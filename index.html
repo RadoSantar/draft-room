@@ -126,6 +126,36 @@
   .hero h1{font-size:36px;line-height:1.15;margin-bottom:10px;}
   .hero p.lead{font-size:17px;color:var(--ink-soft);max-width:56ch;margin-bottom:22px;}
 
+  .draft-banner{
+    background:var(--amber);
+    border-radius:12px;
+    padding:20px 24px;
+    margin-bottom:24px;
+  }
+  .draft-banner-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--turf);
+    opacity:.8;
+    margin-bottom:6px;
+  }
+  .draft-banner-date{
+    font-family:'Anton', sans-serif;
+    font-size:32px;
+    letter-spacing:.02em;
+    color:var(--turf);
+    line-height:1.1;
+  }
+  .draft-banner-sub{
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    color:var(--turf);
+    opacity:.85;
+    margin-top:6px;
+  }
+
   .snapshot{
     display:grid;
     grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
@@ -595,6 +625,12 @@
       <h1>Willkommen im Draft Room</h1>
       <p class="lead">Alles, was du für unsere Liga wissen musst – Regeln, Begriffe, Scoring und Strategie, kompakt erklärt und auf unser Format zugeschnitten.</p>
 
+      <div class="draft-banner">
+        <div class="draft-banner-label">Save the Date · Draft-Termin</div>
+        <div class="draft-banner-date">06.09. · 16:00 Uhr</div>
+        <div class="draft-banner-sub">Zu diesem Zeitpunkt hat noch niemand einen Spieler – sei pünktlich dabei.</div>
+      </div>
+
       <div class="snapshot">
         <div class="snap-card">
           <div class="label">Format</div>
@@ -603,10 +639,6 @@
         <div class="snap-card">
           <div class="label">Draft</div>
           <div class="value">Snake · 23 Picks</div>
-        </div>
-        <div class="snap-card">
-          <div class="label">Draft-Termin</div>
-          <div class="value">06.09. · 16 Uhr</div>
         </div>
         <div class="snap-card">
           <div class="label">Waiver</div>
