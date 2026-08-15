@@ -115,7 +115,7 @@
     position:absolute;
     left:50%;
     transform:translate(-50%,-50%);
-    top:calc(10% + 14px);
+    top:calc(3% + 14px);
     transition:top .25s ease;
     z-index:2;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));
@@ -413,6 +413,51 @@
   /* Roster table */
   .roster-note{font-size:14px;color:var(--ink-soft);margin-top:14px;max-width:64ch;}
 
+  /* Level badges (Einsteiger/Fortgeschritten) */
+  .badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    padding:2px 7px;
+    border-radius:3px;
+    vertical-align:middle;
+    margin-left:8px;
+  }
+  .badge.adv{background:rgba(184,64,47,0.12);color:var(--endzone);}
+
+  /* FAQ accordion */
+  .faq-list{display:flex;flex-direction:column;gap:10px;}
+  .faq-item{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:8px;
+    padding:0 16px;
+  }
+  .faq-item summary{
+    font-family:'Source Serif 4', serif;
+    font-weight:600;
+    font-size:15px;
+    color:var(--turf);
+    padding:14px 26px 14px 0;
+    cursor:pointer;
+    list-style:none;
+    position:relative;
+  }
+  .faq-item summary::-webkit-details-marker{display:none;}
+  .faq-item summary::after{
+    content:'+';
+    position:absolute;
+    right:2px;
+    top:12px;
+    font-family:'Anton', sans-serif;
+    color:var(--amber);
+    font-size:18px;
+  }
+  .faq-item[open] summary::after{content:'\2013';}
+  .faq-item p{font-size:14px;color:var(--ink-soft);padding-bottom:14px;max-width:64ch;}
+
   /* Mobile nav: horizontal progress bar + hamburger menu */
   .mobile-progress{display:none;}
   .menu-btn{display:none;}
@@ -552,7 +597,7 @@
     .mobile-progress .ball-h{
       position:absolute;
       top:50%;
-      left:10%;
+      left:3%;
       transform:translate(-50%,-50%);
       transition:left .25s ease;
       z-index:2;
@@ -580,15 +625,17 @@
   </div>
   <div class="mobile-progress">
     <div class="track">
-      <span class="tick active" data-target="basics" style="left:10%"></span>
-      <span class="tick" data-target="glossar" style="left:20%"></span>
+      <span class="tick active" data-target="faq" style="left:3%"></span>
+      <span class="tick" data-target="basics" style="left:12%"></span>
+      <span class="tick" data-target="glossar" style="left:21%"></span>
       <span class="tick" data-target="scoring" style="left:30%"></span>
-      <span class="tick" data-target="strategie" style="left:40%"></span>
-      <span class="tick" data-target="draft-ablauf" style="left:50%"></span>
-      <span class="tick" data-target="draft-tipps" style="left:60%"></span>
-      <span class="tick" data-target="lineup" style="left:70%"></span>
-      <span class="tick" data-target="waiver" style="left:80%"></span>
-      <span class="tick" data-target="trades" style="left:90%"></span>
+      <span class="tick" data-target="strategie" style="left:39%"></span>
+      <span class="tick" data-target="draft-ablauf" style="left:48%"></span>
+      <span class="tick" data-target="draft-tipps" style="left:57%"></span>
+      <span class="tick" data-target="lineup" style="left:66%"></span>
+      <span class="tick" data-target="waiver" style="left:75%"></span>
+      <span class="tick" data-target="trades" style="left:84%"></span>
+      <span class="tick" data-target="advanced" style="left:97%"></span>
       <svg class="ball-h" aria-hidden="true" viewBox="0 0 34 20" width="20" height="12" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="17" cy="10" rx="16" ry="8.5" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
         <line x1="7" y1="10" x2="27" y2="10" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
@@ -597,13 +644,14 @@
         <line x1="22" y1="7" x2="22" y2="13" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
     </div>
-    <span class="label">Basics · 10</span>
+    <span class="label">FAQ · 0</span>
   </div>
 </header>
 
 <div id="mobileMenu" class="mobile-menu">
   <button class="close-btn" id="menuCloseBtn" aria-label="Menü schließen">×</button>
   <ul>
+    <li><a href="#faq"><span class="yard mono">0</span> FAQ</a></li>
     <li><a href="#basics"><span class="yard mono">10</span> Basics</a></li>
     <li><a href="#glossar"><span class="yard mono">20</span> Glossar</a></li>
     <li><a href="#scoring"><span class="yard mono">30</span> Scoring</a></li>
@@ -613,21 +661,24 @@
     <li><a href="#lineup"><span class="yard mono">70</span> Lineup</a></li>
     <li><a href="#waiver"><span class="yard mono">80</span> Waiver Wire</a></li>
     <li><a href="#trades"><span class="yard mono">90</span> Trades</a></li>
+    <li><a href="#advanced"><span class="yard mono">100</span> Advanced</a></li>
   </ul>
 </div>
 
 <div class="layout">
   <nav class="yardline" aria-label="Kapitel-Navigation">
     <div class="line">
-      <a class="marker active" data-target="basics" href="#basics" style="top:10%">Basics</a>
-      <a class="marker" data-target="glossar" href="#glossar" style="top:20%">Glossar</a>
+      <a class="marker active" data-target="faq" href="#faq" style="top:3%">FAQ</a>
+      <a class="marker" data-target="basics" href="#basics" style="top:12%">Basics</a>
+      <a class="marker" data-target="glossar" href="#glossar" style="top:21%">Glossar</a>
       <a class="marker" data-target="scoring" href="#scoring" style="top:30%">Scoring</a>
-      <a class="marker" data-target="strategie" href="#strategie" style="top:40%">Strategie</a>
-      <a class="marker" data-target="draft-ablauf" href="#draft-ablauf" style="top:50%">Ablauf</a>
-      <a class="marker" data-target="draft-tipps" href="#draft-tipps" style="top:60%">Tipps</a>
-      <a class="marker" data-target="lineup" href="#lineup" style="top:70%">Lineup</a>
-      <a class="marker" data-target="waiver" href="#waiver" style="top:80%">Waiver</a>
-      <a class="marker" data-target="trades" href="#trades" style="top:90%">Trades</a>
+      <a class="marker" data-target="strategie" href="#strategie" style="top:39%">Strategie</a>
+      <a class="marker" data-target="draft-ablauf" href="#draft-ablauf" style="top:48%">Ablauf</a>
+      <a class="marker" data-target="draft-tipps" href="#draft-tipps" style="top:57%">Tipps</a>
+      <a class="marker" data-target="lineup" href="#lineup" style="top:66%">Lineup</a>
+      <a class="marker" data-target="waiver" href="#waiver" style="top:75%">Waiver</a>
+      <a class="marker" data-target="trades" href="#trades" style="top:84%">Trades</a>
+      <a class="marker" data-target="advanced" href="#advanced" style="top:97%">Advanced</a>
       <svg class="ball" aria-hidden="true" viewBox="0 0 20 34" width="14" height="24" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="10" cy="17" rx="8.5" ry="16" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
         <line x1="10" y1="7" x2="10" y2="27" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
@@ -666,6 +717,42 @@
           <div class="label">Stärkste Position</div>
           <div class="value">QB</div>
         </div>
+      </div>
+    </section>
+
+    <section id="faq" data-yard="0" data-label="FAQ">
+      <div class="kicker">Bevor's losgeht · für Einsteiger</div>
+      <h2>Häufige Fragen</h2>
+      <p class="copy">Die wichtigsten Fragen zum Einstieg, kurz beantwortet – zum Aufklappen. Alles darüber hinaus findest du in den folgenden Kapiteln.</p>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Was ist Fantasy Football überhaupt?</summary>
+          <p>Du stellst ein virtuelles Team aus echten NFL-Spielern zusammen. Diese Spieler sammeln für dich Punkte, basierend auf ihrer tatsächlichen Leistung am jeweiligen NFL-Spieltag – jede Woche trittst du damit gegen ein anderes Team unserer Liga an.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Ich kenne kaum NFL-Spieler – kann ich trotzdem mitspielen?</summary>
+          <p>Ja, problemlos. Nutze aktuelle Rankings direkt in der ESPN App oder frag KI-Tools/Google nach Empfehlungen für den Draft. Ein Mock Draft vorher (siehe Draft-Ablauf) hilft zusätzlich, ein Gefühl für Spielernamen und Tempo zu bekommen.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Muss ich jede Woche aktiv etwas tun?</summary>
+          <p>Zwingend nicht, aber du solltest vor jedem Lineup-Lock kurz dein Team checken (Verletzungen, Bye Weeks) – siehe Kapitel "Lineup". Vergisst du es mal, greift unser Sicherheitsnetz mit automatischem Ersatz. Regelmäßiges Reinschauen bringt aber klar bessere Ergebnisse.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Was, wenn ich am Draft-Tag nicht live dabei sein kann?</summary>
+          <p>Leg dir vorher eine Draft-Queue (Rangliste) an – das System pickt dann automatisch für dich, wenn du an der Reihe bist. Live dabei zu sein ist trotzdem von Vorteil, weil du spontan auf andere Picks reagieren kannst.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Kostet die Teilnahme etwas?</summary>
+          <p>Die Liga selbst läuft kostenlos über die ESPN Fantasy App. Einzige Ausgabe ist der Champions Ring am Saisonende (ca. 5–10 CHF pro Person, wird unter allen geteilt).</p>
+        </details>
+        <details class="faq-item">
+          <summary>Wo sehe ich meine Punkte und den Stand meines Teams?</summary>
+          <p>Alles läuft über die ESPN Fantasy App bzw. Website: Live-Scores während der Spiele, Matchup-Ansicht, Liga-Standings und Push-Benachrichtigungen kannst du dort direkt einsehen bzw. aktivieren.</p>
+        </details>
+        <details class="faq-item">
+          <summary>Zwei meiner Spieler brauchen denselben Slot – was jetzt?</summary>
+          <p>Du entscheidest jede Woche selbst, wer von deinem Roster tatsächlich startet (Start/Sit). Der Rest bleibt auf der Bench und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</p>
+        </details>
       </div>
     </section>
 
@@ -934,14 +1021,14 @@
       <div class="tip-card">
         <span class="num">03</span>
         <div>
-          <h3>Onesie-Positionen (QB, TE) nicht reflexartig früh nehmen</h3>
+          <h3>Onesie-Positionen (QB, TE) nicht reflexartig früh nehmen<span class="badge adv">Fortgeschritten</span></h3>
           <p>Die Tiefe an brauchbaren Startern reicht meist bis in spätere Runden – bei unserem QB-lastigen Scoring lohnt es sich trotzdem, den QB-Markt im Blick zu behalten und nicht zu spät zuzuschlagen.</p>
         </div>
       </div>
       <div class="tip-card">
         <span class="num">04</span>
         <div>
-          <h3>Handcuffs gezielt einsetzen, nicht flächendeckend</h3>
+          <h3>Handcuffs gezielt einsetzen, nicht flächendeckend<span class="badge adv">Fortgeschritten</span></h3>
           <p>Nur bei Startern mit schlechter Verletzungshistorie oder dünner Depth Chart handcuffen. Bei gesunden Stammspielern verschwendet man wertvolle Bench-Plätze.</p>
         </div>
       </div>
@@ -1017,6 +1104,54 @@
         <li>Klassischer Anfängerfehler: zu schnell auf Namen oder Ruf reagieren statt auf aktuelle Form und Restplan zu achten.</li>
         <li>Die meisten Ligen haben eine Trade-Deadline – oft einige Wochen vor den Playoffs.</li>
       </ul>
+    </section>
+
+    <section id="advanced" data-yard="100" data-label="Advanced">
+      <div class="kicker">Endzone · für Fortgeschrittene</div>
+      <h2>Advanced-Strategien</h2>
+      <p class="copy">Wer die Basics und die Draft-Tipps schon verinnerlicht hat, findet hier ein paar tiefere Konzepte für den nächsten Schritt.</p>
+      <div class="tip-card">
+        <span class="num">01</span>
+        <div>
+          <h3>Zero-RB / Hero-RB als Draft-Ansatz</h3>
+          <p>Statt in den ersten Runden reflexartig RBs zu nehmen, gezielt früh auf WR/TE/QB setzen und RB-Tiefe erst später über Volumen und Waiver aufbauen (Zero-RB) – oder nur einen Elite-RB früh sichern und danach auf WR fokussieren (Hero-RB). Funktioniert besonders gut in Full-PPR-Formaten wie unserem.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">02</span>
+        <div>
+          <h3>Positional Scarcity gezielt einschätzen</h3>
+          <p>Nicht nur nach reinem Gesamt-Ranking draften, sondern beobachten, wie schnell die Tiefe an einer Position abfällt – bei uns z.B. TE durch den 2×-Slot besonders eng. Lieber zuschlagen, bevor die brauchbare Tiefe komplett weg ist.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">03</span>
+        <div>
+          <h3>Bye-Week-Stacking vermeiden</h3>
+          <p>Beim Draften im Hinterkopf behalten, wenn zu viele Starter derselben Position in derselben Woche Bye haben. Gerade bei unseren hohen Starter-Anforderungen (6 RB/WR-taugliche + 2 TE) kann das eine einzelne Woche empfindlich schwächen.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">04</span>
+        <div>
+          <h3>Buy-Low / Sell-High im Trade-Markt</h3>
+          <p>Spieler nach einer schwachen Phase, aber mit gutem Restplan, günstig einsammeln – gehypte Spieler nach starken Wochen abgeben, solange ihr Marktwert bei den anderen Managern noch hoch ist.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">05</span>
+        <div>
+          <h3>Strength of Schedule für die Playoffs mitdenken</h3>
+          <p>Bei Draft- und Waiver-Entscheidungen nicht nur die aktuelle Form zählen lassen, sondern auch, gegen welche Defenses ein Spieler in den entscheidenden Playoff-Wochen antritt.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">06</span>
+        <div>
+          <h3>Advanced Stats statt nur Endergebnis</h3>
+          <p>Target Share, Snap-% und Red-Zone-Looks sagen oft mehr über die künftige Fantasy-Relevanz eines Spielers aus als reine Yards oder TDs der letzten Woche – hilfreich vor allem für Waiver-Wire-Entscheidungen.</p>
+        </div>
+      </div>
     </section>
   </main>
 </div>
