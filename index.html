@@ -115,7 +115,7 @@
     position:absolute;
     left:50%;
     transform:translate(-50%,-50%);
-    top:calc(3% + 14px);
+    top:calc(2% + 14px);
     transition:top .25s ease;
     z-index:2;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));
@@ -458,6 +458,135 @@
   .faq-item[open] summary::after{content:'\2013';}
   .faq-item p{font-size:14px;color:var(--ink-soft);padding-bottom:14px;max-width:64ch;}
 
+  /* Punkterechner */
+  .calc-controls{
+    display:flex;
+    flex-wrap:wrap;
+    gap:14px;
+    align-items:end;
+    margin:20px 0 4px;
+  }
+  .calc-field{display:flex;flex-direction:column;gap:5px;}
+  .calc-field label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--hash);
+  }
+  .calc-field select{
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    color:var(--ink);
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:6px;
+    padding:9px 10px;
+    min-width:170px;
+  }
+  .calc-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    background:var(--turf);
+    color:var(--chalk);
+    border:none;
+    border-radius:6px;
+    padding:11px 18px;
+    cursor:pointer;
+    height:38px;
+  }
+  .calc-btn:hover{background:var(--turf-2);}
+  .calc-btn:disabled{opacity:.6;cursor:default;}
+  .calc-status{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--hash);
+    margin-top:16px;
+    min-height:1em;
+  }
+  .calc-status.error{color:var(--endzone);}
+  .calc-result{margin-top:18px;}
+  .calc-total{
+    background:var(--turf);
+    border-radius:10px;
+    padding:18px 22px;
+    margin-bottom:16px;
+    display:flex;
+    align-items:baseline;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .calc-total-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--hash);
+    width:100%;
+  }
+  .calc-total-value{
+    font-family:'Anton', sans-serif;
+    font-size:40px;
+    color:var(--amber);
+    line-height:1;
+  }
+  .calc-total-meta{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--chalk);
+    opacity:.85;
+  }
+
+  /* Beliebteste Picks */
+  .pos-tabs{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin:18px 0 4px;
+  }
+  .pos-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    background:var(--card);
+    color:var(--turf);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:7px 16px;
+    cursor:pointer;
+  }
+  .pos-tab.active{
+    background:var(--amber);
+    border-color:var(--amber);
+    color:var(--turf);
+    font-weight:600;
+  }
+  .picks-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:10px 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .picks-row:last-child{border-bottom:none;}
+  .picks-rank{
+    color:var(--hash);
+    min-width:22px;
+  }
+  .picks-name{
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    flex:1;
+  }
+  .picks-team{color:var(--hash);margin-left:6px;}
+  .picks-adp{color:var(--amber);min-width:80px;text-align:right;}
+  .picks-own{color:var(--chalk);opacity:.75;min-width:70px;text-align:right;}
+
   /* Mobile nav: horizontal progress bar + hamburger menu */
   .mobile-progress{display:none;}
   .menu-btn{display:none;}
@@ -519,6 +648,14 @@
     .layout{grid-template-columns:1fr;}
     nav.yardline{display:none;}
     .glossary{grid-template-columns:1fr;}
+
+    .picks-row{padding:10px 12px;gap:6px;font-size:12px;}
+    .picks-name{font-size:13px;}
+    .picks-adp{min-width:auto;}
+    .picks-own{min-width:auto;}
+    .calc-controls{gap:10px;}
+    .calc-field select{min-width:0;width:100%;}
+    .calc-total-value{font-size:32px;}
 
     header.topbar{
       flex-direction:column;
@@ -597,7 +734,7 @@
     .mobile-progress .ball-h{
       position:absolute;
       top:50%;
-      left:3%;
+      left:2%;
       transform:translate(-50%,-50%);
       transition:left .25s ease;
       z-index:2;
@@ -625,17 +762,19 @@
   </div>
   <div class="mobile-progress">
     <div class="track">
-      <span class="tick active" data-target="faq" style="left:3%"></span>
-      <span class="tick" data-target="basics" style="left:12%"></span>
-      <span class="tick" data-target="glossar" style="left:21%"></span>
-      <span class="tick" data-target="scoring" style="left:30%"></span>
-      <span class="tick" data-target="strategie" style="left:39%"></span>
-      <span class="tick" data-target="draft-ablauf" style="left:48%"></span>
-      <span class="tick" data-target="draft-tipps" style="left:57%"></span>
-      <span class="tick" data-target="lineup" style="left:66%"></span>
-      <span class="tick" data-target="waiver" style="left:75%"></span>
-      <span class="tick" data-target="trades" style="left:84%"></span>
-      <span class="tick" data-target="advanced" style="left:97%"></span>
+      <span class="tick active" data-target="faq" style="left:2%"></span>
+      <span class="tick" data-target="basics" style="left:10%"></span>
+      <span class="tick" data-target="glossar" style="left:18%"></span>
+      <span class="tick" data-target="scoring" style="left:26%"></span>
+      <span class="tick" data-target="rechner" style="left:34%"></span>
+      <span class="tick" data-target="strategie" style="left:42%"></span>
+      <span class="tick" data-target="draft-ablauf" style="left:50%"></span>
+      <span class="tick" data-target="beliebte-picks" style="left:58%"></span>
+      <span class="tick" data-target="draft-tipps" style="left:66%"></span>
+      <span class="tick" data-target="lineup" style="left:74%"></span>
+      <span class="tick" data-target="waiver" style="left:82%"></span>
+      <span class="tick" data-target="trades" style="left:90%"></span>
+      <span class="tick" data-target="advanced" style="left:98%"></span>
       <svg class="ball-h" aria-hidden="true" viewBox="0 0 34 20" width="20" height="12" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="17" cy="10" rx="16" ry="8.5" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
         <line x1="7" y1="10" x2="27" y2="10" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
@@ -644,41 +783,45 @@
         <line x1="22" y1="7" x2="22" y2="13" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
     </div>
-    <span class="label">FAQ · 0</span>
+    <span class="label">FAQ · 2</span>
   </div>
 </header>
 
 <div id="mobileMenu" class="mobile-menu">
   <button class="close-btn" id="menuCloseBtn" aria-label="Menü schließen">×</button>
   <ul>
-    <li><a href="#faq"><span class="yard mono">0</span> FAQ</a></li>
+    <li><a href="#faq"><span class="yard mono">2</span> FAQ</a></li>
     <li><a href="#basics"><span class="yard mono">10</span> Basics</a></li>
-    <li><a href="#glossar"><span class="yard mono">20</span> Glossar</a></li>
-    <li><a href="#scoring"><span class="yard mono">30</span> Scoring</a></li>
-    <li><a href="#strategie"><span class="yard mono">40</span> Strategie</a></li>
+    <li><a href="#glossar"><span class="yard mono">18</span> Glossar</a></li>
+    <li><a href="#scoring"><span class="yard mono">26</span> Scoring</a></li>
+    <li><a href="#rechner"><span class="yard mono">34</span> Punkterechner</a></li>
+    <li><a href="#strategie"><span class="yard mono">42</span> Strategie</a></li>
     <li><a href="#draft-ablauf"><span class="yard mono">50</span> Draft-Ablauf</a></li>
-    <li><a href="#draft-tipps"><span class="yard mono">60</span> Draft-Tipps</a></li>
-    <li><a href="#lineup"><span class="yard mono">70</span> Lineup</a></li>
-    <li><a href="#waiver"><span class="yard mono">80</span> Waiver Wire</a></li>
+    <li><a href="#beliebte-picks"><span class="yard mono">58</span> Beliebte Picks</a></li>
+    <li><a href="#draft-tipps"><span class="yard mono">66</span> Draft-Tipps</a></li>
+    <li><a href="#lineup"><span class="yard mono">74</span> Lineup</a></li>
+    <li><a href="#waiver"><span class="yard mono">82</span> Waiver Wire</a></li>
     <li><a href="#trades"><span class="yard mono">90</span> Trades</a></li>
-    <li><a href="#advanced"><span class="yard mono">100</span> Advanced</a></li>
+    <li><a href="#advanced"><span class="yard mono">98</span> Advanced</a></li>
   </ul>
 </div>
 
 <div class="layout">
   <nav class="yardline" aria-label="Kapitel-Navigation">
     <div class="line">
-      <a class="marker active" data-target="faq" href="#faq" style="top:3%">FAQ</a>
-      <a class="marker" data-target="basics" href="#basics" style="top:12%">Basics</a>
-      <a class="marker" data-target="glossar" href="#glossar" style="top:21%">Glossar</a>
-      <a class="marker" data-target="scoring" href="#scoring" style="top:30%">Scoring</a>
-      <a class="marker" data-target="strategie" href="#strategie" style="top:39%">Strategie</a>
-      <a class="marker" data-target="draft-ablauf" href="#draft-ablauf" style="top:48%">Ablauf</a>
-      <a class="marker" data-target="draft-tipps" href="#draft-tipps" style="top:57%">Tipps</a>
-      <a class="marker" data-target="lineup" href="#lineup" style="top:66%">Lineup</a>
-      <a class="marker" data-target="waiver" href="#waiver" style="top:75%">Waiver</a>
-      <a class="marker" data-target="trades" href="#trades" style="top:84%">Trades</a>
-      <a class="marker" data-target="advanced" href="#advanced" style="top:97%">Advanced</a>
+      <a class="marker active" data-target="faq" href="#faq" style="top:2%">FAQ</a>
+      <a class="marker" data-target="basics" href="#basics" style="top:10%">Basics</a>
+      <a class="marker" data-target="glossar" href="#glossar" style="top:18%">Glossar</a>
+      <a class="marker" data-target="scoring" href="#scoring" style="top:26%">Scoring</a>
+      <a class="marker" data-target="rechner" href="#rechner" style="top:34%">Rechner</a>
+      <a class="marker" data-target="strategie" href="#strategie" style="top:42%">Strategie</a>
+      <a class="marker" data-target="draft-ablauf" href="#draft-ablauf" style="top:50%">Ablauf</a>
+      <a class="marker" data-target="beliebte-picks" href="#beliebte-picks" style="top:58%">Picks</a>
+      <a class="marker" data-target="draft-tipps" href="#draft-tipps" style="top:66%">Tipps</a>
+      <a class="marker" data-target="lineup" href="#lineup" style="top:74%">Lineup</a>
+      <a class="marker" data-target="waiver" href="#waiver" style="top:82%">Waiver</a>
+      <a class="marker" data-target="trades" href="#trades" style="top:90%">Trades</a>
+      <a class="marker" data-target="advanced" href="#advanced" style="top:98%">Advanced</a>
       <svg class="ball" aria-hidden="true" viewBox="0 0 20 34" width="14" height="24" xmlns="http://www.w3.org/2000/svg">
         <ellipse cx="10" cy="17" rx="8.5" ry="16" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
         <line x1="10" y1="7" x2="10" y2="27" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
@@ -720,7 +863,7 @@
       </div>
     </section>
 
-    <section id="faq" data-yard="0" data-label="FAQ">
+    <section id="faq" data-yard="2" data-label="FAQ">
       <div class="kicker">Bevor's losgeht · für Einsteiger</div>
       <h2>Häufige Fragen</h2>
       <p class="copy">Die wichtigsten Fragen zum Einstieg, kurz beantwortet – zum Aufklappen. Alles darüber hinaus findest du in den folgenden Kapiteln.</p>
@@ -795,7 +938,7 @@
       <p class="copy">Landet ein Spieler auf der Injured-Reserve-Liste der NFL, fällt er für mindestens 4 Wochen aus. Genau dann kannst du ihn auf deinen IR-Slot legen – er blockiert dort keinen normalen Roster-Platz, und du kannst dafür einen Ersatzspieler vom Waiver Wire holen. Ist der Spieler wieder einsatzbereit, musst du dich entscheiden: den Ersatzspieler behalten oder zurück auf den ursprünglichen Spieler wechseln.</p>
     </section>
 
-    <section id="glossar" data-yard="20" data-label="Glossar">
+    <section id="glossar" data-yard="18" data-label="Glossar">
       <div class="kicker">Vokabeln zum Nachschlagen</div>
       <h2>Glossar</h2>
       <div class="glossary">
@@ -826,7 +969,7 @@
       </div>
     </section>
 
-    <section id="scoring" data-yard="30" data-label="Scoring">
+    <section id="scoring" data-yard="26" data-label="Scoring">
       <div class="kicker">Komplettes Punktesystem</div>
       <h2>Scoring</h2>
 
@@ -961,7 +1104,45 @@
       </div>
     </section>
 
-    <section id="strategie" data-yard="40" data-label="Strategie">
+    <section id="rechner" data-yard="34" data-label="Rechner">
+      <div class="kicker">Live-Daten · ESPN</div>
+      <h2>Punkterechner</h2>
+      <p class="copy">Wähle einen Quarterback, ein Jahr und eine Saison-Woche – der Rechner holt die echten NFL-Boxscore-Daten und rechnet sie live nach unserem Liga-Scoring um, inklusive Aufschlüsselung nach Kategorie.</p>
+
+      <div class="calc-controls">
+        <div class="calc-field">
+          <label for="calcQb">Quarterback</label>
+          <select id="calcQb"></select>
+        </div>
+        <div class="calc-field">
+          <label for="calcYear">Jahr</label>
+          <select id="calcYear"></select>
+        </div>
+        <div class="calc-field">
+          <label for="calcWeek">Woche</label>
+          <select id="calcWeek"></select>
+        </div>
+        <button class="calc-btn" id="calcBtn" type="button">Punkte berechnen</button>
+      </div>
+
+      <div class="calc-status" id="calcStatus" aria-live="polite"></div>
+
+      <div class="calc-result" id="calcResult" hidden>
+        <div class="calc-total">
+          <div class="calc-total-label" id="calcTotalLabel"></div>
+          <div class="calc-total-value" id="calcTotalValue"></div>
+          <div class="calc-total-meta" id="calcTotalMeta"></div>
+        </div>
+        <div class="scoreboard" id="calcBreakdown"></div>
+      </div>
+
+      <div class="note-box">
+        <span class="flag">Hinweis</span>
+        <span>Datenquelle: öffentliche ESPN-Boxscore-Daten. 2pt-Conversions und der 50+-Yard-TD-Bonus werden erkannt, der QB-Rushing-First-Down-Bonus (+0.5/Stück) ist in diesen Daten aber nicht enthalten und fehlt daher in der Berechnung – bei laufstarken QBs kann der echte Wert dadurch etwas höher liegen.</span>
+      </div>
+    </section>
+
+    <section id="strategie" data-yard="42" data-label="Strategie">
       <div class="kicker">Was das Scoring bedeutet</div>
       <h2>Strategische Einordnung</h2>
       <div class="insight-list">
@@ -1001,7 +1182,26 @@
       </ul>
     </section>
 
-    <section id="draft-tipps" data-yard="60" data-label="Draft-Tipps">
+    <section id="beliebte-picks" data-yard="58" data-label="Picks">
+      <div class="kicker">Live-Daten · ESPN Fantasy</div>
+      <h2>Beliebteste Picks nach Position</h2>
+      <p class="copy">Live-Rangliste nach Average Draft Position (ADP) und Ownership-Quote über alle ESPN-Fantasy-Ligen – ein guter Anhaltspunkt, wer aktuell wo eingeordnet wird. Lädt bei jedem Seitenaufruf automatisch die aktuellen Werte.</p>
+
+      <div class="pos-tabs" id="picksTabs">
+        <button class="pos-tab active" data-pos="QB" type="button">QB</button>
+        <button class="pos-tab" data-pos="RB" type="button">RB</button>
+        <button class="pos-tab" data-pos="WR" type="button">WR</button>
+        <button class="pos-tab" data-pos="TE" type="button">TE</button>
+        <button class="pos-tab" data-pos="K" type="button">K</button>
+        <button class="pos-tab" data-pos="DST" type="button">DEF</button>
+      </div>
+
+      <div class="calc-status" id="picksStatus" aria-live="polite">Lade Live-Daten…</div>
+      <div class="scoreboard" id="picksList" style="display:none"></div>
+      <p class="note-text">ADP = durchschnittliche Draft-Position, Own% = Anteil der ESPN-Ligen, in denen der Spieler aktuell gerostert ist. Beide Werte verschieben sich täglich bis zum Saisonstart.</p>
+    </section>
+
+    <section id="draft-tipps" data-yard="66" data-label="Draft-Tipps">
       <div class="kicker">Stand 2026 · an unser Format angepasst</div>
       <h2>Draft-Strategie-Tipps</h2>
       <div class="tip-card">
@@ -1048,7 +1248,7 @@
       </div>
     </section>
 
-    <section id="lineup" data-yard="70" data-label="Lineup">
+    <section id="lineup" data-yard="74" data-label="Lineup">
       <div class="kicker">Vor jedem Lineup-Lock</div>
       <h2>Wöchentliches Lineup-Management</h2>
       <div class="check-list">
@@ -1079,7 +1279,7 @@
       </div>
     </section>
 
-    <section id="waiver" data-yard="80" data-label="Waiver">
+    <section id="waiver" data-yard="82" data-label="Waiver">
       <div class="kicker">ESPN · Reihenfolge-System</div>
       <h2>Waiver Wire</h2>
       <ul class="info-list">
@@ -1106,7 +1306,7 @@
       </ul>
     </section>
 
-    <section id="advanced" data-yard="100" data-label="Advanced">
+    <section id="advanced" data-yard="98" data-label="Advanced">
       <div class="kicker">Endzone · für Fortgeschrittene</div>
       <h2>Advanced-Strategien</h2>
       <p class="copy">Wer die Basics und die Draft-Tipps schon verinnerlicht hat, findet hier ein paar tiefere Konzepte für den nächsten Schritt.</p>
@@ -1222,6 +1422,336 @@
   if(menuOpenBtn) menuOpenBtn.addEventListener('click', openMenu);
   if(menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
   menuLinks.forEach(function(a){ a.addEventListener('click', closeMenu); });
+})();
+</script>
+
+<script>
+(function(){
+  // Aktuelle Starting-QBs (Stand: Depth Charts, ESPN Athlete-IDs)
+  var QUARTERBACKS = [
+    { id: '2578570', name: 'Jacoby Brissett', team: 'ARI' },
+    { id: '4241479', name: 'Tua Tagovailoa', team: 'ATL' },
+    { id: '3916387', name: 'Lamar Jackson', team: 'BAL' },
+    { id: '3918298', name: 'Josh Allen', team: 'BUF' },
+    { id: '4685720', name: 'Bryce Young', team: 'CAR' },
+    { id: '4431611', name: 'Caleb Williams', team: 'CHI' },
+    { id: '3915511', name: 'Joe Burrow', team: 'CIN' },
+    { id: '3122840', name: 'Deshaun Watson', team: 'CLE' },
+    { id: '2577417', name: 'Dak Prescott', team: 'DAL' },
+    { id: '4426338', name: 'Bo Nix', team: 'DEN' },
+    { id: '3046779', name: 'Jared Goff', team: 'DET' },
+    { id: '4036378', name: 'Jordan Love', team: 'GB' },
+    { id: '4432577', name: 'C.J. Stroud', team: 'HOU' },
+    { id: '3917792', name: 'Daniel Jones', team: 'IND' },
+    { id: '4360310', name: 'Trevor Lawrence', team: 'JAX' },
+    { id: '3139477', name: 'Patrick Mahomes', team: 'KC' },
+    { id: '4038941', name: 'Justin Herbert', team: 'LAC' },
+    { id: '12483', name: 'Matthew Stafford', team: 'LAR' },
+    { id: '14880', name: 'Kirk Cousins', team: 'LV' },
+    { id: '4242512', name: 'Malik Willis', team: 'MIA' },
+    { id: '3917315', name: 'Kyler Murray', team: 'MIN' },
+    { id: '4431452', name: 'Drake Maye', team: 'NE' },
+    { id: '4360689', name: 'Tyler Shough', team: 'NO' },
+    { id: '4689114', name: 'Jaxson Dart', team: 'NYG' },
+    { id: '15864', name: 'Geno Smith', team: 'NYJ' },
+    { id: '4040715', name: 'Jalen Hurts', team: 'PHI' },
+    { id: '8439', name: 'Aaron Rodgers', team: 'PIT' },
+    { id: '3912547', name: 'Sam Darnold', team: 'SEA' },
+    { id: '4361741', name: 'Brock Purdy', team: 'SF' },
+    { id: '3052587', name: 'Baker Mayfield', team: 'TB' },
+    { id: '4688380', name: 'Cam Ward', team: 'TEN' },
+    { id: '4426348', name: 'Jayden Daniels', team: 'WSH' }
+  ].sort(function(a, b){ return a.name.localeCompare(b.name); });
+
+  var qbSelect = document.getElementById('calcQb');
+  var yearSelect = document.getElementById('calcYear');
+  var weekSelect = document.getElementById('calcWeek');
+  var calcBtn = document.getElementById('calcBtn');
+  var statusEl = document.getElementById('calcStatus');
+  var resultEl = document.getElementById('calcResult');
+  var breakdownEl = document.getElementById('calcBreakdown');
+  var totalLabelEl = document.getElementById('calcTotalLabel');
+  var totalValueEl = document.getElementById('calcTotalValue');
+  var totalMetaEl = document.getElementById('calcTotalMeta');
+
+  if(!qbSelect) return;
+
+  QUARTERBACKS.forEach(function(qb){
+    var opt = document.createElement('option');
+    opt.value = qb.id;
+    opt.textContent = qb.name + ' (' + qb.team + ')';
+    opt.dataset.name = qb.name;
+    qbSelect.appendChild(opt);
+  });
+  var mahomesOpt = qbSelect.querySelector('option[value="3139477"]');
+  if(mahomesOpt) qbSelect.value = '3139477';
+
+  var thisYear = new Date().getFullYear();
+  for(var y = thisYear; y >= 2015; y--){
+    var yOpt = document.createElement('option');
+    yOpt.value = y;
+    yOpt.textContent = y;
+    yearSelect.appendChild(yOpt);
+  }
+  yearSelect.value = thisYear - 1;
+
+  for(var w = 1; w <= 18; w++){
+    var wOpt = document.createElement('option');
+    wOpt.value = w;
+    wOpt.textContent = 'Woche ' + w;
+    weekSelect.appendChild(wOpt);
+  }
+
+  function fmtPts(n){
+    var r = Math.round(n * 10) / 10;
+    var sign = r > 0 ? '+' : (r < 0 ? '−' : '');
+    return sign + Math.abs(r).toFixed(1);
+  }
+
+  function ptsClass(n){
+    if(n > 0) return 'val pos';
+    if(n < 0) return 'val neg';
+    return 'val';
+  }
+
+  function addRow(label, raw, pts){
+    var row = document.createElement('div');
+    row.className = 'row';
+    var l = document.createElement('span');
+    l.textContent = raw !== null ? (label + ' (' + raw + ')') : label;
+    var p = document.createElement('span');
+    p.className = ptsClass(pts) + ' mono';
+    p.textContent = fmtPts(pts);
+    row.appendChild(l);
+    row.appendChild(p);
+    breakdownEl.appendChild(row);
+  }
+
+  function setStatus(text, isError){
+    statusEl.textContent = text || '';
+    statusEl.classList.toggle('error', !!isError);
+  }
+
+  async function calculate(){
+    var qbId = qbSelect.value;
+    var qbName = qbSelect.options[qbSelect.selectedIndex].dataset.name;
+    var year = yearSelect.value;
+    var week = parseInt(weekSelect.value, 10);
+
+    resultEl.hidden = true;
+    breakdownEl.innerHTML = '';
+    calcBtn.disabled = true;
+    setStatus('Lade Daten von ESPN…', false);
+
+    try {
+      var glRes = await fetch('https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/' + qbId + '/gamelog?season=' + year);
+      if(!glRes.ok) throw new Error('gamelog');
+      var gl = await glRes.json();
+
+      var regSeason = (gl.seasonTypes || []).filter(function(st){
+        return /Regular Season/i.test(st.displayName || '');
+      })[0];
+      if(!regSeason) throw { code: 'no-data' };
+
+      var targetEventId = null, gameInfo = null;
+      var events = gl.events || {};
+      Object.keys(events).forEach(function(eid){
+        if(events[eid].week === week && !targetEventId){
+          targetEventId = eid;
+          gameInfo = events[eid];
+        }
+      });
+      if(!targetEventId) throw { code: 'no-game' };
+
+      var statsArr = null;
+      regSeason.categories.forEach(function(cat){
+        cat.events.forEach(function(ev){
+          if(ev.eventId === targetEventId) statsArr = ev.stats;
+        });
+      });
+      if(!statsArr) throw { code: 'no-stats' };
+
+      var raw = {};
+      gl.names.forEach(function(n, i){ raw[n] = parseFloat(statsArr[i]) || 0; });
+
+      setStatus('Lade Boxscore-Details…', false);
+      var sumRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + targetEventId);
+      if(!sumRes.ok) throw new Error('summary');
+      var sum = await sumRes.json();
+
+      var fumblesLost = 0;
+      ((sum.boxscore || {}).players || []).forEach(function(team){
+        (team.statistics || []).forEach(function(cat){
+          if(cat.name === 'fumbles'){
+            (cat.athletes || []).forEach(function(ath){
+              if(ath.athlete && ath.athlete.displayName === qbName){
+                var idx = cat.labels.indexOf('LOST');
+                fumblesLost = parseFloat(ath.stats[idx]) || 0;
+              }
+            });
+          }
+        });
+      });
+
+      var bonus50 = 0, twoPt = 0;
+      var escapedName = qbName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      var twoPtRe = new RegExp(escapedName + '\\s+(Pass to [^)]+|Rush) for Two-Point Conversion');
+      (sum.scoringPlays || []).forEach(function(p){
+        var text = p.text || '';
+        var typeText = (p.type && p.type.text) || '';
+        if(typeText === 'Passing Touchdown'){
+          var m1 = text.match(/^(\d+)\s+Yd pass from (.+?)\s*\(/);
+          if(m1 && m1[2].trim() === qbName && parseInt(m1[1], 10) >= 50) bonus50 += 5;
+        }
+        if(typeText === 'Rushing Touchdown'){
+          var m2 = text.match(/^(.+?)\s+(\d+)\s+Yd Rush\s*\(/);
+          if(m2 && m2[1].trim() === qbName && parseInt(m2[2], 10) >= 50) bonus50 += 5;
+        }
+        if(twoPtRe.test(text)) twoPt += 2;
+      });
+
+      var passYds = raw.passingYards || 0, comp = raw.completions || 0, passTD = raw.passingTouchdowns || 0,
+          ints = raw.interceptions || 0, sacks = raw.sacks || 0,
+          rushYds = raw.rushingYards || 0, rushTD = raw.rushingTouchdowns || 0,
+          rushAtt = raw.rushingAttempts || 0, att = raw.passingAttempts || 0;
+
+      var passYardPts = passYds / 25;
+      var compPts = comp * 0.5;
+      var passTdPts = passTD * 6;
+      var intPts = ints * -2;
+      var sackPts = sacks * -1;
+      var passGameBonus = passYds >= 400 ? 4 : (passYds >= 300 ? 2 : 0);
+
+      var rushYardPts = rushYds / 10;
+      var rushTdPts = rushTD * 6;
+      var rushGameBonus = rushYds >= 200 ? 4 : (rushYds >= 100 ? 1 : 0);
+
+      var fumblePts = fumblesLost * -2;
+
+      var total = passYardPts + compPts + passTdPts + intPts + sackPts + passGameBonus
+                + rushYardPts + rushTdPts + rushGameBonus + bonus50 + twoPt + fumblePts;
+
+      totalLabelEl.textContent = qbName + ' · ' + year + ' · Woche ' + week;
+      totalValueEl.textContent = fmtPts(total) + ' Pkt';
+      var oppName = gameInfo.opponent ? gameInfo.opponent.displayName : '?';
+      var atVs = gameInfo.atVs === '@' ? 'bei' : 'vs.';
+      totalMetaEl.textContent = atVs + ' ' + oppName + ' · ' + gameInfo.score + ' (' + gameInfo.gameResult + ')';
+
+      breakdownEl.innerHTML = '';
+      addRow('Passing Yards', passYds, passYardPts);
+      addRow('Completions (' + comp + '/' + att + ')', null, compPts);
+      addRow('Passing TDs', passTD, passTdPts);
+      addRow('Interceptions', ints, intPts);
+      addRow('Sacked', sacks, sackPts);
+      if(passGameBonus) addRow('Passing Yard-Game-Bonus', null, passGameBonus);
+      addRow('Rushing Yards', rushYds + ' (' + rushAtt + ' Carries)', rushYardPts);
+      addRow('Rushing TDs', rushTD, rushTdPts);
+      if(rushGameBonus) addRow('Rushing Yard-Game-Bonus', null, rushGameBonus);
+      if(bonus50) addRow('50+ Yard TD Bonus', null, bonus50);
+      if(twoPt) addRow('2pt Conversions', null, twoPt);
+      addRow('Fumbles Lost', fumblesLost, fumblePts);
+
+      setStatus('', false);
+      resultEl.hidden = false;
+    } catch(err){
+      var code = err && err.code;
+      if(code === 'no-game'){
+        setStatus('Kein NFL-Spiel in dieser Woche gefunden (Bye Week oder außerhalb der Saison).', true);
+      } else if(code === 'no-data'){
+        setStatus('Keine Saison-Daten für dieses Jahr gefunden.', true);
+      } else {
+        setStatus('Daten konnten nicht geladen werden. Bitte später erneut versuchen.', true);
+      }
+    } finally {
+      calcBtn.disabled = false;
+    }
+  }
+
+  calcBtn.addEventListener('click', calculate);
+})();
+</script>
+
+<script>
+(function(){
+  var TEAM_ABBR = {
+    1:'ATL', 2:'BUF', 3:'CHI', 4:'CIN', 5:'CLE', 6:'DAL', 7:'DEN', 8:'DET', 9:'GB', 10:'TEN',
+    11:'IND', 12:'KC', 13:'LV', 14:'LAR', 15:'MIA', 16:'MIN', 17:'NE', 18:'NO', 19:'NYG', 20:'NYJ',
+    21:'PHI', 22:'ARI', 23:'PIT', 24:'LAC', 25:'SF', 26:'SEA', 27:'TB', 28:'WSH', 29:'CAR', 30:'JAX',
+    33:'BAL', 34:'HOU'
+  };
+  var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+
+  var tabsEl = document.getElementById('picksTabs');
+  var statusEl = document.getElementById('picksStatus');
+  var listEl = document.getElementById('picksList');
+  if(!tabsEl) return;
+
+  var cache = {};
+
+  function render(pos){
+    var data = cache[pos];
+    listEl.innerHTML = '';
+    data.forEach(function(p, i){
+      var row = document.createElement('div');
+      row.className = 'picks-row';
+      row.innerHTML =
+        '<span class="picks-rank mono">' + (i + 1) + '</span>' +
+        '<span class="picks-name">' + p.name + '<span class="picks-team mono">' + p.team + '</span></span>' +
+        '<span class="picks-adp mono">ADP ' + p.adp.toFixed(1) + '</span>' +
+        '<span class="picks-own mono">' + p.pct.toFixed(0) + '% own</span>';
+      listEl.appendChild(row);
+    });
+    listEl.style.display = '';
+    statusEl.textContent = '';
+  }
+
+  async function loadPosition(pos){
+    if(cache[pos]){ render(pos); return; }
+    statusEl.textContent = 'Lade Live-Daten…';
+    statusEl.classList.remove('error');
+    listEl.style.display = 'none';
+    try {
+      var filter = JSON.stringify({
+        players: {
+          filterSlotIds: { value: [SLOT_IDS[pos]] },
+          sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
+          limit: 12,
+          offset: 0,
+          filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
+        }
+      });
+      var res = await fetch('https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info', {
+        headers: { 'x-fantasy-filter': filter }
+      });
+      if(!res.ok) throw new Error('fetch-failed');
+      var data = await res.json();
+      var list = (data.players || []).map(function(p){
+        var pl = p.player;
+        var own = pl.ownership || {};
+        return {
+          name: pl.fullName,
+          team: TEAM_ABBR[pl.proTeamId] || '',
+          adp: own.averageDraftPosition || 999,
+          pct: own.percentOwned || 0
+        };
+      }).sort(function(a, b){ return a.adp - b.adp; });
+      cache[pos] = list;
+      render(pos);
+    } catch(err){
+      statusEl.textContent = 'Live-Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
+      statusEl.classList.add('error');
+    }
+  }
+
+  tabsEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.pos-tab');
+    if(!btn) return;
+    tabsEl.querySelectorAll('.pos-tab').forEach(function(t){ t.classList.remove('active'); });
+    btn.classList.add('active');
+    loadPosition(btn.dataset.pos);
+  });
+
+  loadPosition('QB');
 })();
 </script>
 
