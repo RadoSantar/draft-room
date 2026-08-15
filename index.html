@@ -113,14 +113,13 @@
   nav.yardline .ball{
     position:absolute;
     left:50%;
-    transform:translate(-50%,-50%);
-    width:10px;
-    height:10px;
-    border-radius:50%;
-    background:var(--endzone);
+    transform:translate(-50%,-50%) rotate(90deg);
+    font-size:15px;
+    line-height:1;
     top:calc(10% + 14px);
     transition:top .25s ease;
     z-index:2;
+    filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));
   }
 
   main{padding:32px 24px 96px;min-width:0;}
@@ -574,16 +573,16 @@
 <div class="layout">
   <nav class="yardline" aria-label="Kapitel-Navigation">
     <div class="line">
-      <span class="marker active" data-target="basics" style="top:10%">Basics</span>
-      <span class="marker" data-target="glossar" style="top:20%">Glossar</span>
-      <span class="marker" data-target="scoring" style="top:30%">Scoring</span>
-      <span class="marker" data-target="strategie" style="top:40%">Strategie</span>
-      <span class="marker" data-target="draft-ablauf" style="top:50%">Ablauf</span>
-      <span class="marker" data-target="draft-tipps" style="top:60%">Tipps</span>
-      <span class="marker" data-target="lineup" style="top:70%">Lineup</span>
-      <span class="marker" data-target="waiver" style="top:80%">Waiver</span>
-      <span class="marker" data-target="trades" style="top:90%">Trades</span>
-      <span class="ball"></span>
+      <a class="marker active" data-target="basics" href="#basics" style="top:10%">Basics</a>
+      <a class="marker" data-target="glossar" href="#glossar" style="top:20%">Glossar</a>
+      <a class="marker" data-target="scoring" href="#scoring" style="top:30%">Scoring</a>
+      <a class="marker" data-target="strategie" href="#strategie" style="top:40%">Strategie</a>
+      <a class="marker" data-target="draft-ablauf" href="#draft-ablauf" style="top:50%">Ablauf</a>
+      <a class="marker" data-target="draft-tipps" href="#draft-tipps" style="top:60%">Tipps</a>
+      <a class="marker" data-target="lineup" href="#lineup" style="top:70%">Lineup</a>
+      <a class="marker" data-target="waiver" href="#waiver" style="top:80%">Waiver</a>
+      <a class="marker" data-target="trades" href="#trades" style="top:90%">Trades</a>
+      <span class="ball" aria-hidden="true">🏈</span>
     </div>
   </nav>
 
@@ -939,6 +938,16 @@
 
     sections.forEach(function(s){ observer.observe(s); });
   }
+
+  function checkBottom(){
+    var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+    if(atBottom){
+      var last = sections[sections.length - 1];
+      setActive(last.id, last.dataset.yard, last.dataset.label);
+    }
+  }
+  window.addEventListener('scroll', checkBottom, { passive: true });
+  checkBottom();
 
   function openMenu(){
     mobileMenu.classList.add('open');
