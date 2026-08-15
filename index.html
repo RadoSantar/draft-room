@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draft Room – Liga Playbook</title>
+<meta name="description" content="FAQ &amp; Strategie-Guide für unsere ESPN NFL Fantasy Football Liga.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf:#1E4638;
+    --turf-2:#173629;
+    --hash:#3F7A5C;
+    --chalk:#F3EFE4;
+    --amber:#E9A73B;
+    --endzone:#B8402F;
+    --endzone-soft:#e08a7e;
+    --ink:#22241F;
+    --ink-soft:#4a4c44;
+    --card:#ffffff;
+    --card-border:rgba(30,70,56,0.15);
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    line-height:1.65;
+  }
+  h1,h2,h3,.display{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+    text-wrap:balance;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+
+  /* Header */
+  header.topbar{
+    background:var(--turf);
+    color:var(--chalk);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    position:sticky;
+    top:0;
+    z-index:20;
+    border-bottom:3px solid var(--amber);
+  }
+  header.topbar .title{
+    font-family:'Anton', sans-serif;
+    font-size:20px;
+    letter-spacing:0.04em;
+  }
+  header.topbar .sub{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--hash);
+    background:rgba(255,255,255,0.06);
+    padding:4px 10px;
+    border-radius:3px;
+  }
+
+  /* Layout with yard-line nav */
+  .layout{
+    display:grid;
+    grid-template-columns:76px 1fr;
+    max-width:920px;
+    margin:0 auto;
+  }
+  nav.yardline{
+    position:sticky;
+    top:64px;
+    height:calc(100vh - 64px);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding-top:24px;
+    padding-bottom:24px;
+  }
+  nav.yardline .line{
+    position:relative;
+    width:2px;
+    background:var(--hash);
+    flex:1;
+  }
+  nav.yardline .marker{
+    position:absolute;
+    left:50%;
+    transform:translate(-50%,-50%);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--hash);
+    background:var(--chalk);
+    padding:2px 5px;
+    white-space:nowrap;
+    text-decoration:none;
+    transition:color .15s ease, background .15s ease;
+  }
+  nav.yardline .marker.active{
+    color:var(--turf);
+    background:var(--amber);
+    border-radius:2px;
+    font-weight:600;
+  }
+  nav.yardline .ball{
+    position:absolute;
+    left:50%;
+    transform:translate(-50%,-50%);
+    width:10px;
+    height:10px;
+    border-radius:50%;
+    background:var(--endzone);
+    top:calc(10% + 14px);
+    transition:top .25s ease;
+    z-index:2;
+  }
+
+  main{padding:32px 24px 96px;min-width:0;}
+
+  /* Hero */
+  .hero h1{font-size:36px;line-height:1.15;margin-bottom:10px;}
+  .hero p.lead{font-size:17px;color:var(--ink-soft);max-width:56ch;margin-bottom:22px;}
+
+  .snapshot{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+    gap:12px;
+    margin:28px 0 48px;
+  }
+  .snap-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:14px 16px;
+  }
+  .snap-card .label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--hash);
+    margin-bottom:6px;
+  }
+  .snap-card .value{
+    font-family:'Anton', sans-serif;
+    font-size:18px;
+    color:var(--turf);
+  }
+
+  section{margin-bottom:56px;scroll-margin-top:110px;}
+  section > h2{font-size:24px;margin-bottom:18px;padding-bottom:8px;border-bottom:2px solid var(--turf);}
+  section > .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--hash);
+    margin-bottom:6px;
+  }
+  h3.sub-head{
+    font-size:15px;
+    color:var(--turf);
+    margin:28px 0 10px;
+  }
+  h3.sub-head:first-of-type{margin-top:0;}
+  p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:64ch;}
+  p.copy:last-child{margin-bottom:0;}
+
+  /* Glossary cards */
+  .glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .term-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--hash);
+    border-radius:6px;
+    padding:12px 14px;
+  }
+  .term-card .term{
+    font-family:'IBM Plex Mono', monospace;
+    font-weight:600;
+    font-size:13px;
+    color:var(--turf);
+    display:block;
+    margin-bottom:4px;
+  }
+  .term-card .def{font-size:14px;color:var(--ink-soft);}
+
+  /* Scoreboard table */
+  .scoreboard{
+    background:var(--turf);
+    border-radius:10px;
+    overflow:hidden;
+    color:var(--chalk);
+  }
+  .scoreboard + .scoreboard{margin-top:14px;}
+  .scoreboard .row{
+    display:flex;
+    justify-content:space-between;
+    gap:12px;
+    padding:10px 18px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:14px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .scoreboard .row:last-child{border-bottom:none;}
+  .scoreboard .row.head{
+    background:rgba(0,0,0,0.2);
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.05em;
+    color:var(--hash);
+  }
+  .scoreboard .row span:first-child{font-family:'Source Serif 4', serif;font-size:14px;}
+  .scoreboard .row.head span:first-child{font-family:'IBM Plex Mono', monospace;}
+  .val{font-variant-numeric:tabular-nums;font-weight:600;}
+  .val.pos{color:var(--amber);}
+  .val.neg{color:var(--endzone-soft);}
+
+  .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:8px;max-width:64ch;}
+
+  .note-box{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--endzone);
+    border-radius:6px;
+    padding:12px 16px;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:12px;
+    max-width:64ch;
+  }
+  .note-box .flag{
+    font-family:'Anton', sans-serif;
+    color:var(--endzone);
+    font-size:12px;
+    letter-spacing:.04em;
+    flex:0 0 auto;
+  }
+
+  .tip-box{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--amber);
+    border-radius:6px;
+    padding:12px 16px;
+    display:flex;
+    gap:10px;
+    align-items:flex-start;
+    font-size:13px;
+    color:var(--ink-soft);
+    margin-top:12px;
+    max-width:64ch;
+  }
+  .tip-box .flag{
+    font-family:'Anton', sans-serif;
+    color:var(--turf);
+    font-size:12px;
+    letter-spacing:.04em;
+    flex:0 0 auto;
+  }
+
+  /* Range scale (defense points/yards allowed) */
+  .range-scale{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:2px 2px 8px;
+    margin-top:10px;
+  }
+  .range-cell{
+    background:var(--turf);
+    color:var(--chalk);
+    border-radius:8px;
+    padding:10px 12px;
+    min-width:64px;
+    text-align:center;
+    flex:0 0 auto;
+  }
+  .range-cell .range{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    color:var(--hash);
+    margin-bottom:5px;
+    white-space:nowrap;
+  }
+  .range-cell .pts{
+    font-family:'Anton', sans-serif;
+    font-size:16px;
+  }
+  .range-cell .pts.pos{color:var(--amber);}
+  .range-cell .pts.neg{color:var(--endzone-soft);}
+
+  /* Insight cards (strategy section) */
+  .insight-list{display:flex;flex-direction:column;gap:10px;}
+  .insight-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--amber);
+    border-radius:8px;
+    padding:14px 16px;
+    font-size:14px;
+    color:var(--ink-soft);
+  }
+  .insight-card strong{color:var(--turf);}
+
+  /* Info list (waiver, trades, draft-ablauf) */
+  .info-list{list-style:none;display:flex;flex-direction:column;gap:10px;max-width:64ch;}
+  .info-list li{
+    position:relative;
+    padding-left:20px;
+    font-size:15px;
+    color:var(--ink-soft);
+  }
+  .info-list li::before{
+    content:'';
+    position:absolute;
+    left:0;
+    top:9px;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:var(--hash);
+  }
+  .info-list li strong{color:var(--ink);}
+
+  /* Check list (weekly lineup) */
+  .check-list{display:flex;flex-direction:column;gap:10px;}
+  .check-item{
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:8px;
+    padding:12px 16px;
+  }
+  .check-item .mark{
+    font-family:'Anton', sans-serif;
+    color:var(--hash);
+    font-size:16px;
+    line-height:1.3;
+    flex:0 0 auto;
+  }
+  .check-item strong{
+    display:block;
+    font-family:'Source Serif 4', serif;
+    font-weight:600;
+    color:var(--turf);
+    margin-bottom:2px;
+    font-size:15px;
+  }
+  .check-item p{font-size:14px;color:var(--ink-soft);}
+
+  /* Draft tip card */
+  .tip-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:18px 20px;
+    display:flex;
+    gap:14px;
+    align-items:flex-start;
+  }
+  .tip-card + .tip-card{margin-top:12px;}
+  .tip-card .num{
+    font-family:'Anton', sans-serif;
+    font-size:26px;
+    color:var(--amber);
+    min-width:36px;
+  }
+  .tip-card h3{font-size:16px;margin-bottom:4px;}
+  .tip-card p{font-size:14px;color:var(--ink-soft);}
+
+  /* Roster table */
+  .roster-note{font-size:14px;color:var(--ink-soft);margin-top:14px;max-width:64ch;}
+
+  /* Mobile nav: horizontal progress bar + hamburger menu */
+  .mobile-progress{display:none;}
+  .menu-btn{display:none;}
+  .mobile-menu{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:var(--turf);
+    z-index:40;
+    padding:80px 28px 28px;
+    overflow-y:auto;
+  }
+  .mobile-menu.open{display:block;}
+  .mobile-menu .close-btn{
+    position:absolute;
+    top:20px;
+    right:24px;
+    background:none;
+    border:none;
+    color:var(--chalk);
+    font-size:28px;
+    line-height:1;
+    cursor:pointer;
+  }
+  .mobile-menu ul{list-style:none;}
+  .mobile-menu li{
+    border-bottom:1px solid rgba(255,255,255,0.15);
+  }
+  .mobile-menu a{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:16px 4px;
+    color:var(--chalk);
+    text-decoration:none;
+    font-family:'Anton', sans-serif;
+    font-size:18px;
+    letter-spacing:0.02em;
+  }
+  .mobile-menu a .yard{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--amber);
+    min-width:28px;
+  }
+
+  a:focus-visible, button:focus-visible{
+    outline:2px solid var(--amber);
+    outline-offset:2px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    html{scroll-behavior:auto;}
+    nav.yardline .ball{transition:none;}
+  }
+
+  @media (max-width:640px){
+    .layout{grid-template-columns:1fr;}
+    nav.yardline{display:none;}
+    .glossary{grid-template-columns:1fr;}
+
+    header.topbar{
+      flex-direction:column;
+      align-items:flex-start;
+      gap:8px;
+      padding:12px 16px 0;
+      border-bottom:none;
+    }
+    header.topbar .row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      width:100%;
+    }
+    .menu-btn{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      background:none;
+      border:1px solid rgba(255,255,255,0.3);
+      border-radius:5px;
+      color:var(--chalk);
+      font-family:'IBM Plex Mono', monospace;
+      font-size:11px;
+      padding:5px 10px;
+      cursor:pointer;
+    }
+    .menu-btn .bar{
+      display:block;
+      width:14px;
+      height:2px;
+      background:var(--chalk);
+      position:relative;
+    }
+    .menu-btn .bar::before,.menu-btn .bar::after{
+      content:'';
+      position:absolute;
+      left:0;
+      width:14px;
+      height:2px;
+      background:var(--chalk);
+    }
+    .menu-btn .bar::before{top:-4px;}
+    .menu-btn .bar::after{top:4px;}
+
+    /* liegende Yard-Linie als Fortschrittsbalken */
+    .mobile-progress{
+      display:flex;
+      align-items:center;
+      gap:0;
+      width:100%;
+      padding:10px 0 12px;
+      position:relative;
+    }
+    .mobile-progress .track{
+      position:relative;
+      flex:1;
+      height:2px;
+      background:var(--hash);
+    }
+    .mobile-progress .tick{
+      position:absolute;
+      top:50%;
+      transform:translate(-50%,-50%);
+      width:6px;
+      height:6px;
+      border-radius:50%;
+      background:var(--hash);
+      transition:background .15s ease, width .15s ease, height .15s ease;
+    }
+    .mobile-progress .tick.active{
+      background:var(--amber);
+      width:9px;
+      height:9px;
+    }
+    .mobile-progress .label{
+      font-family:'IBM Plex Mono', monospace;
+      font-size:10px;
+      color:var(--amber);
+      margin-left:10px;
+      white-space:nowrap;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="row">
+    <span class="title">Draft Room</span>
+    <button class="menu-btn" id="menuOpenBtn" aria-label="Kapitelmenü öffnen" aria-controls="mobileMenu" aria-expanded="false">
+      <span class="bar"></span> Kapitel
+    </button>
+    <span class="sub" style="display:none">Liga · Full PPR · Snake Draft</span>
+  </div>
+  <div class="mobile-progress">
+    <div class="track">
+      <span class="tick active" data-target="basics" style="left:10%"></span>
+      <span class="tick" data-target="glossar" style="left:20%"></span>
+      <span class="tick" data-target="scoring" style="left:30%"></span>
+      <span class="tick" data-target="strategie" style="left:40%"></span>
+      <span class="tick" data-target="draft-ablauf" style="left:50%"></span>
+      <span class="tick" data-target="draft-tipps" style="left:60%"></span>
+      <span class="tick" data-target="lineup" style="left:70%"></span>
+      <span class="tick" data-target="waiver" style="left:80%"></span>
+      <span class="tick" data-target="trades" style="left:90%"></span>
+    </div>
+    <span class="label">Basics · 10</span>
+  </div>
+</header>
+
+<div id="mobileMenu" class="mobile-menu">
+  <button class="close-btn" id="menuCloseBtn" aria-label="Menü schließen">×</button>
+  <ul>
+    <li><a href="#basics"><span class="yard mono">10</span> Basics</a></li>
+    <li><a href="#glossar"><span class="yard mono">20</span> Glossar</a></li>
+    <li><a href="#scoring"><span class="yard mono">30</span> Scoring</a></li>
+    <li><a href="#strategie"><span class="yard mono">40</span> Strategie</a></li>
+    <li><a href="#draft-ablauf"><span class="yard mono">50</span> Draft-Ablauf</a></li>
+    <li><a href="#draft-tipps"><span class="yard mono">60</span> Draft-Tipps</a></li>
+    <li><a href="#lineup"><span class="yard mono">70</span> Lineup</a></li>
+    <li><a href="#waiver"><span class="yard mono">80</span> Waiver Wire</a></li>
+    <li><a href="#trades"><span class="yard mono">90</span> Trades</a></li>
+  </ul>
+</div>
+
+<div class="layout">
+  <nav class="yardline" aria-label="Kapitel-Navigation">
+    <div class="line">
+      <span class="marker active" data-target="basics" style="top:10%">Basics</span>
+      <span class="marker" data-target="glossar" style="top:20%">Glossar</span>
+      <span class="marker" data-target="scoring" style="top:30%">Scoring</span>
+      <span class="marker" data-target="strategie" style="top:40%">Strategie</span>
+      <span class="marker" data-target="draft-ablauf" style="top:50%">Ablauf</span>
+      <span class="marker" data-target="draft-tipps" style="top:60%">Tipps</span>
+      <span class="marker" data-target="lineup" style="top:70%">Lineup</span>
+      <span class="marker" data-target="waiver" style="top:80%">Waiver</span>
+      <span class="marker" data-target="trades" style="top:90%">Trades</span>
+      <span class="ball"></span>
+    </div>
+  </nav>
+
+  <main>
+    <section class="hero">
+      <h1>Willkommen im Draft Room</h1>
+      <p class="lead">Alles, was du für unsere Liga wissen musst – Regeln, Begriffe, Scoring und Strategie, kompakt erklärt und auf unser Format zugeschnitten.</p>
+
+      <div class="snapshot">
+        <div class="snap-card">
+          <div class="label">Format</div>
+          <div class="value">Full PPR</div>
+        </div>
+        <div class="snap-card">
+          <div class="label">Draft</div>
+          <div class="value">Snake · 21 Picks</div>
+        </div>
+        <div class="snap-card">
+          <div class="label">Waiver</div>
+          <div class="value">Reihenfolge</div>
+        </div>
+        <div class="snap-card">
+          <div class="label">Stärkste Position</div>
+          <div class="value">QB</div>
+        </div>
+      </div>
+    </section>
+
+    <section id="basics" data-yard="10" data-label="Basics">
+      <div class="kicker">Liga-Steckbrief</div>
+      <h2>Basics</h2>
+      <p class="copy">Wir spielen auf der ESPN Fantasy App, im Kern nach Standard-Regeln – aber mit individuell angepasstem Scoring und einer größeren Rostergröße als in klassischen Ligen. Der Draft läuft als Snake Draft, Waiver-Zugriff wird über eine feste Reihenfolge geregelt (kein FAAB-Budget). Bewusstes Design-Ziel unseres Scorings: der Quarterback ist die klar stärkste Position.</p>
+
+      <h3 class="sub-head">Roster (21 Plätze gesamt)</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Slot</span><span>Anzahl</span></div>
+        <div class="row"><span>QB</span><span class="val mono">1</span></div>
+        <div class="row"><span>RB</span><span class="val mono">2</span></div>
+        <div class="row"><span>WR</span><span class="val mono">2</span></div>
+        <div class="row"><span>RB/WR (Flex)</span><span class="val mono">2</span></div>
+        <div class="row"><span>TE</span><span class="val mono">2</span></div>
+        <div class="row"><span>K</span><span class="val mono">1</span></div>
+        <div class="row"><span>DEF</span><span class="val mono">1</span></div>
+        <div class="row"><span>Bench</span><span class="val mono">9</span></div>
+        <div class="row"><span>IR</span><span class="val mono">3</span></div>
+      </div>
+      <p class="roster-note">2× TE-Slot + 2× Flex bedeutet: Ein Team braucht insgesamt <strong>6 RB/WR-taugliche Starter</strong> (2 RB + 2 WR + 2 Flex) und <strong>2 starttaugliche TE</strong> – deutlich mehr Tiefe an Skill-Positionen als in Standard-Ligen mit nur 1 Flex und 1 TE.</p>
+    </section>
+
+    <section id="glossar" data-yard="20" data-label="Glossar">
+      <div class="kicker">Vokabeln zum Nachschlagen</div>
+      <h2>Glossar</h2>
+      <div class="glossary">
+        <div class="term-card"><span class="term">Draft</span><span class="def">Die Auswahlrunde zu Saisonbeginn, bei der jeder Manager sein Team aus echten NFL-Spielern zusammenstellt.</span></div>
+        <div class="term-card"><span class="term">Snake Draft</span><span class="def">Draft-Reihenfolge dreht sich nach jeder Runde um (1→10, dann 10→1, usw.).</span></div>
+        <div class="term-card"><span class="term">Roster</span><span class="def">Der komplette Kader eines Teams (Starter + Bench + IR).</span></div>
+        <div class="term-card"><span class="term">Starter/Lineup</span><span class="def">Die Spieler, die in der jeweiligen Woche aktiv Punkte sammeln.</span></div>
+        <div class="term-card"><span class="term">Bench</span><span class="def">Reservespieler, die nicht in der Startaufstellung stehen.</span></div>
+        <div class="term-card"><span class="term">IR (Injured Reserve)</span><span class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz.</span></div>
+        <div class="term-card"><span class="term">Flex</span><span class="def">Slot, der mit mehreren Positionen besetzt werden kann (bei uns: RB oder WR).</span></div>
+        <div class="term-card"><span class="term">Waiver Wire</span><span class="def">Pool aller Spieler, die aktuell in keinem Team stehen.</span></div>
+        <div class="term-card"><span class="term">Free Agent</span><span class="def">Spieler auf dem Waiver Wire, der sofort ohne Anspruch geholt werden kann.</span></div>
+        <div class="term-card"><span class="term">Waiver Priority/Order</span><span class="def">Reihenfolge, in der Manager Zugriff auf Waiver-Spieler haben.</span></div>
+        <div class="term-card"><span class="term">Trade</span><span class="def">Spielertausch zwischen zwei Managern.</span></div>
+        <div class="term-card"><span class="term">Bye Week</span><span class="def">Woche, in der ein NFL-Team spielfrei hat.</span></div>
+        <div class="term-card"><span class="term">Start/Sit</span><span class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</span></div>
+        <div class="term-card"><span class="term">ADP</span><span class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</span></div>
+        <div class="term-card"><span class="term">Handcuff</span><span class="def">Der Backup-Spieler hinter einem wichtigen Starter (meist RB).</span></div>
+        <div class="term-card"><span class="term">Sleeper</span><span class="def">Ein unterschätzter Spieler mit Potenzial.</span></div>
+        <div class="term-card"><span class="term">Bust</span><span class="def">Ein hoch gedrafteter Spieler, der enttäuscht.</span></div>
+        <div class="term-card"><span class="term">Streaming</span><span class="def">Wöchentliches Wechseln einer Position je nach bestem Matchup.</span></div>
+        <div class="term-card"><span class="term">PPR</span><span class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte.</span></div>
+      </div>
+    </section>
+
+    <section id="scoring" data-yard="30" data-label="Scoring">
+      <div class="kicker">Komplettes Punktesystem</div>
+      <h2>Scoring</h2>
+
+      <h3 class="sub-head">Passing (alle Positionen)</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Pro 25 Passing Yards</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Completion</span><span class="val pos">+0.5</span></div>
+        <div class="row"><span>Passing TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>50+ Yard TD Bonus</span><span class="val pos">+5</span></div>
+        <div class="row"><span>Interception</span><span class="val neg">−2</span></div>
+        <div class="row"><span>2pt Passing Conversion</span><span class="val pos">+2</span></div>
+        <div class="row"><span>300–399 Yard Game Bonus</span><span class="val pos">+2</span></div>
+        <div class="row"><span>400+ Yard Game Bonus</span><span class="val pos">+4</span></div>
+        <div class="row"><span>Sacked</span><span class="val neg">−1</span></div>
+      </div>
+      <p class="note-text">Der 300–399-Yard-Bonus und der Sacked-Abzug gelten nur für den QB – bei RB/WR/TE, die passen, sind diese Boni nicht aktiv.</p>
+
+      <h3 class="sub-head">Rushing – Quarterback (angepasst)</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Pro 10 Rushing Yards</span><span class="val pos">+1.0</span></div>
+        <div class="row"><span>Rushing TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>50+ Yard TD Bonus</span><span class="val pos">+5</span></div>
+        <div class="row"><span>Rushing First Down</span><span class="val pos">+0.5</span></div>
+        <div class="row"><span>2pt Rushing Conversion</span><span class="val pos">+2</span></div>
+        <div class="row"><span>100–199 Yard Game Bonus</span><span class="val pos">+1</span></div>
+        <div class="row"><span>200+ Yard Game Bonus</span><span class="val pos">+4</span></div>
+      </div>
+      <div class="note-box">
+        <span class="flag">Setup</span>
+        <span>Angepasst von ursprünglich 1.5 auf 1.0 Punkte pro 10 Rushing Yards, um mobile QBs nicht zusätzlich überzugewichten. Muss noch manuell in den ESPN-Liga-Einstellungen unter <strong>Rushing → Quarterback → „Every … rushing yards“</strong> eingetragen werden.</span>
+      </div>
+
+      <h3 class="sub-head">Rushing – Running Back</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Pro 10 Rushing Yards</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Rushing TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>40+ Yard TD Bonus</span><span class="val pos">+1</span></div>
+        <div class="row"><span>50+ Yard TD Bonus</span><span class="val pos">+1</span></div>
+        <div class="row"><span>200+ Yard Game Bonus</span><span class="val pos">+1</span></div>
+      </div>
+
+      <h3 class="sub-head">Rushing – Wide Receiver / Tight End</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Pro 10 Rushing Yards</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Rushing TD</span><span class="val pos">+6</span></div>
+      </div>
+      <p class="note-text">Keine weiteren Boni aktiv.</p>
+
+      <h3 class="sub-head">Receiving (Full PPR, alle Positionen)</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Pro 10 Receiving Yards</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Reception (pro Catch)</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Receiving TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>200+ Yard Game Bonus</span><span class="val pos">+1</span></div>
+      </div>
+
+      <h3 class="sub-head">Kicking</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>PAT gemacht</span><span class="val pos">+1</span></div>
+        <div class="row"><span>PAT verpasst</span><span class="val neg">−1</span></div>
+        <div class="row"><span>FG gesamt verpasst</span><span class="val neg">−0.5</span></div>
+        <div class="row"><span>FG gemacht 0–39 Yards</span><span class="val pos">+3</span></div>
+        <div class="row"><span>FG gemacht 40–49 Yards</span><span class="val pos">+4</span></div>
+        <div class="row"><span>FG gemacht 50–59 Yards</span><span class="val pos">+5</span></div>
+        <div class="row"><span>FG gemacht 60+ Yards</span><span class="val pos">+6</span></div>
+      </div>
+
+      <h3 class="sub-head">Team Defense / Special Teams</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Sack</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Interception Return TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>Fumble Return TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>Kickoff Return TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>Punt Return TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>Blocked Punt/FG Return TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>Blocked Punt, PAT oder FG</span><span class="val pos">+2</span></div>
+        <div class="row"><span>Interception</span><span class="val pos">+2</span></div>
+        <div class="row"><span>Fumble Recovered</span><span class="val pos">+2</span></div>
+        <div class="row"><span>Fumble Forced</span><span class="val pos">+1</span></div>
+        <div class="row"><span>Safety</span><span class="val pos">+2</span></div>
+      </div>
+
+      <h3 class="sub-head">Defense – Points Allowed</h3>
+      <div class="range-scale">
+        <div class="range-cell"><div class="range">0 Pkt</div><div class="pts pos">+10</div></div>
+        <div class="range-cell"><div class="range">1–6</div><div class="pts pos">+7</div></div>
+        <div class="range-cell"><div class="range">7–13</div><div class="pts pos">+4</div></div>
+        <div class="range-cell"><div class="range">14–17</div><div class="pts pos">+1</div></div>
+        <div class="range-cell"><div class="range">18–27</div><div class="pts">0</div></div>
+        <div class="range-cell"><div class="range">28–34</div><div class="pts neg">−4</div></div>
+        <div class="range-cell"><div class="range">35–45</div><div class="pts neg">−7</div></div>
+        <div class="range-cell"><div class="range">46+</div><div class="pts neg">−10</div></div>
+      </div>
+
+      <h3 class="sub-head">Defense – Yards Allowed</h3>
+      <div class="range-scale">
+        <div class="range-cell"><div class="range">&lt;100</div><div class="pts pos">+5</div></div>
+        <div class="range-cell"><div class="range">100–199</div><div class="pts pos">+3</div></div>
+        <div class="range-cell"><div class="range">200–349</div><div class="pts">0</div></div>
+        <div class="range-cell"><div class="range">350–399</div><div class="pts neg">−0.5</div></div>
+        <div class="range-cell"><div class="range">400–449</div><div class="pts neg">−1</div></div>
+        <div class="range-cell"><div class="range">450–499</div><div class="pts neg">−3</div></div>
+        <div class="range-cell"><div class="range">500–549</div><div class="pts neg">−5</div></div>
+        <div class="range-cell"><div class="range">550+</div><div class="pts neg">−8</div></div>
+      </div>
+
+      <h3 class="sub-head">Miscellaneous</h3>
+      <div class="scoreboard">
+        <div class="row head"><span>Kategorie</span><span>Punkte</span></div>
+        <div class="row"><span>Fumble Recovered for TD</span><span class="val pos">+6</span></div>
+        <div class="row"><span>Total Fumbles Lost</span><span class="val neg">−2</span></div>
+      </div>
+    </section>
+
+    <section id="strategie" data-yard="40" data-label="Strategie">
+      <div class="kicker">Was das Scoring bedeutet</div>
+      <h2>Strategische Einordnung</h2>
+      <div class="insight-list">
+        <div class="insight-card"><strong>Full-PPR</strong> (1 Punkt/Catch) macht Volumen-Fänger – Pass-Catching-RBs, Slot-WRs, targetstarke TEs – sehr wertvoll, unabhängig von Yards oder TDs.</div>
+        <div class="insight-card"><strong>QB ist klar die stärkste Position</strong> – hauptsächlich wegen des großzügigen Passing-Scorings (0.5 Pkt/Completion, 6 statt 4 Pkt/Passing-TD, gestaffelte Yard-Boni), nicht primär wegen des Rushings.</div>
+        <div class="insight-card"><strong>2× TE-Slot + Full-PPR</strong> macht Top-Tight-Ends zu Premium-Assets – jede Woche werden zwei davon gebraucht.</div>
+        <div class="insight-card"><strong>Gestaffelte Defense-Skala</strong> (Punkte + Yards erlaubt) belohnt Streaming von Defenses nach Matchup.</div>
+        <div class="insight-card"><strong>Kicker mit Distanz-Staffelung</strong>: Kicker mit starkem Leg (viele 50+ Yard Versuche) sind leicht bevorzugt.</div>
+      </div>
+    </section>
+
+    <section id="draft-ablauf" data-yard="50" data-label="Draft-Ablauf">
+      <div class="kicker">So läuft der Draft-Tag ab</div>
+      <h2>Draft-Ablauf</h2>
+      <ul class="info-list">
+        <li>Die Reihenfolge wird vor dem Draft festgelegt (zufällig oder per Vorjahres-Standing).</li>
+        <li><strong>Snake-Prinzip:</strong> Runde 1 läuft z.B. 1→10, Runde 2 dreht sich um: 10→1, Runde 3 wieder 1→10, usw.</li>
+        <li>Pro Pick gibt es ein Zeitlimit (bei ESPN einstellbar).</li>
+        <li>Insgesamt <strong>21 Picks pro Team</strong> – 9 Starter, 9 Bench, 3 IR.</li>
+        <li>Unser Format braucht dabei überdurchschnittlich viel Tiefe: 6 RB/WR-taugliche Starter + 2 starttaugliche TE, also deutlich mehr als in Standard-Ligen.</li>
+      </ul>
+    </section>
+
+    <section id="draft-tipps" data-yard="60" data-label="Draft-Tipps">
+      <div class="kicker">Stand 2026 · an unser Format angepasst</div>
+      <h2>Draft-Strategie-Tipps</h2>
+      <div class="tip-card">
+        <span class="num">01</span>
+        <div>
+          <h3>TE-Premium-Denke gilt bei uns verstärkt</h3>
+          <p>Durch 2× TE-Slot und Full-PPR wird die Tight-End-Position wertvoller – aber nicht überziehen, RB/WR bleiben weiterhin priorisiert.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">02</span>
+        <div>
+          <h3>Nicht zu früh auf TE gehen</h3>
+          <p>Viele Manager überbewerten den Scoring-Boost bei TE-Premium-artigen Formaten. Geduld zahlt sich oft aus – während andere TEs überdraften, gibt's bei RB/WR noch Value.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">03</span>
+        <div>
+          <h3>Onesie-Positionen (QB, TE) nicht reflexartig früh nehmen</h3>
+          <p>Die Tiefe an brauchbaren Startern reicht meist bis in spätere Runden – bei unserem QB-lastigen Scoring lohnt es sich trotzdem, den QB-Markt im Blick zu behalten und nicht zu spät zuzuschlagen.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">04</span>
+        <div>
+          <h3>Handcuffs gezielt einsetzen, nicht flächendeckend</h3>
+          <p>Nur bei Startern mit schlechter Verletzungshistorie oder dünner Depth Chart handcuffen. Bei gesunden Stammspielern verschwendet man wertvolle Bench-Plätze.</p>
+        </div>
+      </div>
+      <div class="tip-card">
+        <span class="num">05</span>
+        <div>
+          <h3>Bench-Tiefe nutzen</h3>
+          <p>Mit 9 Bench-Plätzen lohnt es sich, Waiver-Stashes und Bye-Week-Fill-Optionen freizuhalten, statt jeden Slot fest zu verplanen.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="lineup" data-yard="70" data-label="Lineup">
+      <div class="kicker">Vor jedem Lineup-Lock</div>
+      <h2>Wöchentliches Lineup-Management</h2>
+      <div class="check-list">
+        <div class="check-item">
+          <span class="mark">✓</span>
+          <div><strong>Matchup checken</strong><p>Spielt dein Spieler gegen eine schwache oder starke Verteidigung?</p></div>
+        </div>
+        <div class="check-item">
+          <span class="mark">✓</span>
+          <div><strong>Bye Weeks im Blick behalten</strong><p>Rechtzeitig planen, wer in welcher Woche pausiert.</p></div>
+        </div>
+        <div class="check-item">
+          <span class="mark">✓</span>
+          <div><strong>Verletzungsreport prüfen</strong><p>Vor dem Lineup-Lock den Injury Report checken (Questionable/Doubtful/Out).</p></div>
+        </div>
+        <div class="check-item">
+          <span class="mark">✓</span>
+          <div><strong>Wetter beachten</strong><p>Starker Wind oder Regen kann Passing-Offenses und Kicker beeinträchtigen.</p></div>
+        </div>
+        <div class="check-item">
+          <span class="mark">✓</span>
+          <div><strong>Lineup-Lock beachten</strong><p>Sobald ein NFL-Spiel beginnt, ist der jeweilige Spieler nicht mehr austauschbar.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="waiver" data-yard="80" data-label="Waiver">
+      <div class="kicker">ESPN · Reihenfolge-System</div>
+      <h2>Waiver Wire</h2>
+      <ul class="info-list">
+        <li>Die Startreihenfolge ist meist umgekehrt zur Draft-Reihenfolge – wer zuerst gedraftet hat, startet mit der niedrigsten Priorität.</li>
+        <li>Nicht gedraftete Spieler gehen direkt nach dem Draft auf Waivers.</li>
+        <li>Claims werden täglich verarbeitet (ESPN: ca. 3 Uhr morgens ET).</li>
+        <li>Wer eine Claim gewinnt, rutscht ans Ende der Prioritätenliste.</li>
+        <li>Beim wöchentlichen Reset basiert die neue Reihenfolge auf den umgekehrten Standings – schlechtere Teams zuerst.</li>
+        <li>Free Agents (unbeanspruchte Spieler außerhalb der Waiver-Phase) können meist sofort geholt werden.</li>
+      </ul>
+      <div class="tip-box">
+        <span class="flag">Tipp</span>
+        <span>Setzt eure Waiver Priority nur für Spieler ein, die das Team wirklich verbessern – nicht für jeden Hype-Pickup.</span>
+      </div>
+    </section>
+
+    <section id="trades" data-yard="90" data-label="Trades">
+      <div class="kicker">Spielertausch zwischen Managern</div>
+      <h2>Trades</h2>
+      <ul class="info-list">
+        <li>Ein fairer Trade bringt für beide Seiten einen erkennbaren Vorteil.</li>
+        <li>Klassischer Anfängerfehler: zu schnell auf Namen oder Ruf reagieren statt auf aktuelle Form und Restplan zu achten.</li>
+        <li>Die meisten Ligen haben eine Trade-Deadline – oft einige Wochen vor den Playoffs.</li>
+      </ul>
+    </section>
+  </main>
+</div>
+
+<script>
+(function(){
+  var sections = document.querySelectorAll('main section[data-yard]');
+  var desktopMarkers = document.querySelectorAll('nav.yardline .marker');
+  var mobileTicks = document.querySelectorAll('.mobile-progress .tick');
+  var ball = document.querySelector('nav.yardline .ball');
+  var mobileLabel = document.querySelector('.mobile-progress .label');
+  var menuLinks = document.querySelectorAll('#mobileMenu a');
+  var menuOpenBtn = document.getElementById('menuOpenBtn');
+  var menuCloseBtn = document.getElementById('menuCloseBtn');
+  var mobileMenu = document.getElementById('mobileMenu');
+
+  function setActive(id, yard, label){
+    var activeTop = null;
+    desktopMarkers.forEach(function(m){
+      var isActive = m.dataset.target === id;
+      m.classList.toggle('active', isActive);
+      if(isActive) activeTop = m.style.top;
+    });
+    mobileTicks.forEach(function(t){
+      t.classList.toggle('active', t.dataset.target === id);
+    });
+    if(ball && activeTop) ball.style.top = 'calc(' + activeTop + ' + 14px)';
+    if(mobileLabel) mobileLabel.textContent = label + ' · ' + yard;
+  }
+
+  if('IntersectionObserver' in window){
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        if(entry.isIntersecting){
+          var t = entry.target;
+          setActive(t.id, t.dataset.yard, t.dataset.label);
+        }
+      });
+    }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
+
+    sections.forEach(function(s){ observer.observe(s); });
+  }
+
+  function openMenu(){
+    mobileMenu.classList.add('open');
+    menuOpenBtn.setAttribute('aria-expanded', 'true');
+  }
+  function closeMenu(){
+    mobileMenu.classList.remove('open');
+    menuOpenBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  if(menuOpenBtn) menuOpenBtn.addEventListener('click', openMenu);
+  if(menuCloseBtn) menuCloseBtn.addEventListener('click', closeMenu);
+  menuLinks.forEach(function(a){ a.addEventListener('click', closeMenu); });
+})();
+</script>
+
+</body>
+</html>
