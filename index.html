@@ -790,6 +790,7 @@
   .bracket-heading.champ{color:var(--amber);}
   .bracket-heading.cons{color:var(--hash);}
   .bracket{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;}
+  .bracket.single{grid-template-columns:1fr;max-width:340px;}
   .bracket-round-label{font-size:10px;color:var(--hash);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
   .bracket-match{background:var(--card);border:1px solid var(--card-border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
   .bracket-match:last-child{margin-bottom:0;}
@@ -1629,7 +1630,18 @@
             </div>
             <div>
               <div class="bracket-round-label">Woche 17 · Championship</div>
-              <div class="bracket-match final">Sieger Halbfinale A <span class="vs">vs</span> Sieger Halbfinale B</div>
+              <div class="bracket-match final"><span class="game-tag">Platz 1</span>Sieger Halbfinale A <span class="vs">vs</span> Sieger Halbfinale B</div>
+              <div class="bracket-match bye"><span class="game-tag">Platz 2</span>automatisch: Verlierer Championship</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="bracket-heading champ">Winner's Consolation Ladder (Platz 3–5)</div>
+          <div class="bracket single">
+            <div>
+              <div class="bracket-round-label">Woche 17 · Platzierungsspiele</div>
+              <div class="bracket-match"><span class="game-tag">Platz 3</span>Verlierer Halbfinale A <span class="vs">vs</span> Verlierer Halbfinale B</div>
+              <div class="bracket-match bye"><span class="game-tag">Platz 5</span>Verlierer Runde 1 (4 vs 5) – kein weiteres Spiel</div>
             </div>
           </div>
         </div>
@@ -1657,7 +1669,7 @@
           </div>
         </div>
       </div>
-      <p class="note-text">Wie im echten ESPN-Bracket spielt in der Consolation Ladder jedes Team bis zum Schluss um seine genaue Platzierung: Sieger bleiben unter sich, Verlierer bleiben unter sich – am Ende steht die komplette Reihenfolge Platz 6 bis 10 fest.</p>
+      <p class="note-text">Das Muster gilt für beide Ladders: Sieger spielen im nächsten Spiel gegen andere Sieger, Verlierer gegen andere Verlierer – so bekommt am Ende jedes Team seine exakte Endplatzierung, nicht nur "raus in Runde 1". Im echten ESPN-Bracket heissen diese Spiele kryptisch "GmC1", "GmC2" usw., mit Fussnoten wie "W to GmC3, L to GmC4" (Sieger zu Spiel 3, Verlierer zu Spiel 4) – genau dieses Routing steckt hinter den "Spiel A/B"- und "Platz X"-Bezeichnungen hier auf der Seite.</p>
 
       <h3 class="sub-head">Roster (23 Plätze gesamt)</h3>
       <div class="roster-breakdown mono">11 Starter · 9 Bench · 3 IR</div>
