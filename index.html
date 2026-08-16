@@ -711,6 +711,114 @@
   .picks-adp{color:var(--amber);min-width:80px;text-align:right;}
   .picks-own{color:var(--chalk);opacity:.75;min-width:70px;text-align:right;}
 
+  /* Trade fairness calculator */
+  .trade-calc{
+    display:grid;
+    grid-template-columns:1fr auto 1fr;
+    gap:16px;
+    align-items:start;
+    margin:20px 0;
+  }
+  .trade-side{display:flex;flex-direction:column;gap:10px;}
+  .trade-side-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--hash);
+  }
+  .trade-vs{
+    align-self:center;
+    font-size:22px;
+    color:var(--amber);
+    padding-top:26px;
+  }
+  .trade-players{display:flex;flex-direction:column;gap:8px;}
+  .trade-player-row{
+    display:flex;
+    gap:6px;
+    align-items:center;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:6px;
+    padding:8px;
+  }
+  .trade-player-row select{
+    font-family:'Source Serif 4', serif;
+    font-size:13px;
+    color:var(--ink);
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:4px;
+    padding:6px;
+    min-width:0;
+  }
+  .trade-player-row .trade-pos-select{flex:0 0 64px;}
+  .trade-player-row .trade-player-select{flex:1;}
+  .trade-remove-btn{
+    background:none;
+    border:none;
+    color:var(--endzone);
+    font-size:20px;
+    line-height:1;
+    cursor:pointer;
+    flex:0 0 auto;
+    padding:0 2px;
+  }
+  .trade-add-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--hash);
+    background:none;
+    border:1px dashed var(--card-border);
+    border-radius:6px;
+    padding:9px;
+    cursor:pointer;
+  }
+  .trade-add-btn:hover{border-color:var(--amber);color:var(--turf);}
+  .trade-result{margin-top:20px;}
+  .trade-verdict{
+    font-family:'Anton', sans-serif;
+    font-size:22px;
+    color:var(--turf);
+    text-transform:uppercase;
+    margin-bottom:12px;
+  }
+  .trade-bar{
+    display:flex;
+    height:26px;
+    border-radius:6px;
+    overflow:hidden;
+    border:1px solid var(--card-border);
+  }
+  .trade-bar-a{background:var(--turf);transition:width .4s ease;}
+  .trade-bar-b{background:var(--amber);transition:width .4s ease;}
+  .trade-bar-labels{
+    display:flex;
+    justify-content:space-between;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--ink-soft);
+    margin-top:6px;
+  }
+  .trade-breakdown{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:16px;
+    margin-top:16px;
+  }
+  .trade-breakdown-col{display:flex;flex-direction:column;gap:4px;}
+  .trade-breakdown-row{
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    font-size:13px;
+    color:var(--ink-soft);
+    padding:4px 0;
+    border-bottom:1px solid var(--card-border);
+  }
+  .trade-breakdown-row span:last-child{font-family:'IBM Plex Mono', monospace;color:var(--turf);}
+
   /* Mobile nav: horizontal progress bar + hamburger menu */
   .mobile-progress{display:none;}
   .menu-btn{display:none;}
@@ -779,6 +887,13 @@
     .calc-controls{gap:10px;}
     .calc-field select{min-width:0;width:100%;}
     .calc-total-value{font-size:32px;}
+
+    .trade-calc{grid-template-columns:1fr;}
+    .trade-vs{padding-top:0;transform:rotate(90deg);}
+    .trade-breakdown{grid-template-columns:1fr;}
+    .trade-player-row{flex-wrap:wrap;}
+    .trade-player-row .trade-pos-select{flex:0 0 auto;width:80px;}
+    .trade-player-row .trade-player-select{flex:1 1 140px;}
 
     header.topbar{
       flex-direction:column;
@@ -1461,11 +1576,67 @@
     <section id="trades" data-yard="90" data-label="Trades">
       <div class="kicker">Spielertausch zwischen Managern</div>
       <h2>Trades</h2>
+      <p class="copy">Ein Trade ist ein Spielertausch zwischen zwei Managern – ihr einigt euch direkt miteinander, ohne dass Waiver Wire oder Free Agents beteiligt sind. Anders als beim Draft handelt ihr hier live gegeneinander: Was für dich ein guter Deal ist, hängt stark von deinem eigenen Roster und Bedarf ab, nicht nur vom reinen Marktwert der Spieler.</p>
+
+      <h3 class="sub-head">Wie ein Trade abläuft</h3>
       <ul class="info-list">
-        <li>Ein fairer Trade bringt für beide Seiten einen erkennbaren Vorteil.</li>
-        <li>Klassischer Anfängerfehler: zu schnell auf Namen oder Ruf reagieren statt auf aktuelle Form und Restplan zu achten.</li>
-        <li>Die meisten Ligen haben eine Trade-Deadline – oft einige Wochen vor den Playoffs.</li>
+        <li>Du schickst über die ESPN App ein Angebot an einen anderen Manager: deine Spieler gegen seine.</li>
+        <li>Der andere Manager kann annehmen, ablehnen oder ein Gegenangebot schicken.</li>
+        <li>Nach der Annahme läuft meist eine kurze Review-Phase (in ESPN üblicherweise 1–2 Tage), in der die restliche Liga den Trade sehen kann.</li>
+        <li>Je nach Liga-Einstellung kann in dieser Zeit per Abstimmung oder durch den Commissioner ein offensichtlich unfairer Trade (z.B. bei Verdacht auf Absprache) noch gestoppt werden – normale, nachvollziehbare Trades sind davon nicht betroffen.</li>
+        <li>Läuft die Review-Phase ohne Einspruch ab, wechseln die Spieler automatisch die Teams.</li>
+        <li>Trades sind nur bis zur Trade-Deadline möglich – meist einige Wochen vor den Playoffs, danach ist der Kader für den Rest der Saison fix.</li>
       </ul>
+
+      <h3 class="sub-head">Worauf du achten solltest</h3>
+      <div class="insight-list">
+        <div class="insight-card"><strong>Bedarf schlägt reinen Marktwert:</strong> Ein Spieler an einer Position, wo dir spürbar die Tiefe fehlt, kann für dich wertvoller sein als ein objektiv "besserer" Spieler an einer Position, die bei dir schon stark besetzt ist.</div>
+        <div class="insight-card"><strong>Bye Weeks im Blick behalten:</strong> Holst du dir zwei Spieler mit derselben Bye Week ins Team, schwächt das genau diese eine Woche zusätzlich.</div>
+        <div class="insight-card"><strong>Restplan mitdenken:</strong> Vor allem Richtung Playoffs lohnt sich ein Blick auf die <a class="gloss-link" href="#advanced">Strength of Schedule</a> der gehandelten Spieler.</div>
+        <div class="insight-card"><strong>Nicht auf Namen oder Ruf reagieren:</strong> Klassischer Anfängerfehler – zähl aktuelle Form, Rolle im Team und Restplan mehr als den bekannten Namen.</div>
+        <div class="insight-card"><strong>Verletzungsrisiko einkalkulieren:</strong> Ein Spieler mit fragiler Verletzungshistorie ist riskanter, als es sein reiner Marktwert zeigt.</div>
+      </div>
+
+      <h3 class="sub-head">Fairness-Rechner</h3>
+      <p class="copy">Vergleicht die ungefähren Marktwerte beider Trade-Seiten anhand der aktuellen ESPN-Draft-Position (ADP) – ein grober, neutraler Anhaltspunkt, ob ein Trade objektiv ausgeglichen ist.</p>
+
+      <div class="trade-calc">
+        <div class="trade-side">
+          <div class="trade-side-label">Team A gibt ab</div>
+          <div class="trade-players" id="tradeSideA"></div>
+          <button class="trade-add-btn" type="button" data-side="a">+ Spieler hinzufügen</button>
+        </div>
+        <div class="trade-vs mono">↔</div>
+        <div class="trade-side">
+          <div class="trade-side-label">Team B gibt ab</div>
+          <div class="trade-players" id="tradeSideB"></div>
+          <button class="trade-add-btn" type="button" data-side="b">+ Spieler hinzufügen</button>
+        </div>
+      </div>
+
+      <button class="calc-btn" id="tradeCalcBtn" type="button">Fairness berechnen</button>
+      <div class="calc-status" id="tradeStatus" aria-live="polite"></div>
+
+      <div class="trade-result" id="tradeResult" hidden>
+        <div class="trade-verdict" id="tradeVerdict"></div>
+        <div class="trade-bar" id="tradeBar">
+          <div class="trade-bar-a" id="tradeBarA"></div>
+          <div class="trade-bar-b" id="tradeBarB"></div>
+        </div>
+        <div class="trade-bar-labels">
+          <span id="tradeValueA"></span>
+          <span id="tradeValueB"></span>
+        </div>
+        <div class="trade-breakdown">
+          <div class="trade-breakdown-col" id="tradeBreakdownA"></div>
+          <div class="trade-breakdown-col" id="tradeBreakdownB"></div>
+        </div>
+      </div>
+
+      <div class="note-box">
+        <span class="flag">Wichtig</span>
+        <span>Der Rechner kennt nur den neutralen Marktwert über alle ESPN-Ligen hinweg – nicht deinen Roster oder deinen Bedarf. Ein Trade kann laut Rechner rechnerisch "unfair" gegen dich sein und trotzdem genau richtig für dich – etwa wenn du an einer Position dringend Tiefe brauchst, den Spieler unbedingt willst oder er perfekt zu deinem Restplan passt. Nutze das Ergebnis als groben Ausgangspunkt für die Diskussion, nicht als letztes Wort.</span>
+      </div>
     </section>
 
     <section id="advanced" data-yard="98" data-label="Advanced">
@@ -2411,6 +2582,191 @@
       applyTheme(b.dataset.teamTheme || '');
     });
   });
+})();
+</script>
+
+<script>
+(function(){
+  var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
+  var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+  var POS_LABELS = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
+  var TEAM_ABBR = {
+    1:'ATL', 2:'BUF', 3:'CHI', 4:'CIN', 5:'CLE', 6:'DAL', 7:'DEN', 8:'DET', 9:'GB', 10:'TEN',
+    11:'IND', 12:'KC', 13:'LV', 14:'LAR', 15:'MIA', 16:'MIN', 17:'NE', 18:'NO', 19:'NYG', 20:'NYJ',
+    21:'PHI', 22:'ARI', 23:'PIT', 24:'LAC', 25:'SF', 26:'SEA', 27:'TB', 28:'WSH', 29:'CAR', 30:'JAX',
+    33:'BAL', 34:'HOU'
+  };
+  var VALUE_ADP_CAP = 260;
+
+  var sideAEl = document.getElementById('tradeSideA');
+  var sideBEl = document.getElementById('tradeSideB');
+  var calcBtn = document.getElementById('tradeCalcBtn');
+  var statusEl = document.getElementById('tradeStatus');
+  var resultEl = document.getElementById('tradeResult');
+  var verdictEl = document.getElementById('tradeVerdict');
+  var barAEl = document.getElementById('tradeBarA');
+  var barBEl = document.getElementById('tradeBarB');
+  var valueAEl = document.getElementById('tradeValueA');
+  var valueBEl = document.getElementById('tradeValueB');
+  var breakdownAEl = document.getElementById('tradeBreakdownA');
+  var breakdownBEl = document.getElementById('tradeBreakdownB');
+  if(!sideAEl) return;
+
+  var adpCache = {};
+  async function fetchAdpList(pos){
+    if(adpCache[pos]) return adpCache[pos];
+    var filter = JSON.stringify({
+      players: {
+        filterSlotIds: { value: [SLOT_IDS[pos]] },
+        sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
+        limit: 50,
+        offset: 0,
+        filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
+      }
+    });
+    var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter } });
+    if(!res.ok) throw new Error('adp-fetch-failed');
+    var data = await res.json();
+    var list = (data.players || []).map(function(p){
+      var pl = p.player;
+      var own = pl.ownership || {};
+      return { id: String(pl.id), name: pl.fullName, team: TEAM_ABBR[pl.proTeamId] || '', adp: own.averageDraftPosition || 999 };
+    }).sort(function(a, b){ return a.adp - b.adp; });
+    adpCache[pos] = list;
+    return list;
+  }
+
+  function createPlayerRow(){
+    var row = document.createElement('div');
+    row.className = 'trade-player-row';
+
+    var posSelect = document.createElement('select');
+    posSelect.className = 'trade-pos-select';
+    Object.keys(POS_LABELS).forEach(function(pos){
+      var opt = document.createElement('option');
+      opt.value = pos;
+      opt.textContent = POS_LABELS[pos];
+      posSelect.appendChild(opt);
+    });
+
+    var playerSelect = document.createElement('select');
+    playerSelect.className = 'trade-player-select';
+
+    var removeBtn = document.createElement('button');
+    removeBtn.type = 'button';
+    removeBtn.className = 'trade-remove-btn';
+    removeBtn.innerHTML = '&times;';
+    removeBtn.setAttribute('aria-label', 'Spieler entfernen');
+    removeBtn.addEventListener('click', function(){ row.remove(); });
+
+    async function loadPlayers(){
+      playerSelect.innerHTML = '<option>Lade…</option>';
+      playerSelect.disabled = true;
+      try {
+        var list = await fetchAdpList(posSelect.value);
+        playerSelect.innerHTML = '';
+        list.forEach(function(p){
+          var opt = document.createElement('option');
+          opt.value = p.id;
+          opt.textContent = p.name + ' (' + p.team + ')';
+          opt.dataset.adp = p.adp;
+          opt.dataset.name = p.name;
+          playerSelect.appendChild(opt);
+        });
+      } catch(err){
+        playerSelect.innerHTML = '<option value="">Fehler beim Laden</option>';
+      } finally {
+        playerSelect.disabled = false;
+      }
+    }
+    posSelect.addEventListener('change', loadPlayers);
+    loadPlayers();
+
+    row.appendChild(posSelect);
+    row.appendChild(playerSelect);
+    row.appendChild(removeBtn);
+    return row;
+  }
+
+  document.querySelectorAll('.trade-add-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var container = btn.dataset.side === 'a' ? sideAEl : sideBEl;
+      if(container.children.length >= 5) return;
+      container.appendChild(createPlayerRow());
+    });
+  });
+
+  sideAEl.appendChild(createPlayerRow());
+  sideBEl.appendChild(createPlayerRow());
+
+  function collectSide(container){
+    var players = [];
+    container.querySelectorAll('.trade-player-row').forEach(function(row){
+      var sel = row.querySelector('.trade-player-select');
+      var opt = sel.options[sel.selectedIndex];
+      if(!opt || !opt.value) return;
+      var adp = parseFloat(opt.dataset.adp);
+      var value = Math.max(0, VALUE_ADP_CAP - adp);
+      players.push({ name: opt.dataset.name, value: value });
+    });
+    return players;
+  }
+
+  function renderBreakdown(container, players){
+    container.innerHTML = '';
+    players.forEach(function(p){
+      var row = document.createElement('div');
+      row.className = 'trade-breakdown-row';
+      var l = document.createElement('span');
+      l.textContent = p.name;
+      var v = document.createElement('span');
+      v.textContent = Math.round(p.value);
+      row.appendChild(l);
+      row.appendChild(v);
+      container.appendChild(row);
+    });
+  }
+
+  function calculateTrade(){
+    var playersA = collectSide(sideAEl);
+    var playersB = collectSide(sideBEl);
+
+    if(!playersA.length || !playersB.length){
+      statusEl.textContent = 'Bitte auf beiden Seiten mindestens einen Spieler auswählen.';
+      statusEl.classList.add('error');
+      resultEl.hidden = true;
+      return;
+    }
+    statusEl.textContent = '';
+    statusEl.classList.remove('error');
+
+    var totalA = playersA.reduce(function(s, p){ return s + p.value; }, 0);
+    var totalB = playersB.reduce(function(s, p){ return s + p.value; }, 0);
+    var total = totalA + totalB;
+    var pctA = total > 0 ? (totalA / total * 100) : 50;
+    var pctB = 100 - pctA;
+
+    barAEl.style.width = pctA + '%';
+    barBEl.style.width = pctB + '%';
+    valueAEl.textContent = 'Team A: ' + Math.round(totalA) + ' Wertpunkte';
+    valueBEl.textContent = 'Team B: ' + Math.round(totalB) + ' Wertpunkte';
+
+    var diffPct = total > 0 ? Math.abs(totalA - totalB) / Math.max(totalA, totalB) * 100 : 0;
+    var winner = totalA > totalB ? 'Team A' : (totalB > totalA ? 'Team B' : null);
+    var verdict;
+    if(!winner || diffPct < 8) verdict = 'Sehr ausgeglichen';
+    else if(diffPct < 20) verdict = 'Leichter Vorteil für ' + winner;
+    else if(diffPct < 40) verdict = 'Deutlicher Vorteil für ' + winner;
+    else verdict = 'Einseitig zugunsten ' + winner;
+    verdictEl.textContent = verdict;
+
+    renderBreakdown(breakdownAEl, playersA);
+    renderBreakdown(breakdownBEl, playersB);
+
+    resultEl.hidden = false;
+  }
+
+  calcBtn.addEventListener('click', calculateTrade);
 })();
 </script>
 
