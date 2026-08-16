@@ -771,6 +771,35 @@
 
   .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:8px;max-width:64ch;}
 
+  /* Example standings table (playoff format) */
+  .standings{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin-top:12px;max-width:520px;}
+  .standings .srow{display:grid;grid-template-columns:28px 1fr 56px 68px;gap:8px;padding:8px 16px;font-family:'IBM Plex Mono', monospace;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08);align-items:center;}
+  .standings .srow:last-child{border-bottom:none;}
+  .standings .srow.head{background:rgba(0,0,0,0.2);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);}
+  .standings .srow .team{font-family:'Source Serif 4', serif;font-size:13px;color:var(--chalk);}
+  .standings .srow.head .team{font-family:'IBM Plex Mono', monospace;font-size:10px;}
+  .standings .srow .seed{color:var(--hash);}
+  .standings .srow.playoff .seed{color:var(--amber);}
+  .standings .srow-divider{padding:6px 16px;text-align:center;font-family:'IBM Plex Mono', monospace;font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--amber);background:rgba(233,167,59,0.1);border-bottom:1px dashed rgba(233,167,59,0.35);}
+
+  /* Playoff / consolation bracket */
+  .bracket-wrap{display:flex;flex-direction:column;gap:26px;margin-top:18px;}
+  .bracket-heading{font-family:'Anton', sans-serif;font-size:15px;letter-spacing:.02em;margin-bottom:10px;}
+  .bracket-heading.champ{color:var(--amber);}
+  .bracket-heading.cons{color:var(--hash);}
+  .bracket{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;}
+  .bracket-round-label{font-size:10px;color:var(--hash);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+  .bracket-match{background:var(--card);border:1px solid var(--card-border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
+  .bracket-match:last-child{margin-bottom:0;}
+  .bracket-match .seed{display:inline-block;font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--chalk);background:var(--turf);border-radius:4px;padding:1px 5px;margin-right:5px;}
+  .bracket-match .vs{color:var(--hash);font-size:10px;margin:0 4px;text-transform:uppercase;}
+  .bracket-match.bye{opacity:.6;font-style:italic;}
+  .bracket-match.final{border-left:4px solid var(--amber);color:var(--ink);font-weight:600;}
+  .bracket.cons .bracket-match.final{border-left-color:var(--hash);}
+  @media (max-width:720px){
+    .bracket{grid-template-columns:1fr;}
+  }
+
   .note-box{
     background:var(--card);
     border:1px solid var(--card-border);
@@ -1551,8 +1580,71 @@
 
       <h3 class="sub-head">Wie funktioniert eine Saison?</h3>
       <p class="copy">Dein Team besteht aus echten NFL-Spielern – im echten Spiel musst du selbst nichts tun. Punkte kommen automatisch aus deren realer Leistung am Wochenende, nach dem Scoring-System weiter unten.</p>
-      <p class="copy">Jede Woche trittst du im Direktduell gegen ein anderes Team der Liga an: Wer mit seiner Startaufstellung mehr Punkte holt, gewinnt die Woche. Nach 14 Wochen Liga-Phase geht's in die Playoffs, wo die besten Teams um den Titel spielen – wie viele Teams das genau sind (4, 5 oder 6), wird noch per Umfrage in der Liga festgelegt.</p>
+      <p class="copy">Jede Woche trittst du im Direktduell gegen ein anderes Team der Liga an: Wer mit seiner Startaufstellung mehr Punkte holt, gewinnt die Woche. Nach 14 Wochen Liga-Phase geht's in die Playoffs: Die Top 5 Teams spielen drei Wochen lang um den Titel, die restlichen 5 Teams parallel in einer Trostrunde um die Plätze 6–10.</p>
       <p class="copy">Neben dem Ruhm gibt's am Saisonende einen Champions Ring für den Sieger. Design wird mitten in der Saison gemeinsam abgestimmt, die Kosten (ca. 5–10 CHF pro Person) werden unter allen geteilt.</p>
+
+      <h3 class="sub-head">Playoff-Format</h3>
+      <p class="copy">Nach Woche 14 steht die Endplatzierung der Liga-Phase fest. Die Top 5 spielen die Playoffs um den Titel, Platz 6–10 spielt parallel eine Trostrunde um die restlichen Platzierungen – beide Brackets laufen nach demselben Schema über drei Wochen. So könnte ein Beispiel-Endstand nach 14 Wochen aussehen (Fantasie-Teams, nur zur Veranschaulichung):</p>
+      <div class="standings">
+        <div class="srow head"><span>#</span><span class="team">Team</span><span>Bilanz</span><span>Punkte</span></div>
+        <div class="srow playoff"><span class="seed">1</span><span class="team">Gridiron Gladiators</span><span>11-3</span><span>1742.4</span></div>
+        <div class="srow playoff"><span class="seed">2</span><span class="team">End Zone Enforcers</span><span>10-4</span><span>1698.2</span></div>
+        <div class="srow playoff"><span class="seed">3</span><span class="team">Blitz Brigade</span><span>9-5</span><span>1655.7</span></div>
+        <div class="srow playoff"><span class="seed">4</span><span class="team">Hail Mary Heroes</span><span>8-6</span><span>1611.3</span></div>
+        <div class="srow playoff"><span class="seed">5</span><span class="team">Turf Titans</span><span>7-7</span><span>1589.9</span></div>
+        <div class="srow-divider">Playoff-Cutoff</div>
+        <div class="srow"><span class="seed">6</span><span class="team">Red Zone Raiders</span><span>7-7</span><span>1572.5</span></div>
+        <div class="srow"><span class="seed">7</span><span class="team">Fumble Force</span><span>6-8</span><span>1540.1</span></div>
+        <div class="srow"><span class="seed">8</span><span class="team">Pigskin Pirates</span><span>6-8</span><span>1518.6</span></div>
+        <div class="srow"><span class="seed">9</span><span class="team">Sack Attack</span><span>5-9</span><span>1455.2</span></div>
+        <div class="srow"><span class="seed">10</span><span class="team">Victory Formation</span><span>1-13</span><span>1402.8</span></div>
+      </div>
+      <p class="note-text">Bei gleicher Bilanz entscheiden die meisten erzielten Punkte der Liga-Phase – hier trennt das Turf Titans (Platz 5, Playoffs) von den Red Zone Raiders (Platz 6, Trostrunde).</p>
+
+      <div class="bracket-wrap">
+        <div>
+          <div class="bracket-heading champ">Playoffs um den Titel (Platz 1–5)</div>
+          <div class="bracket">
+            <div>
+              <div class="bracket-round-label">Woche 15 · Runde 1</div>
+              <div class="bracket-match"><span class="seed">4</span>Hail Mary Heroes <span class="vs">vs</span> <span class="seed">5</span>Turf Titans</div>
+              <div class="bracket-match bye"><span class="seed">1</span>Gridiron Gladiators – Bye</div>
+              <div class="bracket-match bye"><span class="seed">2</span>End Zone Enforcers – Bye</div>
+              <div class="bracket-match bye"><span class="seed">3</span>Blitz Brigade – Bye</div>
+            </div>
+            <div>
+              <div class="bracket-round-label">Woche 16 · Halbfinale</div>
+              <div class="bracket-match"><span class="seed">1</span>Gridiron Gladiators <span class="vs">vs</span> Sieger 4/5</div>
+              <div class="bracket-match"><span class="seed">2</span>End Zone Enforcers <span class="vs">vs</span> <span class="seed">3</span>Blitz Brigade</div>
+            </div>
+            <div>
+              <div class="bracket-round-label">Woche 17 · Championship</div>
+              <div class="bracket-match final">Sieger Halbfinale A <span class="vs">vs</span> Sieger Halbfinale B</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="bracket-heading cons">Trostrunde um Platz 6–10</div>
+          <div class="bracket cons">
+            <div>
+              <div class="bracket-round-label">Woche 15 · Runde 1</div>
+              <div class="bracket-match"><span class="seed">9</span>Sack Attack <span class="vs">vs</span> <span class="seed">10</span>Victory Formation</div>
+              <div class="bracket-match bye"><span class="seed">6</span>Red Zone Raiders – Bye</div>
+              <div class="bracket-match bye"><span class="seed">7</span>Fumble Force – Bye</div>
+              <div class="bracket-match bye"><span class="seed">8</span>Pigskin Pirates – Bye</div>
+            </div>
+            <div>
+              <div class="bracket-round-label">Woche 16 · Halbfinale</div>
+              <div class="bracket-match"><span class="seed">6</span>Red Zone Raiders <span class="vs">vs</span> Sieger 9/10</div>
+              <div class="bracket-match"><span class="seed">7</span>Fumble Force <span class="vs">vs</span> <span class="seed">8</span>Pigskin Pirates</div>
+            </div>
+            <div>
+              <div class="bracket-round-label">Woche 17 · Platzierung</div>
+              <div class="bracket-match final">Sieger Halbfinale A <span class="vs">vs</span> Sieger Halbfinale B</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       <h3 class="sub-head">Roster (23 Plätze gesamt)</h3>
       <div class="roster-breakdown mono">11 Starter · 9 Bench · 3 IR</div>
