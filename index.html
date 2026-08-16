@@ -625,6 +625,35 @@
     cursor:pointer;
   }
   .gloss-link:hover{text-decoration-color:var(--amber);}
+  .back-to-top{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:40;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:none;
+    background:var(--amber);
+    color:var(--turf-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    opacity:1;
+    transform:translateY(0);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .back-to-top svg{width:18px;height:18px;}
+  .back-to-top.is-hidden{
+    opacity:0;
+    transform:translateY(10px);
+    pointer-events:none;
+  }
+  @media (max-width:640px){
+    .back-to-top{right:14px;bottom:14px;width:40px;height:40px;}
+  }
   .term-card summary{
     display:flex;
     align-items:center;
@@ -1427,7 +1456,7 @@
     <section id="basics" data-yard="2" data-label="Basics">
       <div class="kicker">Liga-Steckbrief</div>
       <h2>Basics</h2>
-      <p class="copy">Wir spielen auf der ESPN Fantasy App, im Kern nach Standard-Regeln – aber mit individuell angepasstem Scoring und einer größeren Rostergröße als in klassischen Ligen. Der Draft läuft als Snake Draft, Waiver-Zugriff wird über eine feste Reihenfolge geregelt (kein FAAB-Budget). Bewusstes Design-Ziel unseres Scorings: der Quarterback ist die klar stärkste Position.</p>
+      <p class="copy">Wir spielen auf der ESPN Fantasy App, im Kern nach Standard-Regeln – aber mit individuell angepasstem Scoring und einer größeren Rostergröße als in klassischen Ligen. Der Draft läuft als <a class="gloss-link" href="#term-snake-draft">Snake Draft</a>, Waiver-Zugriff wird über eine feste <a class="gloss-link" href="#term-waiver-priority-order">Reihenfolge</a> geregelt (kein FAAB-Budget). Bewusstes Design-Ziel unseres Scorings: der Quarterback ist die klar stärkste Position.</p>
 
       <h3 class="sub-head">Wie funktioniert eine Saison?</h3>
       <p class="copy">Dein Team besteht aus echten NFL-Spielern – im echten Spiel musst du selbst nichts tun. Punkte kommen automatisch aus deren realer Leistung am Wochenende, nach dem Scoring-System weiter unten.</p>
@@ -1496,7 +1525,7 @@
         </details>
         <details class="faq-item">
           <summary>Zwei meiner Spieler brauchen denselben Slot – was jetzt?</summary>
-          <p><span>Du entscheidest jede Woche selbst, wer von deinem Roster tatsächlich startet (Start/Sit). Der Rest bleibt auf der Bench und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</span></p>
+          <p><span>Du entscheidest jede Woche selbst, wer von deinem <a class="gloss-link" href="#term-roster">Roster</a> tatsächlich startet (<a class="gloss-link" href="#term-start-sit">Start/Sit</a>). Der Rest bleibt auf der <a class="gloss-link" href="#term-bench">Bench</a> und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</span></p>
         </details>
       </div>
     </section>
@@ -1725,7 +1754,7 @@
         <div class="insight-card"><strong>Full-PPR</strong> (1 Punkt/Catch) macht Volumen-Fänger – Pass-Catching-RBs, Slot-WRs, targetstarke TEs – sehr wertvoll, unabhängig von Yards oder TDs.</div>
         <div class="insight-card"><strong>QB ist klar die stärkste Position</strong> – hauptsächlich wegen des großzügigen Passing-Scorings (0.5 Pkt/Completion, 6 statt 4 Pkt/Passing-TD, gestaffelte Yard-Boni), nicht primär wegen des Rushings.</div>
         <div class="insight-card"><strong>2× TE-Slot + Full-PPR</strong> macht Top-Tight-Ends zu Premium-Assets – jede Woche werden zwei davon gebraucht.</div>
-        <div class="insight-card"><strong>Gestaffelte Defense-Skala</strong> (Punkte + Yards erlaubt) belohnt Streaming von Defenses nach Matchup.</div>
+        <div class="insight-card"><strong>Gestaffelte Defense-Skala</strong> (Punkte + Yards erlaubt) belohnt <a class="gloss-link" href="#term-streaming">Streaming</a> von Defenses nach Matchup.</div>
         <div class="insight-card"><strong>Kicker mit Distanz-Staffelung</strong>: Kicker mit starkem Leg (viele 50+ Yard Versuche) sind leicht bevorzugt.</div>
       </div>
     </section>
@@ -1752,7 +1781,7 @@
       <ul class="info-list">
         <li>Startbar jederzeit über die ESPN Fantasy App oder Website, eigener Menüpunkt für Mock- bzw. Practice-Drafts.</li>
         <li>Freie Plätze werden automatisch von Bots aufgefüllt, falls nicht genug Mitspieler dabei sind – du kannst also auch komplett solo üben.</li>
-        <li>Läuft wie ein echter Snake Draft: du bekommst der Reihe nach deine Picks, das Zeitlimit tickt genauso.</li>
+        <li>Läuft wie ein echter <a class="gloss-link" href="#term-snake-draft">Snake Draft</a>: du bekommst der Reihe nach deine Picks, das Zeitlimit tickt genauso.</li>
         <li>Ergebnisse zählen nirgends – du kannst ihn beliebig oft abbrechen und neu starten.</li>
         <li>Achtung: Der öffentliche Mock-Draft-Modus nutzt meist Standard-Scoring und Standard-Rostergrößen, nicht zwingend unsere angepassten Liga-Einstellungen – trotzdem super, um ein Gefühl für Tempo und Spieler-Reihenfolge zu bekommen.</li>
       </ul>
@@ -1761,7 +1790,7 @@
     <section id="beliebte-picks" data-yard="58" data-label="Picks">
       <div class="kicker">Live-Daten · ESPN Fantasy</div>
       <h2>Beliebteste Picks nach Position</h2>
-      <p class="copy">Live-Rangliste nach Average Draft Position (ADP) und Ownership-Quote über alle ESPN-Fantasy-Ligen – ein guter Anhaltspunkt, wer aktuell wo eingeordnet wird. Lädt bei jedem Seitenaufruf automatisch die aktuellen Werte.</p>
+      <p class="copy">Live-Rangliste nach <a class="gloss-link" href="#term-adp">Average Draft Position (ADP)</a> und Ownership-Quote über alle ESPN-Fantasy-Ligen – ein guter Anhaltspunkt, wer aktuell wo eingeordnet wird. Lädt bei jedem Seitenaufruf automatisch die aktuellen Werte.</p>
 
       <div class="pos-tabs" id="picksTabs">
         <button class="pos-tab active" data-pos="QB" type="button">QB</button>
@@ -1810,7 +1839,7 @@
           <span class="tip-title">Bench-Tiefe nutzen</span>
           <span class="caret">+</span>
         </summary>
-        <p>Mit 9 Bench-Plätzen musst du nicht jeden Slot fest verplanen. Lass dir Luft für zwei Dinge: Waiver-Stashes (aussichtsreiche Spieler, die du auf Verdacht vom <a class="gloss-link" href="#term-waiver-wire">Waiver Wire</a> holst und erstmal nur auf der Bank "bunkerst", falls sie später wichtig werden) und Bye-Week-Fill-Optionen (Ersatzspieler, die einspringen, wenn ein Stammspieler spielfrei hat).</p>
+        <p>Mit 9 <a class="gloss-link" href="#term-bench">Bench</a>-Plätzen musst du nicht jeden Slot fest verplanen. Lass dir Luft für zwei Dinge: Waiver-Stashes (aussichtsreiche Spieler, die du auf Verdacht vom <a class="gloss-link" href="#term-waiver-wire">Waiver Wire</a> holst und erstmal nur auf der Bank "bunkerst", falls sie später wichtig werden) und Bye-Week-Fill-Optionen (Ersatzspieler, die einspringen, wenn ein Stammspieler spielfrei hat).</p>
       </details>
       <details class="tip-card">
         <summary>
@@ -1836,7 +1865,7 @@
         </div>
         <div class="check-item">
           <span class="mark">✓</span>
-          <div><strong>Verletzungsreport prüfen</strong><p>Vor dem <a class="gloss-link" href="#term-lineup-lock">Lineup-Lock</a> den <a class="gloss-link" href="#term-injury-report">Injury Report</a> checken (Questionable/Doubtful/Out).</p></div>
+          <div><strong>Verletzungsreport prüfen</strong><p>Vor dem <a class="gloss-link" href="#term-lineup-lock">Lineup-Lock</a> den <a class="gloss-link" href="#term-injury-report">Injury Report</a> checken (<a class="gloss-link" href="#term-questionable">Questionable</a>/<a class="gloss-link" href="#term-doubtful">Doubtful</a>/<a class="gloss-link" href="#term-out">Out</a>).</p></div>
         </div>
         <div class="check-item">
           <span class="mark">✓</span>
@@ -1862,18 +1891,18 @@
         <li>Claims werden täglich verarbeitet (ESPN: ca. 3 Uhr morgens ET).</li>
         <li>Wer eine Claim gewinnt, rutscht ans Ende der Prioritätenliste.</li>
         <li>Beim wöchentlichen Reset basiert die neue Reihenfolge auf den umgekehrten Standings – schlechtere Teams zuerst.</li>
-        <li>Free Agents (unbeanspruchte Spieler außerhalb der Waiver-Phase) können meist sofort geholt werden.</li>
+        <li><a class="gloss-link" href="#term-free-agent">Free Agents</a> (unbeanspruchte Spieler außerhalb der Waiver-Phase) können meist sofort geholt werden.</li>
       </ul>
       <div class="tip-box">
         <span class="flag">Tipp</span>
-        <span>Setzt eure Waiver Priority nur für Spieler ein, die das Team wirklich verbessern – nicht für jeden Hype-Pickup.</span>
+        <span>Setzt eure <a class="gloss-link" href="#term-waiver-priority-order">Waiver Priority</a> nur für Spieler ein, die das Team wirklich verbessern – nicht für jeden Hype-Pickup.</span>
       </div>
     </section>
 
     <section id="trades" data-yard="90" data-label="Trades">
       <div class="kicker">Spielertausch zwischen Managern</div>
       <h2>Trades</h2>
-      <p class="copy">Ein Trade ist ein Spielertausch zwischen zwei Managern – ihr einigt euch direkt miteinander, ohne dass Waiver Wire oder Free Agents beteiligt sind. Anders als beim Draft handelt ihr hier live gegeneinander: Was für dich ein guter Deal ist, hängt stark von deinem eigenen Roster und Bedarf ab, nicht nur vom reinen Marktwert der Spieler.</p>
+      <p class="copy">Ein Trade ist ein Spielertausch zwischen zwei Managern – ihr einigt euch direkt miteinander, ohne dass <a class="gloss-link" href="#term-waiver-wire">Waiver Wire</a> oder <a class="gloss-link" href="#term-free-agent">Free Agents</a> beteiligt sind. Anders als beim Draft handelt ihr hier live gegeneinander: Was für dich ein guter Deal ist, hängt stark von deinem eigenen <a class="gloss-link" href="#term-roster">Roster</a> und Bedarf ab, nicht nur vom reinen Marktwert der Spieler.</p>
 
       <h3 class="sub-head">Wie ein Trade abläuft</h3>
       <ul class="info-list">
@@ -1895,7 +1924,7 @@
       </div>
 
       <h3 class="sub-head">Fairness-Rechner</h3>
-      <p class="copy">Vergleicht die ungefähren Marktwerte beider Trade-Seiten anhand der aktuellen ESPN-Draft-Position (ADP) – ein grober, neutraler Anhaltspunkt, ob ein Trade objektiv ausgeglichen ist.</p>
+      <p class="copy">Vergleicht die ungefähren Marktwerte beider Trade-Seiten anhand der aktuellen ESPN-Draft-Position (<a class="gloss-link" href="#term-adp">ADP</a>) – ein grober, neutraler Anhaltspunkt, ob ein Trade objektiv ausgeglichen ist.</p>
 
       <div class="trade-calc">
         <div class="trade-side">
@@ -1992,6 +2021,12 @@
   </main>
 </div>
 
+<button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
 <script>
 (function(){
   var sections = document.querySelectorAll('main section[data-yard]');
@@ -2038,17 +2073,29 @@
     if(ballH) ballH.style.left = pct + '%';
     ballTicking = false;
   }
+  var backToTop = document.getElementById('backToTop');
+  function updateBackToTop(){
+    if(!backToTop) return;
+    backToTop.classList.toggle('is-hidden', window.scrollY < window.innerHeight * 0.6);
+  }
   function onScroll(){
     checkBottom();
     if(!ballTicking){
       window.requestAnimationFrame(updateBallPosition);
       ballTicking = true;
     }
+    updateBackToTop();
   }
   window.addEventListener('scroll', onScroll, { passive: true });
   window.addEventListener('resize', updateBallPosition);
   updateBallPosition();
   checkBottom();
+  updateBackToTop();
+  if(backToTop){
+    backToTop.addEventListener('click', function(){
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
 
   function openMenu(){
     mobileMenu.classList.add('open');
@@ -2841,6 +2888,13 @@
 
   window.addEventListener('hashchange', handleHash);
   if(window.location.hash) window.setTimeout(handleHash, 50);
+
+  document.querySelectorAll('.gloss-link[href^="#term-"]').forEach(function(link){
+    link.addEventListener('click', function(){
+      var id = link.getAttribute('href').slice(1);
+      openGlossaryTerm(id);
+    });
+  });
 })();
 </script>
 
