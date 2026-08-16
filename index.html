@@ -775,14 +775,14 @@
   .standings-div-label{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--hash);margin:14px 0 4px;}
   .standings-div-label:first-of-type{margin-top:12px;}
   .standings{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);max-width:560px;}
-  .standings .srow{display:grid;grid-template-columns:24px 1fr 50px 62px 62px;gap:8px;padding:8px 16px;font-family:'IBM Plex Mono', monospace;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08);align-items:center;}
+  .standings .srow{display:grid;grid-template-columns:24px 1fr 46px 56px 72px;gap:8px;padding:8px 16px;font-family:'IBM Plex Mono', monospace;font-size:12px;border-bottom:1px solid rgba(255,255,255,0.08);align-items:center;}
   .standings .srow:last-child{border-bottom:none;}
   .standings .srow.head{background:rgba(0,0,0,0.2);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);}
   .standings .srow .team{font-family:'Source Serif 4', serif;font-size:13px;color:var(--chalk);}
   .standings .srow.head .team{font-family:'IBM Plex Mono', monospace;font-size:10px;}
   .standings .srow .seed{color:var(--hash);}
   .standings .srow.playoff .seed{color:var(--amber);}
-  .standings .srow .qual-tag{font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.03em;}
+  .standings .srow .qual-tag{font-size:10px;color:var(--amber);text-transform:uppercase;letter-spacing:.03em;overflow-wrap:break-word;line-height:1.3;}
 
   /* Playoff / consolation bracket */
   .bracket-wrap{display:flex;flex-direction:column;gap:26px;margin-top:18px;}
@@ -1582,30 +1582,33 @@
 
       <h3 class="sub-head">Wie funktioniert eine Saison?</h3>
       <p class="copy">Dein Team besteht aus echten NFL-Spielern – im echten Spiel musst du selbst nichts tun. Punkte kommen automatisch aus deren realer Leistung am Wochenende, nach dem Scoring-System weiter unten.</p>
-      <p class="copy">Jede Woche trittst du im Direktduell gegen ein anderes Team der Liga an: Wer mit seiner Startaufstellung mehr Punkte holt, gewinnt die Woche. Die Liga ist in zwei Divisionen zu je 5 Teams aufgeteilt (NFC und AFC) – für die Playoff-Quali zählt aber die Gesamtbilanz über beide Divisionen hinweg, nicht die Division allein. Nach 14 Wochen Liga-Phase geht's in die Playoffs: Die Top 5 Teams der Gesamtwertung spielen drei Wochen lang um den Titel, die restlichen 5 Teams parallel in einer Trostrunde um die Plätze 6–10.</p>
+      <p class="copy">Jede Woche trittst du im Direktduell gegen ein anderes Team der Liga an: Wer mit seiner Startaufstellung mehr Punkte holt, gewinnt die Woche. Die Liga ist in zwei Divisionen zu je 5 Teams aufgeteilt (NFC und AFC). Nach 14 Wochen Liga-Phase geht's in die Playoffs: Platz 1 und 2 jeder Division qualifizieren sich direkt, dazu kommt als Wildcard das beste Team, das in seiner Division Dritter wurde – macht 5 Playoff-Teams, die drei Wochen lang um den Titel spielen. Die übrigen 5 Teams spielen parallel eine Trostrunde um die Plätze 6–10.</p>
       <p class="copy">Neben dem Ruhm gibt's am Saisonende einen Champions Ring für den Sieger. Design wird mitten in der Saison gemeinsam abgestimmt, die Kosten (ca. 5–10 CHF pro Person) werden unter allen geteilt.</p>
 
       <h3 class="sub-head">Playoff-Format</h3>
-      <p class="copy">Nach Woche 14 steht die Endplatzierung der Liga-Phase fest. Die Top 5 der Gesamtwertung spielen die Playoffs um den Titel, Platz 6–10 spielt parallel eine Trostrunde um die restlichen Platzierungen – beide Brackets laufen nach demselben Schema über drei Wochen. So könnte ein Beispiel-Endstand nach 14 Wochen aussehen, getrennt nach Division (Fantasie-Teams, nur zur Veranschaulichung):</p>
+      <p class="copy">Nach Woche 14 steht die Endplatzierung jeder Division fest. Platz 1 und 2 jeder Division ziehen direkt in die Playoffs ein, die 5. Position geht als Wildcard an das bessere der beiden Divisions-Dritten. Der Rest spielt parallel eine Trostrunde um die Plätze 6–10. So könnte ein Beispiel-Endstand nach 14 Wochen aussehen (nur zur Veranschaulichung):</p>
       <div class="standings-div-label mono">NFC</div>
       <div class="standings">
         <div class="srow head"><span>#</span><span class="team">Team</span><span>Bilanz</span><span>Punkte</span><span>Quali</span></div>
-        <div class="srow playoff"><span class="seed">1</span><span class="team">Gridiron Gladiators</span><span>11-3</span><span>1742.4</span><span class="qual-tag">Playoffs</span></div>
-        <div class="srow playoff"><span class="seed">3</span><span class="team">Blitz Brigade</span><span>9-5</span><span>1655.7</span><span class="qual-tag">Playoffs</span></div>
-        <div class="srow playoff"><span class="seed">5</span><span class="team">Turf Titans</span><span>7-7</span><span>1589.9</span><span class="qual-tag">Playoffs</span></div>
-        <div class="srow"><span class="seed">7</span><span class="team">Fumble Force</span><span>6-8</span><span>1540.1</span><span></span></div>
-        <div class="srow"><span class="seed">10</span><span class="team">Victory Formation</span><span>1-13</span><span>1402.8</span><span></span></div>
+        <div class="srow playoff"><span class="seed">1.</span><span class="team">Saints of Anarchy</span><span>11-3</span><span>1742.4</span><span class="qual-tag">Div.-Sieger</span></div>
+        <div class="srow playoff"><span class="seed">2.</span><span class="team">Hopp Schwiiz</span><span>9-5</span><span>1655.7</span><span class="qual-tag">Playoffs</span></div>
+        <div class="srow playoff"><span class="seed">3.</span><span class="team">Tackleberry Finn</span><span>7-7</span><span>1589.9</span><span class="qual-tag">Wildcard</span></div>
+        <div class="srow"><span class="seed">4.</span><span class="team">Buhaaner</span><span>6-8</span><span>1518.6</span><span></span></div>
+        <div class="srow"><span class="seed">5.</span><span class="team">Team 9</span><span>3-11</span><span>1402.8</span><span></span></div>
       </div>
       <div class="standings-div-label mono">AFC</div>
       <div class="standings">
         <div class="srow head"><span>#</span><span class="team">Team</span><span>Bilanz</span><span>Punkte</span><span>Quali</span></div>
-        <div class="srow playoff"><span class="seed">2</span><span class="team">End Zone Enforcers</span><span>10-4</span><span>1698.2</span><span class="qual-tag">Playoffs</span></div>
-        <div class="srow playoff"><span class="seed">4</span><span class="team">Hail Mary Heroes</span><span>8-6</span><span>1611.3</span><span class="qual-tag">Playoffs</span></div>
-        <div class="srow"><span class="seed">6</span><span class="team">Red Zone Raiders</span><span>7-7</span><span>1572.5</span><span></span></div>
-        <div class="srow"><span class="seed">8</span><span class="team">Pigskin Pirates</span><span>6-8</span><span>1518.6</span><span></span></div>
-        <div class="srow"><span class="seed">9</span><span class="team">Sack Attack</span><span>5-9</span><span>1455.2</span><span></span></div>
+        <div class="srow playoff"><span class="seed">1.</span><span class="team">Zurich City Ravens</span><span>10-4</span><span>1698.2</span><span class="qual-tag">Div.-Sieger</span></div>
+        <div class="srow playoff"><span class="seed">2.</span><span class="team">Sherlock Mahomes</span><span>8-6</span><span>1611.3</span><span class="qual-tag">Playoffs</span></div>
+        <div class="srow"><span class="seed">3.</span><span class="team">Run CMC</span><span>7-7</span><span>1572.5</span><span></span></div>
+        <div class="srow"><span class="seed">4.</span><span class="team">TM06</span><span>6-8</span><span>1540.1</span><span></span></div>
+        <div class="srow"><span class="seed">5.</span><span class="team">Team 10</span><span>5-9</span><span>1455.2</span><span></span></div>
       </div>
-      <p class="note-text">"#" ist der Seed in der Gesamtwertung über beide Divisionen – nicht die Division-interne Platzierung. Bei gleicher Bilanz entscheiden die meisten erzielten Punkte der Liga-Phase, z.B. bei Turf Titans (Seed 5, Playoffs) gegen Red Zone Raiders (Seed 6, Trostrunde).</p>
+      <p class="note-text">"#" ist die Platzierung innerhalb der Division. Bei den beiden Divisions-Dritten entscheiden die meisten erzielten Punkte der Liga-Phase über die Wildcard: Tackleberry Finn (1589.9 Pkt.) schnappt sie sich vor Run CMC (1572.5 Pkt.) – trotz identischer 7-7-Bilanz.</p>
+      <p class="note-text">Playoff-Seeds (nach Divisionssieg, Vize-Bilanz, dann Wildcard): 1 Saints of Anarchy · 2 Zurich City Ravens · 3 Hopp Schwiiz · 4 Sherlock Mahomes · 5 Tackleberry Finn. Trostrunde: 6 Run CMC · 7 TM06 · 8 Buhaaner · 9 Team 10 · 10 Team 9.</p>
+
+      <p class="copy">Die Playoffs laufen mit echtem <strong>Reseeding</strong>: Nach jeder Runde werden die verbliebenen Teams neu nach Seed sortiert, der höchste verbliebene Seed spielt immer gegen den niedrigsten. Bei 5 Teams heisst das konkret: Seed 1–3 haben in Runde 1 ein Freilos, nur Seed 4 gegen Seed 5 spielt – danach wird neu gepaart.</p>
 
       <div class="bracket-wrap">
         <div>
@@ -1613,15 +1616,15 @@
           <div class="bracket">
             <div>
               <div class="bracket-round-label">Woche 15 · Runde 1</div>
-              <div class="bracket-match"><span class="seed">4</span>Hail Mary Heroes <span class="vs">vs</span> <span class="seed">5</span>Turf Titans</div>
-              <div class="bracket-match bye"><span class="seed">1</span>Gridiron Gladiators – Bye</div>
-              <div class="bracket-match bye"><span class="seed">2</span>End Zone Enforcers – Bye</div>
-              <div class="bracket-match bye"><span class="seed">3</span>Blitz Brigade – Bye</div>
+              <div class="bracket-match"><span class="seed">4</span>Sherlock Mahomes <span class="vs">vs</span> <span class="seed">5</span>Tackleberry Finn</div>
+              <div class="bracket-match bye"><span class="seed">1</span>Saints of Anarchy – Freilos</div>
+              <div class="bracket-match bye"><span class="seed">2</span>Zurich City Ravens – Freilos</div>
+              <div class="bracket-match bye"><span class="seed">3</span>Hopp Schwiiz – Freilos</div>
             </div>
             <div>
-              <div class="bracket-round-label">Woche 16 · Halbfinale</div>
-              <div class="bracket-match"><span class="seed">1</span>Gridiron Gladiators <span class="vs">vs</span> Sieger 4/5</div>
-              <div class="bracket-match"><span class="seed">2</span>End Zone Enforcers <span class="vs">vs</span> <span class="seed">3</span>Blitz Brigade</div>
+              <div class="bracket-round-label">Woche 16 · Halbfinale (reseeded)</div>
+              <div class="bracket-match"><span class="seed">1</span>Saints of Anarchy <span class="vs">vs</span> Sieger 4/5</div>
+              <div class="bracket-match"><span class="seed">2</span>Zurich City Ravens <span class="vs">vs</span> <span class="seed">3</span>Hopp Schwiiz</div>
             </div>
             <div>
               <div class="bracket-round-label">Woche 17 · Championship</div>
@@ -1634,15 +1637,15 @@
           <div class="bracket cons">
             <div>
               <div class="bracket-round-label">Woche 15 · Runde 1</div>
-              <div class="bracket-match"><span class="seed">9</span>Sack Attack <span class="vs">vs</span> <span class="seed">10</span>Victory Formation</div>
-              <div class="bracket-match bye"><span class="seed">6</span>Red Zone Raiders – Bye</div>
-              <div class="bracket-match bye"><span class="seed">7</span>Fumble Force – Bye</div>
-              <div class="bracket-match bye"><span class="seed">8</span>Pigskin Pirates – Bye</div>
+              <div class="bracket-match"><span class="seed">9</span>Team 10 <span class="vs">vs</span> <span class="seed">10</span>Team 9</div>
+              <div class="bracket-match bye"><span class="seed">6</span>Run CMC – Freilos</div>
+              <div class="bracket-match bye"><span class="seed">7</span>TM06 – Freilos</div>
+              <div class="bracket-match bye"><span class="seed">8</span>Buhaaner – Freilos</div>
             </div>
             <div>
-              <div class="bracket-round-label">Woche 16 · Halbfinale</div>
-              <div class="bracket-match"><span class="seed">6</span>Red Zone Raiders <span class="vs">vs</span> Sieger 9/10</div>
-              <div class="bracket-match"><span class="seed">7</span>Fumble Force <span class="vs">vs</span> <span class="seed">8</span>Pigskin Pirates</div>
+              <div class="bracket-round-label">Woche 16 · Halbfinale (reseeded)</div>
+              <div class="bracket-match"><span class="seed">6</span>Run CMC <span class="vs">vs</span> Sieger 9/10</div>
+              <div class="bracket-match"><span class="seed">7</span>TM06 <span class="vs">vs</span> <span class="seed">8</span>Buhaaner</div>
             </div>
             <div>
               <div class="bracket-round-label">Woche 17 · Platzierung</div>
