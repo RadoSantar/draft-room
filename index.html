@@ -23,6 +23,26 @@
     --card:#ffffff;
     --card-border:rgba(30,70,56,0.15);
   }
+  :root[data-team-theme="saints"]{
+    --turf:#101820;
+    --turf-2:#080c10;
+    --hash:#A5895A;
+    --chalk:#F5F1E6;
+    --amber:#D3BC8D;
+    --ink:#1a1815;
+    --ink-soft:#4d473c;
+    --card-border:rgba(16,24,32,0.15);
+  }
+  :root[data-team-theme="lions"]{
+    --turf:#0B3C5D;
+    --turf-2:#072943;
+    --hash:#7FA8C9;
+    --chalk:#F0F3F5;
+    --amber:#3FA9DC;
+    --ink:#10202c;
+    --ink-soft:#3f5a6d;
+    --card-border:rgba(11,60,93,0.15);
+  }
   *{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
   body{
@@ -30,6 +50,7 @@
     color:var(--ink);
     font-family:'Source Serif 4', Georgia, serif;
     line-height:1.65;
+    transition:background-color .3s ease, color .3s ease;
   }
   h1,h2,h3,.display{
     font-family:'Anton', sans-serif;
@@ -122,6 +143,36 @@
   }
 
   main{padding:32px 24px 96px;min-width:0;}
+
+  /* Theme picker */
+  .theme-picker{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .theme-picker-label{
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--hash);
+  }
+  .theme-btn{
+    width:38px;
+    height:38px;
+    border-radius:50%;
+    background:var(--card);
+    border:2px solid var(--card-border);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    padding:5px;
+    transition:border-color .2s ease, transform .15s ease;
+  }
+  .theme-btn:hover{transform:translateY(-2px);}
+  .theme-btn.active{border-color:var(--amber);box-shadow:0 0 0 2px rgba(233,167,59,0.25);}
+  .theme-btn img{width:100%;height:100%;object-fit:contain;}
 
   /* Hero */
   .hero h1{font-size:36px;line-height:1.15;margin-bottom:10px;}
@@ -824,6 +875,14 @@
     }
   }
 </style>
+<script>
+(function(){
+  try {
+    var saved = localStorage.getItem('draftroom-team-theme');
+    if(saved) document.documentElement.setAttribute('data-team-theme', saved);
+  } catch(e){}
+})();
+</script>
 </head>
 <body>
 
@@ -909,6 +968,25 @@
 
   <main>
     <section class="hero">
+      <div class="theme-picker" role="group" aria-label="Team-Design wählen">
+        <span class="theme-picker-label mono">Design</span>
+        <button class="theme-btn active" type="button" data-team-theme="" title="Standard-Design" aria-label="Standard-Design">
+          <svg viewBox="0 0 24 34" width="20" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <ellipse cx="12" cy="17" rx="8.5" ry="16" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
+            <line x1="12" y1="7" x2="12" y2="27" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9" y1="12" x2="15" y2="12" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9" y1="17" x2="15" y2="17" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+            <line x1="9" y1="22" x2="15" y2="22" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button class="theme-btn" type="button" data-team-theme="saints" title="New Orleans Saints" aria-label="Saints-Design">
+          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/no.png" alt="" loading="lazy">
+        </button>
+        <button class="theme-btn" type="button" data-team-theme="lions" title="Detroit Lions" aria-label="Lions-Design">
+          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt="" loading="lazy">
+        </button>
+      </div>
+
       <h1>Willkommen im Draft Room</h1>
       <p class="lead">Alles, was du für unsere Liga wissen musst – Regeln, Begriffe, Scoring und Strategie, kompakt erklärt und auf unser Format zugeschnitten.</p>
 
@@ -2295,6 +2373,36 @@
 
   window.addEventListener('hashchange', handleHash);
   if(window.location.hash) window.setTimeout(handleHash, 50);
+})();
+</script>
+
+<script>
+(function(){
+  var STORAGE_KEY = 'draftroom-team-theme';
+  var root = document.documentElement;
+  var buttons = document.querySelectorAll('.theme-btn');
+  if(!buttons.length) return;
+
+  function syncActive(theme){
+    buttons.forEach(function(b){
+      b.classList.toggle('active', (b.dataset.teamTheme || '') === theme);
+    });
+  }
+
+  function applyTheme(theme){
+    if(theme) root.setAttribute('data-team-theme', theme);
+    else root.removeAttribute('data-team-theme');
+    syncActive(theme);
+    try { localStorage.setItem(STORAGE_KEY, theme); } catch(e){}
+  }
+
+  syncActive(root.getAttribute('data-team-theme') || '');
+
+  buttons.forEach(function(b){
+    b.addEventListener('click', function(){
+      applyTheme(b.dataset.teamTheme || '');
+    });
+  });
 })();
 </script>
 
