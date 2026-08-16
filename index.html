@@ -928,8 +928,6 @@
       padding:12px 16px 0;
       border-bottom:none;
     }
-    .chapter-label{display:none;}
-
     /* liegende Yard-Linie als Fortschrittsbalken */
     .mobile-progress{
       display:flex;
@@ -952,13 +950,6 @@
       transform:translate(-50%,-50%);
       z-index:2;
       filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));
-    }
-    .mobile-progress .label{
-      font-family:'IBM Plex Mono', monospace;
-      font-size:10px;
-      color:var(--amber);
-      margin-left:10px;
-      white-space:nowrap;
     }
   }
 </style>
@@ -994,7 +985,6 @@
         <line x1="22" y1="7" x2="22" y2="13" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
     </div>
-    <span class="label">Basics</span>
   </div>
 </header>
 
@@ -1653,7 +1643,6 @@
   var sections = document.querySelectorAll('main section[data-yard]');
   var ball = document.querySelector('nav.yardline .ball');
   var ballH = document.querySelector('.mobile-progress .ball-h');
-  var mobileLabel = document.querySelector('.mobile-progress .label');
   var chapterLabel = document.getElementById('chapterLabel');
   var menuLinks = document.querySelectorAll('#mobileMenu a');
   var menuOpenBtn = document.getElementById('menuOpenBtn');
@@ -1661,7 +1650,6 @@
   var mobileMenu = document.getElementById('mobileMenu');
 
   function setActive(id, label){
-    if(mobileLabel) mobileLabel.textContent = label;
     if(chapterLabel) chapterLabel.textContent = label;
   }
 
