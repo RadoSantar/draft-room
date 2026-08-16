@@ -81,6 +81,17 @@
     font-size:20px;
     letter-spacing:0.04em;
   }
+  .title-group{
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .header-logo{
+    width:30px;
+    height:30px;
+    object-fit:contain;
+    flex:0 0 auto;
+  }
   header.topbar .sub{
     font-family:'IBM Plex Mono', monospace;
     font-size:12px;
@@ -966,7 +977,10 @@
 
 <header class="topbar">
   <div class="row">
-    <span class="title">Draft Room</span>
+    <div class="title-group">
+      <img class="header-logo" id="headerLogo" src="" alt="" hidden>
+      <span class="title">Draft Room</span>
+    </div>
     <div class="chapter-nav">
       <span class="chapter-label mono" id="chapterLabel">Basics</span>
       <button class="menu-btn" id="menuOpenBtn" aria-label="Kapitelmenü öffnen" aria-controls="mobileMenu" aria-expanded="false">
@@ -2495,12 +2509,26 @@
   var STORAGE_KEY = 'draftroom-team-theme';
   var root = document.documentElement;
   var buttons = document.querySelectorAll('.theme-btn');
+  var headerLogo = document.getElementById('headerLogo');
   if(!buttons.length) return;
 
   function syncActive(theme){
+    var activeImg = null;
     buttons.forEach(function(b){
-      b.classList.toggle('active', (b.dataset.teamTheme || '') === theme);
+      var isActive = (b.dataset.teamTheme || '') === theme;
+      b.classList.toggle('active', isActive);
+      if(isActive) activeImg = b.querySelector('img');
     });
+    if(headerLogo){
+      if(activeImg){
+        headerLogo.src = activeImg.src;
+        headerLogo.alt = activeImg.alt || theme;
+        headerLogo.hidden = false;
+      } else {
+        headerLogo.hidden = true;
+        headerLogo.src = '';
+      }
+    }
   }
 
   function applyTheme(theme){
