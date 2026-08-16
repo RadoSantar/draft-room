@@ -1107,11 +1107,22 @@
     <section id="rechner" data-yard="34" data-label="Rechner">
       <div class="kicker">Live-Daten · ESPN</div>
       <h2>Punkterechner</h2>
-      <p class="copy">Wähle einen Quarterback, ein Jahr und eine Saison-Woche – der Rechner holt die echten NFL-Boxscore-Daten und rechnet sie live nach unserem Liga-Scoring um, inklusive Aufschlüsselung nach Kategorie.</p>
+      <p class="copy">Wähle eine Position, einen Spieler (bzw. ein Team bei Defense), ein Jahr und eine Saison-Woche – der Rechner holt die echten NFL-Daten und rechnet sie live nach unserem Liga-Scoring um, inklusive Aufschlüsselung nach Kategorie.</p>
 
       <div class="calc-controls">
         <div class="calc-field">
-          <label for="calcQb">Quarterback</label>
+          <label for="calcPos">Position</label>
+          <select id="calcPos">
+            <option value="QB">QB</option>
+            <option value="RB">RB</option>
+            <option value="WR">WR</option>
+            <option value="TE">TE</option>
+            <option value="K">K</option>
+            <option value="DST">Defense</option>
+          </select>
+        </div>
+        <div class="calc-field">
+          <label for="calcQb" id="calcPlayerLabel">Quarterback</label>
           <select id="calcQb"></select>
         </div>
         <div class="calc-field">
@@ -1138,7 +1149,7 @@
 
       <div class="note-box">
         <span class="flag">Hinweis</span>
-        <span>Datenquelle: öffentliche ESPN-Boxscore-Daten. 2pt-Conversions und der 50+-Yard-TD-Bonus werden erkannt, der QB-Rushing-First-Down-Bonus (+0.5/Stück) ist in diesen Daten aber nicht enthalten und fehlt daher in der Berechnung – bei laufstarken QBs kann der echte Wert dadurch etwas höher liegen.</span>
+        <span id="calcNote">Datenquelle: öffentliche ESPN-Daten. 2pt-Conversions und der 50+-Yard-TD-Bonus werden erkannt, der QB-Rushing-First-Down-Bonus (+0.5/Stück) ist in diesen Daten aber nicht enthalten und fehlt daher in der Berechnung – bei laufstarken QBs kann der echte Wert dadurch etwas höher liegen.</span>
       </div>
     </section>
 
@@ -1427,6 +1438,46 @@
 
 <script>
 (function(){
+  var GAMELOG_BASE = 'https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/';
+  var SUMMARY_BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=';
+  var TEAM_BASE = 'https://site.api.espn.com/apis/site/v2/sports/football/nfl/teams/';
+  var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
+  var SLOT_IDS = { RB: 2, WR: 4, TE: 6, K: 17 };
+  var TEAM_ABBR = {
+    1:'ATL', 2:'BUF', 3:'CHI', 4:'CIN', 5:'CLE', 6:'DAL', 7:'DEN', 8:'DET', 9:'GB', 10:'TEN',
+    11:'IND', 12:'KC', 13:'LV', 14:'LAR', 15:'MIA', 16:'MIN', 17:'NE', 18:'NO', 19:'NYG', 20:'NYJ',
+    21:'PHI', 22:'ARI', 23:'PIT', 24:'LAC', 25:'SF', 26:'SEA', 27:'TB', 28:'WSH', 29:'CAR', 30:'JAX',
+    33:'BAL', 34:'HOU'
+  };
+  var TEAMS = [
+    { slug: 'ari', name: 'Arizona Cardinals' }, { slug: 'atl', name: 'Atlanta Falcons' },
+    { slug: 'bal', name: 'Baltimore Ravens' }, { slug: 'buf', name: 'Buffalo Bills' },
+    { slug: 'car', name: 'Carolina Panthers' }, { slug: 'chi', name: 'Chicago Bears' },
+    { slug: 'cin', name: 'Cincinnati Bengals' }, { slug: 'cle', name: 'Cleveland Browns' },
+    { slug: 'dal', name: 'Dallas Cowboys' }, { slug: 'den', name: 'Denver Broncos' },
+    { slug: 'det', name: 'Detroit Lions' }, { slug: 'gb', name: 'Green Bay Packers' },
+    { slug: 'hou', name: 'Houston Texans' }, { slug: 'ind', name: 'Indianapolis Colts' },
+    { slug: 'jax', name: 'Jacksonville Jaguars' }, { slug: 'kc', name: 'Kansas City Chiefs' },
+    { slug: 'lac', name: 'Los Angeles Chargers' }, { slug: 'lar', name: 'Los Angeles Rams' },
+    { slug: 'lv', name: 'Las Vegas Raiders' }, { slug: 'mia', name: 'Miami Dolphins' },
+    { slug: 'min', name: 'Minnesota Vikings' }, { slug: 'ne', name: 'New England Patriots' },
+    { slug: 'no', name: 'New Orleans Saints' }, { slug: 'nyg', name: 'New York Giants' },
+    { slug: 'nyj', name: 'New York Jets' }, { slug: 'phi', name: 'Philadelphia Eagles' },
+    { slug: 'pit', name: 'Pittsburgh Steelers' }, { slug: 'sea', name: 'Seattle Seahawks' },
+    { slug: 'sf', name: 'San Francisco 49ers' }, { slug: 'tb', name: 'Tampa Bay Buccaneers' },
+    { slug: 'ten', name: 'Tennessee Titans' }, { slug: 'wsh', name: 'Washington Commanders' }
+  ].sort(function(a, b){ return a.name.localeCompare(b.name); });
+
+  var POS_LABELS = { QB: 'Quarterback', RB: 'Running Back', WR: 'Wide Receiver', TE: 'Tight End', K: 'Kicker', DST: 'Team (Defense)' };
+  var POS_NOTES = {
+    QB: 'Datenquelle: öffentliche ESPN-Daten. 2pt-Conversions und der 50+-Yard-TD-Bonus werden erkannt, der QB-Rushing-First-Down-Bonus (+0.5/Stück) ist in diesen Daten aber nicht enthalten und fehlt daher in der Berechnung – bei laufstarken QBs kann der echte Wert dadurch etwas höher liegen.',
+    RB: 'Datenquelle: öffentliche ESPN-Daten. Rushing/Receiving inkl. 40+/50+-Yard-TD-Bonus werden erkannt. Seltene Trickspielzüge, bei denen ein RB selbst einen Passing-TD wirft, sind nicht enthalten.',
+    WR: 'Datenquelle: öffentliche ESPN-Daten. Receiving/Rushing werden vollständig erfasst. Seltene Trickspielzüge, bei denen ein WR/TE selbst einen Passing-TD wirft, sind nicht enthalten.',
+    TE: 'Datenquelle: öffentliche ESPN-Daten. Receiving/Rushing werden vollständig erfasst. Seltene Trickspielzüge, bei denen ein WR/TE selbst einen Passing-TD wirft, sind nicht enthalten.',
+    K: 'Datenquelle: öffentliche ESPN-Daten. Bei mehr als einem 50+-Yard-Field-Goal im selben Spiel (sehr selten) wird nur der längste Versuch exakt der 50–59- bzw. 60+-Stufe zugeordnet, alle weiteren pauschal der 50–59-Stufe.',
+    DST: 'Datenquelle: öffentliche ESPN-Team-Boxscore-Daten. Sacks, Interceptions, Fumbles Recovered, Defensive/Special-Teams-TDs sowie Points/Yards Allowed werden erfasst. Forced Fumbles (+1), Safeties (+2) und geblockte Kicks (+2/+6) sind in diesen Daten nicht zuverlässig enthalten und fehlen daher in der Berechnung.'
+  };
+
   // Aktuelle Starting-QBs (Stand: Depth Charts, ESPN Athlete-IDs)
   var QUARTERBACKS = [
     { id: '2578570', name: 'Jacoby Brissett', team: 'ARI' },
@@ -1463,7 +1514,9 @@
     { id: '4426348', name: 'Jayden Daniels', team: 'WSH' }
   ].sort(function(a, b){ return a.name.localeCompare(b.name); });
 
-  var qbSelect = document.getElementById('calcQb');
+  var posSelect = document.getElementById('calcPos');
+  var playerLabel = document.getElementById('calcPlayerLabel');
+  var playerSelect = document.getElementById('calcQb');
   var yearSelect = document.getElementById('calcYear');
   var weekSelect = document.getElementById('calcWeek');
   var calcBtn = document.getElementById('calcBtn');
@@ -1473,18 +1526,9 @@
   var totalLabelEl = document.getElementById('calcTotalLabel');
   var totalValueEl = document.getElementById('calcTotalValue');
   var totalMetaEl = document.getElementById('calcTotalMeta');
+  var noteEl = document.getElementById('calcNote');
 
-  if(!qbSelect) return;
-
-  QUARTERBACKS.forEach(function(qb){
-    var opt = document.createElement('option');
-    opt.value = qb.id;
-    opt.textContent = qb.name + ' (' + qb.team + ')';
-    opt.dataset.name = qb.name;
-    qbSelect.appendChild(opt);
-  });
-  var mahomesOpt = qbSelect.querySelector('option[value="3139477"]');
-  if(mahomesOpt) qbSelect.value = '3139477';
+  if(!playerSelect) return;
 
   var thisYear = new Date().getFullYear();
   for(var y = thisYear; y >= 2015; y--){
@@ -1532,11 +1576,421 @@
     statusEl.classList.toggle('error', !!isError);
   }
 
+  // ---- Spieler-/Team-Listen je Position ----
+  var adpCache = {};
+
+  async function fetchAdpList(pos){
+    if(adpCache[pos]) return adpCache[pos];
+    var filter = JSON.stringify({
+      players: {
+        filterSlotIds: { value: [SLOT_IDS[pos]] },
+        sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
+        limit: 40,
+        offset: 0,
+        filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
+      }
+    });
+    var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter } });
+    if(!res.ok) throw new Error('adp-fetch-failed');
+    var data = await res.json();
+    var list = (data.players || []).map(function(p){
+      var pl = p.player;
+      var own = pl.ownership || {};
+      return { id: String(pl.id), name: pl.fullName, team: TEAM_ABBR[pl.proTeamId] || '', adp: own.averageDraftPosition || 999 };
+    }).sort(function(a, b){ return a.adp - b.adp; });
+    adpCache[pos] = list;
+    return list;
+  }
+
+  var loadToken = 0;
+
+  async function loadPlayerOptions(pos){
+    var myToken = ++loadToken;
+    playerLabel.textContent = POS_LABELS[pos];
+    noteEl.textContent = POS_NOTES[pos];
+    resultEl.hidden = true;
+    setStatus('', false);
+
+    if(pos === 'QB'){
+      playerSelect.innerHTML = '';
+      QUARTERBACKS.forEach(function(qb){
+        var opt = document.createElement('option');
+        opt.value = qb.id;
+        opt.textContent = qb.name + ' (' + qb.team + ')';
+        opt.dataset.name = qb.name;
+        playerSelect.appendChild(opt);
+      });
+      var mahomesOpt = playerSelect.querySelector('option[value="3139477"]');
+      if(mahomesOpt) playerSelect.value = '3139477';
+      return;
+    }
+
+    if(pos === 'DST'){
+      playerSelect.innerHTML = '';
+      TEAMS.forEach(function(t){
+        var opt = document.createElement('option');
+        opt.value = t.slug;
+        opt.textContent = t.name;
+        opt.dataset.name = t.name;
+        playerSelect.appendChild(opt);
+      });
+      return;
+    }
+
+    playerSelect.innerHTML = '<option>Lade Spieler…</option>';
+    playerSelect.disabled = true;
+    try {
+      var list = await fetchAdpList(pos);
+      if(myToken !== loadToken) return;
+      playerSelect.innerHTML = '';
+      list.forEach(function(p){
+        var opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = p.name + ' (' + p.team + ')';
+        opt.dataset.name = p.name;
+        playerSelect.appendChild(opt);
+      });
+    } catch(err){
+      if(myToken !== loadToken) return;
+      playerSelect.innerHTML = '<option>Fehler beim Laden</option>';
+    } finally {
+      if(myToken === loadToken) playerSelect.disabled = false;
+    }
+  }
+
+  posSelect.addEventListener('change', function(){ loadPlayerOptions(posSelect.value); });
+  loadPlayerOptions('QB');
+
+  // ---- Fetch-Helfer ----
+  async function fetchJson(url, opts){
+    var res = await fetch(url, opts);
+    if(!res.ok) throw new Error('fetch-failed: ' + url);
+    return res.json();
+  }
+
+  async function fetchGamelog(playerId, year){
+    var gl = await fetchJson(GAMELOG_BASE + playerId + '/gamelog?season=' + year);
+    var regSeason = (gl.seasonTypes || []).filter(function(st){ return /Regular Season/i.test(st.displayName || ''); })[0];
+    if(!regSeason) throw { code: 'no-data' };
+    return { gl: gl, regSeason: regSeason };
+  }
+
+  function findWeekEvent(gl, week){
+    var targetEventId = null, gameInfo = null;
+    var events = gl.events || {};
+    Object.keys(events).forEach(function(eid){
+      if(events[eid].week === week && !targetEventId){
+        targetEventId = eid;
+        gameInfo = events[eid];
+      }
+    });
+    if(!targetEventId) throw { code: 'no-game' };
+    return { targetEventId: targetEventId, gameInfo: gameInfo };
+  }
+
+  function extractRawStats(regSeason, gl, targetEventId){
+    var statsArr = null;
+    regSeason.categories.forEach(function(cat){
+      cat.events.forEach(function(ev){ if(ev.eventId === targetEventId) statsArr = ev.stats; });
+    });
+    if(!statsArr) throw { code: 'no-stats' };
+    var raw = {};
+    gl.names.forEach(function(n, i){ raw[n] = statsArr[i]; });
+    return raw;
+  }
+
+  function gameMetaText(gameInfo){
+    var oppName = gameInfo.opponent ? gameInfo.opponent.displayName : '?';
+    var atVs = gameInfo.atVs === '@' ? 'bei' : 'vs.';
+    return atVs + ' ' + oppName + ' · ' + gameInfo.score + ' (' + gameInfo.gameResult + ')';
+  }
+
+  function findBoxscoreAthleteStat(sum, catName, statLabel, playerName){
+    var val = 0;
+    ((sum.boxscore || {}).players || []).forEach(function(team){
+      (team.statistics || []).forEach(function(cat){
+        if(cat.name === catName){
+          (cat.athletes || []).forEach(function(ath){
+            if(ath.athlete && ath.athlete.displayName === playerName){
+              var idx = cat.labels.indexOf(statLabel);
+              if(idx >= 0) val = parseFloat(ath.stats[idx]) || 0;
+            }
+          });
+        }
+      });
+    });
+    return val;
+  }
+
+  function findTdBonusesFromScoringPlays(sum, playerName, includeTwoPt){
+    var bonus50 = 0, twoPt = 0;
+    var escapedName = playerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var twoPtRe = new RegExp(escapedName + '\\s+(Pass to [^)]+|Rush) for Two-Point Conversion');
+    (sum.scoringPlays || []).forEach(function(p){
+      var text = p.text || '';
+      var typeText = (p.type && p.type.text) || '';
+      if(typeText === 'Passing Touchdown'){
+        var m1 = text.match(/^(\d+)\s+Yd pass from (.+?)\s*\(/);
+        if(m1 && m1[2].trim() === playerName && parseInt(m1[1], 10) >= 50) bonus50 += 5;
+      }
+      if(typeText === 'Rushing Touchdown'){
+        var m2 = text.match(/^(.+?)\s+(\d+)\s+Yd Rush\s*\(/);
+        if(m2 && m2[1].trim() === playerName && parseInt(m2[2], 10) >= 50) bonus50 += 5;
+      }
+      if(includeTwoPt && twoPtRe.test(text)) twoPt += 2;
+    });
+    return { bonus50: bonus50, twoPt: twoPt };
+  }
+
+  function findRushTdDistanceBonus(sum, playerName){
+    var bonus = 0;
+    var escapedName = playerName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    var re = new RegExp('^' + escapedName + '\\s+(\\d+)\\s+Yd Rush\\s*\\(');
+    (sum.scoringPlays || []).forEach(function(p){
+      var typeText = (p.type && p.type.text) || '';
+      if(typeText !== 'Rushing Touchdown') return;
+      var m = (p.text || '').match(re);
+      if(!m) return;
+      var yards = parseInt(m[1], 10);
+      if(yards >= 40) bonus += 1;
+      if(yards >= 50) bonus += 1;
+    });
+    return bonus;
+  }
+
+  function ptsAllowedBonus(pa){
+    if(pa === 0) return 10;
+    if(pa <= 6) return 7;
+    if(pa <= 13) return 4;
+    if(pa <= 17) return 1;
+    if(pa <= 27) return 0;
+    if(pa <= 34) return -4;
+    if(pa <= 45) return -7;
+    return -10;
+  }
+
+  function yardsAllowedBonus(ya){
+    if(ya < 100) return 5;
+    if(ya <= 199) return 3;
+    if(ya <= 349) return 0;
+    if(ya <= 399) return -0.5;
+    if(ya <= 449) return -1;
+    if(ya <= 499) return -3;
+    if(ya <= 549) return -5;
+    return -8;
+  }
+
+  // ---- Positions-spezifische Berechnungen ----
+  async function calcQB(id, name, year, week){
+    var g = await fetchGamelog(id, year);
+    var w = findWeekEvent(g.gl, week);
+    var raw = extractRawStats(g.regSeason, g.gl, w.targetEventId);
+    setStatus('Lade Boxscore-Details…', false);
+    var sum = await fetchJson(SUMMARY_BASE + w.targetEventId);
+
+    var fumblesLost = findBoxscoreAthleteStat(sum, 'fumbles', 'LOST', name);
+    var b = findTdBonusesFromScoringPlays(sum, name, true);
+
+    var passYds = parseFloat(raw.passingYards) || 0, comp = parseFloat(raw.completions) || 0,
+        passTD = parseFloat(raw.passingTouchdowns) || 0, ints = parseFloat(raw.interceptions) || 0,
+        sacks = parseFloat(raw.sacks) || 0, rushYds = parseFloat(raw.rushingYards) || 0,
+        rushTD = parseFloat(raw.rushingTouchdowns) || 0, rushAtt = parseFloat(raw.rushingAttempts) || 0,
+        att = parseFloat(raw.passingAttempts) || 0;
+
+    var passYardPts = passYds / 25, compPts = comp * 0.5, passTdPts = passTD * 6,
+        intPts = ints * -2, sackPts = sacks * -1,
+        passGameBonus = passYds >= 400 ? 4 : (passYds >= 300 ? 2 : 0);
+    var rushYardPts = rushYds / 10, rushTdPts = rushTD * 6,
+        rushGameBonus = rushYds >= 200 ? 4 : (rushYds >= 100 ? 1 : 0);
+    var fumblePts = fumblesLost * -2;
+
+    var total = passYardPts + compPts + passTdPts + intPts + sackPts + passGameBonus
+              + rushYardPts + rushTdPts + rushGameBonus + b.bonus50 + b.twoPt + fumblePts;
+
+    var rows = [];
+    rows.push(['Passing Yards', passYds, passYardPts]);
+    rows.push(['Completions (' + comp + '/' + att + ')', null, compPts]);
+    rows.push(['Passing TDs', passTD, passTdPts]);
+    rows.push(['Interceptions', ints, intPts]);
+    rows.push(['Sacked', sacks, sackPts]);
+    if(passGameBonus) rows.push(['Passing Yard-Game-Bonus', null, passGameBonus]);
+    rows.push(['Rushing Yards', rushYds + ' (' + rushAtt + ' Carries)', rushYardPts]);
+    rows.push(['Rushing TDs', rushTD, rushTdPts]);
+    if(rushGameBonus) rows.push(['Rushing Yard-Game-Bonus', null, rushGameBonus]);
+    if(b.bonus50) rows.push(['50+ Yard TD Bonus', null, b.bonus50]);
+    if(b.twoPt) rows.push(['2pt Conversions', null, b.twoPt]);
+    rows.push(['Fumbles Lost', fumblesLost, fumblePts]);
+
+    return { total: total, meta: gameMetaText(w.gameInfo), rows: rows };
+  }
+
+  async function calcRB(id, name, year, week){
+    var g = await fetchGamelog(id, year);
+    var w = findWeekEvent(g.gl, week);
+    var raw = extractRawStats(g.regSeason, g.gl, w.targetEventId);
+
+    var rushAtt = parseFloat(raw.rushingAttempts) || 0, rushYds = parseFloat(raw.rushingYards) || 0,
+        rushTD = parseFloat(raw.rushingTouchdowns) || 0, rec = parseFloat(raw.receptions) || 0,
+        tgt = parseFloat(raw.receivingTargets) || 0, recYds = parseFloat(raw.receivingYards) || 0,
+        recTD = parseFloat(raw.receivingTouchdowns) || 0, fumblesLost = parseFloat(raw.fumblesLost) || 0;
+
+    var tdBonus = 0;
+    if(rushTD > 0){
+      setStatus('Lade Boxscore-Details…', false);
+      var sum = await fetchJson(SUMMARY_BASE + w.targetEventId);
+      tdBonus = findRushTdDistanceBonus(sum, name);
+    }
+
+    var rushYardPts = rushYds / 10, rushTdPts = rushTD * 6, rushGameBonus = rushYds >= 200 ? 1 : 0;
+    var recYardPts = recYds / 10, recPts = rec * 1, recTdPts = recTD * 6, recGameBonus = recYds >= 200 ? 1 : 0;
+    var fumblePts = fumblesLost * -2;
+
+    var total = rushYardPts + rushTdPts + tdBonus + rushGameBonus
+              + recYardPts + recPts + recTdPts + recGameBonus + fumblePts;
+
+    var rows = [];
+    rows.push(['Rushing Yards', rushYds + ' (' + rushAtt + ' Carries)', rushYardPts]);
+    rows.push(['Rushing TDs', rushTD, rushTdPts]);
+    if(tdBonus) rows.push(['40+/50+ Yard TD Bonus', null, tdBonus]);
+    if(rushGameBonus) rows.push(['Rushing 200+ Yard Bonus', null, rushGameBonus]);
+    rows.push(['Receptions (Targets: ' + tgt + ')', rec, recPts]);
+    rows.push(['Receiving Yards', recYds, recYardPts]);
+    rows.push(['Receiving TDs', recTD, recTdPts]);
+    if(recGameBonus) rows.push(['Receiving 200+ Yard Bonus', null, recGameBonus]);
+    rows.push(['Fumbles Lost', fumblesLost, fumblePts]);
+
+    return { total: total, meta: gameMetaText(w.gameInfo), rows: rows };
+  }
+
+  async function calcWRTE(id, name, year, week){
+    var g = await fetchGamelog(id, year);
+    var w = findWeekEvent(g.gl, week);
+    var raw = extractRawStats(g.regSeason, g.gl, w.targetEventId);
+
+    var rec = parseFloat(raw.receptions) || 0, tgt = parseFloat(raw.receivingTargets) || 0,
+        recYds = parseFloat(raw.receivingYards) || 0, recTD = parseFloat(raw.receivingTouchdowns) || 0,
+        rushAtt = parseFloat(raw.rushingAttempts) || 0, rushYds = parseFloat(raw.rushingYards) || 0,
+        rushTD = parseFloat(raw.rushingTouchdowns) || 0, fumblesLost = parseFloat(raw.fumblesLost) || 0;
+
+    var recYardPts = recYds / 10, recPts = rec * 1, recTdPts = recTD * 6, recGameBonus = recYds >= 200 ? 1 : 0;
+    var rushYardPts = rushYds / 10, rushTdPts = rushTD * 6;
+    var fumblePts = fumblesLost * -2;
+
+    var total = recYardPts + recPts + recTdPts + recGameBonus + rushYardPts + rushTdPts + fumblePts;
+
+    var rows = [];
+    rows.push(['Receptions (Targets: ' + tgt + ')', rec, recPts]);
+    rows.push(['Receiving Yards', recYds, recYardPts]);
+    rows.push(['Receiving TDs', recTD, recTdPts]);
+    if(recGameBonus) rows.push(['Receiving 200+ Yard Bonus', null, recGameBonus]);
+    if(rushAtt) rows.push(['Rushing Yards', rushYds + ' (' + rushAtt + ' Carries)', rushYardPts]);
+    if(rushTD) rows.push(['Rushing TDs', rushTD, rushTdPts]);
+    rows.push(['Fumbles Lost', fumblesLost, fumblePts]);
+
+    return { total: total, meta: gameMetaText(w.gameInfo), rows: rows };
+  }
+
+  async function calcK(id, name, year, week){
+    var g = await fetchGamelog(id, year);
+    var w = findWeekEvent(g.gl, week);
+    var raw = extractRawStats(g.regSeason, g.gl, w.targetEventId);
+
+    function pair(key){
+      var v = (raw[key] || '0-0').split('-');
+      return { made: parseInt(v[0], 10) || 0, att: parseInt(v[1], 10) || 0 };
+    }
+    var p1 = pair('fieldGoalsMade1_19-fieldGoalAttempts1_19');
+    var p2 = pair('fieldGoalsMade20_29-fieldGoalAttempts20_29');
+    var p3 = pair('fieldGoalsMade30_39-fieldGoalAttempts30_39');
+    var p4 = pair('fieldGoalsMade40_49-fieldGoalAttempts40_49');
+    var p5 = pair('fieldGoalsMade50-fieldGoalAttempts50');
+    var pat = pair('extraPointsMade-extraPointAttempts');
+    var longMake = parseInt(raw.longFieldGoalMade, 10) || 0;
+
+    var made0_39 = p1.made + p2.made + p3.made, att0_39 = p1.att + p2.att + p3.att;
+    var fg0_39Pts = made0_39 * 3;
+    var fg40_49Pts = p4.made * 4;
+    var fg50Pts = 0;
+    if(p5.made === 1) fg50Pts = longMake >= 60 ? 6 : 5;
+    else if(p5.made > 1) fg50Pts = (p5.made - 1) * 5 + (longMake >= 60 ? 6 : 5);
+
+    var missed = (att0_39 - made0_39) + (p4.att - p4.made) + (p5.att - p5.made);
+    var missedPts = missed * -0.5;
+    var patMissed = pat.att - pat.made;
+    var patPts = pat.made * 1 + patMissed * -1;
+
+    var total = fg0_39Pts + fg40_49Pts + fg50Pts + missedPts + patPts;
+
+    var rows = [];
+    rows.push(['FG 0–39 Yards (' + made0_39 + '/' + att0_39 + ')', null, fg0_39Pts]);
+    rows.push(['FG 40–49 Yards (' + p4.made + '/' + p4.att + ')', null, fg40_49Pts]);
+    rows.push(['FG 50+ Yards (' + p5.made + '/' + p5.att + ', längster: ' + longMake + ')', null, fg50Pts]);
+    if(missed) rows.push(['FG verpasst', missed, missedPts]);
+    rows.push(['PAT (' + pat.made + '/' + pat.att + ')', null, patPts]);
+
+    return { total: total, meta: gameMetaText(w.gameInfo), rows: rows };
+  }
+
+  async function calcDST(slug, teamName, year, week){
+    var schedule = await fetchJson(TEAM_BASE + slug + '/schedule?season=' + year);
+    var event = (schedule.events || []).filter(function(ev){
+      return ev.week && ev.week.number === week && ev.seasonType && ev.seasonType.type === 2;
+    })[0];
+    if(!event) throw { code: 'no-game' };
+
+    var teamAbbr = slug.toUpperCase();
+    var competitors = event.competitions[0].competitors;
+    var thisComp = competitors.filter(function(c){ return c.team.abbreviation === teamAbbr; })[0];
+    var oppComp = competitors.filter(function(c){ return c.team.abbreviation !== teamAbbr; })[0];
+    var pointsAllowed = (oppComp.score && oppComp.score.value) || 0;
+    var thisScore = (thisComp.score && thisComp.score.value) || 0;
+    var result = thisScore > pointsAllowed ? 'W' : (thisScore < pointsAllowed ? 'L' : 'T');
+    var atVs = thisComp.homeAway === 'home' ? 'vs.' : 'bei';
+
+    setStatus('Lade Boxscore-Details…', false);
+    var sum = await fetchJson(SUMMARY_BASE + event.id);
+    var teams = (sum.boxscore || {}).teams || [];
+    var thisStats = {}, oppStats = {};
+    teams.forEach(function(t){
+      var map = {};
+      (t.statistics || []).forEach(function(s){ map[s.name] = s.displayValue; });
+      if(t.team.abbreviation === teamAbbr) thisStats = map;
+      else oppStats = map;
+    });
+
+    var sacks = parseInt((oppStats.sacksYardsLost || '0-0').split('-')[0], 10) || 0;
+    var interceptions = parseFloat(oppStats.interceptions) || 0;
+    var fumRec = parseFloat(oppStats.fumblesLost) || 0;
+    var defTD = parseFloat(thisStats.defensiveTouchdowns) || 0;
+    var yardsAllowed = parseFloat(oppStats.totalYards) || 0;
+
+    var sackPts = sacks * 1, intPts = interceptions * 2, fumRecPts = fumRec * 2, defTdPts = defTD * 6;
+    var paBonus = ptsAllowedBonus(pointsAllowed), yaBonus = yardsAllowedBonus(yardsAllowed);
+
+    var total = sackPts + intPts + fumRecPts + defTdPts + paBonus + yaBonus;
+
+    var rows = [];
+    rows.push(['Sacks', sacks, sackPts]);
+    rows.push(['Interceptions', interceptions, intPts]);
+    rows.push(['Fumbles Recovered', fumRec, fumRecPts]);
+    rows.push(['Defensive/ST TDs', defTD, defTdPts]);
+    rows.push(['Points Allowed', pointsAllowed, paBonus]);
+    rows.push(['Yards Allowed', yardsAllowed, yaBonus]);
+
+    var meta = atVs + ' ' + oppComp.team.displayName + ' · ' + thisScore + '-' + pointsAllowed + ' (' + result + ')';
+    return { total: total, meta: meta, rows: rows };
+  }
+
+  var CALCULATORS = { QB: calcQB, RB: calcRB, WR: calcWRTE, TE: calcWRTE, K: calcK, DST: calcDST };
+
   async function calculate(){
-    var qbId = qbSelect.value;
-    var qbName = qbSelect.options[qbSelect.selectedIndex].dataset.name;
+    var pos = posSelect.value;
+    var id = playerSelect.value;
+    var name = playerSelect.options[playerSelect.selectedIndex] ? playerSelect.options[playerSelect.selectedIndex].dataset.name : null;
     var year = yearSelect.value;
     var week = parseInt(weekSelect.value, 10);
+
+    if(!id || !name){ setStatus('Bitte warten, bis die Liste geladen ist.', true); return; }
 
     resultEl.hidden = true;
     breakdownEl.innerHTML = '';
@@ -1544,112 +1998,14 @@
     setStatus('Lade Daten von ESPN…', false);
 
     try {
-      var glRes = await fetch('https://site.web.api.espn.com/apis/common/v3/sports/football/nfl/athletes/' + qbId + '/gamelog?season=' + year);
-      if(!glRes.ok) throw new Error('gamelog');
-      var gl = await glRes.json();
+      var result = await CALCULATORS[pos](id, name, year, week);
 
-      var regSeason = (gl.seasonTypes || []).filter(function(st){
-        return /Regular Season/i.test(st.displayName || '');
-      })[0];
-      if(!regSeason) throw { code: 'no-data' };
-
-      var targetEventId = null, gameInfo = null;
-      var events = gl.events || {};
-      Object.keys(events).forEach(function(eid){
-        if(events[eid].week === week && !targetEventId){
-          targetEventId = eid;
-          gameInfo = events[eid];
-        }
-      });
-      if(!targetEventId) throw { code: 'no-game' };
-
-      var statsArr = null;
-      regSeason.categories.forEach(function(cat){
-        cat.events.forEach(function(ev){
-          if(ev.eventId === targetEventId) statsArr = ev.stats;
-        });
-      });
-      if(!statsArr) throw { code: 'no-stats' };
-
-      var raw = {};
-      gl.names.forEach(function(n, i){ raw[n] = parseFloat(statsArr[i]) || 0; });
-
-      setStatus('Lade Boxscore-Details…', false);
-      var sumRes = await fetch('https://site.api.espn.com/apis/site/v2/sports/football/nfl/summary?event=' + targetEventId);
-      if(!sumRes.ok) throw new Error('summary');
-      var sum = await sumRes.json();
-
-      var fumblesLost = 0;
-      ((sum.boxscore || {}).players || []).forEach(function(team){
-        (team.statistics || []).forEach(function(cat){
-          if(cat.name === 'fumbles'){
-            (cat.athletes || []).forEach(function(ath){
-              if(ath.athlete && ath.athlete.displayName === qbName){
-                var idx = cat.labels.indexOf('LOST');
-                fumblesLost = parseFloat(ath.stats[idx]) || 0;
-              }
-            });
-          }
-        });
-      });
-
-      var bonus50 = 0, twoPt = 0;
-      var escapedName = qbName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      var twoPtRe = new RegExp(escapedName + '\\s+(Pass to [^)]+|Rush) for Two-Point Conversion');
-      (sum.scoringPlays || []).forEach(function(p){
-        var text = p.text || '';
-        var typeText = (p.type && p.type.text) || '';
-        if(typeText === 'Passing Touchdown'){
-          var m1 = text.match(/^(\d+)\s+Yd pass from (.+?)\s*\(/);
-          if(m1 && m1[2].trim() === qbName && parseInt(m1[1], 10) >= 50) bonus50 += 5;
-        }
-        if(typeText === 'Rushing Touchdown'){
-          var m2 = text.match(/^(.+?)\s+(\d+)\s+Yd Rush\s*\(/);
-          if(m2 && m2[1].trim() === qbName && parseInt(m2[2], 10) >= 50) bonus50 += 5;
-        }
-        if(twoPtRe.test(text)) twoPt += 2;
-      });
-
-      var passYds = raw.passingYards || 0, comp = raw.completions || 0, passTD = raw.passingTouchdowns || 0,
-          ints = raw.interceptions || 0, sacks = raw.sacks || 0,
-          rushYds = raw.rushingYards || 0, rushTD = raw.rushingTouchdowns || 0,
-          rushAtt = raw.rushingAttempts || 0, att = raw.passingAttempts || 0;
-
-      var passYardPts = passYds / 25;
-      var compPts = comp * 0.5;
-      var passTdPts = passTD * 6;
-      var intPts = ints * -2;
-      var sackPts = sacks * -1;
-      var passGameBonus = passYds >= 400 ? 4 : (passYds >= 300 ? 2 : 0);
-
-      var rushYardPts = rushYds / 10;
-      var rushTdPts = rushTD * 6;
-      var rushGameBonus = rushYds >= 200 ? 4 : (rushYds >= 100 ? 1 : 0);
-
-      var fumblePts = fumblesLost * -2;
-
-      var total = passYardPts + compPts + passTdPts + intPts + sackPts + passGameBonus
-                + rushYardPts + rushTdPts + rushGameBonus + bonus50 + twoPt + fumblePts;
-
-      totalLabelEl.textContent = qbName + ' · ' + year + ' · Woche ' + week;
-      totalValueEl.textContent = fmtPts(total) + ' Pkt';
-      var oppName = gameInfo.opponent ? gameInfo.opponent.displayName : '?';
-      var atVs = gameInfo.atVs === '@' ? 'bei' : 'vs.';
-      totalMetaEl.textContent = atVs + ' ' + oppName + ' · ' + gameInfo.score + ' (' + gameInfo.gameResult + ')';
+      totalLabelEl.textContent = name + ' · ' + year + ' · Woche ' + week;
+      totalValueEl.textContent = fmtPts(result.total) + ' Pkt';
+      totalMetaEl.textContent = result.meta;
 
       breakdownEl.innerHTML = '';
-      addRow('Passing Yards', passYds, passYardPts);
-      addRow('Completions (' + comp + '/' + att + ')', null, compPts);
-      addRow('Passing TDs', passTD, passTdPts);
-      addRow('Interceptions', ints, intPts);
-      addRow('Sacked', sacks, sackPts);
-      if(passGameBonus) addRow('Passing Yard-Game-Bonus', null, passGameBonus);
-      addRow('Rushing Yards', rushYds + ' (' + rushAtt + ' Carries)', rushYardPts);
-      addRow('Rushing TDs', rushTD, rushTdPts);
-      if(rushGameBonus) addRow('Rushing Yard-Game-Bonus', null, rushGameBonus);
-      if(bonus50) addRow('50+ Yard TD Bonus', null, bonus50);
-      if(twoPt) addRow('2pt Conversions', null, twoPt);
-      addRow('Fumbles Lost', fumblesLost, fumblePts);
+      result.rows.forEach(function(r){ addRow(r[0], r[1], r[2]); });
 
       setStatus('', false);
       resultEl.hidden = false;
@@ -1687,6 +2043,7 @@
   if(!tabsEl) return;
 
   var cache = {};
+  var activePos = 'QB';
 
   function render(pos){
     var data = cache[pos];
@@ -1706,6 +2063,7 @@
   }
 
   async function loadPosition(pos){
+    activePos = pos;
     if(cache[pos]){ render(pos); return; }
     statusEl.textContent = 'Lade Live-Daten…';
     statusEl.classList.remove('error');
@@ -1736,10 +2094,12 @@
         };
       }).sort(function(a, b){ return a.adp - b.adp; });
       cache[pos] = list;
-      render(pos);
+      if(activePos === pos) render(pos);
     } catch(err){
-      statusEl.textContent = 'Live-Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
-      statusEl.classList.add('error');
+      if(activePos === pos){
+        statusEl.textContent = 'Live-Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
+        statusEl.classList.add('error');
+      }
     }
   }
 
