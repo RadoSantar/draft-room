@@ -654,6 +654,63 @@
   @media (max-width:640px){
     .back-to-top{right:14px;bottom:14px;width:40px;height:40px;}
   }
+
+  /* Overview / table of contents */
+  .toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
+  .toc-card{
+    display:block;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--hash);
+    border-radius:8px;
+    padding:12px 14px;
+    text-decoration:none;
+    transition:border-left-color .2s ease, transform .2s ease;
+  }
+  .toc-card:hover{border-left-color:var(--amber);transform:translateX(2px);}
+  .toc-card .toc-num{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    color:var(--hash);
+    letter-spacing:.06em;
+  }
+  .toc-card .toc-title{
+    display:block;
+    font-family:'Anton', sans-serif;
+    font-size:16px;
+    letter-spacing:.01em;
+    color:var(--turf);
+    margin:2px 0 4px;
+  }
+  .toc-card .toc-desc{font-size:13px;color:var(--ink-soft);}
+  .tools-callout{
+    background:var(--turf);
+    border-radius:10px;
+    padding:16px 18px;
+    margin-top:16px;
+    color:var(--chalk);
+  }
+  .tools-callout .tools-title{
+    font-family:'Anton', sans-serif;
+    font-size:15px;
+    letter-spacing:.02em;
+    color:var(--amber);
+    margin-bottom:8px;
+  }
+  .tools-callout ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
+  .tools-callout li{font-size:14px;position:relative;padding-left:18px;}
+  .tools-callout li::before{
+    content:'\2192';
+    position:absolute;
+    left:0;
+    color:var(--amber);
+  }
+  .tools-callout a{color:var(--chalk);text-decoration:underline;text-decoration-color:rgba(243,239,228,0.4);}
+  .tools-callout a:hover{text-decoration-color:var(--amber);}
+  @media (max-width:640px){
+    .toc-grid{grid-template-columns:1fr;}
+  }
+
   .term-card summary{
     display:flex;
     align-items:center;
@@ -1344,9 +1401,8 @@
 <div id="mobileMenu" class="mobile-menu">
   <button class="close-btn" id="menuCloseBtn" aria-label="Menü schließen">×</button>
   <ul>
+    <li><a href="#uebersicht">Übersicht</a></li>
     <li><a href="#basics">Basics</a></li>
-    <li><a href="#faq">FAQ</a></li>
-    <li><a href="#glossar">Glossar</a></li>
     <li><a href="#scoring">Scoring</a></li>
     <li><a href="#rechner">Punkterechner</a></li>
     <li><a href="#strategie">Strategie</a></li>
@@ -1357,6 +1413,8 @@
     <li><a href="#waiver">Waiver Wire</a></li>
     <li><a href="#trades">Trades</a></li>
     <li><a href="#advanced">Advanced</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#glossar">Glossar</a></li>
   </ul>
 </div>
 
@@ -1453,7 +1511,37 @@
       </div>
     </section>
 
-    <section id="basics" data-yard="2" data-label="Basics">
+    <section id="uebersicht" data-yard="2" data-label="Übersicht">
+      <div class="kicker">Wegweiser</div>
+      <h2>Was du hier findest</h2>
+      <p class="copy">Ein kurzer Überblick über alle Kapitel und die interaktiven Tools auf dieser Seite. Über die Kapitel-Navigation oben kommst du jederzeit direkt dorthin zurück.</p>
+      <div class="toc-grid">
+        <a class="toc-card" href="#basics"><span class="toc-num mono">01</span><span class="toc-title">Basics</span><span class="toc-desc">Liga-Format, Roster-Größe und die wichtigsten Eckdaten auf einen Blick.</span></a>
+        <a class="toc-card" href="#scoring"><span class="toc-num mono">02</span><span class="toc-title">Scoring</span><span class="toc-desc">Das komplette Punktesystem – was jede Aktion wert ist.</span></a>
+        <a class="toc-card" href="#rechner"><span class="toc-num mono">03</span><span class="toc-title">Punkterechner</span><span class="toc-desc">Live-Rechner für alle Positionen – Stats eintragen, Punkte sehen.</span></a>
+        <a class="toc-card" href="#strategie"><span class="toc-num mono">04</span><span class="toc-title">Strategie</span><span class="toc-desc">Wie sich unser Scoring auf Draft- und Waiver-Entscheidungen auswirkt.</span></a>
+        <a class="toc-card" href="#draft-ablauf"><span class="toc-num mono">05</span><span class="toc-title">Draft-Ablauf</span><span class="toc-desc">Wie der Draft-Tag abläuft, inklusive Mock-Draft-Tipps.</span></a>
+        <a class="toc-card" href="#beliebte-picks"><span class="toc-num mono">06</span><span class="toc-title">Beliebte Picks</span><span class="toc-desc">Live-ADP und Ownership-Werte aus allen ESPN-Ligen.</span></a>
+        <a class="toc-card" href="#draft-tipps"><span class="toc-num mono">07</span><span class="toc-title">Draft-Tipps</span><span class="toc-desc">Praktische Tipps für den Draft, auf unser Format zugeschnitten.</span></a>
+        <a class="toc-card" href="#lineup"><span class="toc-num mono">08</span><span class="toc-title">Lineup</span><span class="toc-desc">Checkliste fürs wöchentliche Lineup-Management.</span></a>
+        <a class="toc-card" href="#waiver"><span class="toc-num mono">09</span><span class="toc-title">Waiver Wire</span><span class="toc-desc">Wie unser Prioritäten-System für Waiver-Claims funktioniert.</span></a>
+        <a class="toc-card" href="#trades"><span class="toc-num mono">10</span><span class="toc-title">Trades</span><span class="toc-desc">Wie ein Trade abläuft, plus Fairness-Kalkulator.</span></a>
+        <a class="toc-card" href="#advanced"><span class="toc-num mono">11</span><span class="toc-title">Advanced</span><span class="toc-desc">Vertiefte Draft- und Trade-Strategien für Fortgeschrittene.</span></a>
+        <a class="toc-card" href="#faq"><span class="toc-num mono">12</span><span class="toc-title">FAQ</span><span class="toc-desc">Die häufigsten Einsteigerfragen, kurz beantwortet.</span></a>
+        <a class="toc-card" href="#glossar"><span class="toc-num mono">13</span><span class="toc-title">Glossar</span><span class="toc-desc">Alle Fachbegriffe zum Nachschlagen, verlinkt aus dem ganzen Text.</span></a>
+      </div>
+      <div class="tools-callout">
+        <div class="tools-title">Interaktive Tools</div>
+        <ul>
+          <li><a href="#rechner">Punkterechner</a> – Stats eines Spielers eintragen und live die Fantasy-Punkte für QB, RB, WR, TE, K oder DEF sehen.</li>
+          <li><a href="#beliebte-picks">Beliebteste Picks</a> – aktuelle ADP- und Ownership-Ranglisten je Position, live von ESPN geladen.</li>
+          <li><a href="#trades">Trade-Fairness-Kalkulator</a> – Marktwerte beider Trade-Seiten vergleichen und sehen, wie ausgeglichen ein Deal ist.</li>
+          <li>Team-Design – oben im Header per Dropdown das Farbschema deines Lieblings-NFL-Teams für die ganze Seite aktivieren.</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="basics" data-yard="9" data-label="Basics">
       <div class="kicker">Liga-Steckbrief</div>
       <h2>Basics</h2>
       <p class="copy">Wir spielen auf der ESPN Fantasy App, im Kern nach Standard-Regeln – aber mit individuell angepasstem Scoring und einer größeren Rostergröße als in klassischen Ligen. Der Draft läuft als <a class="gloss-link" href="#term-snake-draft">Snake Draft</a>, Waiver-Zugriff wird über eine feste <a class="gloss-link" href="#term-waiver-priority-order">Reihenfolge</a> geregelt (kein <a class="gloss-link" href="#term-faab">FAAB</a>-Budget). Bewusstes Design-Ziel unseres Scorings: der Quarterback ist die klar stärkste Position.</p>
@@ -1494,86 +1582,7 @@
       <p class="copy">Landet ein Spieler auf der Injured-Reserve-Liste der NFL, fällt er für mindestens 4 Wochen aus. Genau dann kannst du ihn auf deinen IR-Slot legen – er blockiert dort keinen normalen Roster-Platz, und du kannst dafür einen Ersatzspieler vom <a class="gloss-link" href="#term-waiver-wire">Waiver Wire</a> holen. Ist der Spieler wieder einsatzbereit, musst du dich entscheiden: den Ersatzspieler behalten oder zurück auf den ursprünglichen Spieler wechseln.</p>
     </section>
 
-    <section id="faq" data-yard="10" data-label="FAQ">
-      <div class="kicker">Bevor's losgeht · für Einsteiger</div>
-      <h2>Häufige Fragen</h2>
-      <p class="copy">Die wichtigsten Fragen zum Einstieg, kurz beantwortet – zum Aufklappen. Alles darüber hinaus findest du in den folgenden Kapiteln.</p>
-      <div class="faq-list">
-        <details class="faq-item">
-          <summary>Was ist Fantasy Football überhaupt?</summary>
-          <p><span>Du stellst ein virtuelles Team aus echten NFL-Spielern zusammen. Diese Spieler sammeln für dich Punkte, basierend auf ihrer tatsächlichen Leistung am jeweiligen NFL-Spieltag – jede Woche trittst du damit gegen ein anderes Team unserer Liga an.</span></p>
-        </details>
-        <details class="faq-item">
-          <summary>Ich kenne kaum NFL-Spieler – kann ich trotzdem mitspielen?</summary>
-          <p><span>Ja, problemlos. Nutze aktuelle Rankings direkt in der ESPN App oder frag KI-Tools/Google nach Empfehlungen für den Draft. Ein <a class="gloss-link" href="#term-mock-draft">Mock Draft</a> vorher (siehe Draft-Ablauf) hilft zusätzlich, ein Gefühl für Spielernamen und Tempo zu bekommen.</span></p>
-        </details>
-        <details class="faq-item">
-          <summary>Muss ich jede Woche aktiv etwas tun?</summary>
-          <p><span>Zwingend nicht, aber du solltest vor jedem <a class="gloss-link" href="#term-lineup-lock">Lineup-Lock</a> kurz dein Team checken (Verletzungen, <a class="gloss-link" href="#term-bye-week">Bye Weeks</a>) – siehe Kapitel "Lineup". Vergisst du es mal, greift unser Sicherheitsnetz mit automatischem Ersatz. Regelmäßiges Reinschauen bringt aber klar bessere Ergebnisse.</span></p>
-        </details>
-        <details class="faq-item">
-          <summary>Was, wenn ich am Draft-Tag nicht live dabei sein kann?</summary>
-          <p><span>Leg dir vorher eine Draft-Queue (Rangliste) an – das System pickt dann automatisch für dich, wenn du an der Reihe bist. Live dabei zu sein ist trotzdem von Vorteil, weil du spontan auf andere Picks reagieren kannst.</span></p>
-        </details>
-        <details class="faq-item">
-          <summary>Kostet die Teilnahme etwas?</summary>
-          <p><span>Die Liga selbst läuft kostenlos über die ESPN Fantasy App. Einzige Ausgabe ist der Champions Ring am Saisonende (ca. 5–10 CHF pro Person, wird unter allen geteilt).</span></p>
-        </details>
-        <details class="faq-item">
-          <summary>Wo sehe ich meine Punkte und den Stand meines Teams?</summary>
-          <p><span>Alles läuft über die ESPN Fantasy App bzw. Website: Live-Scores während der Spiele, Matchup-Ansicht, Liga-Standings und Push-Benachrichtigungen kannst du dort direkt einsehen bzw. aktivieren.</span></p>
-        </details>
-        <details class="faq-item">
-          <summary>Zwei meiner Spieler brauchen denselben Slot – was jetzt?</summary>
-          <p><span>Du entscheidest jede Woche selbst, wer von deinem <a class="gloss-link" href="#term-roster">Roster</a> tatsächlich startet (<a class="gloss-link" href="#term-start-sit">Start/Sit</a>). Der Rest bleibt auf der <a class="gloss-link" href="#term-bench">Bench</a> und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</span></p>
-        </details>
-      </div>
-    </section>
-
-    <section id="glossar" data-yard="18" data-label="Glossar">
-      <div class="kicker">Vokabeln zum Nachschlagen</div>
-      <h2>Glossar</h2>
-      <div class="glossary">
-        <details class="term-card" id="term-draft"><summary><span class="term">Draft</span><span class="caret">+</span></summary><p class="def">Die Auswahlrunde zu Saisonbeginn, bei der jeder Manager sein Team aus echten NFL-Spielern zusammenstellt.</p></details>
-        <details class="term-card" id="term-snake-draft"><summary><span class="term">Snake Draft</span><span class="caret">+</span></summary><p class="def">Draft-Reihenfolge dreht sich nach jeder Runde um (1→10, dann 10→1, usw.).</p></details>
-        <details class="term-card" id="term-roster"><summary><span class="term">Roster</span><span class="caret">+</span></summary><p class="def">Der komplette Kader eines Teams (Starter + Bench + IR).</p></details>
-        <details class="term-card" id="term-starter-lineup"><summary><span class="term">Starter/Lineup</span><span class="caret">+</span></summary><p class="def">Die Spieler, die in der jeweiligen Woche aktiv Punkte sammeln.</p></details>
-        <details class="term-card" id="term-bench"><summary><span class="term">Bench</span><span class="caret">+</span></summary><p class="def">Reservespieler, die nicht in der Startaufstellung stehen.</p></details>
-        <details class="term-card" id="term-ir"><summary><span class="term">IR (Injured Reserve)</span><span class="caret">+</span></summary><p class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz.</p></details>
-        <details class="term-card" id="term-flex"><summary><span class="term">Flex</span><span class="caret">+</span></summary><p class="def">Slot, der mit mehreren Positionen besetzt werden kann (bei uns: RB oder WR).</p></details>
-        <details class="term-card" id="term-waiver-wire"><summary><span class="term">Waiver Wire</span><span class="caret">+</span></summary><p class="def">Pool aller Spieler, die aktuell in keinem Team stehen.</p></details>
-        <details class="term-card" id="term-free-agent"><summary><span class="term">Free Agent</span><span class="caret">+</span></summary><p class="def">Spieler auf dem Waiver Wire, der sofort ohne Anspruch geholt werden kann.</p></details>
-        <details class="term-card" id="term-waiver-priority-order"><summary><span class="term">Waiver Priority/Order</span><span class="caret">+</span></summary><p class="def">Reihenfolge, in der Manager Zugriff auf Waiver-Spieler haben.</p></details>
-        <details class="term-card" id="term-trade"><summary><span class="term">Trade</span><span class="caret">+</span></summary><p class="def">Spielertausch zwischen zwei Managern.</p></details>
-        <details class="term-card" id="term-bye-week"><summary><span class="term">Bye Week</span><span class="caret">+</span></summary><p class="def">Woche, in der ein NFL-Team spielfrei hat.</p></details>
-        <details class="term-card" id="term-start-sit"><summary><span class="term">Start/Sit</span><span class="caret">+</span></summary><p class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</p></details>
-        <details class="term-card" id="term-lineup-lock"><summary><span class="term">Lineup-Lock</span><span class="caret">+</span></summary><p class="def">Der Zeitpunkt, ab dem ein Spieler nicht mehr aus deinem Lineup getauscht werden kann – meist der Kickoff seines NFL-Spiels.</p></details>
-        <details class="term-card" id="term-adp"><summary><span class="term">ADP</span><span class="caret">+</span></summary><p class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</p></details>
-        <details class="term-card" id="term-handcuff"><summary><span class="term">Handcuff</span><span class="caret">+</span></summary><p class="def">Der Backup-Spieler hinter einem wichtigen Starter (meist RB).</p></details>
-        <details class="term-card" id="term-sleeper"><summary><span class="term">Sleeper</span><span class="caret">+</span></summary><p class="def">Ein unterschätzter Spieler mit Potenzial.</p></details>
-        <details class="term-card" id="term-bust"><summary><span class="term">Bust</span><span class="caret">+</span></summary><p class="def">Ein hoch gedrafteter Spieler, der enttäuscht.</p></details>
-        <details class="term-card" id="term-streaming"><summary><span class="term">Streaming</span><span class="caret">+</span></summary><p class="def">Wöchentliches Wechseln einer Position je nach bestem Matchup.</p></details>
-        <details class="term-card" id="term-ppr"><summary><span class="term">PPR</span><span class="caret">+</span></summary><p class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte. Bei uns Full PPR (1 Punkt/Catch); andere Ligen nutzen oft Half-PPR (0,5 Punkte) oder Standard-Scoring (0 Punkte, nur Yards/TDs zählen).</p></details>
-        <details class="term-card" id="term-questionable"><summary><span class="term">Questionable (Q)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz ungewiss, 50/50.</p></details>
-        <details class="term-card" id="term-doubtful"><summary><span class="term">Doubtful (D)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz unwahrscheinlich.</p></details>
-        <details class="term-card" id="term-out"><summary><span class="term">Out (O)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: spielt diese Woche sicher nicht.</p></details>
-        <details class="term-card" id="term-pup"><summary><span class="term">PUP</span><span class="caret">+</span></summary><p class="def">Physically Unable to Perform – Liste zu Saisonbeginn für Spieler, die die Vorbereitung verletzungsbedingt verpasst haben.</p></details>
-        <details class="term-card" id="term-injury-report"><summary><span class="term">Injury Report</span><span class="caret">+</span></summary><p class="def">Offizielle NFL-Liste mit dem Verletzungsstatus aller Spieler vor dem Spieltag (Questionable/Doubtful/Out) – Basis für deine Start/Sit-Entscheidungen.</p></details>
-        <details class="term-card" id="term-mock-draft"><summary><span class="term">Mock Draft</span><span class="caret">+</span></summary><p class="def">Kostenlose Proberunde des Drafts, oft gegen Bots – zum Üben, zählt nicht für die echte Liga.</p></details>
-        <details class="term-card" id="term-faab"><summary><span class="term">FAAB</span><span class="caret">+</span></summary><p class="def">Free Agent Acquisition Budget – ein Budget-System, mit dem Manager in manchen Ligen für Waiver-Spieler bieten. Bei uns nicht im Einsatz: Wir regeln Waiver-Zugriff stattdessen über eine feste Waiver Priority/Order.</p></details>
-        <details class="term-card" id="term-bye-week-stacking"><summary><span class="term">Bye-Week-Stacking</span><span class="caret">+</span></summary><p class="def">Wenn zu viele Starter derselben Position in derselben Woche gleichzeitig Bye haben – schwächt dein Lineup in genau dieser Woche empfindlich.</p></details>
-        <details class="term-card" id="term-zero-rb-hero-rb"><summary><span class="term">Zero-RB / Hero-RB</span><span class="caret">+</span></summary><p class="def">Draft-Strategien: Zero-RB verzichtet in frühen Runden bewusst auf RBs zugunsten von WR/TE/QB, RB-Tiefe kommt später über Waiver. Hero-RB sichert nur einen einzigen Elite-RB früh und fokussiert danach auf andere Positionen.</p></details>
-        <details class="term-card" id="term-buy-low-sell-high"><summary><span class="term">Buy-Low / Sell-High</span><span class="caret">+</span></summary><p class="def">Trade-Strategie: Spieler nach einer schwachen Phase günstig einsammeln (Buy-Low), gehypte Spieler nach starken Wochen abgeben, solange ihr Marktwert noch hoch ist (Sell-High).</p></details>
-        <details class="term-card" id="term-strength-of-schedule"><summary><span class="term">Strength of Schedule (SOS)</span><span class="caret">+</span></summary><p class="def">Wie schwierig oder leicht die kommenden Gegner-Defenses eines Spielers sind – wichtig bei Waiver-, Trade- und vor allem Playoff-Entscheidungen.</p></details>
-        <details class="term-card" id="term-target-share"><summary><span class="term">Target Share</span><span class="caret">+</span></summary><p class="def">Anteil der Team-Pässe, die auf einen bestimmten Spieler abzielen. Ein hoher Wert deutet auf konstante Fantasy-Relevanz hin, unabhängig vom Ergebnis einzelner Wochen.</p></details>
-        <details class="term-card" id="term-snap-count"><summary><span class="term">Snap Count / Snap-%</span><span class="caret">+</span></summary><p class="def">Anzahl bzw. Anteil der gespielten Offense-Snaps eines Spielers – zeigt, wie fest er im Gameplan seines Teams verankert ist.</p></details>
-        <details class="term-card" id="term-red-zone"><summary><span class="term">Red Zone / Red-Zone-Looks</span><span class="caret">+</span></summary><p class="def">Der Bereich innerhalb der gegnerischen 20-Yard-Linie. Viele Targets oder Carries dort (Red-Zone-Looks) bedeuten hohe Touchdown-Chancen.</p></details>
-        <details class="term-card" id="term-waiver-stash"><summary><span class="term">Waiver-Stash</span><span class="caret">+</span></summary><p class="def">Ein aussichtsreicher Spieler, den du auf Verdacht vom Waiver Wire holst und erstmal nur auf der Bench "bunkerst", falls er später wichtig wird.</p></details>
-        <details class="term-card" id="term-bye-week-fill"><summary><span class="term">Bye-Week-Fill</span><span class="caret">+</span></summary><p class="def">Ein Ersatzspieler auf der Bench, der einspringt, wenn ein Stammspieler Bye Week hat.</p></details>
-      </div>
-    </section>
-
-    <section id="scoring" data-yard="26" data-label="Scoring">
+    <section id="scoring" data-yard="16" data-label="Scoring">
       <div class="kicker">Komplettes Punktesystem</div>
       <h2>Scoring</h2>
 
@@ -1708,7 +1717,7 @@
       </div>
     </section>
 
-    <section id="rechner" data-yard="34" data-label="Rechner">
+    <section id="rechner" data-yard="23" data-label="Rechner">
       <div class="kicker">Live-Daten · ESPN</div>
       <h2>Punkterechner</h2>
       <p class="copy">Wähle eine Position, einen Spieler (bzw. ein Team bei Defense), ein Jahr und eine Saison-Woche – der Rechner holt die echten NFL-Daten und rechnet sie live nach unserem Liga-Scoring um, inklusive Aufschlüsselung nach Kategorie.</p>
@@ -1757,7 +1766,7 @@
       </div>
     </section>
 
-    <section id="strategie" data-yard="42" data-label="Strategie">
+    <section id="strategie" data-yard="30" data-label="Strategie">
       <div class="kicker">Was das Scoring bedeutet</div>
       <h2>Strategische Einordnung</h2>
       <div class="insight-list">
@@ -1769,7 +1778,7 @@
       </div>
     </section>
 
-    <section id="draft-ablauf" data-yard="50" data-label="Draft-Ablauf">
+    <section id="draft-ablauf" data-yard="37" data-label="Draft-Ablauf">
       <div class="kicker">So läuft der Draft-Tag ab</div>
       <h2>Draft-Ablauf</h2>
       <div class="tip-box">
@@ -1797,7 +1806,7 @@
       </ul>
     </section>
 
-    <section id="beliebte-picks" data-yard="58" data-label="Picks">
+    <section id="beliebte-picks" data-yard="44" data-label="Picks">
       <div class="kicker">Live-Daten · ESPN Fantasy</div>
       <h2>Beliebteste Picks nach Position</h2>
       <p class="copy">Live-Rangliste nach <a class="gloss-link" href="#term-adp">Average Draft Position (ADP)</a> und Ownership-Quote über alle ESPN-Fantasy-Ligen – ein guter Anhaltspunkt, wer aktuell wo eingeordnet wird. Lädt bei jedem Seitenaufruf automatisch die aktuellen Werte.</p>
@@ -1816,7 +1825,7 @@
       <p class="note-text">ADP = durchschnittliche Draft-Position, Own% = Anteil der ESPN-Ligen, in denen der Spieler aktuell gerostert ist. Beide Werte verschieben sich täglich bis zum Saisonstart.</p>
     </section>
 
-    <section id="draft-tipps" data-yard="66" data-label="Draft-Tipps">
+    <section id="draft-tipps" data-yard="51" data-label="Draft-Tipps">
       <div class="kicker">Stand 2026 · an unser Format angepasst</div>
       <h2>Draft-Strategie-Tipps</h2>
       <details class="tip-card">
@@ -1861,7 +1870,7 @@
       </details>
     </section>
 
-    <section id="lineup" data-yard="74" data-label="Lineup">
+    <section id="lineup" data-yard="58" data-label="Lineup">
       <div class="kicker">Vor jedem Lineup-Lock</div>
       <h2>Wöchentliches Lineup-Management</h2>
       <div class="check-list">
@@ -1892,7 +1901,7 @@
       </div>
     </section>
 
-    <section id="waiver" data-yard="82" data-label="Waiver">
+    <section id="waiver" data-yard="65" data-label="Waiver">
       <div class="kicker">ESPN · Reihenfolge-System</div>
       <h2>Waiver Wire</h2>
       <ul class="info-list">
@@ -1909,7 +1918,7 @@
       </div>
     </section>
 
-    <section id="trades" data-yard="90" data-label="Trades">
+    <section id="trades" data-yard="72" data-label="Trades">
       <div class="kicker">Spielertausch zwischen Managern</div>
       <h2>Trades</h2>
       <p class="copy">Ein Trade ist ein Spielertausch zwischen zwei Managern – ihr einigt euch direkt miteinander, ohne dass <a class="gloss-link" href="#term-waiver-wire">Waiver Wire</a> oder <a class="gloss-link" href="#term-free-agent">Free Agents</a> beteiligt sind. Anders als beim Draft handelt ihr hier live gegeneinander: Was für dich ein guter Deal ist, hängt stark von deinem eigenen <a class="gloss-link" href="#term-roster">Roster</a> und Bedarf ab, nicht nur vom reinen Marktwert der Spieler.</p>
@@ -1975,7 +1984,7 @@
       </div>
     </section>
 
-    <section id="advanced" data-yard="98" data-label="Advanced">
+    <section id="advanced" data-yard="79" data-label="Advanced">
       <div class="kicker">Endzone · für Fortgeschrittene</div>
       <h2>Advanced-Strategien</h2>
       <p class="copy">Wer die Basics und die Draft-Tipps schon verinnerlicht hat, findet hier ein paar tiefere Konzepte für den nächsten Schritt.</p>
@@ -2027,6 +2036,85 @@
         </summary>
         <p><a class="gloss-link" href="#term-target-share">Target Share</a>, <a class="gloss-link" href="#term-snap-count">Snap-%</a> und <a class="gloss-link" href="#term-red-zone">Red-Zone-Looks</a> sagen oft mehr über die künftige Fantasy-Relevanz eines Spielers aus als reine Yards oder TDs der letzten Woche – hilfreich vor allem für Waiver-Wire-Entscheidungen.</p>
       </details>
+    </section>
+
+    <section id="faq" data-yard="86" data-label="FAQ">
+      <div class="kicker">Zum Nachschlagen · für Einsteiger</div>
+      <h2>Häufige Fragen</h2>
+      <p class="copy">Die wichtigsten Fragen zum Einstieg, kurz beantwortet – zum Aufklappen. Alles darüber hinaus findest du in den anderen Kapiteln dieser Seite (siehe <a class="gloss-link" href="#uebersicht">Übersicht</a>).</p>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>Was ist Fantasy Football überhaupt?</summary>
+          <p><span>Du stellst ein virtuelles Team aus echten NFL-Spielern zusammen. Diese Spieler sammeln für dich Punkte, basierend auf ihrer tatsächlichen Leistung am jeweiligen NFL-Spieltag – jede Woche trittst du damit gegen ein anderes Team unserer Liga an.</span></p>
+        </details>
+        <details class="faq-item">
+          <summary>Ich kenne kaum NFL-Spieler – kann ich trotzdem mitspielen?</summary>
+          <p><span>Ja, problemlos. Nutze aktuelle Rankings direkt in der ESPN App oder frag KI-Tools/Google nach Empfehlungen für den Draft. Ein <a class="gloss-link" href="#term-mock-draft">Mock Draft</a> vorher (siehe Draft-Ablauf) hilft zusätzlich, ein Gefühl für Spielernamen und Tempo zu bekommen.</span></p>
+        </details>
+        <details class="faq-item">
+          <summary>Muss ich jede Woche aktiv etwas tun?</summary>
+          <p><span>Zwingend nicht, aber du solltest vor jedem <a class="gloss-link" href="#term-lineup-lock">Lineup-Lock</a> kurz dein Team checken (Verletzungen, <a class="gloss-link" href="#term-bye-week">Bye Weeks</a>) – siehe Kapitel "Lineup". Vergisst du es mal, greift unser Sicherheitsnetz mit automatischem Ersatz. Regelmäßiges Reinschauen bringt aber klar bessere Ergebnisse.</span></p>
+        </details>
+        <details class="faq-item">
+          <summary>Was, wenn ich am Draft-Tag nicht live dabei sein kann?</summary>
+          <p><span>Leg dir vorher eine Draft-Queue (Rangliste) an – das System pickt dann automatisch für dich, wenn du an der Reihe bist. Live dabei zu sein ist trotzdem von Vorteil, weil du spontan auf andere Picks reagieren kannst.</span></p>
+        </details>
+        <details class="faq-item">
+          <summary>Kostet die Teilnahme etwas?</summary>
+          <p><span>Die Liga selbst läuft kostenlos über die ESPN Fantasy App. Einzige Ausgabe ist der Champions Ring am Saisonende (ca. 5–10 CHF pro Person, wird unter allen geteilt).</span></p>
+        </details>
+        <details class="faq-item">
+          <summary>Wo sehe ich meine Punkte und den Stand meines Teams?</summary>
+          <p><span>Alles läuft über die ESPN Fantasy App bzw. Website: Live-Scores während der Spiele, Matchup-Ansicht, Liga-Standings und Push-Benachrichtigungen kannst du dort direkt einsehen bzw. aktivieren.</span></p>
+        </details>
+        <details class="faq-item">
+          <summary>Zwei meiner Spieler brauchen denselben Slot – was jetzt?</summary>
+          <p><span>Du entscheidest jede Woche selbst, wer von deinem <a class="gloss-link" href="#term-roster">Roster</a> tatsächlich startet (<a class="gloss-link" href="#term-start-sit">Start/Sit</a>). Der Rest bleibt auf der <a class="gloss-link" href="#term-bench">Bench</a> und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</span></p>
+        </details>
+      </div>
+    </section>
+
+    <section id="glossar" data-yard="93" data-label="Glossar">
+      <div class="kicker">Vokabeln zum Nachschlagen</div>
+      <h2>Glossar</h2>
+      <div class="glossary">
+        <details class="term-card" id="term-draft"><summary><span class="term">Draft</span><span class="caret">+</span></summary><p class="def">Die Auswahlrunde zu Saisonbeginn, bei der jeder Manager sein Team aus echten NFL-Spielern zusammenstellt.</p></details>
+        <details class="term-card" id="term-snake-draft"><summary><span class="term">Snake Draft</span><span class="caret">+</span></summary><p class="def">Draft-Reihenfolge dreht sich nach jeder Runde um (1→10, dann 10→1, usw.).</p></details>
+        <details class="term-card" id="term-roster"><summary><span class="term">Roster</span><span class="caret">+</span></summary><p class="def">Der komplette Kader eines Teams (Starter + Bench + IR).</p></details>
+        <details class="term-card" id="term-starter-lineup"><summary><span class="term">Starter/Lineup</span><span class="caret">+</span></summary><p class="def">Die Spieler, die in der jeweiligen Woche aktiv Punkte sammeln.</p></details>
+        <details class="term-card" id="term-bench"><summary><span class="term">Bench</span><span class="caret">+</span></summary><p class="def">Reservespieler, die nicht in der Startaufstellung stehen.</p></details>
+        <details class="term-card" id="term-ir"><summary><span class="term">IR (Injured Reserve)</span><span class="caret">+</span></summary><p class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz.</p></details>
+        <details class="term-card" id="term-flex"><summary><span class="term">Flex</span><span class="caret">+</span></summary><p class="def">Slot, der mit mehreren Positionen besetzt werden kann (bei uns: RB oder WR).</p></details>
+        <details class="term-card" id="term-waiver-wire"><summary><span class="term">Waiver Wire</span><span class="caret">+</span></summary><p class="def">Pool aller Spieler, die aktuell in keinem Team stehen.</p></details>
+        <details class="term-card" id="term-free-agent"><summary><span class="term">Free Agent</span><span class="caret">+</span></summary><p class="def">Spieler auf dem Waiver Wire, der sofort ohne Anspruch geholt werden kann.</p></details>
+        <details class="term-card" id="term-waiver-priority-order"><summary><span class="term">Waiver Priority/Order</span><span class="caret">+</span></summary><p class="def">Reihenfolge, in der Manager Zugriff auf Waiver-Spieler haben.</p></details>
+        <details class="term-card" id="term-trade"><summary><span class="term">Trade</span><span class="caret">+</span></summary><p class="def">Spielertausch zwischen zwei Managern.</p></details>
+        <details class="term-card" id="term-bye-week"><summary><span class="term">Bye Week</span><span class="caret">+</span></summary><p class="def">Woche, in der ein NFL-Team spielfrei hat.</p></details>
+        <details class="term-card" id="term-start-sit"><summary><span class="term">Start/Sit</span><span class="caret">+</span></summary><p class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</p></details>
+        <details class="term-card" id="term-lineup-lock"><summary><span class="term">Lineup-Lock</span><span class="caret">+</span></summary><p class="def">Der Zeitpunkt, ab dem ein Spieler nicht mehr aus deinem Lineup getauscht werden kann – meist der Kickoff seines NFL-Spiels.</p></details>
+        <details class="term-card" id="term-adp"><summary><span class="term">ADP</span><span class="caret">+</span></summary><p class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</p></details>
+        <details class="term-card" id="term-handcuff"><summary><span class="term">Handcuff</span><span class="caret">+</span></summary><p class="def">Der Backup-Spieler hinter einem wichtigen Starter (meist RB).</p></details>
+        <details class="term-card" id="term-sleeper"><summary><span class="term">Sleeper</span><span class="caret">+</span></summary><p class="def">Ein unterschätzter Spieler mit Potenzial.</p></details>
+        <details class="term-card" id="term-bust"><summary><span class="term">Bust</span><span class="caret">+</span></summary><p class="def">Ein hoch gedrafteter Spieler, der enttäuscht.</p></details>
+        <details class="term-card" id="term-streaming"><summary><span class="term">Streaming</span><span class="caret">+</span></summary><p class="def">Wöchentliches Wechseln einer Position je nach bestem Matchup.</p></details>
+        <details class="term-card" id="term-ppr"><summary><span class="term">PPR</span><span class="caret">+</span></summary><p class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte. Bei uns Full PPR (1 Punkt/Catch); andere Ligen nutzen oft Half-PPR (0,5 Punkte) oder Standard-Scoring (0 Punkte, nur Yards/TDs zählen).</p></details>
+        <details class="term-card" id="term-questionable"><summary><span class="term">Questionable (Q)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz ungewiss, 50/50.</p></details>
+        <details class="term-card" id="term-doubtful"><summary><span class="term">Doubtful (D)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz unwahrscheinlich.</p></details>
+        <details class="term-card" id="term-out"><summary><span class="term">Out (O)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: spielt diese Woche sicher nicht.</p></details>
+        <details class="term-card" id="term-pup"><summary><span class="term">PUP</span><span class="caret">+</span></summary><p class="def">Physically Unable to Perform – Liste zu Saisonbeginn für Spieler, die die Vorbereitung verletzungsbedingt verpasst haben.</p></details>
+        <details class="term-card" id="term-injury-report"><summary><span class="term">Injury Report</span><span class="caret">+</span></summary><p class="def">Offizielle NFL-Liste mit dem Verletzungsstatus aller Spieler vor dem Spieltag (Questionable/Doubtful/Out) – Basis für deine Start/Sit-Entscheidungen.</p></details>
+        <details class="term-card" id="term-mock-draft"><summary><span class="term">Mock Draft</span><span class="caret">+</span></summary><p class="def">Kostenlose Proberunde des Drafts, oft gegen Bots – zum Üben, zählt nicht für die echte Liga.</p></details>
+        <details class="term-card" id="term-faab"><summary><span class="term">FAAB</span><span class="caret">+</span></summary><p class="def">Free Agent Acquisition Budget – ein Budget-System, mit dem Manager in manchen Ligen für Waiver-Spieler bieten. Bei uns nicht im Einsatz: Wir regeln Waiver-Zugriff stattdessen über eine feste Waiver Priority/Order.</p></details>
+        <details class="term-card" id="term-bye-week-stacking"><summary><span class="term">Bye-Week-Stacking</span><span class="caret">+</span></summary><p class="def">Wenn zu viele Starter derselben Position in derselben Woche gleichzeitig Bye haben – schwächt dein Lineup in genau dieser Woche empfindlich.</p></details>
+        <details class="term-card" id="term-zero-rb-hero-rb"><summary><span class="term">Zero-RB / Hero-RB</span><span class="caret">+</span></summary><p class="def">Draft-Strategien: Zero-RB verzichtet in frühen Runden bewusst auf RBs zugunsten von WR/TE/QB, RB-Tiefe kommt später über Waiver. Hero-RB sichert nur einen einzigen Elite-RB früh und fokussiert danach auf andere Positionen.</p></details>
+        <details class="term-card" id="term-buy-low-sell-high"><summary><span class="term">Buy-Low / Sell-High</span><span class="caret">+</span></summary><p class="def">Trade-Strategie: Spieler nach einer schwachen Phase günstig einsammeln (Buy-Low), gehypte Spieler nach starken Wochen abgeben, solange ihr Marktwert noch hoch ist (Sell-High).</p></details>
+        <details class="term-card" id="term-strength-of-schedule"><summary><span class="term">Strength of Schedule (SOS)</span><span class="caret">+</span></summary><p class="def">Wie schwierig oder leicht die kommenden Gegner-Defenses eines Spielers sind – wichtig bei Waiver-, Trade- und vor allem Playoff-Entscheidungen.</p></details>
+        <details class="term-card" id="term-target-share"><summary><span class="term">Target Share</span><span class="caret">+</span></summary><p class="def">Anteil der Team-Pässe, die auf einen bestimmten Spieler abzielen. Ein hoher Wert deutet auf konstante Fantasy-Relevanz hin, unabhängig vom Ergebnis einzelner Wochen.</p></details>
+        <details class="term-card" id="term-snap-count"><summary><span class="term">Snap Count / Snap-%</span><span class="caret">+</span></summary><p class="def">Anzahl bzw. Anteil der gespielten Offense-Snaps eines Spielers – zeigt, wie fest er im Gameplan seines Teams verankert ist.</p></details>
+        <details class="term-card" id="term-red-zone"><summary><span class="term">Red Zone / Red-Zone-Looks</span><span class="caret">+</span></summary><p class="def">Der Bereich innerhalb der gegnerischen 20-Yard-Linie. Viele Targets oder Carries dort (Red-Zone-Looks) bedeuten hohe Touchdown-Chancen.</p></details>
+        <details class="term-card" id="term-waiver-stash"><summary><span class="term">Waiver-Stash</span><span class="caret">+</span></summary><p class="def">Ein aussichtsreicher Spieler, den du auf Verdacht vom Waiver Wire holst und erstmal nur auf der Bench "bunkerst", falls er später wichtig wird.</p></details>
+        <details class="term-card" id="term-bye-week-fill"><summary><span class="term">Bye-Week-Fill</span><span class="caret">+</span></summary><p class="def">Ein Ersatzspieler auf der Bench, der einspringt, wenn ein Stammspieler Bye Week hat.</p></details>
+      </div>
     </section>
   </main>
 </div>
