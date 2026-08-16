@@ -434,6 +434,7 @@
     border:1px solid var(--card-border);
     border-radius:8px;
     padding:0 16px;
+    overflow:hidden;
   }
   .faq-item summary{
     font-family:'Source Serif 4', serif;
@@ -454,9 +455,24 @@
     font-family:'Anton', sans-serif;
     color:var(--amber);
     font-size:18px;
+    display:inline-block;
+    transition:transform .25s ease;
   }
-  .faq-item[open] summary::after{content:'\2013';}
-  .faq-item p{font-size:14px;color:var(--ink-soft);padding-bottom:14px;max-width:64ch;}
+  .faq-item.is-open summary::after{transform:rotate(45deg);}
+  .faq-item p{
+    font-size:14px;
+    color:var(--ink-soft);
+    max-width:64ch;
+    margin:0;
+    padding-bottom:14px;
+    opacity:0;
+    transition:opacity .18s ease;
+  }
+  .faq-item.is-open p{opacity:1;transition:opacity .2s ease .08s;}
+  @media (prefers-reduced-motion: reduce){
+    .faq-item summary::after{transition:none;}
+    .faq-item p{transition:none;}
+  }
 
   /* Punkterechner */
   .calc-controls{
@@ -870,31 +886,31 @@
       <div class="faq-list">
         <details class="faq-item">
           <summary>Was ist Fantasy Football überhaupt?</summary>
-          <p>Du stellst ein virtuelles Team aus echten NFL-Spielern zusammen. Diese Spieler sammeln für dich Punkte, basierend auf ihrer tatsächlichen Leistung am jeweiligen NFL-Spieltag – jede Woche trittst du damit gegen ein anderes Team unserer Liga an.</p>
+          <p><span>Du stellst ein virtuelles Team aus echten NFL-Spielern zusammen. Diese Spieler sammeln für dich Punkte, basierend auf ihrer tatsächlichen Leistung am jeweiligen NFL-Spieltag – jede Woche trittst du damit gegen ein anderes Team unserer Liga an.</span></p>
         </details>
         <details class="faq-item">
           <summary>Ich kenne kaum NFL-Spieler – kann ich trotzdem mitspielen?</summary>
-          <p>Ja, problemlos. Nutze aktuelle Rankings direkt in der ESPN App oder frag KI-Tools/Google nach Empfehlungen für den Draft. Ein Mock Draft vorher (siehe Draft-Ablauf) hilft zusätzlich, ein Gefühl für Spielernamen und Tempo zu bekommen.</p>
+          <p><span>Ja, problemlos. Nutze aktuelle Rankings direkt in der ESPN App oder frag KI-Tools/Google nach Empfehlungen für den Draft. Ein Mock Draft vorher (siehe Draft-Ablauf) hilft zusätzlich, ein Gefühl für Spielernamen und Tempo zu bekommen.</span></p>
         </details>
         <details class="faq-item">
           <summary>Muss ich jede Woche aktiv etwas tun?</summary>
-          <p>Zwingend nicht, aber du solltest vor jedem Lineup-Lock kurz dein Team checken (Verletzungen, Bye Weeks) – siehe Kapitel "Lineup". Vergisst du es mal, greift unser Sicherheitsnetz mit automatischem Ersatz. Regelmäßiges Reinschauen bringt aber klar bessere Ergebnisse.</p>
+          <p><span>Zwingend nicht, aber du solltest vor jedem Lineup-Lock kurz dein Team checken (Verletzungen, Bye Weeks) – siehe Kapitel "Lineup". Vergisst du es mal, greift unser Sicherheitsnetz mit automatischem Ersatz. Regelmäßiges Reinschauen bringt aber klar bessere Ergebnisse.</span></p>
         </details>
         <details class="faq-item">
           <summary>Was, wenn ich am Draft-Tag nicht live dabei sein kann?</summary>
-          <p>Leg dir vorher eine Draft-Queue (Rangliste) an – das System pickt dann automatisch für dich, wenn du an der Reihe bist. Live dabei zu sein ist trotzdem von Vorteil, weil du spontan auf andere Picks reagieren kannst.</p>
+          <p><span>Leg dir vorher eine Draft-Queue (Rangliste) an – das System pickt dann automatisch für dich, wenn du an der Reihe bist. Live dabei zu sein ist trotzdem von Vorteil, weil du spontan auf andere Picks reagieren kannst.</span></p>
         </details>
         <details class="faq-item">
           <summary>Kostet die Teilnahme etwas?</summary>
-          <p>Die Liga selbst läuft kostenlos über die ESPN Fantasy App. Einzige Ausgabe ist der Champions Ring am Saisonende (ca. 5–10 CHF pro Person, wird unter allen geteilt).</p>
+          <p><span>Die Liga selbst läuft kostenlos über die ESPN Fantasy App. Einzige Ausgabe ist der Champions Ring am Saisonende (ca. 5–10 CHF pro Person, wird unter allen geteilt).</span></p>
         </details>
         <details class="faq-item">
           <summary>Wo sehe ich meine Punkte und den Stand meines Teams?</summary>
-          <p>Alles läuft über die ESPN Fantasy App bzw. Website: Live-Scores während der Spiele, Matchup-Ansicht, Liga-Standings und Push-Benachrichtigungen kannst du dort direkt einsehen bzw. aktivieren.</p>
+          <p><span>Alles läuft über die ESPN Fantasy App bzw. Website: Live-Scores während der Spiele, Matchup-Ansicht, Liga-Standings und Push-Benachrichtigungen kannst du dort direkt einsehen bzw. aktivieren.</span></p>
         </details>
         <details class="faq-item">
           <summary>Zwei meiner Spieler brauchen denselben Slot – was jetzt?</summary>
-          <p>Du entscheidest jede Woche selbst, wer von deinem Roster tatsächlich startet (Start/Sit). Der Rest bleibt auf der Bench und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</p>
+          <p><span>Du entscheidest jede Woche selbst, wer von deinem Roster tatsächlich startet (Start/Sit). Der Rest bleibt auf der Bench und sammelt in dieser Woche keine Punkte für dich – verletzungsbedingt automatisch getauschte Spieler ausgenommen (siehe Sicherheitsnetz im Kapitel Lineup).</span></p>
         </details>
       </div>
     </section>
@@ -2112,6 +2128,74 @@
   });
 
   loadPosition('QB');
+})();
+</script>
+
+<script>
+(function(){
+  var DURATION = 260;
+  var EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
+
+  document.querySelectorAll('.faq-item').forEach(function(details){
+    var summary = details.querySelector('summary');
+    var animation = null;
+    var isClosing = false;
+    var isExpanding = false;
+
+    summary.addEventListener('click', function(e){
+      e.preventDefault();
+      details.style.overflow = 'hidden';
+      if(isClosing || !details.open){
+        openItem();
+      } else if(isExpanding || details.open){
+        closeItem();
+      }
+    });
+
+    function openItem(){
+      details.style.height = details.offsetHeight + 'px';
+      details.open = true;
+      details.classList.add('is-open');
+      window.requestAnimationFrame(function(){ expand(); });
+    }
+
+    function expand(){
+      isExpanding = true;
+      var startHeight = details.offsetHeight;
+      var endHeight = summary.offsetHeight + details.querySelector('p').offsetHeight;
+      if(animation) animation.cancel();
+      animation = details.animate(
+        { height: [startHeight + 'px', endHeight + 'px'] },
+        { duration: DURATION, easing: EASING }
+      );
+      animation.onfinish = function(){ onFinish(true); };
+      animation.oncancel = function(){ isExpanding = false; };
+    }
+
+    function closeItem(){
+      isClosing = true;
+      var startHeight = details.offsetHeight;
+      var endHeight = summary.offsetHeight;
+      details.classList.remove('is-open');
+      if(animation) animation.cancel();
+      animation = details.animate(
+        { height: [startHeight + 'px', endHeight + 'px'] },
+        { duration: DURATION, easing: EASING }
+      );
+      animation.onfinish = function(){ onFinish(false); };
+      animation.oncancel = function(){ isClosing = false; };
+    }
+
+    function onFinish(openState){
+      details.open = openState;
+      details.classList.toggle('is-open', openState);
+      animation = null;
+      isClosing = false;
+      isExpanding = false;
+      details.style.height = '';
+      details.style.overflow = '';
+    }
+  });
 })();
 </script>
 
