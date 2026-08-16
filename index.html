@@ -137,7 +137,6 @@
     left:50%;
     transform:translate(-50%,-50%);
     top:calc(2% + 14px);
-    transition:top .25s ease;
     z-index:2;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));
   }
@@ -765,8 +764,6 @@
 
   @media (prefers-reduced-motion: reduce){
     html{scroll-behavior:auto;}
-    nav.yardline .ball{transition:none;}
-    .mobile-progress .ball-h{transition:none;}
   }
 
   @media (max-width:640px){
@@ -862,7 +859,6 @@
       top:50%;
       left:2%;
       transform:translate(-50%,-50%);
-      transition:left .25s ease;
       z-index:2;
       filter:drop-shadow(0 1px 1px rgba(0,0,0,0.35));
     }
@@ -917,26 +913,26 @@
         <line x1="22" y1="7" x2="22" y2="13" stroke="#F3EFE4" stroke-width="1.4" stroke-linecap="round"/>
       </svg>
     </div>
-    <span class="label">Basics · 2</span>
+    <span class="label">Basics</span>
   </div>
 </header>
 
 <div id="mobileMenu" class="mobile-menu">
   <button class="close-btn" id="menuCloseBtn" aria-label="Menü schließen">×</button>
   <ul>
-    <li><a href="#basics"><span class="yard mono">2</span> Basics</a></li>
-    <li><a href="#faq"><span class="yard mono">10</span> FAQ</a></li>
-    <li><a href="#glossar"><span class="yard mono">18</span> Glossar</a></li>
-    <li><a href="#scoring"><span class="yard mono">26</span> Scoring</a></li>
-    <li><a href="#rechner"><span class="yard mono">34</span> Punkterechner</a></li>
-    <li><a href="#strategie"><span class="yard mono">42</span> Strategie</a></li>
-    <li><a href="#draft-ablauf"><span class="yard mono">50</span> Draft-Ablauf</a></li>
-    <li><a href="#beliebte-picks"><span class="yard mono">58</span> Beliebte Picks</a></li>
-    <li><a href="#draft-tipps"><span class="yard mono">66</span> Draft-Tipps</a></li>
-    <li><a href="#lineup"><span class="yard mono">74</span> Lineup</a></li>
-    <li><a href="#waiver"><span class="yard mono">82</span> Waiver Wire</a></li>
-    <li><a href="#trades"><span class="yard mono">90</span> Trades</a></li>
-    <li><a href="#advanced"><span class="yard mono">98</span> Advanced</a></li>
+    <li><a href="#basics">Basics</a></li>
+    <li><a href="#faq">FAQ</a></li>
+    <li><a href="#glossar">Glossar</a></li>
+    <li><a href="#scoring">Scoring</a></li>
+    <li><a href="#rechner">Punkterechner</a></li>
+    <li><a href="#strategie">Strategie</a></li>
+    <li><a href="#draft-ablauf">Draft-Ablauf</a></li>
+    <li><a href="#beliebte-picks">Beliebte Picks</a></li>
+    <li><a href="#draft-tipps">Draft-Tipps</a></li>
+    <li><a href="#lineup">Lineup</a></li>
+    <li><a href="#waiver">Waiver Wire</a></li>
+    <li><a href="#trades">Trades</a></li>
+    <li><a href="#advanced">Advanced</a></li>
   </ul>
 </div>
 
@@ -1541,22 +1537,14 @@
   var menuCloseBtn = document.getElementById('menuCloseBtn');
   var mobileMenu = document.getElementById('mobileMenu');
 
-  function setActive(id, yard, label){
-    var activeTop = null;
+  function setActive(id, label){
     desktopMarkers.forEach(function(m){
-      var isActive = m.dataset.target === id;
-      m.classList.toggle('active', isActive);
-      if(isActive) activeTop = m.style.top;
+      m.classList.toggle('active', m.dataset.target === id);
     });
-    var activeLeft = null;
     mobileTicks.forEach(function(t){
-      var isActive = t.dataset.target === id;
-      t.classList.toggle('active', isActive);
-      if(isActive) activeLeft = t.style.left;
+      t.classList.toggle('active', t.dataset.target === id);
     });
-    if(ball && activeTop) ball.style.top = 'calc(' + activeTop + ' + 14px)';
-    if(ballH && activeLeft) ballH.style.left = activeLeft;
-    if(mobileLabel) mobileLabel.textContent = label + ' · ' + yard;
+    if(mobileLabel) mobileLabel.textContent = label;
   }
 
   if('IntersectionObserver' in window){
@@ -1564,7 +1552,7 @@
       entries.forEach(function(entry){
         if(entry.isIntersecting){
           var t = entry.target;
-          setActive(t.id, t.dataset.yard, t.dataset.label);
+          setActive(t.id, t.dataset.label);
         }
       });
     }, { rootMargin: '-45% 0px -50% 0px', threshold: 0 });
@@ -1576,10 +1564,30 @@
     var atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
     if(atBottom){
       var last = sections[sections.length - 1];
-      setActive(last.id, last.dataset.yard, last.dataset.label);
+      setActive(last.id, last.dataset.label);
     }
   }
-  window.addEventListener('scroll', checkBottom, { passive: true });
+
+  // Football folgt fließend dem Scrollfortschritt der Seite statt zwischen Kapiteln zu springen
+  var ballTicking = false;
+  function updateBallPosition(){
+    var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+    var progress = docHeight > 0 ? Math.min(1, Math.max(0, window.scrollY / docHeight)) : 0;
+    var pct = progress * 100;
+    if(ball) ball.style.top = 'calc(' + pct + '% + 14px)';
+    if(ballH) ballH.style.left = pct + '%';
+    ballTicking = false;
+  }
+  function onScroll(){
+    checkBottom();
+    if(!ballTicking){
+      window.requestAnimationFrame(updateBallPosition);
+      ballTicking = true;
+    }
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', updateBallPosition);
+  updateBallPosition();
   checkBottom();
 
   function openMenu(){
