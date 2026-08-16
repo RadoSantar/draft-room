@@ -203,23 +203,40 @@
   p.copy:last-child{margin-bottom:0;}
 
   /* Glossary cards */
-  .glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .glossary{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start;}
   .term-card{
     background:var(--card);
     border:1px solid var(--card-border);
     border-left:4px solid var(--hash);
     border-radius:6px;
     padding:12px 14px;
+    overflow:hidden;
   }
+  .term-card summary{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    cursor:pointer;
+    list-style:none;
+  }
+  .term-card summary::-webkit-details-marker{display:none;}
   .term-card .term{
     font-family:'IBM Plex Mono', monospace;
     font-weight:600;
     font-size:13px;
     color:var(--turf);
-    display:block;
-    margin-bottom:4px;
   }
-  .term-card .def{font-size:14px;color:var(--ink-soft);}
+  .term-card .caret{
+    font-family:'Anton', sans-serif;
+    color:var(--hash);
+    font-size:15px;
+    flex:0 0 auto;
+    display:inline-block;
+    transition:transform .25s ease;
+  }
+  .term-card.is-open .caret{transform:rotate(45deg);}
+  .term-card .def{font-size:14px;color:var(--ink-soft);margin:8px 0 0;}
 
   /* Scoreboard table */
   .scoreboard{
@@ -396,19 +413,44 @@
     border:1px solid var(--card-border);
     border-radius:10px;
     padding:18px 20px;
-    display:flex;
-    gap:14px;
-    align-items:flex-start;
+    overflow:hidden;
   }
   .tip-card + .tip-card{margin-top:12px;}
+  .tip-card summary{
+    display:flex;
+    gap:14px;
+    align-items:center;
+    cursor:pointer;
+    list-style:none;
+  }
+  .tip-card summary::-webkit-details-marker{display:none;}
   .tip-card .num{
     font-family:'Anton', sans-serif;
     font-size:26px;
     color:var(--amber);
     min-width:36px;
+    flex:0 0 auto;
   }
-  .tip-card h3{font-size:16px;margin-bottom:4px;}
-  .tip-card p{font-size:14px;color:var(--ink-soft);}
+  .tip-card .tip-title{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+    text-wrap:balance;
+    font-size:16px;
+    flex:1;
+  }
+  .tip-card .caret{
+    font-family:'Anton', sans-serif;
+    color:var(--amber);
+    font-size:20px;
+    flex:0 0 auto;
+    display:inline-block;
+    transition:transform .25s ease;
+  }
+  .tip-card.is-open .caret{transform:rotate(45deg);}
+  .tip-card p{font-size:14px;color:var(--ink-soft);margin:10px 0 0 50px;}
 
   /* Roster table */
   .roster-note{font-size:14px;color:var(--ink-soft);margin-top:14px;max-width:64ch;}
@@ -665,6 +707,7 @@
     .layout{grid-template-columns:1fr;}
     nav.yardline{display:none;}
     .glossary{grid-template-columns:1fr;}
+    .tip-card p{margin-left:0;}
 
     .picks-row{padding:10px 12px;gap:6px;font-size:12px;}
     .picks-name{font-size:13px;}
@@ -945,12 +988,12 @@
 
       <h3 class="sub-head">Positionen erklärt</h3>
       <div class="glossary">
-        <div class="term-card"><span class="term">QB – Quarterback</span><span class="def">Der Spielmacher, wirft die meisten Pässe – bei uns durch das Scoring die mit Abstand wertvollste Position.</span></div>
-        <div class="term-card"><span class="term">RB – Running Back</span><span class="def">Läuft den Ball, fängt aber auch oft Pässe aus dem Backfield – bei Full PPR sind Pass-Catching-RBs besonders wertvoll.</span></div>
-        <div class="term-card"><span class="term">WR – Wide Receiver</span><span class="def">Der klassische Passempfänger, meist am Spielfeldrand postiert – Hauptziel der meisten Pässe.</span></div>
-        <div class="term-card"><span class="term">TE – Tight End</span><span class="def">Mischung aus Passempfänger und Blocker, spielt näher an der Line – bei uns durch 2× TE-Slot und Full-PPR eine Premium-Position.</span></div>
-        <div class="term-card"><span class="term">K – Kicker</span><span class="def">Tritt Field Goals und Extrapunkte (PAT) – macht Punkte unabhängig vom eigentlichen Ballbesitz-Spiel.</span></div>
-        <div class="term-card"><span class="term">DEF – Team Defense</span><span class="def">Die komplette Abwehr eines NFL-Teams als eine Einheit – punktet über Sacks, Turnover und wenig zugelassene Punkte/Yards.</span></div>
+        <details class="term-card"><summary><span class="term">QB – Quarterback</span><span class="caret">+</span></summary><p class="def">Der Spielmacher, wirft die meisten Pässe – bei uns durch das Scoring die mit Abstand wertvollste Position.</p></details>
+        <details class="term-card"><summary><span class="term">RB – Running Back</span><span class="caret">+</span></summary><p class="def">Läuft den Ball, fängt aber auch oft Pässe aus dem Backfield – bei Full PPR sind Pass-Catching-RBs besonders wertvoll.</p></details>
+        <details class="term-card"><summary><span class="term">WR – Wide Receiver</span><span class="caret">+</span></summary><p class="def">Der klassische Passempfänger, meist am Spielfeldrand postiert – Hauptziel der meisten Pässe.</p></details>
+        <details class="term-card"><summary><span class="term">TE – Tight End</span><span class="caret">+</span></summary><p class="def">Mischung aus Passempfänger und Blocker, spielt näher an der Line – bei uns durch 2× TE-Slot und Full-PPR eine Premium-Position.</p></details>
+        <details class="term-card"><summary><span class="term">K – Kicker</span><span class="caret">+</span></summary><p class="def">Tritt Field Goals und Extrapunkte (PAT) – macht Punkte unabhängig vom eigentlichen Ballbesitz-Spiel.</p></details>
+        <details class="term-card"><summary><span class="term">DEF – Team Defense</span><span class="caret">+</span></summary><p class="def">Die komplette Abwehr eines NFL-Teams als eine Einheit – punktet über Sacks, Turnover und wenig zugelassene Punkte/Yards.</p></details>
       </div>
 
       <h3 class="sub-head">IR im Detail</h3>
@@ -961,30 +1004,32 @@
       <div class="kicker">Vokabeln zum Nachschlagen</div>
       <h2>Glossar</h2>
       <div class="glossary">
-        <div class="term-card"><span class="term">Draft</span><span class="def">Die Auswahlrunde zu Saisonbeginn, bei der jeder Manager sein Team aus echten NFL-Spielern zusammenstellt.</span></div>
-        <div class="term-card"><span class="term">Snake Draft</span><span class="def">Draft-Reihenfolge dreht sich nach jeder Runde um (1→10, dann 10→1, usw.).</span></div>
-        <div class="term-card"><span class="term">Roster</span><span class="def">Der komplette Kader eines Teams (Starter + Bench + IR).</span></div>
-        <div class="term-card"><span class="term">Starter/Lineup</span><span class="def">Die Spieler, die in der jeweiligen Woche aktiv Punkte sammeln.</span></div>
-        <div class="term-card"><span class="term">Bench</span><span class="def">Reservespieler, die nicht in der Startaufstellung stehen.</span></div>
-        <div class="term-card"><span class="term">IR (Injured Reserve)</span><span class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz.</span></div>
-        <div class="term-card"><span class="term">Flex</span><span class="def">Slot, der mit mehreren Positionen besetzt werden kann (bei uns: RB oder WR).</span></div>
-        <div class="term-card"><span class="term">Waiver Wire</span><span class="def">Pool aller Spieler, die aktuell in keinem Team stehen.</span></div>
-        <div class="term-card"><span class="term">Free Agent</span><span class="def">Spieler auf dem Waiver Wire, der sofort ohne Anspruch geholt werden kann.</span></div>
-        <div class="term-card"><span class="term">Waiver Priority/Order</span><span class="def">Reihenfolge, in der Manager Zugriff auf Waiver-Spieler haben.</span></div>
-        <div class="term-card"><span class="term">Trade</span><span class="def">Spielertausch zwischen zwei Managern.</span></div>
-        <div class="term-card"><span class="term">Bye Week</span><span class="def">Woche, in der ein NFL-Team spielfrei hat.</span></div>
-        <div class="term-card"><span class="term">Start/Sit</span><span class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</span></div>
-        <div class="term-card"><span class="term">ADP</span><span class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</span></div>
-        <div class="term-card"><span class="term">Handcuff</span><span class="def">Der Backup-Spieler hinter einem wichtigen Starter (meist RB).</span></div>
-        <div class="term-card"><span class="term">Sleeper</span><span class="def">Ein unterschätzter Spieler mit Potenzial.</span></div>
-        <div class="term-card"><span class="term">Bust</span><span class="def">Ein hoch gedrafteter Spieler, der enttäuscht.</span></div>
-        <div class="term-card"><span class="term">Streaming</span><span class="def">Wöchentliches Wechseln einer Position je nach bestem Matchup.</span></div>
-        <div class="term-card"><span class="term">PPR</span><span class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte.</span></div>
-        <div class="term-card"><span class="term">Questionable (Q)</span><span class="def">Verletzungsstatus: Einsatz ungewiss, 50/50.</span></div>
-        <div class="term-card"><span class="term">Doubtful (D)</span><span class="def">Verletzungsstatus: Einsatz unwahrscheinlich.</span></div>
-        <div class="term-card"><span class="term">Out (O)</span><span class="def">Verletzungsstatus: spielt diese Woche sicher nicht.</span></div>
-        <div class="term-card"><span class="term">PUP</span><span class="def">Physically Unable to Perform – Liste zu Saisonbeginn für Spieler, die die Vorbereitung verletzungsbedingt verpasst haben.</span></div>
-        <div class="term-card"><span class="term">Mock Draft</span><span class="def">Kostenlose Proberunde des Drafts, oft gegen Bots – zum Üben, zählt nicht für die echte Liga.</span></div>
+        <details class="term-card"><summary><span class="term">Draft</span><span class="caret">+</span></summary><p class="def">Die Auswahlrunde zu Saisonbeginn, bei der jeder Manager sein Team aus echten NFL-Spielern zusammenstellt.</p></details>
+        <details class="term-card"><summary><span class="term">Snake Draft</span><span class="caret">+</span></summary><p class="def">Draft-Reihenfolge dreht sich nach jeder Runde um (1→10, dann 10→1, usw.).</p></details>
+        <details class="term-card"><summary><span class="term">Roster</span><span class="caret">+</span></summary><p class="def">Der komplette Kader eines Teams (Starter + Bench + IR).</p></details>
+        <details class="term-card"><summary><span class="term">Starter/Lineup</span><span class="caret">+</span></summary><p class="def">Die Spieler, die in der jeweiligen Woche aktiv Punkte sammeln.</p></details>
+        <details class="term-card"><summary><span class="term">Bench</span><span class="caret">+</span></summary><p class="def">Reservespieler, die nicht in der Startaufstellung stehen.</p></details>
+        <details class="term-card"><summary><span class="term">IR (Injured Reserve)</span><span class="caret">+</span></summary><p class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz.</p></details>
+        <details class="term-card"><summary><span class="term">Flex</span><span class="caret">+</span></summary><p class="def">Slot, der mit mehreren Positionen besetzt werden kann (bei uns: RB oder WR).</p></details>
+        <details class="term-card"><summary><span class="term">Waiver Wire</span><span class="caret">+</span></summary><p class="def">Pool aller Spieler, die aktuell in keinem Team stehen.</p></details>
+        <details class="term-card"><summary><span class="term">Free Agent</span><span class="caret">+</span></summary><p class="def">Spieler auf dem Waiver Wire, der sofort ohne Anspruch geholt werden kann.</p></details>
+        <details class="term-card"><summary><span class="term">Waiver Priority/Order</span><span class="caret">+</span></summary><p class="def">Reihenfolge, in der Manager Zugriff auf Waiver-Spieler haben.</p></details>
+        <details class="term-card"><summary><span class="term">Trade</span><span class="caret">+</span></summary><p class="def">Spielertausch zwischen zwei Managern.</p></details>
+        <details class="term-card"><summary><span class="term">Bye Week</span><span class="caret">+</span></summary><p class="def">Woche, in der ein NFL-Team spielfrei hat.</p></details>
+        <details class="term-card"><summary><span class="term">Start/Sit</span><span class="caret">+</span></summary><p class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</p></details>
+        <details class="term-card"><summary><span class="term">Lineup-Lock</span><span class="caret">+</span></summary><p class="def">Der Zeitpunkt, ab dem ein Spieler nicht mehr aus deinem Lineup getauscht werden kann – meist der Kickoff seines NFL-Spiels.</p></details>
+        <details class="term-card"><summary><span class="term">ADP</span><span class="caret">+</span></summary><p class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</p></details>
+        <details class="term-card"><summary><span class="term">Handcuff</span><span class="caret">+</span></summary><p class="def">Der Backup-Spieler hinter einem wichtigen Starter (meist RB).</p></details>
+        <details class="term-card"><summary><span class="term">Sleeper</span><span class="caret">+</span></summary><p class="def">Ein unterschätzter Spieler mit Potenzial.</p></details>
+        <details class="term-card"><summary><span class="term">Bust</span><span class="caret">+</span></summary><p class="def">Ein hoch gedrafteter Spieler, der enttäuscht.</p></details>
+        <details class="term-card"><summary><span class="term">Streaming</span><span class="caret">+</span></summary><p class="def">Wöchentliches Wechseln einer Position je nach bestem Matchup.</p></details>
+        <details class="term-card"><summary><span class="term">PPR</span><span class="caret">+</span></summary><p class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte.</p></details>
+        <details class="term-card"><summary><span class="term">Questionable (Q)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz ungewiss, 50/50.</p></details>
+        <details class="term-card"><summary><span class="term">Doubtful (D)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz unwahrscheinlich.</p></details>
+        <details class="term-card"><summary><span class="term">Out (O)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: spielt diese Woche sicher nicht.</p></details>
+        <details class="term-card"><summary><span class="term">PUP</span><span class="caret">+</span></summary><p class="def">Physically Unable to Perform – Liste zu Saisonbeginn für Spieler, die die Vorbereitung verletzungsbedingt verpasst haben.</p></details>
+        <details class="term-card"><summary><span class="term">Injury Report</span><span class="caret">+</span></summary><p class="def">Offizielle NFL-Liste mit dem Verletzungsstatus aller Spieler vor dem Spieltag (Questionable/Doubtful/Out) – Basis für deine Start/Sit-Entscheidungen.</p></details>
+        <details class="term-card"><summary><span class="term">Mock Draft</span><span class="caret">+</span></summary><p class="def">Kostenlose Proberunde des Drafts, oft gegen Bots – zum Üben, zählt nicht für die echte Liga.</p></details>
       </div>
     </section>
 
@@ -995,18 +1040,18 @@
       <h3 class="sub-head">Was bedeuten diese Begriffe?</h3>
       <p class="copy">Die Tabellen unten sind reine Zahlen – hier kurz erklärt, was die einzelnen Spielzüge bedeuten und wie sie zusammenspielen.</p>
       <div class="glossary">
-        <div class="term-card"><span class="term">Completion</span><span class="def">Ein Pass, der erfolgreich ankommt – zählt unabhängig von den gewonnenen Yards.</span></div>
-        <div class="term-card"><span class="term">Touchdown (TD)</span><span class="def">Der Ball wird in der gegnerischen Endzone ins Spiel gebracht – 6 Grundpunkte, egal aus welcher Distanz.</span></div>
-        <div class="term-card"><span class="term">PAT</span><span class="def">Point After Touchdown – der Extra-Kick direkt nach einem Touchdown.</span></div>
-        <div class="term-card"><span class="term">2pt Conversion</span><span class="def">Statt des PAT-Kicks ein riskanterer Spielzug direkt in die Endzone – bei Erfolg 2 statt 1 Punkt.</span></div>
-        <div class="term-card"><span class="term">FG (Field Goal)</span><span class="def">Kicker-Versuch durchs Torgestänge – die Punkte steigen mit der Distanz.</span></div>
-        <div class="term-card"><span class="term">Sack</span><span class="def">Der Quarterback wird hinter der Line of Scrimmage zu Boden gebracht, bevor er passen kann.</span></div>
-        <div class="term-card"><span class="term">Interception (INT)</span><span class="def">Ein geworfener Pass wird von der gegnerischen Defense gefangen – Abzug für den Passer, Punkte für die gegnerische Team-Defense.</span></div>
-        <div class="term-card"><span class="term">Fumble</span><span class="def">Ein Spieler verliert den Ball beim Laufen oder Fangen – wer ihn sich schnappt ("recovered"), bekommt Punkte.</span></div>
-        <div class="term-card"><span class="term">Safety</span><span class="def">Der Ballträger wird in der eigenen Endzone zu Boden gebracht – seltenes Play, das der Defense Punkte bringt.</span></div>
-        <div class="term-card"><span class="term">Return TD</span><span class="def">Defense oder Special Teams bringt den Ball nach Interception, Fumble, Kickoff oder Punt direkt zurück in die gegnerische Endzone.</span></div>
-        <div class="term-card"><span class="term">Yard-Bonus (z.B. 100–199)</span><span class="def">Zusatzpunkte, wenn ein Spieler in einem einzelnen Spiel eine bestimmte Yard-Marke überschreitet – kommt oben auf die normalen Yard-Punkte drauf.</span></div>
-        <div class="term-card"><span class="term">Points/Yards Allowed</span><span class="def">Wie viele Punkte bzw. Yards die gegnerische Offense gegen eure Team-Defense gemacht hat – weniger zugelassen bedeutet mehr Punkte für euch.</span></div>
+        <details class="term-card"><summary><span class="term">Completion</span><span class="caret">+</span></summary><p class="def">Ein Pass, der erfolgreich ankommt – zählt unabhängig von den gewonnenen Yards.</p></details>
+        <details class="term-card"><summary><span class="term">Touchdown (TD)</span><span class="caret">+</span></summary><p class="def">Der Ball wird in der gegnerischen Endzone ins Spiel gebracht – 6 Grundpunkte, egal aus welcher Distanz.</p></details>
+        <details class="term-card"><summary><span class="term">PAT</span><span class="caret">+</span></summary><p class="def">Point After Touchdown – der Extra-Kick direkt nach einem Touchdown.</p></details>
+        <details class="term-card"><summary><span class="term">2pt Conversion</span><span class="caret">+</span></summary><p class="def">Statt des PAT-Kicks ein riskanterer Spielzug direkt in die Endzone – bei Erfolg 2 statt 1 Punkt.</p></details>
+        <details class="term-card"><summary><span class="term">FG (Field Goal)</span><span class="caret">+</span></summary><p class="def">Kicker-Versuch durchs Torgestänge – die Punkte steigen mit der Distanz.</p></details>
+        <details class="term-card"><summary><span class="term">Sack</span><span class="caret">+</span></summary><p class="def">Der Quarterback wird hinter der Line of Scrimmage zu Boden gebracht, bevor er passen kann.</p></details>
+        <details class="term-card"><summary><span class="term">Interception (INT)</span><span class="caret">+</span></summary><p class="def">Ein geworfener Pass wird von der gegnerischen Defense gefangen – Abzug für den Passer, Punkte für die gegnerische Team-Defense.</p></details>
+        <details class="term-card"><summary><span class="term">Fumble</span><span class="caret">+</span></summary><p class="def">Ein Spieler verliert den Ball beim Laufen oder Fangen – wer ihn sich schnappt ("recovered"), bekommt Punkte.</p></details>
+        <details class="term-card"><summary><span class="term">Safety</span><span class="caret">+</span></summary><p class="def">Der Ballträger wird in der eigenen Endzone zu Boden gebracht – seltenes Play, das der Defense Punkte bringt.</p></details>
+        <details class="term-card"><summary><span class="term">Return TD</span><span class="caret">+</span></summary><p class="def">Defense oder Special Teams bringt den Ball nach Interception, Fumble, Kickoff oder Punt direkt zurück in die gegnerische Endzone.</p></details>
+        <details class="term-card"><summary><span class="term">Yard-Bonus (z.B. 100–199)</span><span class="caret">+</span></summary><p class="def">Zusatzpunkte, wenn ein Spieler in einem einzelnen Spiel eine bestimmte Yard-Marke überschreitet – kommt oben auf die normalen Yard-Punkte drauf.</p></details>
+        <details class="term-card"><summary><span class="term">Points/Yards Allowed</span><span class="caret">+</span></summary><p class="def">Wie viele Punkte bzw. Yards die gegnerische Offense gegen eure Team-Defense gemacht hat – weniger zugelassen bedeutet mehr Punkte für euch.</p></details>
       </div>
 
       <h3 class="sub-head">Passing (alle Positionen)</h3>
@@ -1234,41 +1279,46 @@
     <section id="draft-tipps" data-yard="66" data-label="Draft-Tipps">
       <div class="kicker">Stand 2026 · an unser Format angepasst</div>
       <h2>Draft-Strategie-Tipps</h2>
-      <div class="tip-card">
-        <span class="num">01</span>
-        <div>
-          <h3>TE ist wertvoller bei uns – aber nicht deshalb zu früh nehmen</h3>
-          <p>Durch 2× TE-Slot und Full-PPR ist Tight End bei uns wertvoller als in Standard-Ligen – RB/WR bleiben aber weiterhin priorisiert. Viele Manager überreagieren auf diesen Boost und reachen zu früh auf TE; meist lohnt sich Geduld trotzdem, weil andere Manager TEs überdraften, während bei RB/WR noch Value liegen bleibt.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">02</span>
-        <div>
-          <h3>Onesie-Position QB nicht reflexartig früh nehmen<span class="badge adv">Fortgeschritten</span></h3>
-          <p>"Onesie-Position" heißt: Du brauchst nur einen einzigen Starter davon – bei uns trifft das nur auf QB zu (TE hat ja 2 Slots, zählt hier also nicht dazu). Die Tiefe an brauchbaren QBs reicht meist bis in spätere Runden – bei unserem QB-lastigen Scoring lohnt es sich trotzdem, den QB-Markt im Blick zu behalten und nicht zu spät zuzuschlagen.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">03</span>
-        <div>
-          <h3>Handcuffs gezielt einsetzen, nicht flächendeckend<span class="badge adv">Fortgeschritten</span></h3>
-          <p>Nur bei Startern mit schlechter Verletzungshistorie oder dünner Depth Chart handcuffen. Bei gesunden Stammspielern verschwendet man wertvolle Bench-Plätze.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">04</span>
-        <div>
-          <h3>Bench-Tiefe nutzen</h3>
-          <p>Mit 9 Bench-Plätzen musst du nicht jeden Slot fest verplanen. Lass dir Luft für zwei Dinge: Waiver-Stashes (aussichtsreiche Spieler, die du auf Verdacht vom Waiver Wire holst und erstmal nur auf der Bank "bunkerst", falls sie später wichtig werden) und Bye-Week-Fill-Optionen (Ersatzspieler, die einspringen, wenn ein Stammspieler spielfrei hat).</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">05</span>
-        <div>
-          <h3>Kicker & Defense zuletzt draften</h3>
-          <p>Beide machen verhältnismäßig am wenigsten Punkte – brauchbare Optionen sind meist bis zum Schluss des Drafts noch verfügbar.</p>
-        </div>
-      </div>
+      <details class="tip-card">
+        <summary>
+          <span class="num">01</span>
+          <span class="tip-title">TE ist wertvoller bei uns – aber nicht deshalb zu früh nehmen</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Durch 2× TE-Slot und Full-PPR ist Tight End bei uns wertvoller als in Standard-Ligen – RB/WR bleiben aber weiterhin priorisiert. Viele Manager überreagieren auf diesen Boost und reachen zu früh auf TE; meist lohnt sich Geduld trotzdem, weil andere Manager TEs überdraften, während bei RB/WR noch Value liegen bleibt.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">02</span>
+          <span class="tip-title">Onesie-Position QB nicht reflexartig früh nehmen<span class="badge adv">Fortgeschritten</span></span>
+          <span class="caret">+</span>
+        </summary>
+        <p>"Onesie-Position" heißt: Du brauchst nur einen einzigen Starter davon – bei uns trifft das nur auf QB zu (TE hat ja 2 Slots, zählt hier also nicht dazu). Die Tiefe an brauchbaren QBs reicht meist bis in spätere Runden – bei unserem QB-lastigen Scoring lohnt es sich trotzdem, den QB-Markt im Blick zu behalten und nicht zu spät zuzuschlagen.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">03</span>
+          <span class="tip-title">Handcuffs gezielt einsetzen, nicht flächendeckend<span class="badge adv">Fortgeschritten</span></span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Nur bei Startern mit schlechter Verletzungshistorie oder dünner Depth Chart handcuffen. Bei gesunden Stammspielern verschwendet man wertvolle Bench-Plätze.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">04</span>
+          <span class="tip-title">Bench-Tiefe nutzen</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Mit 9 Bench-Plätzen musst du nicht jeden Slot fest verplanen. Lass dir Luft für zwei Dinge: Waiver-Stashes (aussichtsreiche Spieler, die du auf Verdacht vom Waiver Wire holst und erstmal nur auf der Bank "bunkerst", falls sie später wichtig werden) und Bye-Week-Fill-Optionen (Ersatzspieler, die einspringen, wenn ein Stammspieler spielfrei hat).</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">05</span>
+          <span class="tip-title">Kicker & Defense zuletzt draften</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Beide machen verhältnismäßig am wenigsten Punkte – brauchbare Optionen sind meist bis zum Schluss des Drafts noch verfügbar.</p>
+      </details>
     </section>
 
     <section id="lineup" data-yard="74" data-label="Lineup">
@@ -1333,48 +1383,54 @@
       <div class="kicker">Endzone · für Fortgeschrittene</div>
       <h2>Advanced-Strategien</h2>
       <p class="copy">Wer die Basics und die Draft-Tipps schon verinnerlicht hat, findet hier ein paar tiefere Konzepte für den nächsten Schritt.</p>
-      <div class="tip-card">
-        <span class="num">01</span>
-        <div>
-          <h3>Zero-RB / Hero-RB als Draft-Ansatz</h3>
-          <p>Statt in den ersten Runden reflexartig RBs zu nehmen, gezielt früh auf WR/TE/QB setzen und RB-Tiefe erst später über Volumen und Waiver aufbauen (Zero-RB) – oder nur einen Elite-RB früh sichern und danach auf WR fokussieren (Hero-RB). Funktioniert besonders gut in Full-PPR-Formaten wie unserem.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">02</span>
-        <div>
-          <h3>Positional Scarcity gezielt einschätzen</h3>
-          <p>Nicht nur nach reinem Gesamt-Ranking draften, sondern beobachten, wie schnell die Tiefe an einer Position abfällt – bei uns z.B. TE durch den 2×-Slot besonders eng. Lieber zuschlagen, bevor die brauchbare Tiefe komplett weg ist.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">03</span>
-        <div>
-          <h3>Bye-Week-Stacking vermeiden</h3>
-          <p>Beim Draften im Hinterkopf behalten, wenn zu viele Starter derselben Position in derselben Woche Bye haben. Gerade bei unseren hohen Starter-Anforderungen (6 RB/WR-taugliche + 2 TE) kann das eine einzelne Woche empfindlich schwächen.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">04</span>
-        <div>
-          <h3>Buy-Low / Sell-High im Trade-Markt</h3>
-          <p>Spieler nach einer schwachen Phase, aber mit gutem Restplan, günstig einsammeln – gehypte Spieler nach starken Wochen abgeben, solange ihr Marktwert bei den anderen Managern noch hoch ist.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">05</span>
-        <div>
-          <h3>Strength of Schedule für die Playoffs mitdenken</h3>
-          <p>Bei Draft- und Waiver-Entscheidungen nicht nur die aktuelle Form zählen lassen, sondern auch, gegen welche Defenses ein Spieler in den entscheidenden Playoff-Wochen antritt.</p>
-        </div>
-      </div>
-      <div class="tip-card">
-        <span class="num">06</span>
-        <div>
-          <h3>Advanced Stats statt nur Endergebnis</h3>
-          <p>Target Share, Snap-% und Red-Zone-Looks sagen oft mehr über die künftige Fantasy-Relevanz eines Spielers aus als reine Yards oder TDs der letzten Woche – hilfreich vor allem für Waiver-Wire-Entscheidungen.</p>
-        </div>
-      </div>
+      <details class="tip-card">
+        <summary>
+          <span class="num">01</span>
+          <span class="tip-title">Zero-RB / Hero-RB als Draft-Ansatz</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Statt in den ersten Runden reflexartig RBs zu nehmen, gezielt früh auf WR/TE/QB setzen und RB-Tiefe erst später über Volumen und Waiver aufbauen (Zero-RB) – oder nur einen Elite-RB früh sichern und danach auf WR fokussieren (Hero-RB). Funktioniert besonders gut in Full-PPR-Formaten wie unserem.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">02</span>
+          <span class="tip-title">Positional Scarcity gezielt einschätzen</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Nicht nur nach reinem Gesamt-Ranking draften, sondern beobachten, wie schnell die Tiefe an einer Position abfällt – bei uns z.B. TE durch den 2×-Slot besonders eng. Lieber zuschlagen, bevor die brauchbare Tiefe komplett weg ist.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">03</span>
+          <span class="tip-title">Bye-Week-Stacking vermeiden</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Beim Draften im Hinterkopf behalten, wenn zu viele Starter derselben Position in derselben Woche Bye haben. Gerade bei unseren hohen Starter-Anforderungen (6 RB/WR-taugliche + 2 TE) kann das eine einzelne Woche empfindlich schwächen.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">04</span>
+          <span class="tip-title">Buy-Low / Sell-High im Trade-Markt</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Spieler nach einer schwachen Phase, aber mit gutem Restplan, günstig einsammeln – gehypte Spieler nach starken Wochen abgeben, solange ihr Marktwert bei den anderen Managern noch hoch ist.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">05</span>
+          <span class="tip-title">Strength of Schedule für die Playoffs mitdenken</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Bei Draft- und Waiver-Entscheidungen nicht nur die aktuelle Form zählen lassen, sondern auch, gegen welche Defenses ein Spieler in den entscheidenden Playoff-Wochen antritt.</p>
+      </details>
+      <details class="tip-card">
+        <summary>
+          <span class="num">06</span>
+          <span class="tip-title">Advanced Stats statt nur Endergebnis</span>
+          <span class="caret">+</span>
+        </summary>
+        <p>Target Share, Snap-% und Red-Zone-Looks sagen oft mehr über die künftige Fantasy-Relevanz eines Spielers aus als reine Yards oder TDs der letzten Woche – hilfreich vor allem für Waiver-Wire-Entscheidungen.</p>
+      </details>
     </section>
   </main>
 </div>
@@ -2132,7 +2188,7 @@
   var DURATION = 260;
   var EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
 
-  document.querySelectorAll('.faq-item').forEach(function(details){
+  document.querySelectorAll('details').forEach(function(details){
     var summary = details.querySelector('summary');
     var animation = null;
     var isClosing = false;
@@ -2158,7 +2214,7 @@
     function expand(){
       isExpanding = true;
       var startHeight = details.offsetHeight;
-      var endHeight = summary.offsetHeight + details.querySelector('p').offsetHeight;
+      var endHeight = summary.offsetHeight + details.lastElementChild.offsetHeight;
       if(animation) animation.cancel();
       animation = details.animate(
         { height: [startHeight + 'px', endHeight + 'px'] },
