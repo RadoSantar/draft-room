@@ -23,7 +23,7 @@
     --card:#ffffff;
     --card-border:rgba(30,70,56,0.15);
   }
-  :root[data-team-theme="saints"]{
+  :root[data-team-theme="no"]{
     --turf:#101820;
     --turf-2:#080c10;
     --hash:#A5895A;
@@ -33,7 +33,7 @@
     --ink-soft:#4d473c;
     --card-border:rgba(16,24,32,0.15);
   }
-  :root[data-team-theme="lions"]{
+  :root[data-team-theme="det"]{
     --turf:#0B3C5D;
     --turf-2:#072943;
     --hash:#7FA8C9;
@@ -484,9 +484,8 @@
   /* Theme picker */
   .theme-picker{
     display:flex;
-    flex-wrap:wrap;
     align-items:center;
-    gap:8px;
+    gap:10px;
     margin-bottom:18px;
   }
   .theme-picker-label{
@@ -494,24 +493,33 @@
     text-transform:uppercase;
     letter-spacing:.06em;
     color:var(--hash);
-    flex:0 0 100%;
   }
-  .theme-btn{
-    width:38px;
-    height:38px;
-    border-radius:50%;
-    background:var(--card);
-    border:2px solid var(--card-border);
+  .theme-select-wrap{
     display:flex;
     align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    padding:5px;
-    transition:border-color .2s ease, transform .15s ease;
+    gap:8px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:6px 14px 6px 8px;
   }
-  .theme-btn:hover{transform:translateY(-2px);}
-  .theme-btn.active{border-color:var(--amber);box-shadow:0 0 0 2px rgba(233,167,59,0.25);}
-  .theme-btn img{width:100%;height:100%;object-fit:contain;}
+  .theme-preview-ball,.theme-preview-logo{
+    width:22px;
+    height:22px;
+    object-fit:contain;
+    flex:0 0 auto;
+  }
+  .is-hidden{display:none !important;}
+  .theme-select{
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    color:var(--ink);
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:2px 0;
+  }
+  .theme-select:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
 
   /* Hero */
   .hero h1{font-size:36px;line-height:1.15;margin-bottom:10px;}
@@ -1280,7 +1288,7 @@
 <header class="topbar">
   <div class="row">
     <div class="title-group">
-      <img class="header-logo" id="headerLogo" src="" alt="" hidden>
+      <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
       <span class="title">Draft Room</span>
     </div>
     <div class="chapter-nav">
@@ -1340,111 +1348,51 @@
     <section class="hero">
       <div class="theme-picker" role="group" aria-label="Team-Design wählen">
         <span class="theme-picker-label mono">Design</span>
-        <button class="theme-btn active" type="button" data-team-theme="" title="Standard-Design" aria-label="Standard-Design">
-          <svg viewBox="0 0 24 34" width="20" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <div class="theme-select-wrap">
+          <svg class="theme-preview-ball" id="themePreviewBall" viewBox="0 0 24 34" width="20" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
             <ellipse cx="12" cy="17" rx="8.5" ry="16" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
             <line x1="12" y1="7" x2="12" y2="27" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
             <line x1="9" y1="12" x2="15" y2="12" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
             <line x1="9" y1="17" x2="15" y2="17" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
             <line x1="9" y1="22" x2="15" y2="22" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="ari" title="Arizona Cardinals" aria-label="Arizona Cardinals-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/ari.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="atl" title="Atlanta Falcons" aria-label="Atlanta Falcons-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/atl.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="bal" title="Baltimore Ravens" aria-label="Baltimore Ravens-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/bal.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="buf" title="Buffalo Bills" aria-label="Buffalo Bills-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/buf.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="car" title="Carolina Panthers" aria-label="Carolina Panthers-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/car.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="chi" title="Chicago Bears" aria-label="Chicago Bears-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/chi.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="cin" title="Cincinnati Bengals" aria-label="Cincinnati Bengals-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="cle" title="Cleveland Browns" aria-label="Cleveland Browns-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/cle.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="dal" title="Dallas Cowboys" aria-label="Dallas Cowboys-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/dal.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="den" title="Denver Broncos" aria-label="Denver Broncos-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/den.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="det" title="Detroit Lions" aria-label="Detroit Lions-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/det.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="gb" title="Green Bay Packers" aria-label="Green Bay Packers-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/gb.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="hou" title="Houston Texans" aria-label="Houston Texans-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/hou.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="ind" title="Indianapolis Colts" aria-label="Indianapolis Colts-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/ind.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="jax" title="Jacksonville Jaguars" aria-label="Jacksonville Jaguars-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/jax.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="kc" title="Kansas City Chiefs" aria-label="Kansas City Chiefs-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/kc.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="lv" title="Las Vegas Raiders" aria-label="Las Vegas Raiders-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/lv.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="lac" title="Los Angeles Chargers" aria-label="Los Angeles Chargers-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/lac.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="lar" title="Los Angeles Rams" aria-label="Los Angeles Rams-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/lar.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="mia" title="Miami Dolphins" aria-label="Miami Dolphins-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/mia.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="min" title="Minnesota Vikings" aria-label="Minnesota Vikings-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/min.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="ne" title="New England Patriots" aria-label="New England Patriots-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/ne.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="no" title="New Orleans Saints" aria-label="New Orleans Saints-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/no.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="nyg" title="New York Giants" aria-label="New York Giants-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/nyg.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="nyj" title="New York Jets" aria-label="New York Jets-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/nyj.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="phi" title="Philadelphia Eagles" aria-label="Philadelphia Eagles-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/phi.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="pit" title="Pittsburgh Steelers" aria-label="Pittsburgh Steelers-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/pit.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="sf" title="San Francisco 49ers" aria-label="San Francisco 49ers-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/sf.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="sea" title="Seattle Seahawks" aria-label="Seattle Seahawks-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/sea.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="tb" title="Tampa Bay Buccaneers" aria-label="Tampa Bay Buccaneers-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/tb.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="ten" title="Tennessee Titans" aria-label="Tennessee Titans-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/ten.png" alt="" loading="lazy">
-        </button>
-        <button class="theme-btn" type="button" data-team-theme="wsh" title="Washington Commanders" aria-label="Washington Commanders-Design">
-          <img src="https://a.espncdn.com/i/teamlogos/nfl/500/wsh.png" alt="" loading="lazy">
-        </button>
+          <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
+          <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen">
+        <option value="">Standard</option>
+        <option value="ari">Arizona Cardinals</option>
+        <option value="atl">Atlanta Falcons</option>
+        <option value="bal">Baltimore Ravens</option>
+        <option value="buf">Buffalo Bills</option>
+        <option value="car">Carolina Panthers</option>
+        <option value="chi">Chicago Bears</option>
+        <option value="cin">Cincinnati Bengals</option>
+        <option value="cle">Cleveland Browns</option>
+        <option value="dal">Dallas Cowboys</option>
+        <option value="den">Denver Broncos</option>
+        <option value="det">Detroit Lions</option>
+        <option value="gb">Green Bay Packers</option>
+        <option value="hou">Houston Texans</option>
+        <option value="ind">Indianapolis Colts</option>
+        <option value="jax">Jacksonville Jaguars</option>
+        <option value="kc">Kansas City Chiefs</option>
+        <option value="lv">Las Vegas Raiders</option>
+        <option value="lac">Los Angeles Chargers</option>
+        <option value="lar">Los Angeles Rams</option>
+        <option value="mia">Miami Dolphins</option>
+        <option value="min">Minnesota Vikings</option>
+        <option value="ne">New England Patriots</option>
+        <option value="no">New Orleans Saints</option>
+        <option value="nyg">New York Giants</option>
+        <option value="nyj">New York Jets</option>
+        <option value="phi">Philadelphia Eagles</option>
+        <option value="pit">Pittsburgh Steelers</option>
+        <option value="sf">San Francisco 49ers</option>
+        <option value="sea">Seattle Seahawks</option>
+        <option value="tb">Tampa Bay Buccaneers</option>
+        <option value="ten">Tennessee Titans</option>
+        <option value="wsh">Washington Commanders</option>
+          </select>
+        </div>
       </div>
 
       <h1>Willkommen im Draft Room</h1>
@@ -2900,24 +2848,36 @@
 (function(){
   var STORAGE_KEY = 'draftroom-team-theme';
   var root = document.documentElement;
-  var buttons = document.querySelectorAll('.theme-btn');
+  var select = document.getElementById('themeSelect');
   var headerLogo = document.getElementById('headerLogo');
-  if(!buttons.length) return;
+  var previewLogo = document.getElementById('themePreviewLogo');
+  var previewBall = document.getElementById('themePreviewBall');
+  if(!select) return;
 
-  function syncActive(theme){
-    var activeImg = null;
-    buttons.forEach(function(b){
-      var isActive = (b.dataset.teamTheme || '') === theme;
-      b.classList.toggle('active', isActive);
-      if(isActive) activeImg = b.querySelector('img');
-    });
-    if(headerLogo){
-      if(activeImg){
-        headerLogo.src = activeImg.src;
-        headerLogo.alt = activeImg.alt || theme;
-        headerLogo.hidden = false;
+  function logoUrl(theme){
+    return 'https://a.espncdn.com/i/teamlogos/nfl/500/' + theme + '.png';
+  }
+
+  function sync(theme){
+    select.value = theme;
+    var url = theme ? logoUrl(theme) : null;
+
+    if(previewLogo && previewBall){
+      if(url){
+        previewLogo.src = url;
+        previewLogo.classList.remove('is-hidden');
+        previewBall.classList.add('is-hidden');
       } else {
-        headerLogo.hidden = true;
+        previewLogo.classList.add('is-hidden');
+        previewBall.classList.remove('is-hidden');
+      }
+    }
+    if(headerLogo){
+      if(url){
+        headerLogo.src = url;
+        headerLogo.classList.remove('is-hidden');
+      } else {
+        headerLogo.classList.add('is-hidden');
         headerLogo.src = '';
       }
     }
@@ -2926,16 +2886,14 @@
   function applyTheme(theme){
     if(theme) root.setAttribute('data-team-theme', theme);
     else root.removeAttribute('data-team-theme');
-    syncActive(theme);
+    sync(theme);
     try { localStorage.setItem(STORAGE_KEY, theme); } catch(e){}
   }
 
-  syncActive(root.getAttribute('data-team-theme') || '');
+  sync(root.getAttribute('data-team-theme') || '');
 
-  buttons.forEach(function(b){
-    b.addEventListener('click', function(){
-      applyTheme(b.dataset.teamTheme || '');
-    });
+  select.addEventListener('change', function(){
+    applyTheme(select.value);
   });
 })();
 </script>
