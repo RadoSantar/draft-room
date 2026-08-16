@@ -795,6 +795,7 @@
   .bracket-match:last-child{margin-bottom:0;}
   .bracket-match .seed{display:inline-block;font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--chalk);background:var(--turf);border-radius:4px;padding:1px 5px;margin-right:5px;}
   .bracket-match .vs{color:var(--hash);font-size:10px;margin:0 4px;text-transform:uppercase;}
+  .bracket-match .game-tag{display:block;font-family:'IBM Plex Mono', monospace;font-size:9px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
   .bracket-match.bye{opacity:.6;font-style:italic;}
   .bracket-match.final{border-left:4px solid var(--amber);color:var(--ink);font-weight:600;}
   .bracket.cons .bracket-match.final{border-left-color:var(--hash);}
@@ -1633,7 +1634,7 @@
           </div>
         </div>
         <div>
-          <div class="bracket-heading cons">Trostrunde um Platz 6–10</div>
+          <div class="bracket-heading cons">Consolation Ladder um Platz 6–10</div>
           <div class="bracket cons">
             <div>
               <div class="bracket-round-label">Woche 15 · Runde 1</div>
@@ -1643,17 +1644,20 @@
               <div class="bracket-match bye"><span class="seed">8</span>Buhaaner – Freilos</div>
             </div>
             <div>
-              <div class="bracket-round-label">Woche 16 · Halbfinale (reseeded)</div>
-              <div class="bracket-match"><span class="seed">6</span>Run CMC <span class="vs">vs</span> Sieger 9/10</div>
-              <div class="bracket-match"><span class="seed">7</span>TM06 <span class="vs">vs</span> <span class="seed">8</span>Buhaaner</div>
+              <div class="bracket-round-label">Woche 16 · Runde 2 (reseeded)</div>
+              <div class="bracket-match"><span class="seed">6</span>Run CMC <span class="vs">vs</span> Sieger 9/10 <span class="game-tag">Spiel A</span></div>
+              <div class="bracket-match"><span class="seed">7</span>TM06 <span class="vs">vs</span> <span class="seed">8</span>Buhaaner <span class="game-tag">Spiel B</span></div>
             </div>
             <div>
-              <div class="bracket-round-label">Woche 17 · Platzierung</div>
-              <div class="bracket-match final">Sieger Halbfinale A <span class="vs">vs</span> Sieger Halbfinale B</div>
+              <div class="bracket-round-label">Woche 17 · Platzierungsspiele</div>
+              <div class="bracket-match final"><span class="game-tag">Platz 6</span>Sieger A <span class="vs">vs</span> Sieger B</div>
+              <div class="bracket-match"><span class="game-tag">Platz 8</span>Verlierer A <span class="vs">vs</span> Verlierer B</div>
+              <div class="bracket-match bye"><span class="game-tag">Platz 10</span>Verlierer Runde 1 – kein weiteres Spiel</div>
             </div>
           </div>
         </div>
       </div>
+      <p class="note-text">Wie im echten ESPN-Bracket spielt in der Consolation Ladder jedes Team bis zum Schluss um seine genaue Platzierung: Sieger bleiben unter sich, Verlierer bleiben unter sich – am Ende steht die komplette Reihenfolge Platz 6 bis 10 fest.</p>
 
       <h3 class="sub-head">Roster (23 Plätze gesamt)</h3>
       <div class="roster-breakdown mono">11 Starter · 9 Bench · 3 IR</div>
