@@ -1190,6 +1190,22 @@
   .picks-team{color:var(--hash);margin-left:6px;}
   .picks-adp{color:var(--amber);min-width:80px;text-align:right;}
   .picks-own{color:var(--chalk);opacity:.75;min-width:70px;text-align:right;}
+  .picks-more-btn{
+    display:none;
+    margin-top:10px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    background:none;
+    color:var(--turf);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:7px 16px;
+    cursor:pointer;
+  }
+  .picks-more-btn:hover{border-color:var(--amber);color:var(--amber);}
+  .picks-more-btn.is-visible{display:inline-block;}
 
   /* Trade fairness calculator */
   .trade-calc{
@@ -1936,6 +1952,7 @@
 
       <div class="calc-status" id="picksStatus" aria-live="polite">Lade Live-Daten…</div>
       <div class="scoreboard" id="picksList" style="display:none"></div>
+      <button class="picks-more-btn" id="picksMoreBtn" type="button">Mehr anzeigen (Top 50)</button>
       <p class="note-text">ADP = durchschnittliche Draft-Position, Own% = Anteil der ESPN-Ligen, in denen der Spieler aktuell gerostert ist. Beide Werte verschieben sich täglich bis zum Saisonstart.</p>
     </section>
 
@@ -2924,19 +2941,24 @@
     33:'BAL', 34:'HOU'
   };
   var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+  var FETCH_LIMIT = { QB: 50, RB: 50, WR: 50, TE: 50, K: 32, DST: 32 };
+  var DEFAULT_SHOW = { QB: 12, RB: 12, WR: 12, TE: 12, K: 32, DST: 32 };
 
   var tabsEl = document.getElementById('picksTabs');
   var statusEl = document.getElementById('picksStatus');
   var listEl = document.getElementById('picksList');
+  var moreBtn = document.getElementById('picksMoreBtn');
   if(!tabsEl) return;
 
   var cache = {};
   var activePos = 'QB';
+  var expanded = {};
 
   function render(pos){
     var data = cache[pos];
+    var showCount = expanded[pos] ? data.length : DEFAULT_SHOW[pos];
     listEl.innerHTML = '';
-    data.forEach(function(p, i){
+    data.slice(0, showCount).forEach(function(p, i){
       var row = document.createElement('div');
       row.className = 'picks-row';
       row.innerHTML =
@@ -2948,6 +2970,12 @@
     });
     listEl.style.display = '';
     statusEl.textContent = '';
+    if(data.length > DEFAULT_SHOW[pos]){
+      moreBtn.classList.add('is-visible');
+      moreBtn.textContent = expanded[pos] ? 'Weniger anzeigen' : 'Mehr anzeigen (Top ' + FETCH_LIMIT[pos] + ')';
+    } else {
+      moreBtn.classList.remove('is-visible');
+    }
   }
 
   async function loadPosition(pos){
@@ -2956,12 +2984,13 @@
     statusEl.textContent = 'Lade Live-Daten…';
     statusEl.classList.remove('error');
     listEl.style.display = 'none';
+    moreBtn.classList.remove('is-visible');
     try {
       var filter = JSON.stringify({
         players: {
           filterSlotIds: { value: [SLOT_IDS[pos]] },
           sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
-          limit: 12,
+          limit: FETCH_LIMIT[pos],
           offset: 0,
           filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
         }
@@ -2997,6 +3026,11 @@
     tabsEl.querySelectorAll('.pos-tab').forEach(function(t){ t.classList.remove('active'); });
     btn.classList.add('active');
     loadPosition(btn.dataset.pos);
+  });
+
+  moreBtn.addEventListener('click', function(){
+    expanded[activePos] = !expanded[activePos];
+    render(activePos);
   });
 
   loadPosition('QB');
