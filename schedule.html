@@ -430,14 +430,29 @@
     min-width:220px;
   }
   .sched-select:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  .sched-toggle{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    color:var(--turf);
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:7px 14px;
+    cursor:pointer;
+    user-select:none;
+  }
+  .sched-toggle input{accent-color:var(--amber);width:14px;height:14px;cursor:pointer;}
+  .sched-toggle:has(input:checked){border-color:var(--amber);color:var(--amber);}
   .sched-legend{font-size:12px;color:var(--ink-soft);}
   .sched-legend .conf-badge{margin:0 3px;}
 
   .sched-week{margin-bottom:16px;}
-  .sched-week-head{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:0 2px 8px;}
+  .sched-week.is-week-hidden{display:none;}
+  .sched-week-head{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px;}
   .sched-week-num{font-family:'Anton', sans-serif;font-size:16px;color:var(--turf);letter-spacing:.02em;text-transform:uppercase;}
-  .sched-week-meta{display:flex;align-items:baseline;gap:8px;}
-  .sched-week-date{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--ink-soft);}
   .sched-week-type{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;}
 
   .sched-games{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);}
@@ -534,9 +549,9 @@
 </header>
 
 <main>
-  <div class="kicker">Saison 2026 · 15 Wochen</div>
+  <div class="kicker">Saison 2026 · 09.09.–21.12. · 15 Wochen</div>
   <h1>Spielplan</h1>
-  <p class="copy">Der komplette Liga-Phase-Spielplan: 10 Teams in zwei Divisionen (NFC/AFC), 15 Wochen, jede Woche genau 5 Spiele – jedes Team spielt jede Woche. Wähle unten dein Team, um nur deine 15 Matchups zu sehen.</p>
+  <p class="copy">Der komplette Liga-Phase-Spielplan: 10 Teams in zwei Divisionen (NFC/AFC), 15 Wochen, jede Woche genau 5 Spiele – jedes Team spielt jede Woche. Unsere Wochen folgen 1:1 dem echten NFL-Spielplan 2026, inklusive ein paar Kuriositäten: Der Saisonauftakt fällt auf einen Mittwoch statt Donnerstag, und Woche 12 startet wegen Thanksgiving ebenfalls schon am Mittwoch. Wähle unten dein Team, um nur deine 15 Matchups zu sehen.</p>
 
   <div class="sched-facts">
     <div class="sched-fact">2× <strong>Conference-intern</strong> pro Gegner</div>
@@ -549,13 +564,13 @@
     <select class="sched-select" id="teamFilter" aria-label="Team filtern">
       <option value="">Alle Teams – kompletter Spielplan</option>
     </select>
+    <label class="sched-toggle"><input type="checkbox" id="doubleOnlyToggle"> Nur Doppel-Duelle (10 Paarungen)</label>
     <span class="sched-legend"><span class="conf-badge nfc">NFC</span><span class="conf-badge afc">AFC</span></span>
   </div>
 
   <div id="schedWeeks"></div>
 
   <p class="note-text">"2×" markiert Doppel-Duelle – Paarungen, die zweimal in der Saison stattfinden. "Max. Conference-intern" heisst: an diesem Spieltag sind so viele Spiele wie möglich innerhalb der eigenen Division (4 von 5).</p>
-  <p class="note-text">Die Wochendaten entsprechen 1:1 dem echten NFL-Spielplan 2026 (Liga-Woche N = NFL-Woche N). Woche 1 startet am 09.09.2026 mit dem offiziellen Saisonauftakt; Woche 12 beginnt wegen Thanksgiving bereits am Mittwoch statt Donnerstag.</p>
 </main>
 
 <button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
@@ -597,6 +612,7 @@
   (function(){
     var weeksEl = document.getElementById('schedWeeks');
     var filterEl = document.getElementById('teamFilter');
+    var doubleOnlyEl = document.getElementById('doubleOnlyToggle');
 
     var teams = {};
     SCHEDULE.forEach(function(wk){
@@ -620,22 +636,9 @@
       return ty === 'max' ? 'Max. Conference-intern' : 'Gemischt';
     }
 
-    /* Echte Termine der NFL-Saison 2026 (offizieller Spielplan, Stand: ESPN-Schedule-API).
-       Unsere Liga-Woche N = NFL-Woche N, 1:1 – daher hier direkt übernommen statt berechnet
-       (die NFL-Wochen sind nicht immer exakt Do–Mo, z.B. Woche 1 startet 2026 an einem Mittwoch,
-       Woche 12 wegen Thanksgiving ebenfalls). */
-    var WEEK_DATES = {
-      1: '09.09.–14.09.2026', 2: '17.09.–21.09.2026', 3: '24.09.–28.09.2026',
-      4: '01.10.–05.10.2026', 5: '08.10.–12.10.2026', 6: '15.10.–19.10.2026',
-      7: '22.10.–26.10.2026', 8: '29.10.–02.11.2026', 9: '05.11.–09.11.2026',
-      10: '12.11.–16.11.2026', 11: '19.11.–23.11.2026', 12: '25.11.–30.11.2026',
-      13: '03.12.–07.12.2026', 14: '10.12.–14.12.2026', 15: '17.12.–21.12.2026'
-    };
-    function weekDateRange(w){ return WEEK_DATES[w] || ''; }
-
     function gameHtml(g){
       var t1 = g[0], c1 = g[1], t2 = g[2], c2 = g[3], kind = g[4], double = g[5];
-      return '<div class="sched-game" data-t1="' + t1 + '" data-t2="' + t2 + '">' +
+      return '<div class="sched-game" data-t1="' + t1 + '" data-t2="' + t2 + '" data-double="' + (double ? '1' : '0') + '">' +
         '<span class="sched-team side-a"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
         '<span class="sched-vs">vs</span>' +
         (double ? '<span class="sched-double">2×</span>' : '') +
@@ -646,7 +649,7 @@
     function render(){
       var html = SCHEDULE.map(function(wk){
         return '<div class="sched-week">' +
-          '<div class="sched-week-head"><span class="sched-week-meta"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-date">' + weekDateRange(wk.w) + '</span></span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span></div>' +
+          '<div class="sched-week-head"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span></div>' +
           '<div class="sched-games">' + wk.g.map(gameHtml).join('') + '</div>' +
         '</div>';
       }).join('');
@@ -656,18 +659,23 @@
 
     function applyFilter(){
       var team = filterEl.value;
-      weeksEl.querySelectorAll('.sched-game').forEach(function(row){
-        if(!team){
-          row.classList.remove('is-filtered-out', 'is-mine');
-          return;
-        }
-        var match = row.dataset.t1 === team || row.dataset.t2 === team;
-        row.classList.toggle('is-filtered-out', !match);
-        row.classList.toggle('is-mine', match);
+      var doubleOnly = doubleOnlyEl.checked;
+      weeksEl.querySelectorAll('.sched-week').forEach(function(weekEl){
+        var anyVisible = false;
+        weekEl.querySelectorAll('.sched-game').forEach(function(row){
+          var matchesTeam = !team || row.dataset.t1 === team || row.dataset.t2 === team;
+          var matchesDouble = !doubleOnly || row.dataset.double === '1';
+          var visible = matchesTeam && matchesDouble;
+          row.classList.toggle('is-filtered-out', !visible);
+          row.classList.toggle('is-mine', !!team && visible);
+          if(visible) anyVisible = true;
+        });
+        weekEl.classList.toggle('is-week-hidden', !anyVisible);
       });
     }
 
     filterEl.addEventListener('change', applyFilter);
+    doubleOnlyEl.addEventListener('change', applyFilter);
     render();
   })();
 </script>
