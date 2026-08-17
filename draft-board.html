@@ -466,6 +466,21 @@
   .db-name{font-family:'Source Serif 4', serif;font-size:14px;flex:1;}
   .db-team{color:var(--hash);margin-left:6px;}
   .db-adp{color:var(--amber);min-width:70px;text-align:right;}
+  .db-proj{color:var(--chalk);opacity:.85;min-width:64px;text-align:right;}
+  .db-sort-toggle{display:flex;gap:6px;}
+  .db-sort-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    background:var(--card);
+    color:var(--turf);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:6px 12px;
+    cursor:pointer;
+  }
+  .db-sort-btn.active{background:var(--amber);border-color:var(--amber);color:var(--turf);font-weight:600;}
   .db-status-btn{
     font-family:'IBM Plex Mono', monospace;
     font-size:10px;
@@ -539,6 +554,7 @@
     main{padding:24px 16px 80px;}
     .db-row{padding:8px 10px;gap:6px;font-size:12px;}
     .db-adp{min-width:56px;}
+    .db-proj{min-width:48px;}
     .db-status-btn{min-width:auto;padding:5px 8px;}
   }
 </style>
@@ -580,6 +596,10 @@
       <button class="pos-tab" data-pos="DST" type="button">DEF</button>
     </div>
     <input class="db-search" id="dbSearch" type="text" placeholder="Spieler suchen…" aria-label="Spieler suchen">
+    <div class="db-sort-toggle" id="dbSortToggle">
+      <button class="db-sort-btn active" data-sort="custom" type="button">Eigene Reihenfolge</button>
+      <button class="db-sort-btn" data-sort="proj" type="button">Nach Projektion</button>
+    </div>
   </div>
 
   <div class="calc-status" id="dbStatus" aria-live="polite">Lade Live-Daten…</div>
@@ -596,6 +616,7 @@
   </div>
 
   <p class="note-text">ADP = durchschnittliche Draft-Position über alle ESPN-Fantasy-Ligen. Deine eigene Reihenfolge und der Draft-Status werden getrennt gespeichert – "Zurücksetzen" löscht nur die Verfügbar/Vergeben-Markierungen, nicht deine Sortierung.</p>
+  <p class="note-text">"Proj." ist eine Näherung der Saison-Punkte nach eurem individuellen Scoring, berechnet aus ESPNs Saison-Projektion. Wochenbasierte Boni (z.B. 300+-Yard-Spiele, 50+-Yard-TD-Bonus, 2pt-Conversions) sind darin nicht enthalten, da eine Saison-Projektion keine einzelnen Spiele ausweist – für K/DEF gibt's aktuell keine Projektion. Zum genauen Punktestand einzelner vergangener Wochen siehe den <a class="gloss-link" href="index.html#rechner">Punkterechner</a>.</p>
 </main>
 
 <button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
@@ -632,17 +653,14 @@
 })();
 </script>
 
+<script src="shared.js"></script>
 <script>
 (function(){
-  var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
-  var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+  var shared = window.DraftRoomShared;
+  var ADP_URL = shared.ADP_URL;
+  var SLOT_IDS = shared.SLOT_IDS;
+  var TEAM_ABBR = shared.TEAM_ABBR;
   var FETCH_LIMIT = { QB: 50, RB: 50, WR: 50, TE: 50, K: 32, DST: 32 };
-  var TEAM_ABBR = {
-    1:'ATL', 2:'BUF', 3:'CHI', 4:'CIN', 5:'CLE', 6:'DAL', 7:'DEN', 8:'DET', 9:'GB', 10:'TEN',
-    11:'IND', 12:'KC', 13:'LV', 14:'LAR', 15:'MIA', 16:'MIN', 17:'NE', 18:'NO', 19:'NYG', 20:'NYJ',
-    21:'PHI', 22:'ARI', 23:'PIT', 24:'LAC', 25:'SF', 26:'SEA', 27:'TB', 28:'WSH', 29:'CAR', 30:'JAX',
-    33:'BAL', 34:'HOU'
-  };
 
   var ORDER_KEY_PREFIX = 'draftboard-order-';
   var STATUS_KEY = 'draftboard-status';
@@ -654,10 +672,12 @@
   var listEl = document.getElementById('dbList');
   var searchEl = document.getElementById('dbSearch');
   var resetBtn = document.getElementById('dbResetBtn');
+  var sortToggleEl = document.getElementById('dbSortToggle');
   if(!tabsEl) return;
 
   var cache = {};
   var activePos = 'QB';
+  var sortMode = 'custom';
   var listAnimation = null;
   var draftStatus = loadStatus();
 
@@ -698,30 +718,38 @@
     return ordered;
   }
 
-  function rowHtml(p, i){
+  function rowHtml(p, i, showReorder){
     var status = draftStatus[p.id] || 'available';
     var statusLabel = status === 'me' ? 'Von mir' : status === 'other' ? 'Vergeben' : 'Verfügbar';
     var rowCls = 'db-row' + (status === 'me' ? ' is-me' : status === 'other' ? ' is-other' : '');
+    var projText = (p.proj === null || p.proj === undefined) ? '–' : p.proj.toFixed(1);
     return '<div class="' + rowCls + '" data-id="' + p.id + '" data-name="' + p.name.toLowerCase() + '">' +
+      (showReorder ?
       '<div class="db-reorder">' +
         '<button class="db-arrow db-up" type="button" aria-label="Nach oben"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
         '<button class="db-arrow db-down" type="button" aria-label="Nach unten">▼</button>' +
-      '</div>' +
+      '</div>' : '') +
       '<span class="db-rank mono">' + (i + 1) + '</span>' +
       '<span class="db-name">' + p.name + '<span class="db-team mono">' + p.team + '</span></span>' +
+      '<span class="db-proj mono" title="Projizierte Saison-Punkte (Näherung)">' + projText + ' Pkt.</span>' +
       '<span class="db-adp mono">ADP ' + p.adp.toFixed(1) + '</span>' +
       '<button class="db-status-btn" type="button" data-status="' + status + '">' + statusLabel + '</button>' +
     '</div>';
   }
 
   function render(pos, animate){
-    var data = cache[pos];
+    var showReorder = sortMode === 'custom';
+    var data = showReorder ? cache[pos] : cache[pos].slice().sort(function(a, b){
+      var ap = a.proj === null || a.proj === undefined ? -Infinity : a.proj;
+      var bp = b.proj === null || b.proj === undefined ? -Infinity : b.proj;
+      return bp - ap;
+    });
     var startHeight = null;
     if(animate){
       if(listAnimation) listAnimation.cancel();
       startHeight = listEl.offsetHeight;
     }
-    listEl.innerHTML = data.map(rowHtml).join('');
+    listEl.innerHTML = data.map(function(p, i){ return rowHtml(p, i, showReorder); }).join('');
     // disable last row's down-arrow
     var lastDown = listEl.querySelector('.db-row:last-child .db-down');
     if(lastDown) lastDown.disabled = true;
@@ -759,10 +787,11 @@
       var filter = JSON.stringify({
         players: {
           filterSlotIds: { value: [SLOT_IDS[pos]] },
+          filterStatsForSourceIds: { value: [1] },
+          filterStatsForSplitTypeIds: { value: [0] },
           sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
           limit: FETCH_LIMIT[pos],
-          offset: 0,
-          filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
+          offset: 0
         }
       });
       var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter } });
@@ -771,11 +800,13 @@
       var list = (data.players || []).map(function(p){
         var pl = p.player;
         var own = pl.ownership || {};
+        var projStats = shared.findSeasonProjection(pl.stats);
         return {
           id: String(pl.id),
           name: pl.fullName,
           team: TEAM_ABBR[pl.proTeamId] || '',
-          adp: own.averageDraftPosition || 999
+          adp: own.averageDraftPosition || 999,
+          proj: shared.projectedPoints(pos, projStats)
         };
       }).sort(function(a, b){ return a.adp - b.adp; });
       cache[pos] = applyStoredOrder(pos, list);
@@ -797,6 +828,15 @@
   });
 
   searchEl.addEventListener('input', applyFilter);
+
+  sortToggleEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.db-sort-btn');
+    if(!btn || btn.dataset.sort === sortMode) return;
+    sortMode = btn.dataset.sort;
+    sortToggleEl.querySelectorAll('.db-sort-btn').forEach(function(t){ t.classList.remove('active'); });
+    btn.classList.add('active');
+    render(activePos, true);
+  });
 
   listEl.addEventListener('click', function(e){
     var row = e.target.closest('.db-row');
