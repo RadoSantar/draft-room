@@ -794,7 +794,7 @@
           offset: 0
         }
       });
-      var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter } });
+      var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter }, cache: 'no-store' });
       if(!res.ok) throw new Error('fetch-failed');
       var data = await res.json();
       var list = (data.players || []).map(function(p){
