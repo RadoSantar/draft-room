@@ -1,0 +1,391 @@
+/* Draft Room – gemeinsames Team-Theme-System + Theme-Picker + Back-to-Top.
+   Wird von index.html, draft-board.html und schedule.html per <link> eingebunden. */
+:root{
+  --turf:#1E4638;
+  --turf-2:#173629;
+  --hash:#3F7A5C;
+  --chalk:#F3EFE4;
+  --amber:#E9A73B;
+  --endzone:#B8402F;
+  --endzone-soft:#e08a7e;
+  --ink:#22241F;
+  --ink-soft:#4a4c44;
+  --card:#ffffff;
+  --card-border:rgba(30,70,56,0.15);
+}
+:root[data-team-theme="no"]{
+  --turf:#101820;
+  --turf-2:#080c10;
+  --hash:#A5895A;
+  --chalk:#F5F1E6;
+  --amber:#D3BC8D;
+  --ink:#1a1815;
+  --ink-soft:#4d473c;
+  --card-border:rgba(16,24,32,0.15);
+}
+:root[data-team-theme="det"]{
+  --turf:#0B3C5D;
+  --turf-2:#072943;
+  --hash:#7FA8C9;
+  --chalk:#F0F3F5;
+  --amber:#3FA9DC;
+  --ink:#10202c;
+  --ink-soft:#3f5a6d;
+  --card-border:rgba(11,60,93,0.15);
+}
+:root[data-team-theme="ari"]{
+  --turf:#7A1830;
+  --turf-2:#4d0f1f;
+  --hash:#A5828C;
+  --chalk:#F6EEEE;
+  --amber:#C9A24B;
+  --ink:#241014;
+  --ink-soft:#5c3940;
+  --card-border:rgba(122,24,48,0.15);
+}
+:root[data-team-theme="atl"]{
+  --turf:#7D1128;
+  --turf-2:#4d0a19;
+  --hash:#A5ACAF;
+  --chalk:#F3EFEE;
+  --amber:#C9A55C;
+  --ink:#201014;
+  --ink-soft:#574044;
+  --card-border:rgba(125,17,40,0.15);
+}
+:root[data-team-theme="bal"]{
+  --turf:#1c1147;
+  --turf-2:#100a2e;
+  --hash:#8f7f45;
+  --chalk:#EFEEF6;
+  --amber:#C9A227;
+  --ink:#17102e;
+  --ink-soft:#4a4560;
+  --card-border:rgba(28,17,71,0.15);
+}
+:root[data-team-theme="buf"]{
+  --turf:#00295E;
+  --turf-2:#001a3d;
+  --hash:#7FA5D6;
+  --chalk:#EEF2F8;
+  --amber:#FFC72C;
+  --ink:#0d1b2e;
+  --ink-soft:#3d5a7a;
+  --card-border:rgba(0,41,94,0.15);
+}
+:root[data-team-theme="car"]{
+  --turf:#045A87;
+  --turf-2:#023d5c;
+  --hash:#8fb8cc;
+  --chalk:#EFF6F9;
+  --amber:#D9B45C;
+  --ink:#0d1f28;
+  --ink-soft:#3d5560;
+  --card-border:rgba(4,90,135,0.15);
+}
+:root[data-team-theme="chi"]{
+  --turf:#0B162A;
+  --turf-2:#060d1a;
+  --hash:#d68a5c;
+  --chalk:#F2EEE9;
+  --amber:#C83803;
+  --ink:#14100c;
+  --ink-soft:#4a3a30;
+  --card-border:rgba(11,22,42,0.15);
+}
+:root[data-team-theme="cin"]{
+  --turf:#14110d;
+  --turf-2:#000000;
+  --hash:#d68a5c;
+  --chalk:#F2EEE9;
+  --amber:#FB4F14;
+  --ink:#14110d;
+  --ink-soft:#4a423a;
+  --card-border:rgba(20,17,13,0.15);
+}
+:root[data-team-theme="cle"]{
+  --turf:#311D00;
+  --turf-2:#1f1300;
+  --hash:#d99a6c;
+  --chalk:#F5EFE7;
+  --amber:#FF6B1A;
+  --ink:#241a10;
+  --ink-soft:#5c4a3a;
+  --card-border:rgba(49,29,0,0.15);
+}
+:root[data-team-theme="dal"]{
+  --turf:#04152E;
+  --turf-2:#020c1c;
+  --hash:#8fa3bc;
+  --chalk:#EEF1F5;
+  --amber:#B3995D;
+  --ink:#0d1522;
+  --ink-soft:#3d4a5c;
+  --card-border:rgba(4,21,46,0.15);
+}
+:root[data-team-theme="den"]{
+  --turf:#002244;
+  --turf-2:#00152c;
+  --hash:#d68a5c;
+  --chalk:#F0EEE9;
+  --amber:#FB4F14;
+  --ink:#0d1522;
+  --ink-soft:#3d4a5c;
+  --card-border:rgba(0,34,68,0.15);
+}
+:root[data-team-theme="gb"]{
+  --turf:#203731;
+  --turf-2:#142420;
+  --hash:#d9b45c;
+  --chalk:#F5F0E4;
+  --amber:#FFB612;
+  --ink:#14201c;
+  --ink-soft:#445c50;
+  --card-border:rgba(32,55,49,0.15);
+}
+:root[data-team-theme="hou"]{
+  --turf:#03202F;
+  --turf-2:#01141d;
+  --hash:#7fa5b8;
+  --chalk:#EEF2F4;
+  --amber:#C9A24B;
+  --ink:#0a1519;
+  --ink-soft:#3a4d54;
+  --card-border:rgba(3,32,47,0.15);
+}
+:root[data-team-theme="ind"]{
+  --turf:#002C5F;
+  --turf-2:#001a3d;
+  --hash:#7FA5D6;
+  --chalk:#EEF2F8;
+  --amber:#C9A24B;
+  --ink:#0d1b2e;
+  --ink-soft:#3d5a7a;
+  --card-border:rgba(0,44,95,0.15);
+}
+:root[data-team-theme="jax"]{
+  --turf:#006778;
+  --turf-2:#003d47;
+  --hash:#8fc4cc;
+  --chalk:#EAF4F5;
+  --amber:#D7A22A;
+  --ink:#0a1f22;
+  --ink-soft:#3a5458;
+  --card-border:rgba(0,103,120,0.15);
+}
+:root[data-team-theme="kc"]{
+  --turf:#7A0E1F;
+  --turf-2:#4d0912;
+  --hash:#d9b45c;
+  --chalk:#F5EEE4;
+  --amber:#FFB81C;
+  --ink:#200a0d;
+  --ink-soft:#5c3a3f;
+  --card-border:rgba(122,14,31,0.15);
+}
+:root[data-team-theme="lv"]{
+  --turf:#14141a;
+  --turf-2:#000000;
+  --hash:#a5acaf;
+  --chalk:#F0F0F0;
+  --amber:#C9A24B;
+  --ink:#14141a;
+  --ink-soft:#4a4a4a;
+  --card-border:rgba(20,20,26,0.15);
+}
+:root[data-team-theme="lac"]{
+  --turf:#002A5E;
+  --turf-2:#001a3d;
+  --hash:#7FC6E8;
+  --chalk:#EAF4FA;
+  --amber:#FFC20E;
+  --ink:#0d1b2e;
+  --ink-soft:#3d5a7a;
+  --card-border:rgba(0,42,94,0.15);
+}
+:root[data-team-theme="lar"]{
+  --turf:#003594;
+  --turf-2:#001f5c;
+  --hash:#d9b45c;
+  --chalk:#EEF1FA;
+  --amber:#FFA300;
+  --ink:#0d1740;
+  --ink-soft:#3d4a70;
+  --card-border:rgba(0,53,148,0.15);
+}
+:root[data-team-theme="mia"]{
+  --turf:#005778;
+  --turf-2:#003850;
+  --hash:#7fc4cc;
+  --chalk:#EAF6F7;
+  --amber:#FC4C02;
+  --ink:#0a2a33;
+  --ink-soft:#3a5d63;
+  --card-border:rgba(0,87,120,0.15);
+}
+:root[data-team-theme="min"]{
+  --turf:#4F2683;
+  --turf-2:#331a57;
+  --hash:#d9b45c;
+  --chalk:#F3EEF9;
+  --amber:#FFC62F;
+  --ink:#22103a;
+  --ink-soft:#524066;
+  --card-border:rgba(79,38,131,0.15);
+}
+:root[data-team-theme="ne"]{
+  --turf:#002244;
+  --turf-2:#00152c;
+  --hash:#a5acaf;
+  --chalk:#EEF1F5;
+  --amber:#C9A24B;
+  --ink:#0d1522;
+  --ink-soft:#3d4a5c;
+  --card-border:rgba(0,34,68,0.15);
+}
+:root[data-team-theme="nyg"]{
+  --turf:#0B2265;
+  --turf-2:#071640;
+  --hash:#8fa3bc;
+  --chalk:#EEF1F8;
+  --amber:#C9A24B;
+  --ink:#0d1530;
+  --ink-soft:#3d4a66;
+  --card-border:rgba(11,34,101,0.15);
+}
+:root[data-team-theme="nyj"]{
+  --turf:#125740;
+  --turf-2:#0a3a2a;
+  --hash:#7fbfa0;
+  --chalk:#EAF5F0;
+  --amber:#D9B45C;
+  --ink:#0a241a;
+  --ink-soft:#3a5c4a;
+  --card-border:rgba(18,87,64,0.15);
+}
+:root[data-team-theme="phi"]{
+  --turf:#004C54;
+  --turf-2:#003338;
+  --hash:#a5acaf;
+  --chalk:#EAF3F3;
+  --amber:#C9A24B;
+  --ink:#0a2226;
+  --ink-soft:#3a5054;
+  --card-border:rgba(0,76,84,0.15);
+}
+:root[data-team-theme="pit"]{
+  --turf:#14120d;
+  --turf-2:#000000;
+  --hash:#d9b45c;
+  --chalk:#F5F0E4;
+  --amber:#FFB612;
+  --ink:#14120d;
+  --ink-soft:#4a453a;
+  --card-border:rgba(20,18,13,0.15);
+}
+:root[data-team-theme="sf"]{
+  --turf:#7A0000;
+  --turf-2:#4d0000;
+  --hash:#d9c48f;
+  --chalk:#F5F0E4;
+  --amber:#B3995D;
+  --ink:#200a0a;
+  --ink-soft:#5c3a3a;
+  --card-border:rgba(122,0,0,0.15);
+}
+:root[data-team-theme="sea"]{
+  --turf:#002244;
+  --turf-2:#00152c;
+  --hash:#a5acaf;
+  --chalk:#EEF1F0;
+  --amber:#69BE28;
+  --ink:#0d1f16;
+  --ink-soft:#3d5a48;
+  --card-border:rgba(0,34,68,0.15);
+}
+:root[data-team-theme="tb"]{
+  --turf:#34302B;
+  --turf-2:#201d19;
+  --hash:#d68a5c;
+  --chalk:#F5F0EA;
+  --amber:#FF7900;
+  --ink:#1a1815;
+  --ink-soft:#4a453e;
+  --card-border:rgba(52,48,43,0.15);
+}
+:root[data-team-theme="ten"]{
+  --turf:#0C2340;
+  --turf-2:#071528;
+  --hash:#7FB8E0;
+  --chalk:#EEF3FA;
+  --amber:#4B92DB;
+  --ink:#0d1f33;
+  --ink-soft:#3d5a7a;
+  --card-border:rgba(12,35,64,0.15);
+}
+:root[data-team-theme="wsh"]{
+  --turf:#5A1414;
+  --turf-2:#3a0d0d;
+  --hash:#d9b45c;
+  --chalk:#F5EEE7;
+  --amber:#FFB612;
+  --ink:#200a0a;
+  --ink-soft:#5c3a3a;
+  --card-border:rgba(90,20,20,0.15);
+}
+
+/* Header-Logo (Team-Wappen im Header, ersetzt Standard-Titel-Icon) */
+.header-logo{width:30px;height:30px;object-fit:contain;flex:0 0 auto;}
+.header-logo.is-hidden{display:none;}
+.is-hidden{display:none !important;}
+
+/* Theme-Picker (Team-Design-Dropdown mit Vorschau) */
+.theme-picker{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.theme-picker-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
+.theme-select-wrap{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  background:var(--card);
+  border:1px solid var(--card-border);
+  border-radius:20px;
+  padding:6px 14px 6px 8px;
+}
+.theme-preview-ball,.theme-preview-logo{width:22px;height:22px;object-fit:contain;flex:0 0 auto;}
+.theme-select{
+  font-family:'Source Serif 4', serif;
+  font-size:14px;
+  color:var(--ink);
+  background:none;
+  border:none;
+  cursor:pointer;
+  padding:2px 0;
+}
+.theme-select:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+
+/* Back-to-Top-Button */
+.back-to-top{
+  position:fixed;
+  right:18px;
+  bottom:18px;
+  z-index:40;
+  width:44px;
+  height:44px;
+  border-radius:50%;
+  border:none;
+  background:var(--amber);
+  color:var(--turf-2);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  box-shadow:0 4px 14px rgba(0,0,0,0.25);
+  opacity:1;
+  transform:translateY(0);
+  transition:opacity .25s ease, transform .25s ease;
+}
+.back-to-top svg{width:18px;height:18px;}
+.back-to-top.is-hidden{opacity:0;transform:translateY(10px);pointer-events:none;}
+@media (max-width:640px){
+  .back-to-top{right:14px;bottom:14px;width:40px;height:40px;}
+}

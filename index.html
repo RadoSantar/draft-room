@@ -20,340 +20,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css">
+<script src="shared.js"></script>
 <style>
-  :root{
-    --turf:#1E4638;
-    --turf-2:#173629;
-    --hash:#3F7A5C;
-    --chalk:#F3EFE4;
-    --amber:#E9A73B;
-    --endzone:#B8402F;
-    --endzone-soft:#e08a7e;
-    --ink:#22241F;
-    --ink-soft:#4a4c44;
-    --card:#ffffff;
-    --card-border:rgba(30,70,56,0.15);
-  }
-  :root[data-team-theme="no"]{
-    --turf:#101820;
-    --turf-2:#080c10;
-    --hash:#A5895A;
-    --chalk:#F5F1E6;
-    --amber:#D3BC8D;
-    --ink:#1a1815;
-    --ink-soft:#4d473c;
-    --card-border:rgba(16,24,32,0.15);
-  }
-  :root[data-team-theme="det"]{
-    --turf:#0B3C5D;
-    --turf-2:#072943;
-    --hash:#7FA8C9;
-    --chalk:#F0F3F5;
-    --amber:#3FA9DC;
-    --ink:#10202c;
-    --ink-soft:#3f5a6d;
-    --card-border:rgba(11,60,93,0.15);
-  }
-  :root[data-team-theme="ari"]{
-    --turf:#7A1830;
-    --turf-2:#4d0f1f;
-    --hash:#A5828C;
-    --chalk:#F6EEEE;
-    --amber:#C9A24B;
-    --ink:#241014;
-    --ink-soft:#5c3940;
-    --card-border:rgba(122,24,48,0.15);
-  }
-  :root[data-team-theme="atl"]{
-    --turf:#7D1128;
-    --turf-2:#4d0a19;
-    --hash:#A5ACAF;
-    --chalk:#F3EFEE;
-    --amber:#C9A55C;
-    --ink:#201014;
-    --ink-soft:#574044;
-    --card-border:rgba(125,17,40,0.15);
-  }
-  :root[data-team-theme="bal"]{
-    --turf:#1c1147;
-    --turf-2:#100a2e;
-    --hash:#8f7f45;
-    --chalk:#EFEEF6;
-    --amber:#C9A227;
-    --ink:#17102e;
-    --ink-soft:#4a4560;
-    --card-border:rgba(28,17,71,0.15);
-  }
-  :root[data-team-theme="buf"]{
-    --turf:#00295E;
-    --turf-2:#001a3d;
-    --hash:#7FA5D6;
-    --chalk:#EEF2F8;
-    --amber:#FFC72C;
-    --ink:#0d1b2e;
-    --ink-soft:#3d5a7a;
-    --card-border:rgba(0,41,94,0.15);
-  }
-  :root[data-team-theme="car"]{
-    --turf:#045A87;
-    --turf-2:#023d5c;
-    --hash:#8fb8cc;
-    --chalk:#EFF6F9;
-    --amber:#D9B45C;
-    --ink:#0d1f28;
-    --ink-soft:#3d5560;
-    --card-border:rgba(4,90,135,0.15);
-  }
-  :root[data-team-theme="chi"]{
-    --turf:#0B162A;
-    --turf-2:#060d1a;
-    --hash:#d68a5c;
-    --chalk:#F2EEE9;
-    --amber:#C83803;
-    --ink:#14100c;
-    --ink-soft:#4a3a30;
-    --card-border:rgba(11,22,42,0.15);
-  }
-  :root[data-team-theme="cin"]{
-    --turf:#14110d;
-    --turf-2:#000000;
-    --hash:#d68a5c;
-    --chalk:#F2EEE9;
-    --amber:#FB4F14;
-    --ink:#14110d;
-    --ink-soft:#4a423a;
-    --card-border:rgba(20,17,13,0.15);
-  }
-  :root[data-team-theme="cle"]{
-    --turf:#311D00;
-    --turf-2:#1f1300;
-    --hash:#d99a6c;
-    --chalk:#F5EFE7;
-    --amber:#FF6B1A;
-    --ink:#241a10;
-    --ink-soft:#5c4a3a;
-    --card-border:rgba(49,29,0,0.15);
-  }
-  :root[data-team-theme="dal"]{
-    --turf:#04152E;
-    --turf-2:#020c1c;
-    --hash:#8fa3bc;
-    --chalk:#EEF1F5;
-    --amber:#B3995D;
-    --ink:#0d1522;
-    --ink-soft:#3d4a5c;
-    --card-border:rgba(4,21,46,0.15);
-  }
-  :root[data-team-theme="den"]{
-    --turf:#002244;
-    --turf-2:#00152c;
-    --hash:#d68a5c;
-    --chalk:#F0EEE9;
-    --amber:#FB4F14;
-    --ink:#0d1522;
-    --ink-soft:#3d4a5c;
-    --card-border:rgba(0,34,68,0.15);
-  }
-  :root[data-team-theme="gb"]{
-    --turf:#203731;
-    --turf-2:#142420;
-    --hash:#d9b45c;
-    --chalk:#F5F0E4;
-    --amber:#FFB612;
-    --ink:#14201c;
-    --ink-soft:#445c50;
-    --card-border:rgba(32,55,49,0.15);
-  }
-  :root[data-team-theme="hou"]{
-    --turf:#03202F;
-    --turf-2:#01141d;
-    --hash:#7fa5b8;
-    --chalk:#EEF2F4;
-    --amber:#C9A24B;
-    --ink:#0a1519;
-    --ink-soft:#3a4d54;
-    --card-border:rgba(3,32,47,0.15);
-  }
-  :root[data-team-theme="ind"]{
-    --turf:#002C5F;
-    --turf-2:#001a3d;
-    --hash:#7FA5D6;
-    --chalk:#EEF2F8;
-    --amber:#C9A24B;
-    --ink:#0d1b2e;
-    --ink-soft:#3d5a7a;
-    --card-border:rgba(0,44,95,0.15);
-  }
-  :root[data-team-theme="jax"]{
-    --turf:#006778;
-    --turf-2:#003d47;
-    --hash:#8fc4cc;
-    --chalk:#EAF4F5;
-    --amber:#D7A22A;
-    --ink:#0a1f22;
-    --ink-soft:#3a5458;
-    --card-border:rgba(0,103,120,0.15);
-  }
-  :root[data-team-theme="kc"]{
-    --turf:#7A0E1F;
-    --turf-2:#4d0912;
-    --hash:#d9b45c;
-    --chalk:#F5EEE4;
-    --amber:#FFB81C;
-    --ink:#200a0d;
-    --ink-soft:#5c3a3f;
-    --card-border:rgba(122,14,31,0.15);
-  }
-  :root[data-team-theme="lv"]{
-    --turf:#14141a;
-    --turf-2:#000000;
-    --hash:#a5acaf;
-    --chalk:#F0F0F0;
-    --amber:#C9A24B;
-    --ink:#14141a;
-    --ink-soft:#4a4a4a;
-    --card-border:rgba(20,20,26,0.15);
-  }
-  :root[data-team-theme="lac"]{
-    --turf:#002A5E;
-    --turf-2:#001a3d;
-    --hash:#7FC6E8;
-    --chalk:#EAF4FA;
-    --amber:#FFC20E;
-    --ink:#0d1b2e;
-    --ink-soft:#3d5a7a;
-    --card-border:rgba(0,42,94,0.15);
-  }
-  :root[data-team-theme="lar"]{
-    --turf:#003594;
-    --turf-2:#001f5c;
-    --hash:#d9b45c;
-    --chalk:#EEF1FA;
-    --amber:#FFA300;
-    --ink:#0d1740;
-    --ink-soft:#3d4a70;
-    --card-border:rgba(0,53,148,0.15);
-  }
-  :root[data-team-theme="mia"]{
-    --turf:#005778;
-    --turf-2:#003850;
-    --hash:#7fc4cc;
-    --chalk:#EAF6F7;
-    --amber:#FC4C02;
-    --ink:#0a2a33;
-    --ink-soft:#3a5d63;
-    --card-border:rgba(0,87,120,0.15);
-  }
-  :root[data-team-theme="min"]{
-    --turf:#4F2683;
-    --turf-2:#331a57;
-    --hash:#d9b45c;
-    --chalk:#F3EEF9;
-    --amber:#FFC62F;
-    --ink:#22103a;
-    --ink-soft:#524066;
-    --card-border:rgba(79,38,131,0.15);
-  }
-  :root[data-team-theme="ne"]{
-    --turf:#002244;
-    --turf-2:#00152c;
-    --hash:#a5acaf;
-    --chalk:#EEF1F5;
-    --amber:#C9A24B;
-    --ink:#0d1522;
-    --ink-soft:#3d4a5c;
-    --card-border:rgba(0,34,68,0.15);
-  }
-  :root[data-team-theme="nyg"]{
-    --turf:#0B2265;
-    --turf-2:#071640;
-    --hash:#8fa3bc;
-    --chalk:#EEF1F8;
-    --amber:#C9A24B;
-    --ink:#0d1530;
-    --ink-soft:#3d4a66;
-    --card-border:rgba(11,34,101,0.15);
-  }
-  :root[data-team-theme="nyj"]{
-    --turf:#125740;
-    --turf-2:#0a3a2a;
-    --hash:#7fbfa0;
-    --chalk:#EAF5F0;
-    --amber:#D9B45C;
-    --ink:#0a241a;
-    --ink-soft:#3a5c4a;
-    --card-border:rgba(18,87,64,0.15);
-  }
-  :root[data-team-theme="phi"]{
-    --turf:#004C54;
-    --turf-2:#003338;
-    --hash:#a5acaf;
-    --chalk:#EAF3F3;
-    --amber:#C9A24B;
-    --ink:#0a2226;
-    --ink-soft:#3a5054;
-    --card-border:rgba(0,76,84,0.15);
-  }
-  :root[data-team-theme="pit"]{
-    --turf:#14120d;
-    --turf-2:#000000;
-    --hash:#d9b45c;
-    --chalk:#F5F0E4;
-    --amber:#FFB612;
-    --ink:#14120d;
-    --ink-soft:#4a453a;
-    --card-border:rgba(20,18,13,0.15);
-  }
-  :root[data-team-theme="sf"]{
-    --turf:#7A0000;
-    --turf-2:#4d0000;
-    --hash:#d9c48f;
-    --chalk:#F5F0E4;
-    --amber:#B3995D;
-    --ink:#200a0a;
-    --ink-soft:#5c3a3a;
-    --card-border:rgba(122,0,0,0.15);
-  }
-  :root[data-team-theme="sea"]{
-    --turf:#002244;
-    --turf-2:#00152c;
-    --hash:#a5acaf;
-    --chalk:#EEF1F0;
-    --amber:#69BE28;
-    --ink:#0d1f16;
-    --ink-soft:#3d5a48;
-    --card-border:rgba(0,34,68,0.15);
-  }
-  :root[data-team-theme="tb"]{
-    --turf:#34302B;
-    --turf-2:#201d19;
-    --hash:#d68a5c;
-    --chalk:#F5F0EA;
-    --amber:#FF7900;
-    --ink:#1a1815;
-    --ink-soft:#4a453e;
-    --card-border:rgba(52,48,43,0.15);
-  }
-  :root[data-team-theme="ten"]{
-    --turf:#0C2340;
-    --turf-2:#071528;
-    --hash:#7FB8E0;
-    --chalk:#EEF3FA;
-    --amber:#4B92DB;
-    --ink:#0d1f33;
-    --ink-soft:#3d5a7a;
-    --card-border:rgba(12,35,64,0.15);
-  }
-  :root[data-team-theme="wsh"]{
-    --turf:#5A1414;
-    --turf-2:#3a0d0d;
-    --hash:#d9b45c;
-    --chalk:#F5EEE7;
-    --amber:#FFB612;
-    --ink:#200a0a;
-    --ink-soft:#5c3a3a;
-    --card-border:rgba(90,20,20,0.15);
-  }
   *{box-sizing:border-box;margin:0;padding:0;}
   html{scroll-behavior:smooth;}
   body{
@@ -396,12 +65,6 @@
     display:flex;
     align-items:center;
     gap:10px;
-  }
-  .header-logo{
-    width:30px;
-    height:30px;
-    object-fit:contain;
-    flex:0 0 auto;
   }
   header.topbar .sub{
     font-family:'IBM Plex Mono', monospace;
@@ -491,46 +154,6 @@
   }
 
   main{padding:32px 24px 96px;min-width:0;}
-
-  /* Theme picker */
-  .theme-picker{
-    display:flex;
-    align-items:center;
-    gap:10px;
-    margin-bottom:18px;
-  }
-  .theme-picker-label{
-    font-size:11px;
-    text-transform:uppercase;
-    letter-spacing:.06em;
-    color:var(--hash);
-  }
-  .theme-select-wrap{
-    display:flex;
-    align-items:center;
-    gap:8px;
-    background:var(--card);
-    border:1px solid var(--card-border);
-    border-radius:20px;
-    padding:6px 14px 6px 8px;
-  }
-  .theme-preview-ball,.theme-preview-logo{
-    width:22px;
-    height:22px;
-    object-fit:contain;
-    flex:0 0 auto;
-  }
-  .is-hidden{display:none !important;}
-  .theme-select{
-    font-family:'Source Serif 4', serif;
-    font-size:14px;
-    color:var(--ink);
-    background:none;
-    border:none;
-    cursor:pointer;
-    padding:2px 0;
-  }
-  .theme-select:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
 
   /* Hero */
   .hero h1{font-size:36px;line-height:1.15;margin-bottom:10px;}
@@ -636,35 +259,6 @@
     cursor:pointer;
   }
   .gloss-link:hover{text-decoration-color:var(--amber);}
-  .back-to-top{
-    position:fixed;
-    right:18px;
-    bottom:18px;
-    z-index:40;
-    width:44px;
-    height:44px;
-    border-radius:50%;
-    border:none;
-    background:var(--amber);
-    color:var(--turf-2);
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    cursor:pointer;
-    box-shadow:0 4px 14px rgba(0,0,0,0.25);
-    opacity:1;
-    transform:translateY(0);
-    transition:opacity .25s ease, transform .25s ease;
-  }
-  .back-to-top svg{width:18px;height:18px;}
-  .back-to-top.is-hidden{
-    opacity:0;
-    transform:translateY(10px);
-    pointer-events:none;
-  }
-  @media (max-width:640px){
-    .back-to-top{right:14px;bottom:14px;width:40px;height:40px;}
-  }
 
   /* Overview / table of contents */
   .toc-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px;}
@@ -1422,15 +1016,6 @@
     }
   }
 </style>
-<script>
-(function(){
-  try {
-    var saved = localStorage.getItem('draftroom-team-theme');
-    if(saved) document.documentElement.setAttribute('data-team-theme', saved);
-  } catch(e){}
-})();
-</script>
-<script src="shared.js"></script>
 </head>
 <body>
 
@@ -1507,41 +1092,7 @@
             <line x1="9" y1="22" x2="15" y2="22" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
           </svg>
           <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
-          <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen">
-        <option value="">Standard</option>
-        <option value="ari">Arizona Cardinals</option>
-        <option value="atl">Atlanta Falcons</option>
-        <option value="bal">Baltimore Ravens</option>
-        <option value="buf">Buffalo Bills</option>
-        <option value="car">Carolina Panthers</option>
-        <option value="chi">Chicago Bears</option>
-        <option value="cin">Cincinnati Bengals</option>
-        <option value="cle">Cleveland Browns</option>
-        <option value="dal">Dallas Cowboys</option>
-        <option value="den">Denver Broncos</option>
-        <option value="det">Detroit Lions</option>
-        <option value="gb">Green Bay Packers</option>
-        <option value="hou">Houston Texans</option>
-        <option value="ind">Indianapolis Colts</option>
-        <option value="jax">Jacksonville Jaguars</option>
-        <option value="kc">Kansas City Chiefs</option>
-        <option value="lv">Las Vegas Raiders</option>
-        <option value="lac">Los Angeles Chargers</option>
-        <option value="lar">Los Angeles Rams</option>
-        <option value="mia">Miami Dolphins</option>
-        <option value="min">Minnesota Vikings</option>
-        <option value="ne">New England Patriots</option>
-        <option value="no">New Orleans Saints</option>
-        <option value="nyg">New York Giants</option>
-        <option value="nyj">New York Jets</option>
-        <option value="phi">Philadelphia Eagles</option>
-        <option value="pit">Pittsburgh Steelers</option>
-        <option value="sf">San Francisco 49ers</option>
-        <option value="sea">Seattle Seahawks</option>
-        <option value="tb">Tampa Bay Buccaneers</option>
-        <option value="ten">Tennessee Titans</option>
-        <option value="wsh">Washington Commanders</option>
-          </select>
+          <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
         </div>
       </div>
 
@@ -2390,42 +1941,6 @@
     DST: 'Datenquelle: öffentliche ESPN-Team-Boxscore-Daten. Sacks, Interceptions, Fumbles Recovered, Defensive/Special-Teams-TDs sowie Points/Yards Allowed werden erfasst. Forced Fumbles (+1), Safeties (+2) und geblockte Kicks (+2/+6) sind in diesen Daten nicht zuverlässig enthalten und fehlen daher in der Berechnung.'
   };
 
-  // Aktuelle Starting-QBs (Stand: Depth Charts, ESPN Athlete-IDs)
-  var QUARTERBACKS = [
-    { id: '2578570', name: 'Jacoby Brissett', team: 'ARI' },
-    { id: '4241479', name: 'Tua Tagovailoa', team: 'ATL' },
-    { id: '3916387', name: 'Lamar Jackson', team: 'BAL' },
-    { id: '3918298', name: 'Josh Allen', team: 'BUF' },
-    { id: '4685720', name: 'Bryce Young', team: 'CAR' },
-    { id: '4431611', name: 'Caleb Williams', team: 'CHI' },
-    { id: '3915511', name: 'Joe Burrow', team: 'CIN' },
-    { id: '3122840', name: 'Deshaun Watson', team: 'CLE' },
-    { id: '2577417', name: 'Dak Prescott', team: 'DAL' },
-    { id: '4426338', name: 'Bo Nix', team: 'DEN' },
-    { id: '3046779', name: 'Jared Goff', team: 'DET' },
-    { id: '4036378', name: 'Jordan Love', team: 'GB' },
-    { id: '4432577', name: 'C.J. Stroud', team: 'HOU' },
-    { id: '3917792', name: 'Daniel Jones', team: 'IND' },
-    { id: '4360310', name: 'Trevor Lawrence', team: 'JAX' },
-    { id: '3139477', name: 'Patrick Mahomes', team: 'KC' },
-    { id: '4038941', name: 'Justin Herbert', team: 'LAC' },
-    { id: '12483', name: 'Matthew Stafford', team: 'LAR' },
-    { id: '14880', name: 'Kirk Cousins', team: 'LV' },
-    { id: '4242512', name: 'Malik Willis', team: 'MIA' },
-    { id: '3917315', name: 'Kyler Murray', team: 'MIN' },
-    { id: '4431452', name: 'Drake Maye', team: 'NE' },
-    { id: '4360689', name: 'Tyler Shough', team: 'NO' },
-    { id: '4689114', name: 'Jaxson Dart', team: 'NYG' },
-    { id: '15864', name: 'Geno Smith', team: 'NYJ' },
-    { id: '4040715', name: 'Jalen Hurts', team: 'PHI' },
-    { id: '8439', name: 'Aaron Rodgers', team: 'PIT' },
-    { id: '3912547', name: 'Sam Darnold', team: 'SEA' },
-    { id: '4361741', name: 'Brock Purdy', team: 'SF' },
-    { id: '3052587', name: 'Baker Mayfield', team: 'TB' },
-    { id: '4688380', name: 'Cam Ward', team: 'TEN' },
-    { id: '4426348', name: 'Jayden Daniels', team: 'WSH' }
-  ].sort(function(a, b){ return a.name.localeCompare(b.name); });
-
   var posSelect = document.getElementById('calcPos');
   var playerLabel = document.getElementById('calcPlayerLabel');
   var playerSelect = document.getElementById('calcQb');
@@ -2522,20 +2037,6 @@
     noteEl.textContent = POS_NOTES[pos];
     resultEl.hidden = true;
     setStatus('', false);
-
-    if(pos === 'QB'){
-      playerSelect.innerHTML = '';
-      QUARTERBACKS.forEach(function(qb){
-        var opt = document.createElement('option');
-        opt.value = qb.id;
-        opt.textContent = qb.name + ' (' + qb.team + ')';
-        opt.dataset.name = qb.name;
-        playerSelect.appendChild(opt);
-      });
-      var mahomesOpt = playerSelect.querySelector('option[value="3139477"]');
-      if(mahomesOpt) playerSelect.value = '3139477';
-      return;
-    }
 
     if(pos === 'DST'){
       playerSelect.innerHTML = '';
@@ -3177,54 +2678,11 @@
 
 <script>
 (function(){
-  var STORAGE_KEY = 'draftroom-team-theme';
-  var root = document.documentElement;
-  var select = document.getElementById('themeSelect');
-  var headerLogo = document.getElementById('headerLogo');
-  var previewLogo = document.getElementById('themePreviewLogo');
-  var previewBall = document.getElementById('themePreviewBall');
-  if(!select) return;
-
-  function logoUrl(theme){
-    return 'https://a.espncdn.com/i/teamlogos/nfl/500/' + theme + '.png';
-  }
-
-  function sync(theme){
-    select.value = theme;
-    var url = theme ? logoUrl(theme) : null;
-
-    if(previewLogo && previewBall){
-      if(url){
-        previewLogo.src = url;
-        previewLogo.classList.remove('is-hidden');
-        previewBall.classList.add('is-hidden');
-      } else {
-        previewLogo.classList.add('is-hidden');
-        previewBall.classList.remove('is-hidden');
-      }
-    }
-    if(headerLogo){
-      if(url){
-        headerLogo.src = url;
-        headerLogo.classList.remove('is-hidden');
-      } else {
-        headerLogo.classList.add('is-hidden');
-        headerLogo.src = '';
-      }
-    }
-  }
-
-  function applyTheme(theme){
-    if(theme) root.setAttribute('data-team-theme', theme);
-    else root.removeAttribute('data-team-theme');
-    sync(theme);
-    try { localStorage.setItem(STORAGE_KEY, theme); } catch(e){}
-  }
-
-  sync(root.getAttribute('data-team-theme') || '');
-
-  select.addEventListener('change', function(){
-    applyTheme(select.value);
+  window.DraftRoomShared.initThemePicker({
+    select: document.getElementById('themeSelect'),
+    headerLogo: document.getElementById('headerLogo'),
+    previewBall: document.getElementById('themePreviewBall'),
+    previewLogo: document.getElementById('themePreviewLogo')
   });
 })();
 </script>

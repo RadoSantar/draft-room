@@ -1,5 +1,4 @@
-/* Draft Room – gemeinsame Konstanten/Helfer für draft-board.html (und ggf. weitere Zusatz-Seiten).
-   index.html selbst bleibt bewusst eigenständig (historisch gewachsen, mehrfach getestet). */
+/* Draft Room – gemeinsame Konstanten/Helfer für alle Seiten (index.html, draft-board.html, schedule.html). */
 (function(global){
   var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
   var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
@@ -9,6 +8,91 @@
     21:'PHI', 22:'ARI', 23:'PIT', 24:'LAC', 25:'SF', 26:'SEA', 27:'TB', 28:'WSH', 29:'CAR', 30:'JAX',
     33:'BAL', 34:'HOU'
   };
+
+  /* ---- Team-Theme (Farbschema-Picker) – gemeinsam für alle Seiten ---- */
+  var THEME_KEY = 'draftroom-team-theme';
+  var TEAM_THEMES = [
+    { value: 'ari', label: 'Arizona Cardinals' }, { value: 'atl', label: 'Atlanta Falcons' },
+    { value: 'bal', label: 'Baltimore Ravens' }, { value: 'buf', label: 'Buffalo Bills' },
+    { value: 'car', label: 'Carolina Panthers' }, { value: 'chi', label: 'Chicago Bears' },
+    { value: 'cin', label: 'Cincinnati Bengals' }, { value: 'cle', label: 'Cleveland Browns' },
+    { value: 'dal', label: 'Dallas Cowboys' }, { value: 'den', label: 'Denver Broncos' },
+    { value: 'det', label: 'Detroit Lions' }, { value: 'gb', label: 'Green Bay Packers' },
+    { value: 'hou', label: 'Houston Texans' }, { value: 'ind', label: 'Indianapolis Colts' },
+    { value: 'jax', label: 'Jacksonville Jaguars' }, { value: 'kc', label: 'Kansas City Chiefs' },
+    { value: 'lv', label: 'Las Vegas Raiders' }, { value: 'lac', label: 'Los Angeles Chargers' },
+    { value: 'lar', label: 'Los Angeles Rams' }, { value: 'mia', label: 'Miami Dolphins' },
+    { value: 'min', label: 'Minnesota Vikings' }, { value: 'ne', label: 'New England Patriots' },
+    { value: 'no', label: 'New Orleans Saints' }, { value: 'nyg', label: 'New York Giants' },
+    { value: 'nyj', label: 'New York Jets' }, { value: 'phi', label: 'Philadelphia Eagles' },
+    { value: 'pit', label: 'Pittsburgh Steelers' }, { value: 'sf', label: 'San Francisco 49ers' },
+    { value: 'sea', label: 'Seattle Seahawks' }, { value: 'tb', label: 'Tampa Bay Buccaneers' },
+    { value: 'ten', label: 'Tennessee Titans' }, { value: 'wsh', label: 'Washington Commanders' }
+  ];
+
+  function logoUrl(theme){ return 'https://a.espncdn.com/i/teamlogos/nfl/500/' + theme + '.png'; }
+
+  // Sofort ausführen (bevor irgendetwas gerendert wird) – verhindert ein Aufblitzen des Standard-Designs.
+  try {
+    var savedTheme = localStorage.getItem(THEME_KEY);
+    if(savedTheme) document.documentElement.setAttribute('data-team-theme', savedTheme);
+  } catch(e){}
+
+  function syncHeaderLogo(headerLogo, theme){
+    if(!headerLogo) return;
+    var url = theme ? logoUrl(theme) : null;
+    if(url){
+      headerLogo.src = url;
+      headerLogo.classList.remove('is-hidden');
+    } else {
+      headerLogo.classList.add('is-hidden');
+      headerLogo.src = '';
+    }
+  }
+
+  /* Baut den Options-Picker auf (falls leer) und verdrahtet Wechsel + Vorschau + Header-Logo + Persistenz.
+     config: { select, headerLogo, previewBall, previewLogo } – nur select ist Pflicht. */
+  function initThemePicker(config){
+    var root = document.documentElement;
+    var select = config.select;
+    var headerLogo = config.headerLogo;
+    var previewBall = config.previewBall;
+    var previewLogo = config.previewLogo;
+    if(!select) return;
+
+    if(!select.dataset.populated){
+      select.innerHTML = '<option value="">Standard</option>' + TEAM_THEMES.map(function(t){
+        return '<option value="' + t.value + '">' + t.label + '</option>';
+      }).join('');
+      select.dataset.populated = '1';
+    }
+
+    function sync(theme){
+      select.value = theme;
+      var url = theme ? logoUrl(theme) : null;
+      if(previewLogo && previewBall){
+        if(url){
+          previewLogo.src = url;
+          previewLogo.classList.remove('is-hidden');
+          previewBall.classList.add('is-hidden');
+        } else {
+          previewLogo.classList.add('is-hidden');
+          previewBall.classList.remove('is-hidden');
+        }
+      }
+      syncHeaderLogo(headerLogo, theme);
+    }
+
+    function applyTheme(theme){
+      if(theme) root.setAttribute('data-team-theme', theme);
+      else root.removeAttribute('data-team-theme');
+      sync(theme);
+      try { localStorage.setItem(THEME_KEY, theme); } catch(e){}
+    }
+
+    sync(root.getAttribute('data-team-theme') || '');
+    select.addEventListener('change', function(){ applyTheme(select.value); });
+  }
 
   /* ESPN-Stat-IDs für die kona_player_info-Projektion (statSourceId=1, statSplitTypeId=0, Saison 2026 = id "102026").
      Nur die Kern-Kategorien, die aus Saison-Totalen ableitbar sind – siehe Hinweis in projectedPoints(). */
@@ -109,6 +193,9 @@
     TEAM_ABBR: TEAM_ABBR,
     STAT: STAT,
     projectedPoints: projectedPoints,
-    findSeasonProjection: findSeasonProjection
+    findSeasonProjection: findSeasonProjection,
+    logoUrl: logoUrl,
+    syncHeaderLogo: syncHeaderLogo,
+    initThemePicker: initThemePicker
   };
 })(window);
