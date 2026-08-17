@@ -1,0 +1,843 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Draft Board – Draft Room</title>
+<meta name="description" content="Eigenes Draft Board vorbereiten: Spieler nach ADP sortiert, selbst umsortierbar, mit Live-Tracking während des Drafts.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 34'%3E%3Cellipse cx='12' cy='17' rx='8.5' ry='16' fill='%237A4A2B' stroke='%234E2E19' stroke-width='1'/%3E%3Cline x1='12' y1='7' x2='12' y2='27' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='12' x2='15' y2='12' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='17' x2='15' y2='17' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='22' x2='15' y2='22' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf:#1E4638;
+    --turf-2:#173629;
+    --hash:#3F7A5C;
+    --chalk:#F3EFE4;
+    --amber:#E9A73B;
+    --endzone:#B8402F;
+    --endzone-soft:#e08a7e;
+    --ink:#22241F;
+    --ink-soft:#4a4c44;
+    --card:#ffffff;
+    --card-border:rgba(30,70,56,0.15);
+  }
+  :root[data-team-theme="no"]{
+    --turf:#101820;
+    --turf-2:#080c10;
+    --hash:#A5895A;
+    --chalk:#F5F1E6;
+    --amber:#D3BC8D;
+    --ink:#1a1815;
+    --ink-soft:#4d473c;
+    --card-border:rgba(16,24,32,0.15);
+  }
+  :root[data-team-theme="det"]{
+    --turf:#0B3C5D;
+    --turf-2:#072943;
+    --hash:#7FA8C9;
+    --chalk:#F0F3F5;
+    --amber:#3FA9DC;
+    --ink:#10202c;
+    --ink-soft:#3f5a6d;
+    --card-border:rgba(11,60,93,0.15);
+  }
+  :root[data-team-theme="ari"]{
+    --turf:#7A1830;
+    --turf-2:#4d0f1f;
+    --hash:#A5828C;
+    --chalk:#F6EEEE;
+    --amber:#C9A24B;
+    --ink:#241014;
+    --ink-soft:#5c3940;
+    --card-border:rgba(122,24,48,0.15);
+  }
+  :root[data-team-theme="atl"]{
+    --turf:#7D1128;
+    --turf-2:#4d0a19;
+    --hash:#A5ACAF;
+    --chalk:#F3EFEE;
+    --amber:#C9A55C;
+    --ink:#201014;
+    --ink-soft:#574044;
+    --card-border:rgba(125,17,40,0.15);
+  }
+  :root[data-team-theme="bal"]{
+    --turf:#1c1147;
+    --turf-2:#100a2e;
+    --hash:#8f7f45;
+    --chalk:#EFEEF6;
+    --amber:#C9A227;
+    --ink:#17102e;
+    --ink-soft:#4a4560;
+    --card-border:rgba(28,17,71,0.15);
+  }
+  :root[data-team-theme="buf"]{
+    --turf:#00295E;
+    --turf-2:#001a3d;
+    --hash:#7FA5D6;
+    --chalk:#EEF2F8;
+    --amber:#FFC72C;
+    --ink:#0d1b2e;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(0,41,94,0.15);
+  }
+  :root[data-team-theme="car"]{
+    --turf:#045A87;
+    --turf-2:#023d5c;
+    --hash:#8fb8cc;
+    --chalk:#EFF6F9;
+    --amber:#D9B45C;
+    --ink:#0d1f28;
+    --ink-soft:#3d5560;
+    --card-border:rgba(4,90,135,0.15);
+  }
+  :root[data-team-theme="chi"]{
+    --turf:#0B162A;
+    --turf-2:#060d1a;
+    --hash:#d68a5c;
+    --chalk:#F2EEE9;
+    --amber:#C83803;
+    --ink:#14100c;
+    --ink-soft:#4a3a30;
+    --card-border:rgba(11,22,42,0.15);
+  }
+  :root[data-team-theme="cin"]{
+    --turf:#14110d;
+    --turf-2:#000000;
+    --hash:#d68a5c;
+    --chalk:#F2EEE9;
+    --amber:#FB4F14;
+    --ink:#14110d;
+    --ink-soft:#4a423a;
+    --card-border:rgba(20,17,13,0.15);
+  }
+  :root[data-team-theme="cle"]{
+    --turf:#311D00;
+    --turf-2:#1f1300;
+    --hash:#d99a6c;
+    --chalk:#F5EFE7;
+    --amber:#FF6B1A;
+    --ink:#241a10;
+    --ink-soft:#5c4a3a;
+    --card-border:rgba(49,29,0,0.15);
+  }
+  :root[data-team-theme="dal"]{
+    --turf:#04152E;
+    --turf-2:#020c1c;
+    --hash:#8fa3bc;
+    --chalk:#EEF1F5;
+    --amber:#B3995D;
+    --ink:#0d1522;
+    --ink-soft:#3d4a5c;
+    --card-border:rgba(4,21,46,0.15);
+  }
+  :root[data-team-theme="den"]{
+    --turf:#002244;
+    --turf-2:#00152c;
+    --hash:#d68a5c;
+    --chalk:#F0EEE9;
+    --amber:#FB4F14;
+    --ink:#0d1522;
+    --ink-soft:#3d4a5c;
+    --card-border:rgba(0,34,68,0.15);
+  }
+  :root[data-team-theme="gb"]{
+    --turf:#203731;
+    --turf-2:#142420;
+    --hash:#d9b45c;
+    --chalk:#F5F0E4;
+    --amber:#FFB612;
+    --ink:#14201c;
+    --ink-soft:#445c50;
+    --card-border:rgba(32,55,49,0.15);
+  }
+  :root[data-team-theme="hou"]{
+    --turf:#03202F;
+    --turf-2:#01141d;
+    --hash:#7fa5b8;
+    --chalk:#EEF2F4;
+    --amber:#C9A24B;
+    --ink:#0a1519;
+    --ink-soft:#3a4d54;
+    --card-border:rgba(3,32,47,0.15);
+  }
+  :root[data-team-theme="ind"]{
+    --turf:#002C5F;
+    --turf-2:#001a3d;
+    --hash:#7FA5D6;
+    --chalk:#EEF2F8;
+    --amber:#C9A24B;
+    --ink:#0d1b2e;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(0,44,95,0.15);
+  }
+  :root[data-team-theme="jax"]{
+    --turf:#006778;
+    --turf-2:#003d47;
+    --hash:#8fc4cc;
+    --chalk:#EAF4F5;
+    --amber:#D7A22A;
+    --ink:#0a1f22;
+    --ink-soft:#3a5458;
+    --card-border:rgba(0,103,120,0.15);
+  }
+  :root[data-team-theme="kc"]{
+    --turf:#7A0E1F;
+    --turf-2:#4d0912;
+    --hash:#d9b45c;
+    --chalk:#F5EEE4;
+    --amber:#FFB81C;
+    --ink:#200a0d;
+    --ink-soft:#5c3a3f;
+    --card-border:rgba(122,14,31,0.15);
+  }
+  :root[data-team-theme="lv"]{
+    --turf:#14141a;
+    --turf-2:#000000;
+    --hash:#a5acaf;
+    --chalk:#F0F0F0;
+    --amber:#C9A24B;
+    --ink:#14141a;
+    --ink-soft:#4a4a4a;
+    --card-border:rgba(20,20,26,0.15);
+  }
+  :root[data-team-theme="lac"]{
+    --turf:#002A5E;
+    --turf-2:#001a3d;
+    --hash:#7FC6E8;
+    --chalk:#EAF4FA;
+    --amber:#FFC20E;
+    --ink:#0d1b2e;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(0,42,94,0.15);
+  }
+  :root[data-team-theme="lar"]{
+    --turf:#003594;
+    --turf-2:#001f5c;
+    --hash:#d9b45c;
+    --chalk:#EEF1FA;
+    --amber:#FFA300;
+    --ink:#0d1740;
+    --ink-soft:#3d4a70;
+    --card-border:rgba(0,53,148,0.15);
+  }
+  :root[data-team-theme="mia"]{
+    --turf:#005778;
+    --turf-2:#003850;
+    --hash:#7fc4cc;
+    --chalk:#EAF6F7;
+    --amber:#FC4C02;
+    --ink:#0a2a33;
+    --ink-soft:#3a5d63;
+    --card-border:rgba(0,87,120,0.15);
+  }
+  :root[data-team-theme="min"]{
+    --turf:#4F2683;
+    --turf-2:#331a57;
+    --hash:#d9b45c;
+    --chalk:#F3EEF9;
+    --amber:#FFC62F;
+    --ink:#22103a;
+    --ink-soft:#524066;
+    --card-border:rgba(79,38,131,0.15);
+  }
+  :root[data-team-theme="ne"]{
+    --turf:#002244;
+    --turf-2:#00152c;
+    --hash:#a5acaf;
+    --chalk:#EEF1F5;
+    --amber:#C9A24B;
+    --ink:#0d1522;
+    --ink-soft:#3d4a5c;
+    --card-border:rgba(0,34,68,0.15);
+  }
+  :root[data-team-theme="nyg"]{
+    --turf:#0B2265;
+    --turf-2:#071640;
+    --hash:#8fa3bc;
+    --chalk:#EEF1F8;
+    --amber:#C9A24B;
+    --ink:#0d1530;
+    --ink-soft:#3d4a66;
+    --card-border:rgba(11,34,101,0.15);
+  }
+  :root[data-team-theme="nyj"]{
+    --turf:#125740;
+    --turf-2:#0a3a2a;
+    --hash:#7fbfa0;
+    --chalk:#EAF5F0;
+    --amber:#D9B45C;
+    --ink:#0a241a;
+    --ink-soft:#3a5c4a;
+    --card-border:rgba(18,87,64,0.15);
+  }
+  :root[data-team-theme="phi"]{
+    --turf:#004C54;
+    --turf-2:#003338;
+    --hash:#a5acaf;
+    --chalk:#EAF3F3;
+    --amber:#C9A24B;
+    --ink:#0a2226;
+    --ink-soft:#3a5054;
+    --card-border:rgba(0,76,84,0.15);
+  }
+  :root[data-team-theme="pit"]{
+    --turf:#14120d;
+    --turf-2:#000000;
+    --hash:#d9b45c;
+    --chalk:#F5F0E4;
+    --amber:#FFB612;
+    --ink:#14120d;
+    --ink-soft:#4a453a;
+    --card-border:rgba(20,18,13,0.15);
+  }
+  :root[data-team-theme="sf"]{
+    --turf:#7A0000;
+    --turf-2:#4d0000;
+    --hash:#d9c48f;
+    --chalk:#F5F0E4;
+    --amber:#B3995D;
+    --ink:#200a0a;
+    --ink-soft:#5c3a3a;
+    --card-border:rgba(122,0,0,0.15);
+  }
+  :root[data-team-theme="sea"]{
+    --turf:#002244;
+    --turf-2:#00152c;
+    --hash:#a5acaf;
+    --chalk:#EEF1F0;
+    --amber:#69BE28;
+    --ink:#0d1f16;
+    --ink-soft:#3d5a48;
+    --card-border:rgba(0,34,68,0.15);
+  }
+  :root[data-team-theme="tb"]{
+    --turf:#34302B;
+    --turf-2:#201d19;
+    --hash:#d68a5c;
+    --chalk:#F5F0EA;
+    --amber:#FF7900;
+    --ink:#1a1815;
+    --ink-soft:#4a453e;
+    --card-border:rgba(52,48,43,0.15);
+  }
+  :root[data-team-theme="ten"]{
+    --turf:#0C2340;
+    --turf-2:#071528;
+    --hash:#7FB8E0;
+    --chalk:#EEF3FA;
+    --amber:#4B92DB;
+    --ink:#0d1f33;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(12,35,64,0.15);
+  }
+  :root[data-team-theme="wsh"]{
+    --turf:#5A1414;
+    --turf-2:#3a0d0d;
+    --hash:#d9b45c;
+    --chalk:#F5EEE7;
+    --amber:#FFB612;
+    --ink:#200a0a;
+    --ink-soft:#5c3a3a;
+    --card-border:rgba(90,20,20,0.15);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    line-height:1.65;
+  }
+  h1,h2,.display{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+    text-wrap:balance;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+
+  header.topbar{
+    background:var(--turf);
+    color:var(--chalk);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    border-bottom:3px solid var(--amber);
+  }
+  .title-group{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .header-logo{width:30px;height:30px;object-fit:contain;flex:0 0 auto;}
+  .header-logo.is-hidden{display:none;}
+  header.topbar .title{font-family:'Anton', sans-serif;font-size:20px;letter-spacing:0.04em;color:var(--chalk);}
+  .tool-nav{display:flex;gap:10px;flex-wrap:wrap;}
+  .tool-nav a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-decoration:none;
+    color:var(--chalk);
+    opacity:.85;
+    border:1px solid rgba(243,239,228,0.3);
+    border-radius:20px;
+    padding:6px 12px;
+  }
+  .tool-nav a:hover{opacity:1;border-color:var(--amber);}
+
+  main{max-width:820px;margin:0 auto;padding:32px 24px 96px;}
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--hash);
+    margin-bottom:6px;
+  }
+  h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
+  p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:64ch;}
+
+  .db-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 4px;}
+  .pos-tabs{display:flex;flex-wrap:wrap;gap:8px;}
+  .pos-tab{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    background:var(--card);
+    color:var(--turf);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:7px 16px;
+    cursor:pointer;
+  }
+  .pos-tab.active{background:var(--amber);border-color:var(--amber);color:var(--turf);font-weight:600;}
+  .db-search{
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    padding:8px 14px;
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    background:var(--card);
+    color:var(--ink);
+    flex:1;
+    min-width:160px;
+  }
+  .db-search:focus{outline:2px solid var(--amber);outline-offset:1px;}
+
+  .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
+  .calc-status.error{color:var(--endzone);}
+
+  .db-list{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin-top:10px;}
+  .db-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+    transition:background-color .2s ease, opacity .2s ease;
+  }
+  .db-row:last-child{border-bottom:none;}
+  .db-reorder{display:flex;flex-direction:column;gap:2px;}
+  .db-arrow{
+    background:rgba(255,255,255,0.08);
+    border:none;
+    color:var(--chalk);
+    width:22px;
+    height:18px;
+    font-size:9px;
+    line-height:1;
+    cursor:pointer;
+    border-radius:3px;
+  }
+  .db-arrow:hover{background:var(--amber);color:var(--turf);}
+  .db-arrow:disabled{opacity:.25;cursor:default;background:rgba(255,255,255,0.08);color:var(--chalk);}
+  .db-rank{color:var(--hash);min-width:24px;}
+  .db-name{font-family:'Source Serif 4', serif;font-size:14px;flex:1;}
+  .db-team{color:var(--hash);margin-left:6px;}
+  .db-adp{color:var(--amber);min-width:70px;text-align:right;}
+  .db-status-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    border:1px solid rgba(255,255,255,0.25);
+    background:none;
+    color:var(--chalk);
+    opacity:.8;
+    border-radius:14px;
+    padding:5px 10px;
+    cursor:pointer;
+    min-width:96px;
+  }
+  .db-row.is-me{background:rgba(233,167,59,0.16);}
+  .db-row.is-me .db-status-btn{background:var(--amber);color:var(--turf);border-color:var(--amber);opacity:1;font-weight:600;}
+  .db-row.is-other{opacity:.45;}
+  .db-row.is-other .db-name{text-decoration:line-through;}
+  .db-row.is-other .db-status-btn{border-color:var(--endzone-soft);color:var(--endzone-soft);opacity:1;}
+  .db-row.is-filtered-out{display:none;}
+
+  .db-legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:13px;color:var(--ink-soft);}
+  .db-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .db-legend .dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+  .db-legend .dot.available{background:var(--hash);}
+  .db-legend .dot.me{background:var(--amber);}
+  .db-legend .dot.other{background:var(--endzone-soft);}
+
+  .db-reset-row{display:flex;justify-content:flex-end;margin-top:16px;}
+  .db-reset-btn{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    background:none;
+    color:var(--endzone);
+    border:1px solid rgba(184,64,47,0.4);
+    border-radius:20px;
+    padding:7px 16px;
+    cursor:pointer;
+  }
+  .db-reset-btn:hover{background:rgba(184,64,47,0.08);}
+
+  .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:64ch;}
+
+  .back-to-top{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:40;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:none;
+    background:var(--amber);
+    color:var(--turf-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    opacity:1;
+    transform:translateY(0);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .back-to-top svg{width:18px;height:18px;}
+  .back-to-top.is-hidden{opacity:0;transform:translateY(10px);pointer-events:none;}
+
+  @media (max-width:640px){
+    header.topbar{padding:12px 16px;flex-wrap:wrap;}
+    main{padding:24px 16px 80px;}
+    .db-row{padding:8px 10px;gap:6px;font-size:12px;}
+    .db-adp{min-width:56px;}
+    .db-status-btn{min-width:auto;padding:5px 8px;}
+  }
+</style>
+<script>
+(function(){
+  try {
+    var saved = localStorage.getItem('draftroom-team-theme');
+    if(saved) document.documentElement.setAttribute('data-team-theme', saved);
+  } catch(e){}
+})();
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="title-group" href="index.html">
+    <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
+    <span class="title">Draft Room</span>
+  </a>
+  <div class="tool-nav">
+    <a href="index.html#draft-tipps">← Übersicht</a>
+    <a href="schedule.html">Spielplan</a>
+  </div>
+</header>
+
+<main>
+  <div class="kicker">Eigenes Cheat-Sheet</div>
+  <h1>Draft Board</h1>
+  <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, mit den Pfeilen bringst du Spieler in deine eigene Reihenfolge. Am Draft-Tag klickst du Spieler einfach durch, um zu tracken, wer schon weg ist.</p>
+  <p class="copy">Alles wird nur auf diesem Gerät im Browser gespeichert (kein Login, kein Server) – auf einem anderen Gerät startest du mit einer leeren Liste.</p>
+
+  <div class="db-controls">
+    <div class="pos-tabs" id="posTabs">
+      <button class="pos-tab active" data-pos="QB" type="button">QB</button>
+      <button class="pos-tab" data-pos="RB" type="button">RB</button>
+      <button class="pos-tab" data-pos="WR" type="button">WR</button>
+      <button class="pos-tab" data-pos="TE" type="button">TE</button>
+      <button class="pos-tab" data-pos="K" type="button">K</button>
+      <button class="pos-tab" data-pos="DST" type="button">DEF</button>
+    </div>
+    <input class="db-search" id="dbSearch" type="text" placeholder="Spieler suchen…" aria-label="Spieler suchen">
+  </div>
+
+  <div class="calc-status" id="dbStatus" aria-live="polite">Lade Live-Daten…</div>
+  <div class="db-list" id="dbList" style="display:none"></div>
+
+  <div class="db-legend">
+    <span><span class="dot available"></span> Verfügbar</span>
+    <span><span class="dot me"></span> Von mir gedraftet</span>
+    <span><span class="dot other"></span> Vergeben</span>
+  </div>
+
+  <div class="db-reset-row">
+    <button class="db-reset-btn" id="dbResetBtn" type="button">Draft-Status zurücksetzen</button>
+  </div>
+
+  <p class="note-text">ADP = durchschnittliche Draft-Position über alle ESPN-Fantasy-Ligen. Deine eigene Reihenfolge und der Draft-Status werden getrennt gespeichert – "Zurücksetzen" löscht nur die Verfügbar/Vergeben-Markierungen, nicht deine Sortierung.</p>
+</main>
+
+<button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<script>
+(function(){
+  var STORAGE_KEY = 'draftroom-team-theme';
+  var root = document.documentElement;
+  var headerLogo = document.getElementById('headerLogo');
+  function logoUrl(theme){ return 'https://a.espncdn.com/i/teamlogos/nfl/500/' + theme + '.png'; }
+  var theme = root.getAttribute('data-team-theme') || '';
+  if(theme && headerLogo){
+    headerLogo.src = logoUrl(theme);
+    headerLogo.classList.remove('is-hidden');
+  }
+})();
+</script>
+
+<script>
+(function(){
+  var backToTop = document.getElementById('backToTop');
+  function update(){
+    backToTop.classList.toggle('is-hidden', window.scrollY < window.innerHeight * 0.6);
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+  backToTop.addEventListener('click', function(){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
+  var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+  var FETCH_LIMIT = { QB: 50, RB: 50, WR: 50, TE: 50, K: 32, DST: 32 };
+  var TEAM_ABBR = {
+    1:'ATL', 2:'BUF', 3:'CHI', 4:'CIN', 5:'CLE', 6:'DAL', 7:'DEN', 8:'DET', 9:'GB', 10:'TEN',
+    11:'IND', 12:'KC', 13:'LV', 14:'LAR', 15:'MIA', 16:'MIN', 17:'NE', 18:'NO', 19:'NYG', 20:'NYJ',
+    21:'PHI', 22:'ARI', 23:'PIT', 24:'LAC', 25:'SF', 26:'SEA', 27:'TB', 28:'WSH', 29:'CAR', 30:'JAX',
+    33:'BAL', 34:'HOU'
+  };
+
+  var ORDER_KEY_PREFIX = 'draftboard-order-';
+  var STATUS_KEY = 'draftboard-status';
+  var DURATION = 260;
+  var EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
+
+  var tabsEl = document.getElementById('posTabs');
+  var statusEl = document.getElementById('dbStatus');
+  var listEl = document.getElementById('dbList');
+  var searchEl = document.getElementById('dbSearch');
+  var resetBtn = document.getElementById('dbResetBtn');
+  if(!tabsEl) return;
+
+  var cache = {};
+  var activePos = 'QB';
+  var listAnimation = null;
+  var draftStatus = loadStatus();
+
+  function loadStatus(){
+    try {
+      var raw = localStorage.getItem(STATUS_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch(e){ return {}; }
+  }
+  function saveStatus(){
+    try { localStorage.setItem(STATUS_KEY, JSON.stringify(draftStatus)); } catch(e){}
+  }
+  function loadOrder(pos){
+    try {
+      var raw = localStorage.getItem(ORDER_KEY_PREFIX + pos);
+      return raw ? JSON.parse(raw) : null;
+    } catch(e){ return null; }
+  }
+  function saveOrder(pos){
+    try {
+      var ids = cache[pos].map(function(p){ return p.id; });
+      localStorage.setItem(ORDER_KEY_PREFIX + pos, JSON.stringify(ids));
+    } catch(e){}
+  }
+
+  function applyStoredOrder(pos, list){
+    var savedIds = loadOrder(pos);
+    if(!savedIds || !savedIds.length) return list;
+    var byId = {};
+    list.forEach(function(p){ byId[p.id] = p; });
+    var ordered = [];
+    savedIds.forEach(function(id){
+      if(byId[id]){ ordered.push(byId[id]); delete byId[id]; }
+    });
+    list.forEach(function(p){
+      if(byId[p.id]) ordered.push(p);
+    });
+    return ordered;
+  }
+
+  function rowHtml(p, i){
+    var status = draftStatus[p.id] || 'available';
+    var statusLabel = status === 'me' ? 'Von mir' : status === 'other' ? 'Vergeben' : 'Verfügbar';
+    var rowCls = 'db-row' + (status === 'me' ? ' is-me' : status === 'other' ? ' is-other' : '');
+    return '<div class="' + rowCls + '" data-id="' + p.id + '" data-name="' + p.name.toLowerCase() + '">' +
+      '<div class="db-reorder">' +
+        '<button class="db-arrow db-up" type="button" aria-label="Nach oben"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
+        '<button class="db-arrow db-down" type="button" aria-label="Nach unten">▼</button>' +
+      '</div>' +
+      '<span class="db-rank mono">' + (i + 1) + '</span>' +
+      '<span class="db-name">' + p.name + '<span class="db-team mono">' + p.team + '</span></span>' +
+      '<span class="db-adp mono">ADP ' + p.adp.toFixed(1) + '</span>' +
+      '<button class="db-status-btn" type="button" data-status="' + status + '">' + statusLabel + '</button>' +
+    '</div>';
+  }
+
+  function render(pos, animate){
+    var data = cache[pos];
+    var startHeight = null;
+    if(animate){
+      if(listAnimation) listAnimation.cancel();
+      startHeight = listEl.offsetHeight;
+    }
+    listEl.innerHTML = data.map(rowHtml).join('');
+    // disable last row's down-arrow
+    var lastDown = listEl.querySelector('.db-row:last-child .db-down');
+    if(lastDown) lastDown.disabled = true;
+    listEl.style.display = '';
+    statusEl.textContent = '';
+    applyFilter();
+    if(animate && startHeight !== null){
+      var endHeight = listEl.offsetHeight;
+      listEl.style.overflow = 'hidden';
+      listEl.style.height = startHeight + 'px';
+      listAnimation = listEl.animate(
+        { height: [startHeight + 'px', endHeight + 'px'] },
+        { duration: DURATION, easing: EASING }
+      );
+      listAnimation.onfinish = function(){ listEl.style.height = ''; listEl.style.overflow = ''; listAnimation = null; };
+      listAnimation.oncancel = function(){ listEl.style.height = ''; listEl.style.overflow = ''; };
+    }
+  }
+
+  function applyFilter(){
+    var q = searchEl.value.trim().toLowerCase();
+    listEl.querySelectorAll('.db-row').forEach(function(row){
+      var match = !q || row.dataset.name.indexOf(q) !== -1;
+      row.classList.toggle('is-filtered-out', !match);
+    });
+  }
+
+  async function loadPosition(pos){
+    activePos = pos;
+    if(cache[pos]){ render(pos); return; }
+    statusEl.textContent = 'Lade Live-Daten…';
+    statusEl.classList.remove('error');
+    listEl.style.display = 'none';
+    try {
+      var filter = JSON.stringify({
+        players: {
+          filterSlotIds: { value: [SLOT_IDS[pos]] },
+          sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
+          limit: FETCH_LIMIT[pos],
+          offset: 0,
+          filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
+        }
+      });
+      var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter } });
+      if(!res.ok) throw new Error('fetch-failed');
+      var data = await res.json();
+      var list = (data.players || []).map(function(p){
+        var pl = p.player;
+        var own = pl.ownership || {};
+        return {
+          id: String(pl.id),
+          name: pl.fullName,
+          team: TEAM_ABBR[pl.proTeamId] || '',
+          adp: own.averageDraftPosition || 999
+        };
+      }).sort(function(a, b){ return a.adp - b.adp; });
+      cache[pos] = applyStoredOrder(pos, list);
+      if(activePos === pos) render(pos);
+    } catch(err){
+      if(activePos === pos){
+        statusEl.textContent = 'Live-Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
+        statusEl.classList.add('error');
+      }
+    }
+  }
+
+  tabsEl.addEventListener('click', function(e){
+    var btn = e.target.closest('.pos-tab');
+    if(!btn) return;
+    tabsEl.querySelectorAll('.pos-tab').forEach(function(t){ t.classList.remove('active'); });
+    btn.classList.add('active');
+    loadPosition(btn.dataset.pos);
+  });
+
+  searchEl.addEventListener('input', applyFilter);
+
+  listEl.addEventListener('click', function(e){
+    var row = e.target.closest('.db-row');
+    if(!row) return;
+    var id = row.dataset.id;
+
+    if(e.target.closest('.db-up') || e.target.closest('.db-down')){
+      var list = cache[activePos];
+      var idx = list.findIndex(function(p){ return p.id === id; });
+      if(idx === -1) return;
+      var dir = e.target.closest('.db-up') ? -1 : 1;
+      var swapIdx = idx + dir;
+      if(swapIdx < 0 || swapIdx >= list.length) return;
+      var tmp = list[idx];
+      list[idx] = list[swapIdx];
+      list[swapIdx] = tmp;
+      saveOrder(activePos);
+      render(activePos, true);
+      return;
+    }
+
+    if(e.target.closest('.db-status-btn')){
+      var current = draftStatus[id] || 'available';
+      var next = current === 'available' ? 'me' : current === 'me' ? 'other' : 'available';
+      if(next === 'available') delete draftStatus[id];
+      else draftStatus[id] = next;
+      saveStatus();
+      render(activePos);
+    }
+  });
+
+  resetBtn.addEventListener('click', function(){
+    if(!confirm('Draft-Status wirklich zurücksetzen? Deine eigene Reihenfolge bleibt erhalten.')) return;
+    draftStatus = {};
+    saveStatus();
+    render(activePos);
+  });
+
+  loadPosition('QB');
+})();
+</script>
+
+</body>
+</html>

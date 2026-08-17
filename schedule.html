@@ -1,0 +1,660 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spielplan – Draft Room</title>
+<meta name="description" content="Der komplette Saison-Spielplan: 15 Wochen, 5 Spiele pro Woche, nach Team filterbar.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 34'%3E%3Cellipse cx='12' cy='17' rx='8.5' ry='16' fill='%237A4A2B' stroke='%234E2E19' stroke-width='1'/%3E%3Cline x1='12' y1='7' x2='12' y2='27' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='12' x2='15' y2='12' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='17' x2='15' y2='17' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='22' x2='15' y2='22' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --turf:#1E4638;
+    --turf-2:#173629;
+    --hash:#3F7A5C;
+    --chalk:#F3EFE4;
+    --amber:#E9A73B;
+    --endzone:#B8402F;
+    --endzone-soft:#e08a7e;
+    --ink:#22241F;
+    --ink-soft:#4a4c44;
+    --card:#ffffff;
+    --card-border:rgba(30,70,56,0.15);
+  }
+  :root[data-team-theme="no"]{
+    --turf:#101820;
+    --turf-2:#080c10;
+    --hash:#A5895A;
+    --chalk:#F5F1E6;
+    --amber:#D3BC8D;
+    --ink:#1a1815;
+    --ink-soft:#4d473c;
+    --card-border:rgba(16,24,32,0.15);
+  }
+  :root[data-team-theme="det"]{
+    --turf:#0B3C5D;
+    --turf-2:#072943;
+    --hash:#7FA8C9;
+    --chalk:#F0F3F5;
+    --amber:#3FA9DC;
+    --ink:#10202c;
+    --ink-soft:#3f5a6d;
+    --card-border:rgba(11,60,93,0.15);
+  }
+  :root[data-team-theme="ari"]{
+    --turf:#7A1830;
+    --turf-2:#4d0f1f;
+    --hash:#A5828C;
+    --chalk:#F6EEEE;
+    --amber:#C9A24B;
+    --ink:#241014;
+    --ink-soft:#5c3940;
+    --card-border:rgba(122,24,48,0.15);
+  }
+  :root[data-team-theme="atl"]{
+    --turf:#7D1128;
+    --turf-2:#4d0a19;
+    --hash:#A5ACAF;
+    --chalk:#F3EFEE;
+    --amber:#C9A55C;
+    --ink:#201014;
+    --ink-soft:#574044;
+    --card-border:rgba(125,17,40,0.15);
+  }
+  :root[data-team-theme="bal"]{
+    --turf:#1c1147;
+    --turf-2:#100a2e;
+    --hash:#8f7f45;
+    --chalk:#EFEEF6;
+    --amber:#C9A227;
+    --ink:#17102e;
+    --ink-soft:#4a4560;
+    --card-border:rgba(28,17,71,0.15);
+  }
+  :root[data-team-theme="buf"]{
+    --turf:#00295E;
+    --turf-2:#001a3d;
+    --hash:#7FA5D6;
+    --chalk:#EEF2F8;
+    --amber:#FFC72C;
+    --ink:#0d1b2e;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(0,41,94,0.15);
+  }
+  :root[data-team-theme="car"]{
+    --turf:#045A87;
+    --turf-2:#023d5c;
+    --hash:#8fb8cc;
+    --chalk:#EFF6F9;
+    --amber:#D9B45C;
+    --ink:#0d1f28;
+    --ink-soft:#3d5560;
+    --card-border:rgba(4,90,135,0.15);
+  }
+  :root[data-team-theme="chi"]{
+    --turf:#0B162A;
+    --turf-2:#060d1a;
+    --hash:#d68a5c;
+    --chalk:#F2EEE9;
+    --amber:#C83803;
+    --ink:#14100c;
+    --ink-soft:#4a3a30;
+    --card-border:rgba(11,22,42,0.15);
+  }
+  :root[data-team-theme="cin"]{
+    --turf:#14110d;
+    --turf-2:#000000;
+    --hash:#d68a5c;
+    --chalk:#F2EEE9;
+    --amber:#FB4F14;
+    --ink:#14110d;
+    --ink-soft:#4a423a;
+    --card-border:rgba(20,17,13,0.15);
+  }
+  :root[data-team-theme="cle"]{
+    --turf:#311D00;
+    --turf-2:#1f1300;
+    --hash:#d99a6c;
+    --chalk:#F5EFE7;
+    --amber:#FF6B1A;
+    --ink:#241a10;
+    --ink-soft:#5c4a3a;
+    --card-border:rgba(49,29,0,0.15);
+  }
+  :root[data-team-theme="dal"]{
+    --turf:#04152E;
+    --turf-2:#020c1c;
+    --hash:#8fa3bc;
+    --chalk:#EEF1F5;
+    --amber:#B3995D;
+    --ink:#0d1522;
+    --ink-soft:#3d4a5c;
+    --card-border:rgba(4,21,46,0.15);
+  }
+  :root[data-team-theme="den"]{
+    --turf:#002244;
+    --turf-2:#00152c;
+    --hash:#d68a5c;
+    --chalk:#F0EEE9;
+    --amber:#FB4F14;
+    --ink:#0d1522;
+    --ink-soft:#3d4a5c;
+    --card-border:rgba(0,34,68,0.15);
+  }
+  :root[data-team-theme="gb"]{
+    --turf:#203731;
+    --turf-2:#142420;
+    --hash:#d9b45c;
+    --chalk:#F5F0E4;
+    --amber:#FFB612;
+    --ink:#14201c;
+    --ink-soft:#445c50;
+    --card-border:rgba(32,55,49,0.15);
+  }
+  :root[data-team-theme="hou"]{
+    --turf:#03202F;
+    --turf-2:#01141d;
+    --hash:#7fa5b8;
+    --chalk:#EEF2F4;
+    --amber:#C9A24B;
+    --ink:#0a1519;
+    --ink-soft:#3a4d54;
+    --card-border:rgba(3,32,47,0.15);
+  }
+  :root[data-team-theme="ind"]{
+    --turf:#002C5F;
+    --turf-2:#001a3d;
+    --hash:#7FA5D6;
+    --chalk:#EEF2F8;
+    --amber:#C9A24B;
+    --ink:#0d1b2e;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(0,44,95,0.15);
+  }
+  :root[data-team-theme="jax"]{
+    --turf:#006778;
+    --turf-2:#003d47;
+    --hash:#8fc4cc;
+    --chalk:#EAF4F5;
+    --amber:#D7A22A;
+    --ink:#0a1f22;
+    --ink-soft:#3a5458;
+    --card-border:rgba(0,103,120,0.15);
+  }
+  :root[data-team-theme="kc"]{
+    --turf:#7A0E1F;
+    --turf-2:#4d0912;
+    --hash:#d9b45c;
+    --chalk:#F5EEE4;
+    --amber:#FFB81C;
+    --ink:#200a0d;
+    --ink-soft:#5c3a3f;
+    --card-border:rgba(122,14,31,0.15);
+  }
+  :root[data-team-theme="lv"]{
+    --turf:#14141a;
+    --turf-2:#000000;
+    --hash:#a5acaf;
+    --chalk:#F0F0F0;
+    --amber:#C9A24B;
+    --ink:#14141a;
+    --ink-soft:#4a4a4a;
+    --card-border:rgba(20,20,26,0.15);
+  }
+  :root[data-team-theme="lac"]{
+    --turf:#002A5E;
+    --turf-2:#001a3d;
+    --hash:#7FC6E8;
+    --chalk:#EAF4FA;
+    --amber:#FFC20E;
+    --ink:#0d1b2e;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(0,42,94,0.15);
+  }
+  :root[data-team-theme="lar"]{
+    --turf:#003594;
+    --turf-2:#001f5c;
+    --hash:#d9b45c;
+    --chalk:#EEF1FA;
+    --amber:#FFA300;
+    --ink:#0d1740;
+    --ink-soft:#3d4a70;
+    --card-border:rgba(0,53,148,0.15);
+  }
+  :root[data-team-theme="mia"]{
+    --turf:#005778;
+    --turf-2:#003850;
+    --hash:#7fc4cc;
+    --chalk:#EAF6F7;
+    --amber:#FC4C02;
+    --ink:#0a2a33;
+    --ink-soft:#3a5d63;
+    --card-border:rgba(0,87,120,0.15);
+  }
+  :root[data-team-theme="min"]{
+    --turf:#4F2683;
+    --turf-2:#331a57;
+    --hash:#d9b45c;
+    --chalk:#F3EEF9;
+    --amber:#FFC62F;
+    --ink:#22103a;
+    --ink-soft:#524066;
+    --card-border:rgba(79,38,131,0.15);
+  }
+  :root[data-team-theme="ne"]{
+    --turf:#002244;
+    --turf-2:#00152c;
+    --hash:#a5acaf;
+    --chalk:#EEF1F5;
+    --amber:#C9A24B;
+    --ink:#0d1522;
+    --ink-soft:#3d4a5c;
+    --card-border:rgba(0,34,68,0.15);
+  }
+  :root[data-team-theme="nyg"]{
+    --turf:#0B2265;
+    --turf-2:#071640;
+    --hash:#8fa3bc;
+    --chalk:#EEF1F8;
+    --amber:#C9A24B;
+    --ink:#0d1530;
+    --ink-soft:#3d4a66;
+    --card-border:rgba(11,34,101,0.15);
+  }
+  :root[data-team-theme="nyj"]{
+    --turf:#125740;
+    --turf-2:#0a3a2a;
+    --hash:#7fbfa0;
+    --chalk:#EAF5F0;
+    --amber:#D9B45C;
+    --ink:#0a241a;
+    --ink-soft:#3a5c4a;
+    --card-border:rgba(18,87,64,0.15);
+  }
+  :root[data-team-theme="phi"]{
+    --turf:#004C54;
+    --turf-2:#003338;
+    --hash:#a5acaf;
+    --chalk:#EAF3F3;
+    --amber:#C9A24B;
+    --ink:#0a2226;
+    --ink-soft:#3a5054;
+    --card-border:rgba(0,76,84,0.15);
+  }
+  :root[data-team-theme="pit"]{
+    --turf:#14120d;
+    --turf-2:#000000;
+    --hash:#d9b45c;
+    --chalk:#F5F0E4;
+    --amber:#FFB612;
+    --ink:#14120d;
+    --ink-soft:#4a453a;
+    --card-border:rgba(20,18,13,0.15);
+  }
+  :root[data-team-theme="sf"]{
+    --turf:#7A0000;
+    --turf-2:#4d0000;
+    --hash:#d9c48f;
+    --chalk:#F5F0E4;
+    --amber:#B3995D;
+    --ink:#200a0a;
+    --ink-soft:#5c3a3a;
+    --card-border:rgba(122,0,0,0.15);
+  }
+  :root[data-team-theme="sea"]{
+    --turf:#002244;
+    --turf-2:#00152c;
+    --hash:#a5acaf;
+    --chalk:#EEF1F0;
+    --amber:#69BE28;
+    --ink:#0d1f16;
+    --ink-soft:#3d5a48;
+    --card-border:rgba(0,34,68,0.15);
+  }
+  :root[data-team-theme="tb"]{
+    --turf:#34302B;
+    --turf-2:#201d19;
+    --hash:#d68a5c;
+    --chalk:#F5F0EA;
+    --amber:#FF7900;
+    --ink:#1a1815;
+    --ink-soft:#4a453e;
+    --card-border:rgba(52,48,43,0.15);
+  }
+  :root[data-team-theme="ten"]{
+    --turf:#0C2340;
+    --turf-2:#071528;
+    --hash:#7FB8E0;
+    --chalk:#EEF3FA;
+    --amber:#4B92DB;
+    --ink:#0d1f33;
+    --ink-soft:#3d5a7a;
+    --card-border:rgba(12,35,64,0.15);
+  }
+  :root[data-team-theme="wsh"]{
+    --turf:#5A1414;
+    --turf-2:#3a0d0d;
+    --hash:#d9b45c;
+    --chalk:#F5EEE7;
+    --amber:#FFB612;
+    --ink:#200a0a;
+    --ink-soft:#5c3a3a;
+    --card-border:rgba(90,20,20,0.15);
+  }
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    line-height:1.65;
+  }
+  h1,h2,.display{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+    text-wrap:balance;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+
+  header.topbar{
+    background:var(--turf);
+    color:var(--chalk);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    border-bottom:3px solid var(--amber);
+  }
+  .title-group{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  .header-logo{width:30px;height:30px;object-fit:contain;flex:0 0 auto;}
+  .header-logo.is-hidden{display:none;}
+  header.topbar .title{font-family:'Anton', sans-serif;font-size:20px;letter-spacing:0.04em;color:var(--chalk);}
+  .tool-nav{display:flex;gap:10px;flex-wrap:wrap;}
+  .tool-nav a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-decoration:none;
+    color:var(--chalk);
+    opacity:.85;
+    border:1px solid rgba(243,239,228,0.3);
+    border-radius:20px;
+    padding:6px 12px;
+  }
+  .tool-nav a:hover{opacity:1;border-color:var(--amber);}
+
+  main{max-width:820px;margin:0 auto;padding:32px 24px 96px;}
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--hash);
+    margin-bottom:6px;
+  }
+  h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
+  p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:64ch;}
+
+  .sched-facts{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0 4px;}
+  .sched-fact{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    background:var(--card);
+    color:var(--turf);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:6px 14px;
+  }
+  .sched-fact strong{color:var(--amber);}
+
+  .sched-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0;}
+  .sched-select{
+    font-family:'Source Serif 4', serif;
+    font-size:14px;
+    padding:8px 14px;
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    background:var(--card);
+    color:var(--ink);
+    cursor:pointer;
+    min-width:220px;
+  }
+  .sched-select:focus{outline:2px solid var(--amber);outline-offset:1px;}
+  .sched-legend{font-size:12px;color:var(--ink-soft);}
+  .sched-legend .conf-badge{margin:0 3px;}
+
+  .sched-week{margin-bottom:16px;}
+  .sched-week-head{display:flex;justify-content:space-between;align-items:baseline;margin:0 2px 8px;}
+  .sched-week-num{font-family:'Anton', sans-serif;font-size:16px;color:var(--turf);letter-spacing:.02em;text-transform:uppercase;}
+  .sched-week-type{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;}
+
+  .sched-games{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);}
+  .sched-game{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    padding:10px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .sched-game:last-child{border-bottom:none;}
+  .sched-team{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
+  .sched-team.side-a{justify-content:flex-end;text-align:right;}
+  .sched-team.side-b{justify-content:flex-start;text-align:left;}
+  .sched-team .name{font-family:'Source Serif 4', serif;font-size:14px;}
+  .conf-badge{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    padding:1px 5px;
+    border-radius:3px;
+    letter-spacing:.03em;
+    flex:0 0 auto;
+  }
+  .conf-badge.nfc{background:rgba(233,167,59,0.2);color:var(--amber);}
+  .conf-badge.afc{background:rgba(255,255,255,0.14);color:var(--chalk);}
+  .sched-vs{color:var(--hash);font-size:10px;text-transform:uppercase;flex:0 0 auto;}
+  .sched-double{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    color:var(--amber);
+    border:1px solid var(--amber);
+    border-radius:3px;
+    padding:1px 4px;
+    flex:0 0 auto;
+  }
+  .sched-game.is-filtered-out{display:none;}
+  .sched-game.is-mine .name{color:var(--amber);font-weight:600;}
+
+  .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:64ch;}
+
+  .back-to-top{
+    position:fixed;
+    right:18px;
+    bottom:18px;
+    z-index:40;
+    width:44px;
+    height:44px;
+    border-radius:50%;
+    border:none;
+    background:var(--amber);
+    color:var(--turf-2);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    box-shadow:0 4px 14px rgba(0,0,0,0.25);
+    opacity:1;
+    transform:translateY(0);
+    transition:opacity .25s ease, transform .25s ease;
+  }
+  .back-to-top svg{width:18px;height:18px;}
+  .back-to-top.is-hidden{opacity:0;transform:translateY(10px);pointer-events:none;}
+
+  @media (max-width:640px){
+    header.topbar{padding:12px 16px;flex-wrap:wrap;}
+    main{padding:24px 16px 80px;}
+    .sched-game{padding:9px 10px;gap:6px;font-size:12px;}
+    .sched-team .name{font-size:13px;}
+    .sched-select{width:100%;min-width:0;}
+  }
+</style>
+<script>
+(function(){
+  try {
+    var saved = localStorage.getItem('draftroom-team-theme');
+    if(saved) document.documentElement.setAttribute('data-team-theme', saved);
+  } catch(e){}
+})();
+</script>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="title-group" href="index.html">
+    <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
+    <span class="title">Draft Room</span>
+  </a>
+  <div class="tool-nav">
+    <a href="index.html#basics">← Übersicht</a>
+    <a href="draft-board.html">Draft Board</a>
+  </div>
+</header>
+
+<main>
+  <div class="kicker">Saison 2026 · 15 Wochen</div>
+  <h1>Spielplan</h1>
+  <p class="copy">Der komplette Liga-Phase-Spielplan: 10 Teams in zwei Divisionen (NFC/AFC), 15 Wochen, jede Woche genau 5 Spiele – jedes Team spielt jede Woche. Wähle unten dein Team, um nur deine 15 Matchups zu sehen.</p>
+
+  <div class="sched-facts">
+    <div class="sched-fact">2× <strong>Conference-intern</strong> pro Gegner</div>
+    <div class="sched-fact">≥1× <strong>Interconference</strong> pro Gegner</div>
+    <div class="sched-fact">10 Paarungen als <strong>Doppel-Duell</strong> (2×)</div>
+    <div class="sched-fact">Woche 1, 8, 13–15: <strong>max. Conference-intern</strong></div>
+  </div>
+
+  <div class="sched-controls">
+    <select class="sched-select" id="teamFilter" aria-label="Team filtern">
+      <option value="">Alle Teams – kompletter Spielplan</option>
+    </select>
+    <span class="sched-legend"><span class="conf-badge nfc">NFC</span><span class="conf-badge afc">AFC</span></span>
+  </div>
+
+  <div id="schedWeeks"></div>
+
+  <p class="note-text">"2×" markiert Doppel-Duelle – Paarungen, die zweimal in der Saison stattfinden. "Max. Conference-intern" heisst: an diesem Spieltag sind so viele Spiele wie möglich innerhalb der eigenen Division (4 von 5).</p>
+</main>
+
+<button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<script>
+(function(){
+  var root = document.documentElement;
+  var headerLogo = document.getElementById('headerLogo');
+  function logoUrl(theme){ return 'https://a.espncdn.com/i/teamlogos/nfl/500/' + theme + '.png'; }
+  var theme = root.getAttribute('data-team-theme') || '';
+  if(theme && headerLogo){
+    headerLogo.src = logoUrl(theme);
+    headerLogo.classList.remove('is-hidden');
+  }
+})();
+</script>
+
+<script>
+(function(){
+  var backToTop = document.getElementById('backToTop');
+  function update(){
+    backToTop.classList.toggle('is-hidden', window.scrollY < window.innerHeight * 0.6);
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+  backToTop.addEventListener('click', function(){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
+
+<script>
+  var SCHEDULE = [{"w":1,"ty":"max","g":[["Tackleberry Finn","NFC","Team 9","NFC","intern",false],["Hopp Schwiiz","NFC","Buhaaner","NFC","intern",false],["Run CMC","AFC","Team 10","AFC","intern",false],["Sherlock Mahomes","AFC","TM06","AFC","intern",false],["Saints of Anarchy","NFC","Zurich City Ravens","AFC","inter",true]]},{"w":2,"ty":"mixed","g":[["Saints of Anarchy","NFC","Team 9","NFC","intern",false],["Sherlock Mahomes","AFC","Team 10","AFC","intern",false],["Tackleberry Finn","NFC","TM06","AFC","inter",false],["Hopp Schwiiz","NFC","Zurich City Ravens","AFC","inter",false],["Buhaaner","NFC","Run CMC","AFC","inter",false]]},{"w":3,"ty":"mixed","g":[["Buhaaner","NFC","Team 9","NFC","intern",false],["Run CMC","AFC","Sherlock Mahomes","AFC","intern",false],["Saints of Anarchy","NFC","Team 10","AFC","inter",false],["Tackleberry Finn","NFC","Zurich City Ravens","AFC","inter",false],["Hopp Schwiiz","NFC","TM06","AFC","inter",true]]},{"w":4,"ty":"mixed","g":[["Saints of Anarchy","NFC","Hopp Schwiiz","NFC","intern",false],["Zurich City Ravens","AFC","TM06","AFC","intern",false],["Tackleberry Finn","NFC","Sherlock Mahomes","AFC","inter",false],["Buhaaner","NFC","Team 10","AFC","inter",false],["Team 9","NFC","Run CMC","AFC","inter",false]]},{"w":5,"ty":"mixed","g":[["Tackleberry Finn","NFC","Buhaaner","NFC","intern",false],["Zurich City Ravens","AFC","Run CMC","AFC","intern",false],["Saints of Anarchy","NFC","TM06","AFC","inter",false],["Hopp Schwiiz","NFC","Sherlock Mahomes","AFC","inter",false],["Team 9","NFC","Team 10","AFC","inter",true]]},{"w":6,"ty":"mixed","g":[["Tackleberry Finn","NFC","Hopp Schwiiz","NFC","intern",false],["Run CMC","AFC","Team 10","AFC","intern",false],["Saints of Anarchy","NFC","Zurich City Ravens","AFC","inter",true],["Buhaaner","NFC","Sherlock Mahomes","AFC","inter",true],["Team 9","NFC","TM06","AFC","inter",false]]},{"w":7,"ty":"mixed","g":[["Tackleberry Finn","NFC","Team 9","NFC","intern",false],["Sherlock Mahomes","AFC","TM06","AFC","intern",false],["Saints of Anarchy","NFC","Run CMC","AFC","inter",false],["Hopp Schwiiz","NFC","Team 10","AFC","inter",false],["Buhaaner","NFC","Zurich City Ravens","AFC","inter",false]]},{"w":8,"ty":"max","g":[["Saints of Anarchy","NFC","Buhaaner","NFC","intern",false],["Team 9","NFC","Hopp Schwiiz","NFC","intern",false],["Zurich City Ravens","AFC","TM06","AFC","intern",false],["Team 10","AFC","Sherlock Mahomes","AFC","intern",false],["Tackleberry Finn","NFC","Run CMC","AFC","inter",true]]},{"w":9,"ty":"mixed","g":[["Saints of Anarchy","NFC","Tackleberry Finn","NFC","intern",false],["Zurich City Ravens","AFC","Team 10","AFC","intern",false],["Hopp Schwiiz","NFC","Run CMC","AFC","inter",false],["Buhaaner","NFC","TM06","AFC","inter",false],["Team 9","NFC","Sherlock Mahomes","AFC","inter",false]]},{"w":10,"ty":"mixed","g":[["Hopp Schwiiz","NFC","Buhaaner","NFC","intern",false],["Run CMC","AFC","TM06","AFC","intern",false],["Saints of Anarchy","NFC","Sherlock Mahomes","AFC","inter",false],["Tackleberry Finn","NFC","Team 10","AFC","inter",false],["Team 9","NFC","Zurich City Ravens","AFC","inter",false]]},{"w":11,"ty":"mixed","g":[["Hopp Schwiiz","NFC","Team 9","NFC","intern",false],["TM06","AFC","Team 10","AFC","intern",false],["Saints of Anarchy","NFC","Run CMC","AFC","inter",false],["Tackleberry Finn","NFC","Sherlock Mahomes","AFC","inter",false],["Buhaaner","NFC","Zurich City Ravens","AFC","inter",false]]},{"w":12,"ty":"mixed","g":[["Saints of Anarchy","NFC","Buhaaner","NFC","intern",false],["Zurich City Ravens","AFC","Sherlock Mahomes","AFC","intern",false],["Tackleberry Finn","NFC","Run CMC","AFC","inter",true],["Hopp Schwiiz","NFC","Team 10","AFC","inter",false],["Team 9","NFC","TM06","AFC","inter",false]]},{"w":13,"ty":"max","g":[["Saints of Anarchy","NFC","Tackleberry Finn","NFC","intern",false],["Buhaaner","NFC","Team 9","NFC","intern",false],["Zurich City Ravens","AFC","Team 10","AFC","intern",false],["Run CMC","AFC","Sherlock Mahomes","AFC","intern",false],["Hopp Schwiiz","NFC","TM06","AFC","inter",true]]},{"w":14,"ty":"max","g":[["Saints of Anarchy","NFC","Team 9","NFC","intern",false],["Tackleberry Finn","NFC","Hopp Schwiiz","NFC","intern",false],["Zurich City Ravens","AFC","Run CMC","AFC","intern",false],["TM06","AFC","Team 10","AFC","intern",false],["Buhaaner","NFC","Sherlock Mahomes","AFC","inter",true]]},{"w":15,"ty":"max","g":[["Saints of Anarchy","NFC","Hopp Schwiiz","NFC","intern",false],["Buhaaner","NFC","Tackleberry Finn","NFC","intern",false],["Zurich City Ravens","AFC","Sherlock Mahomes","AFC","intern",false],["TM06","AFC","Run CMC","AFC","intern",false],["Team 9","NFC","Team 10","AFC","inter",true]]}];
+
+  (function(){
+    var weeksEl = document.getElementById('schedWeeks');
+    var filterEl = document.getElementById('teamFilter');
+
+    var teams = {};
+    SCHEDULE.forEach(function(wk){
+      wk.g.forEach(function(g){
+        teams[g[0]] = g[1];
+        teams[g[2]] = g[3];
+      });
+    });
+    var teamNames = Object.keys(teams).sort(function(a, b){
+      if(teams[a] !== teams[b]) return teams[a] === 'NFC' ? -1 : 1;
+      return a.localeCompare(b);
+    });
+    teamNames.forEach(function(name){
+      var opt = document.createElement('option');
+      opt.value = name;
+      opt.textContent = name + ' (' + teams[name] + ')';
+      filterEl.appendChild(opt);
+    });
+
+    function weekTypeLabel(ty){
+      return ty === 'max' ? 'Max. Conference-intern' : 'Gemischt';
+    }
+
+    function gameHtml(g){
+      var t1 = g[0], c1 = g[1], t2 = g[2], c2 = g[3], kind = g[4], double = g[5];
+      return '<div class="sched-game" data-t1="' + t1 + '" data-t2="' + t2 + '">' +
+        '<span class="sched-team side-a"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
+        '<span class="sched-vs">vs</span>' +
+        (double ? '<span class="sched-double">2×</span>' : '') +
+        '<span class="sched-team side-b"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
+      '</div>';
+    }
+
+    function render(){
+      var html = SCHEDULE.map(function(wk){
+        return '<div class="sched-week">' +
+          '<div class="sched-week-head"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span></div>' +
+          '<div class="sched-games">' + wk.g.map(gameHtml).join('') + '</div>' +
+        '</div>';
+      }).join('');
+      weeksEl.innerHTML = html;
+      applyFilter();
+    }
+
+    function applyFilter(){
+      var team = filterEl.value;
+      weeksEl.querySelectorAll('.sched-game').forEach(function(row){
+        if(!team){
+          row.classList.remove('is-filtered-out', 'is-mine');
+          return;
+        }
+        var match = row.dataset.t1 === team || row.dataset.t2 === team;
+        row.classList.toggle('is-filtered-out', !match);
+        row.classList.toggle('is-mine', match);
+      });
+    }
+
+    filterEl.addEventListener('change', applyFilter);
+    render();
+  })();
+</script>
+
+</body>
+</html>
