@@ -2953,10 +2953,18 @@
   var cache = {};
   var activePos = 'QB';
   var expanded = {};
+  var DURATION = 260;
+  var EASING = 'cubic-bezier(0.4, 0, 0.2, 1)';
+  var listAnimation = null;
 
-  function render(pos){
+  function render(pos, animate){
     var data = cache[pos];
     var showCount = expanded[pos] ? data.length : DEFAULT_SHOW[pos];
+    var startHeight = null;
+    if(animate){
+      if(listAnimation) listAnimation.cancel();
+      startHeight = listEl.offsetHeight;
+    }
     listEl.innerHTML = '';
     data.slice(0, showCount).forEach(function(p, i){
       var row = document.createElement('div');
@@ -2975,6 +2983,24 @@
       moreBtn.textContent = expanded[pos] ? 'Weniger anzeigen' : 'Mehr anzeigen (Top ' + FETCH_LIMIT[pos] + ')';
     } else {
       moreBtn.classList.remove('is-visible');
+    }
+    if(animate && startHeight !== null){
+      var endHeight = listEl.offsetHeight;
+      listEl.style.overflow = 'hidden';
+      listEl.style.height = startHeight + 'px';
+      listAnimation = listEl.animate(
+        { height: [startHeight + 'px', endHeight + 'px'] },
+        { duration: DURATION, easing: EASING }
+      );
+      listAnimation.onfinish = function(){
+        listEl.style.height = '';
+        listEl.style.overflow = '';
+        listAnimation = null;
+      };
+      listAnimation.oncancel = function(){
+        listEl.style.height = '';
+        listEl.style.overflow = '';
+      };
     }
   }
 
@@ -3030,7 +3056,7 @@
 
   moreBtn.addEventListener('click', function(){
     expanded[activePos] = !expanded[activePos];
-    render(activePos);
+    render(activePos, true);
   });
 
   loadPosition('QB');
