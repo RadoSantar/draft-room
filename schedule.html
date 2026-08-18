@@ -151,6 +151,7 @@
     padding:1px 4px;
     flex:0 0 auto;
   }
+  .sched-double.is-empty{visibility:hidden;}
   .sched-game.is-filtered-out{display:none;}
   .sched-game.is-mine .name{color:var(--amber);font-weight:600;}
 
@@ -346,7 +347,7 @@
       return '<div class="sched-game" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
         '<span class="sched-team side-a"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
         '<span class="sched-vs">vs</span>' +
-        (double ? '<span class="sched-double">2×</span>' : '') +
+        '<span class="sched-double' + (double ? '' : ' is-empty') + '">2×</span>' +
         '<span class="sched-team side-b"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
       '</div>';
     }
