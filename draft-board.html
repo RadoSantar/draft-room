@@ -108,12 +108,17 @@
   .roster-panel-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(0,0,0,0.2);}
   .roster-panel-title{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--amber);}
   .roster-panel-count{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--chalk);opacity:.85;}
-  .roster-panel-empty{padding:14px 18px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
-  .roster-pos-group{padding:8px 18px;border-bottom:1px solid rgba(255,255,255,0.08);}
-  .roster-pos-group:last-child{border-bottom:none;}
-  .roster-pos-label{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
-  .roster-player-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;}
+  .roster-panel-empty{padding:8px 18px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
+  .roster-targets{padding:10px 18px;font-size:11px;color:var(--chalk);opacity:.75;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .roster-section-label{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;padding:10px 18px 4px;}
+  .roster-slot-row{display:flex;align-items:baseline;gap:10px;padding:4px 18px;}
+  .roster-slot-row .slot-label{min-width:44px;color:var(--hash);font-size:11px;}
+  .roster-slot-row .slot-player{font-family:'Source Serif 4', serif;font-size:14px;opacity:.4;}
+  .roster-slot-row.filled .slot-player{opacity:1;}
+  .roster-slot-row .slot-player .team{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--hash);}
+  .roster-player-row{display:flex;justify-content:space-between;gap:8px;padding:4px 18px;}
   .roster-player-row .name{font-family:'Source Serif 4', serif;font-size:14px;}
+  .roster-player-row .name .team{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);}
   .roster-player-row .team{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--hash);}
 
   .db-list{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin-top:10px;}
@@ -251,7 +256,7 @@
   <div class="kicker">Eigenes Cheat-Sheet</div>
   <h1>Draft Board</h1>
   <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, mit den Pfeilen bringst du Spieler in deine eigene Reihenfolge. Am Draft-Tag klickst du Spieler einfach durch, um zu tracken, wer schon weg ist.</p>
-  <p class="copy">Alles wird nur auf diesem Gerät im Browser gespeichert (kein Login, kein Server) – auf einem anderen Gerät startest du mit einer leeren Liste.</p>
+  <p class="copy">Ohne Namenseingabe bei "Sync" oben wird alles nur auf diesem Gerät im Browser gespeichert – auf einem anderen Gerät startest du dann mit einer leeren Liste. Trägst du oben denselben Namen auf mehreren Geräten ein, synct sich deine Reihenfolge und dein Draft-Status automatisch zwischen ihnen.</p>
 
   <div class="roster-panel">
     <div class="roster-panel-head">
@@ -291,6 +296,7 @@
   </div>
 
   <p class="note-text">ADP = durchschnittliche Draft-Position über alle ESPN-Fantasy-Ligen. Deine eigene Reihenfolge und der Draft-Status werden getrennt gespeichert – "Zurücksetzen" löscht nur die Verfügbar/Vergeben-Markierungen, nicht deine Sortierung.</p>
+  <p class="note-text">"Starter"/"Bench" im Roster oben sind eine automatische Einordnung nach ADP innerhalb jeder Position – keine echte Slot-Zuweisung, nur zur Orientierung. Fragen wie "brauche ich einen Backup-QB?" oder "was gehört auf die Bench?" beantwortet <a class="gloss-link" href="index.html#roster-tipps">dieses Kapitel</a>.</p>
   <p class="note-text">"Proj." ist eine Näherung der Saison-Punkte nach eurem individuellen Scoring, berechnet aus ESPNs Saison-Projektion – keine exakte Reproduktion des Punkterechners. Bei QB/RB/WR/TE fehlen wochenbasierte Boni (z.B. 300+-Yard-Spiele, 50+-Yard-TD-Bonus, 2pt-Conversions), da eine Saison-Projektion keine einzelnen Spiele ausweist. Bei K werden 50–59 und 60+ Yards beide als "50+" mit +5 genähert. Bei DEF fliessen nur Punkte/Yards erlaubt (auf Basis des Saison-Schnitts) und Sacks ein – Interceptions, Fumble-Recoveries und Defensive-TDs fehlen. Zum genauen Punktestand einzelner vergangener Wochen siehe den <a class="gloss-link" href="index.html#rechner">Punkterechner</a>.</p>
 </main>
 
@@ -407,32 +413,72 @@
   var POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
   var POS_LABEL_FULL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
   var ROSTER_TOTAL = 20;
+  var DRAFT_TARGETS = { QB: 1, RB: 6, WR: 6, TE: 3, K: 1, DST: 1 };
+  var STARTER_SLOTS = [
+    { label: 'QB', positions: ['QB'], count: 1 },
+    { label: 'RB', positions: ['RB'], count: 2 },
+    { label: 'WR', positions: ['WR'], count: 2 },
+    { label: 'FLEX', positions: ['RB', 'WR'], count: 2 },
+    { label: 'TE', positions: ['TE'], count: 2 },
+    { label: 'K', positions: ['K'], count: 1 },
+    { label: 'DEF', positions: ['DST'], count: 1 }
+  ];
 
   function renderRosterPanel(){
     if(!rosterBodyEl) return;
-    var groups = {};
-    POSITIONS.forEach(function(pos){ groups[pos] = []; });
+    var pools = {};
+    POSITIONS.forEach(function(pos){ pools[pos] = []; });
     var total = 0;
     Object.keys(draftStatus).forEach(function(id){
       if(draftStatus[id] !== 'me') return;
-      total++;
       for(var i = 0; i < POSITIONS.length; i++){
         var pos = POSITIONS[i];
         if(!cache[pos]) continue;
         var found = cache[pos].filter(function(p){ return p.id === id; })[0];
-        if(found){ groups[pos].push(found); break; }
+        if(found){ pools[pos].push(found); total++; break; }
       }
     });
+    POSITIONS.forEach(function(pos){ pools[pos].sort(function(a, b){ return a.adp - b.adp; }); });
+
     if(rosterCountEl) rosterCountEl.textContent = total + ' / ' + ROSTER_TOTAL;
-    var html = POSITIONS.map(function(pos){
-      if(!groups[pos].length) return '';
-      return '<div class="roster-pos-group"><div class="roster-pos-label mono">' + POS_LABEL_FULL[pos] + '</div>' +
-        groups[pos].map(function(p){
-          return '<div class="roster-player-row"><span class="name">' + p.name + '</span><span class="team">' + p.team + '</span></div>';
-        }).join('') +
+
+    var targetsHtml = POSITIONS.map(function(pos){
+      return POS_LABEL_FULL[pos] + ' ' + pools[pos].length + '/' + DRAFT_TARGETS[pos];
+    }).join(' · ');
+
+    var starterRows = [];
+    STARTER_SLOTS.forEach(function(slot){
+      for(var i = 0; i < slot.count; i++){
+        var player = null;
+        for(var j = 0; j < slot.positions.length; j++){
+          var pos = slot.positions[j];
+          if(pools[pos].length){ player = pools[pos].shift(); break; }
+        }
+        starterRows.push({ label: slot.label, player: player });
+      }
+    });
+    var starterFilled = starterRows.filter(function(r){ return r.player; }).length;
+
+    var bench = [];
+    POSITIONS.forEach(function(pos){
+      pools[pos].forEach(function(p){ bench.push({ name: p.name, team: p.team, posLabel: POS_LABEL_FULL[pos] }); });
+    });
+
+    var starterHtml = starterRows.map(function(r){
+      return '<div class="roster-slot-row' + (r.player ? ' filled' : '') + '">' +
+        '<span class="slot-label mono">' + r.label + '</span>' +
+        '<span class="slot-player">' + (r.player ? r.player.name + ' <span class="team mono">' + r.player.team + '</span>' : '–') + '</span>' +
       '</div>';
     }).join('');
-    rosterBodyEl.innerHTML = html || '<div class="roster-panel-empty">Noch keine Spieler markiert.</div>';
+
+    var benchHtml = bench.length ? bench.map(function(p){
+      return '<div class="roster-player-row"><span class="name">' + p.name + ' <span class="team mono">' + p.posLabel + '</span></span><span class="team">' + p.team + '</span></div>';
+    }).join('') : '<div class="roster-panel-empty">Keine Bankspieler.</div>';
+
+    rosterBodyEl.innerHTML =
+      '<div class="roster-targets mono">' + targetsHtml + '</div>' +
+      '<div class="roster-section"><div class="roster-section-label mono">Starter (' + starterFilled + '/11)</div>' + starterHtml + '</div>' +
+      '<div class="roster-section"><div class="roster-section-label mono">Bench (' + bench.length + '/9)</div>' + benchHtml + '</div>';
   }
 
   function pushDraftBoard(){
