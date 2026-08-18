@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="shared.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -229,6 +231,9 @@
       <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
       <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
     </div>
+    <span class="theme-picker-label mono">Sync</span>
+    <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync">
+    <span class="sync-status mono" id="syncStatus"></span>
   </div>
 
   <div class="kicker">Eigenes Cheat-Sheet</div>
@@ -277,11 +282,24 @@
 
 <script>
 (function(){
-  window.DraftRoomShared.initThemePicker({
+  var themePicker = window.DraftRoomShared.initThemePicker({
     select: document.getElementById('themeSelect'),
     headerLogo: document.getElementById('headerLogo'),
     previewBall: document.getElementById('themePreviewBall'),
     previewLogo: document.getElementById('themePreviewLogo')
+  });
+
+  window.__draftRoomSync = window.DraftRoomShared.initSyncBar({
+    nameInput: document.getElementById('syncName'),
+    statusEl: document.getElementById('syncStatus'),
+    onPull: function(row){
+      if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
+      if(row.draft_board && window.__applyRemoteDraftBoard) window.__applyRemoteDraftBoard(row.draft_board);
+    }
+  });
+
+  document.getElementById('themeSelect').addEventListener('change', function(e){
+    if(window.__draftRoomSync) window.__draftRoomSync.push({ theme: e.target.value });
   });
 })();
 </script>
@@ -363,6 +381,33 @@
     });
     return ordered;
   }
+
+  var POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
+
+  function pushDraftBoard(){
+    if(!window.__draftRoomSync) return;
+    var orders = {};
+    POSITIONS.forEach(function(pos){
+      var saved = loadOrder(pos);
+      if(saved) orders[pos] = saved;
+    });
+    window.__draftRoomSync.push({ draft_board: { orders: orders, status: draftStatus } });
+  }
+
+  window.__applyRemoteDraftBoard = function(remote){
+    if(!remote) return;
+    if(remote.orders){
+      Object.keys(remote.orders).forEach(function(pos){
+        try { localStorage.setItem(ORDER_KEY_PREFIX + pos, JSON.stringify(remote.orders[pos])); } catch(e){}
+        if(cache[pos]) cache[pos] = applyStoredOrder(pos, cache[pos]);
+      });
+    }
+    if(remote.status){
+      draftStatus = remote.status;
+      saveStatus();
+    }
+    render(activePos);
+  };
 
   function rowHtml(p, i, showReorder){
     var status = draftStatus[p.id] || 'available';
@@ -501,6 +546,7 @@
       list[swapIdx] = tmp;
       saveOrder(activePos);
       render(activePos, true);
+      pushDraftBoard();
       return;
     }
 
@@ -511,6 +557,7 @@
       else draftStatus[id] = next;
       saveStatus();
       render(activePos);
+      pushDraftBoard();
     }
   });
 
@@ -519,6 +566,7 @@
     draftStatus = {};
     saveStatus();
     render(activePos);
+    pushDraftBoard();
   });
 
   loadPosition('QB');

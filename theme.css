@@ -340,7 +340,7 @@
 .is-hidden{display:none !important;}
 
 /* Theme-Picker (Team-Design-Dropdown mit Vorschau) */
-.theme-picker{display:flex;align-items:center;gap:10px;margin-bottom:18px;}
+.theme-picker{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:18px;}
 .theme-picker-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
 .theme-select-wrap{
   display:flex;
@@ -362,6 +362,24 @@
   padding:2px 0;
 }
 .theme-select:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+
+/* Sync-Namensfeld (geräteübergreifende Einstellungen über Supabase) */
+.sync-name{
+  font-family:'Source Serif 4', serif;
+  font-size:14px;
+  padding:8px 14px;
+  border:1px solid var(--card-border);
+  border-radius:20px;
+  background:var(--card);
+  color:var(--ink);
+  min-width:140px;
+}
+.sync-name:focus-visible{outline:2px solid var(--amber);outline-offset:1px;}
+.sync-name:disabled{opacity:.5;cursor:default;}
+.sync-status{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);}
+@media (max-width:640px){
+  .sync-name{min-width:0;flex:1 1 120px;}
+}
 
 /* Back-to-Top-Button */
 .back-to-top{

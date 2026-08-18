@@ -1,11 +1,9 @@
 /* Draft Room – optionaler Cloud-Sync über Supabase (Team-Design, "Mein Team", Draft-Board).
-   Noch NICHT in eine Seite eingebunden – aktiviert wird das erst, sobald SUPABASE_URL und
-   SUPABASE_ANON_KEY unten eingetragen sind (aus dem Supabase-Dashboard: Project Settings -> API)
-   und dieses Script per <script> geladen wird. Zugehöriges Tabellen-Setup: supabase/schema.sql
-   (einmal im Supabase SQL Editor ausführen). Ohne Konfiguration bleibt alles wie bisher rein lokal. */
+   SUPABASE_ANON_KEY ist bewusst kein Geheimnis – abgesichert wird über die RLS-Policies in
+   supabase/schema.sql, nicht über Geheimhaltung dieses Keys. */
 (function(global){
-  var SUPABASE_URL = '';
-  var SUPABASE_ANON_KEY = '';
+  var SUPABASE_URL = 'https://tcmmduefxdafjquqvgts.supabase.co';
+  var SUPABASE_ANON_KEY = 'sb_publishable_T3VDp-jyWU629N9_E7CmWQ_eXKSQtG4';
 
   var NAME_KEY = 'draftroom-my-name';
   var client = null;

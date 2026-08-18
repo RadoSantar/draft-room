@@ -10,6 +10,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="shared.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -190,6 +192,9 @@
       <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
       <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
     </div>
+    <span class="theme-picker-label mono">Sync</span>
+    <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync">
+    <span class="sync-status mono" id="syncStatus"></span>
   </div>
 
   <div class="kicker">Saison 2026 · 09.09.–21.12. · 15 Wochen</div>
@@ -219,11 +224,24 @@
 
 <script>
 (function(){
-  window.DraftRoomShared.initThemePicker({
+  var themePicker = window.DraftRoomShared.initThemePicker({
     select: document.getElementById('themeSelect'),
     headerLogo: document.getElementById('headerLogo'),
     previewBall: document.getElementById('themePreviewBall'),
     previewLogo: document.getElementById('themePreviewLogo')
+  });
+
+  window.__draftRoomSync = window.DraftRoomShared.initSyncBar({
+    nameInput: document.getElementById('syncName'),
+    statusEl: document.getElementById('syncStatus'),
+    onPull: function(row){
+      if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
+      if(row.my_team && window.__applyRemoteMyTeam) window.__applyRemoteMyTeam(row.my_team);
+    }
+  });
+
+  document.getElementById('themeSelect').addEventListener('change', function(e){
+    if(window.__draftRoomSync) window.__draftRoomSync.push({ theme: e.target.value });
   });
 })();
 </script>
@@ -289,6 +307,15 @@
 
     var savedMyTeam = loadMyTeam();
     if(savedMyTeam && teams[savedMyTeam]) filterEl.value = savedMyTeam;
+
+    window.__applyRemoteMyTeam = function(remoteTeam){
+      if(remoteTeam && teams[remoteTeam] && filterEl.value !== remoteTeam){
+        filterEl.value = remoteTeam;
+        saveMyTeam(remoteTeam);
+        applyFilter();
+        updateMyTeamBtn();
+      }
+    };
 
     function weekTypeLabel(ty){
       return ty === 'max' ? 'Max. Conference-intern' : 'Gemischt';
@@ -361,8 +388,10 @@
     });
     myTeamBtn.addEventListener('click', function(){
       if(!filterEl.value) return;
-      saveMyTeam(filterEl.value === loadMyTeam() ? '' : filterEl.value);
+      var newValue = filterEl.value === loadMyTeam() ? '' : filterEl.value;
+      saveMyTeam(newValue);
       updateMyTeamBtn();
+      if(window.__draftRoomSync) window.__draftRoomSync.push({ my_team: newValue });
     });
     render();
     updateMyTeamBtn();

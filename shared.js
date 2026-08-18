@@ -92,6 +92,54 @@
 
     sync(root.getAttribute('data-team-theme') || '');
     select.addEventListener('change', function(){ applyTheme(select.value); });
+
+    return { applyTheme: applyTheme };
+  }
+
+  /* Verdrahtet ein Namensfeld mit DraftRoomSync (sync.js): lädt beim Eintragen des Namens den
+     gespeicherten Stand, liefert eine push()-Funktion für spätere Änderungen zurück.
+     config: { nameInput, statusEl, onPull } – nameInput ist Pflicht, onPull(row) wird nach jedem
+     erfolgreichen Laden mit den Server-Daten aufgerufen. Gibt null zurück, wenn Sync nicht
+     konfiguriert ist (sync.js ohne Zugangsdaten) oder kein nameInput übergeben wurde. */
+  function initSyncBar(config){
+    var sync = global.DraftRoomSync;
+    var nameInput = config.nameInput;
+    var statusEl = config.statusEl;
+    if(!nameInput) return null;
+
+    function setStatus(text){ if(statusEl) statusEl.textContent = text || ''; }
+
+    if(!sync || !sync.isConfigured()){
+      nameInput.disabled = true;
+      nameInput.placeholder = 'Sync nicht verfügbar';
+      return null;
+    }
+
+    nameInput.value = sync.getName();
+
+    function doPull(){
+      if(!sync.getName()){ setStatus(''); return; }
+      setStatus('Lade…');
+      sync.pull().then(function(row){
+        setStatus(row ? 'Synchronisiert' : 'Neu – noch keine Daten gespeichert');
+        if(row && config.onPull) config.onPull(row);
+      }).catch(function(){ setStatus('Sync-Fehler'); });
+    }
+
+    nameInput.addEventListener('change', function(){
+      sync.setName(nameInput.value.trim());
+      doPull();
+    });
+
+    doPull();
+
+    return {
+      push: function(fields){
+        if(!sync.getName()) return;
+        setStatus('Speichere…');
+        sync.push(fields).then(function(){ setStatus('Synchronisiert'); }).catch(function(){ setStatus('Sync-Fehler'); });
+      }
+    };
   }
 
   /* ESPN-Stat-IDs für die kona_player_info-Projektion (statSourceId=1, statSplitTypeId=0, Saison 2026 = id "102026").
@@ -196,6 +244,7 @@
     findSeasonProjection: findSeasonProjection,
     logoUrl: logoUrl,
     syncHeaderLogo: syncHeaderLogo,
-    initThemePicker: initThemePicker
+    initThemePicker: initThemePicker,
+    initSyncBar: initSyncBar
   };
 })(window);

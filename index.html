@@ -21,6 +21,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="theme.css">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
 <script src="shared.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -1094,6 +1096,9 @@
           <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
           <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
         </div>
+        <span class="theme-picker-label mono">Sync</span>
+        <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync">
+        <span class="sync-status mono" id="syncStatus"></span>
       </div>
 
       <h1>Willkommen im Draft Room</h1>
@@ -2678,11 +2683,23 @@
 
 <script>
 (function(){
-  window.DraftRoomShared.initThemePicker({
+  var themePicker = window.DraftRoomShared.initThemePicker({
     select: document.getElementById('themeSelect'),
     headerLogo: document.getElementById('headerLogo'),
     previewBall: document.getElementById('themePreviewBall'),
     previewLogo: document.getElementById('themePreviewLogo')
+  });
+
+  var syncHandle = window.DraftRoomShared.initSyncBar({
+    nameInput: document.getElementById('syncName'),
+    statusEl: document.getElementById('syncStatus'),
+    onPull: function(row){
+      if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
+    }
+  });
+
+  document.getElementById('themeSelect').addEventListener('change', function(e){
+    if(syncHandle) syncHandle.push({ theme: e.target.value });
   });
 })();
 </script>
