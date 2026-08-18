@@ -1,4 +1,4 @@
-/* Draft Room – optionaler Cloud-Sync über Supabase (Team-Design, "Mein Team", Draft-Board).
+/* Fantasy Playbook – optionaler Cloud-Sync über Supabase (Team-Design, "Mein Team", Draft-Board).
    SUPABASE_ANON_KEY ist bewusst kein Geheimnis – abgesichert wird über die RLS-Policies in
    supabase/schema.sql, nicht über Geheimhaltung dieses Keys. */
 (function(global){

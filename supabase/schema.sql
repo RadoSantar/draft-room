@@ -1,4 +1,4 @@
--- Draft Room: gemeinsame Einstellungen (Team-Design, "Mein Team", Draft-Board) für alle Liga-Mitglieder.
+-- Fantasy Playbook: gemeinsame Einstellungen (Team-Design, "Mein Team", Draft-Board) für alle Liga-Mitglieder.
 -- Einmal im Supabase-Dashboard unter SQL Editor einfügen und ausführen.
 --
 -- Kein echtes Login (Supabase Auth) im Einsatz – die "Identität" ist weiterhin ein frei gewählter
