@@ -759,8 +759,18 @@
   }
   .calc-chart-baseline{position:absolute;left:12px;right:12px;height:1px;background:rgba(255,255,255,0.18);}
   .calc-chart{position:relative;display:flex;align-items:stretch;gap:3px;height:140px;}
-  .chart-col{flex:1;position:relative;min-width:0;}
-  .chart-bar{position:absolute;left:15%;right:15%;border-radius:2px 2px 0 0;}
+  .chart-col{flex:1;position:relative;min-width:0;cursor:pointer;border-radius:4px;}
+  .chart-col::before{
+    content:'';
+    position:absolute;
+    top:0; bottom:0; left:0; right:0;
+    border-radius:4px;
+    background:rgba(255,255,255,0.08);
+    opacity:0;
+    transition:opacity .15s ease;
+  }
+  .chart-col:hover::before, .chart-col.is-selected::before{opacity:1;}
+  .chart-bar{position:absolute;left:15%;right:15%;border-radius:2px 2px 0 0;pointer-events:none;}
   .chart-bar.chart-pos{background:var(--amber);}
   .chart-bar.chart-neg{background:var(--endzone-soft);border-radius:0 0 2px 2px;}
   .chart-bar.chart-bye{left:32%;right:32%;height:0 !important;border-top:2px dashed var(--hash);}
@@ -774,6 +784,15 @@
     font-size:9px;
     color:var(--chalk);
     opacity:.7;
+    pointer-events:none;
+  }
+  .chart-col.is-selected .chart-wk{opacity:1;color:var(--amber);font-weight:600;}
+  .calc-chart-detail{
+    margin-top:22px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    color:var(--ink-soft);
+    min-height:1.2em;
   }
 
   /* Beliebteste Picks */
@@ -1504,6 +1523,7 @@
           <div class="calc-chart-baseline" id="calcChartBaseline"></div>
           <div class="calc-chart" id="calcChart"></div>
         </div>
+        <div class="calc-chart-detail" id="calcChartDetail">Woche antippen oder mit der Maus darüberfahren für die genauen Punkte.</div>
       </div>
 
       <div class="note-box">
@@ -2047,6 +2067,7 @@
   var chartLabelEl = document.getElementById('calcChartLabel');
   var chartValueEl = document.getElementById('calcChartValue');
   var chartMetaEl = document.getElementById('calcChartMeta');
+  var chartDetailEl = document.getElementById('calcChartDetail');
 
   if(!playerSelect) return;
 
@@ -2520,14 +2541,24 @@
     chartBaselineEl.style.top = posH + 'px';
 
     chartEl.innerHTML = '';
+    chartDetailEl.textContent = 'Woche antippen oder mit der Maus darüberfahren für die genauen Punkte.';
+
+    function selectCol(col, text){
+      var prev = chartEl.querySelector('.chart-col.is-selected');
+      if(prev) prev.classList.remove('is-selected');
+      col.classList.add('is-selected');
+      chartDetailEl.textContent = text;
+    }
+
     weeks.forEach(function(w){
       var col = document.createElement('div');
       col.className = 'chart-col';
       var bar = document.createElement('div');
+      var detailText;
       if(w.total === null){
         bar.className = 'chart-bar chart-bye';
         bar.style.top = posH + 'px';
-        col.title = 'Woche ' + w.week + ': kein Spiel (Bye Week oder außerhalb der Saison)';
+        detailText = 'Woche ' + w.week + ': kein Spiel (Bye Week oder außerhalb der Saison).';
       } else {
         var isPos = w.total >= 0;
         var avail = isPos ? posH : negH;
@@ -2536,13 +2567,16 @@
         bar.className = 'chart-bar ' + (isPos ? 'chart-pos' : 'chart-neg');
         bar.style.top = (isPos ? (posH - h) : posH) + 'px';
         bar.style.height = h + 'px';
-        col.title = 'Woche ' + w.week + ': ' + fmtPts(w.total) + ' Pkt' + (w.meta ? ' · ' + w.meta : '');
+        detailText = 'Woche ' + w.week + ': ' + fmtPts(w.total) + ' Pkt' + (w.meta ? ' · ' + w.meta : '');
       }
+      col.title = detailText;
       col.appendChild(bar);
       var lbl = document.createElement('span');
       lbl.className = 'chart-wk';
       lbl.textContent = w.week;
       col.appendChild(lbl);
+      col.addEventListener('click', function(){ selectCol(col, detailText); });
+      col.addEventListener('mouseenter', function(){ selectCol(col, detailText); });
       chartEl.appendChild(col);
     });
   }
