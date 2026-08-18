@@ -142,16 +142,6 @@
   .conf-badge.nfc{background:rgba(233,167,59,0.2);color:var(--amber);}
   .conf-badge.afc{background:rgba(255,255,255,0.14);color:var(--chalk);}
   .sched-vs{color:var(--hash);font-size:10px;text-transform:uppercase;flex:0 0 auto;}
-  .sched-double{
-    font-family:'IBM Plex Mono', monospace;
-    font-size:9px;
-    color:var(--amber);
-    border:1px solid var(--amber);
-    border-radius:3px;
-    padding:1px 4px;
-    flex:0 0 auto;
-  }
-  .sched-double.is-empty{visibility:hidden;}
   .sched-game.is-filtered-out{display:none;}
   .sched-game.is-mine .name{color:var(--amber);font-weight:600;}
 
@@ -205,7 +195,7 @@
 
   <div class="kicker">Saison 2026 · 09.09.–21.12. · 15 Wochen</div>
   <h1>Spielplan</h1>
-  <p class="copy">Der komplette Liga-Phase-Spielplan: 10 Teams in zwei Conferences (NFC/AFC), 15 Wochen, jede Woche genau 5 Spiele – jedes Team spielt jede Woche. Jeden Conference-Gegner triffst du zweimal, jeden Interconference-Gegner mindestens einmal – bei 10 Paarungen sogar als Doppel-Duell (2×) über die Conference-Grenze hinweg. In den Wochen 1, 8 und 13–15 stehen bewusst möglichst viele Conference-interne Spiele auf dem Plan. Wähle unten dein Team, um nur deine 15 Matchups zu sehen.</p>
+  <p class="copy">Der komplette Liga-Phase-Spielplan: 10 Teams in zwei Conferences (NFC/AFC), 15 Wochen, jede Woche genau 5 Spiele – jedes Team spielt jede Woche. Jeden Conference-Gegner triffst du zweimal, jeden Interconference-Gegner mindestens einmal – bei 10 Paarungen sogar als Doppel-Duell über die Conference-Grenze hinweg. In den Wochen 1, 8 und 13–15 stehen bewusst möglichst viele Conference-interne Spiele auf dem Plan. Wähle unten dein Team, um nur deine 15 Matchups zu sehen.</p>
 
   <div class="sched-controls">
     <select class="sched-select" id="teamFilter" aria-label="Team filtern">
@@ -219,7 +209,7 @@
 
   <div id="schedWeeks"></div>
 
-  <p class="note-text">"2×" markiert Doppel-Duelle – Paarungen, die zweimal in der Saison stattfinden. "Max. Conference-intern" heisst: an diesem Spieltag sind so viele Spiele wie möglich innerhalb der eigenen Conference (4 von 5).</p>
+  <p class="note-text">Doppel-Duelle (Paarungen, die zweimal in der Saison stattfinden) sind im Spielplan nicht extra markiert – nutze den Filter "Nur Doppel-Duelle" oben, um die 10 betroffenen Paarungen zu finden. "Max. Conference-intern" heisst: an diesem Spieltag sind so viele Spiele wie möglich innerhalb der eigenen Conference (4 von 5).</p>
   <p class="note-text">Nach Woche 15 geht's weiter mit den Playoffs (Woche 16+17) – die laufen als Bracket statt als fester Spielplan, siehe <a href="index.html#basics">Playoff-Format</a> auf der Hauptseite.</p>
 </main>
 
@@ -347,7 +337,6 @@
       return '<div class="sched-game" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
         '<span class="sched-team side-a"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
         '<span class="sched-vs">vs</span>' +
-        '<span class="sched-double' + (double ? '' : ' is-empty') + '">2×</span>' +
         '<span class="sched-team side-b"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
       '</div>';
     }
