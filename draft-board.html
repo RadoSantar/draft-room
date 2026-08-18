@@ -104,6 +104,18 @@
   .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
   .calc-status.error{color:var(--endzone);}
 
+  .roster-panel{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin:20px 0;}
+  .roster-panel-head{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:rgba(0,0,0,0.2);}
+  .roster-panel-title{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--amber);}
+  .roster-panel-count{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--chalk);opacity:.85;}
+  .roster-panel-empty{padding:14px 18px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
+  .roster-pos-group{padding:8px 18px;border-bottom:1px solid rgba(255,255,255,0.08);}
+  .roster-pos-group:last-child{border-bottom:none;}
+  .roster-pos-label{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;margin-bottom:4px;}
+  .roster-player-row{display:flex;justify-content:space-between;gap:8px;padding:3px 0;}
+  .roster-player-row .name{font-family:'Source Serif 4', serif;font-size:14px;}
+  .roster-player-row .team{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--hash);}
+
   .db-list{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin-top:10px;}
   .db-row{
     display:flex;
@@ -241,6 +253,14 @@
   <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, mit den Pfeilen bringst du Spieler in deine eigene Reihenfolge. Am Draft-Tag klickst du Spieler einfach durch, um zu tracken, wer schon weg ist.</p>
   <p class="copy">Alles wird nur auf diesem Gerät im Browser gespeichert (kein Login, kein Server) – auf einem anderen Gerät startest du mit einer leeren Liste.</p>
 
+  <div class="roster-panel">
+    <div class="roster-panel-head">
+      <span class="roster-panel-title mono">Mein Roster</span>
+      <span class="roster-panel-count mono" id="rosterCount">0 / 20</span>
+    </div>
+    <div class="roster-panel-body" id="rosterBody"><div class="roster-panel-empty">Noch keine Spieler markiert.</div></div>
+  </div>
+
   <div class="db-controls">
     <div class="pos-tabs" id="posTabs">
       <button class="pos-tab active" data-pos="QB" type="button">QB</button>
@@ -337,6 +357,8 @@
   var searchEl = document.getElementById('dbSearch');
   var resetBtn = document.getElementById('dbResetBtn');
   var sortToggleEl = document.getElementById('dbSortToggle');
+  var rosterCountEl = document.getElementById('rosterCount');
+  var rosterBodyEl = document.getElementById('rosterBody');
   if(!tabsEl) return;
 
   var cache = {};
@@ -383,6 +405,35 @@
   }
 
   var POSITIONS = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
+  var POS_LABEL_FULL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
+  var ROSTER_TOTAL = 20;
+
+  function renderRosterPanel(){
+    if(!rosterBodyEl) return;
+    var groups = {};
+    POSITIONS.forEach(function(pos){ groups[pos] = []; });
+    var total = 0;
+    Object.keys(draftStatus).forEach(function(id){
+      if(draftStatus[id] !== 'me') return;
+      total++;
+      for(var i = 0; i < POSITIONS.length; i++){
+        var pos = POSITIONS[i];
+        if(!cache[pos]) continue;
+        var found = cache[pos].filter(function(p){ return p.id === id; })[0];
+        if(found){ groups[pos].push(found); break; }
+      }
+    });
+    if(rosterCountEl) rosterCountEl.textContent = total + ' / ' + ROSTER_TOTAL;
+    var html = POSITIONS.map(function(pos){
+      if(!groups[pos].length) return '';
+      return '<div class="roster-pos-group"><div class="roster-pos-label mono">' + POS_LABEL_FULL[pos] + '</div>' +
+        groups[pos].map(function(p){
+          return '<div class="roster-player-row"><span class="name">' + p.name + '</span><span class="team">' + p.team + '</span></div>';
+        }).join('') +
+      '</div>';
+    }).join('');
+    rosterBodyEl.innerHTML = html || '<div class="roster-panel-empty">Noch keine Spieler markiert.</div>';
+  }
 
   function pushDraftBoard(){
     if(!window.__draftRoomSync) return;
@@ -407,6 +458,7 @@
       saveStatus();
     }
     render(activePos);
+    renderRosterPanel();
   };
 
   function rowHtml(p, i, showReorder){
@@ -468,6 +520,42 @@
     });
   }
 
+  async function fetchAndCachePosition(pos){
+    if(cache[pos]) return cache[pos];
+    var filter = JSON.stringify({
+      players: {
+        filterSlotIds: { value: [SLOT_IDS[pos]] },
+        filterStatsForSourceIds: { value: [1] },
+        filterStatsForSplitTypeIds: { value: [0] },
+        sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
+        limit: FETCH_LIMIT[pos],
+        offset: 0
+      }
+    });
+    var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter }, cache: 'no-store' });
+    if(!res.ok) throw new Error('fetch-failed');
+    var data = await res.json();
+    var list = (data.players || []).map(function(p){
+      var pl = p.player;
+      var own = pl.ownership || {};
+      var projStats = shared.findSeasonProjection(pl.stats);
+      return {
+        id: String(pl.id),
+        name: pl.fullName,
+        team: TEAM_ABBR[pl.proTeamId] || '',
+        adp: own.averageDraftPosition || 999,
+        proj: shared.projectedPoints(pos, projStats)
+      };
+    }).sort(function(a, b){ return a.adp - b.adp; });
+    cache[pos] = applyStoredOrder(pos, list);
+    return cache[pos];
+  }
+
+  function warmCache(pos){
+    if(cache[pos]) return;
+    fetchAndCachePosition(pos).then(function(){ renderRosterPanel(); }).catch(function(){});
+  }
+
   async function loadPosition(pos){
     activePos = pos;
     if(cache[pos]){ render(pos); return; }
@@ -475,33 +563,9 @@
     statusEl.classList.remove('error');
     listEl.style.display = 'none';
     try {
-      var filter = JSON.stringify({
-        players: {
-          filterSlotIds: { value: [SLOT_IDS[pos]] },
-          filterStatsForSourceIds: { value: [1] },
-          filterStatsForSplitTypeIds: { value: [0] },
-          sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
-          limit: FETCH_LIMIT[pos],
-          offset: 0
-        }
-      });
-      var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter }, cache: 'no-store' });
-      if(!res.ok) throw new Error('fetch-failed');
-      var data = await res.json();
-      var list = (data.players || []).map(function(p){
-        var pl = p.player;
-        var own = pl.ownership || {};
-        var projStats = shared.findSeasonProjection(pl.stats);
-        return {
-          id: String(pl.id),
-          name: pl.fullName,
-          team: TEAM_ABBR[pl.proTeamId] || '',
-          adp: own.averageDraftPosition || 999,
-          proj: shared.projectedPoints(pos, projStats)
-        };
-      }).sort(function(a, b){ return a.adp - b.adp; });
-      cache[pos] = applyStoredOrder(pos, list);
+      await fetchAndCachePosition(pos);
       if(activePos === pos) render(pos);
+      renderRosterPanel();
     } catch(err){
       if(activePos === pos){
         statusEl.textContent = 'Live-Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
@@ -557,6 +621,7 @@
       else draftStatus[id] = next;
       saveStatus();
       render(activePos);
+      renderRosterPanel();
       pushDraftBoard();
     }
   });
@@ -566,10 +631,13 @@
     draftStatus = {};
     saveStatus();
     render(activePos);
+    renderRosterPanel();
     pushDraftBoard();
   });
 
   loadPosition('QB');
+  POSITIONS.forEach(function(pos){ if(pos !== 'QB') warmCache(pos); });
+  renderRosterPanel();
 })();
 </script>
 
