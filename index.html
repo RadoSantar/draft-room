@@ -344,6 +344,18 @@
   }
   .term-card.is-open .caret{transform:rotate(45deg);}
   .term-card .def{font-size:14px;color:var(--ink-soft);margin:8px 0 0;}
+  .glossary-category{
+    grid-column:1 / -1;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:var(--hash);
+    margin:18px 0 2px;
+    padding-bottom:4px;
+    border-bottom:1px solid var(--card-border);
+  }
+  .glossary-category:first-child{margin-top:0;}
 
   /* Scoreboard table */
   .scoreboard{
@@ -1276,6 +1288,7 @@
 
       <h3 class="sub-head">IR im Detail</h3>
       <p class="copy">Landet ein Spieler auf der Injured-Reserve-Liste der NFL, fällt er für mindestens 4 Wochen aus. Genau dann kannst du ihn auf deinen IR-Slot legen – er blockiert dort keinen normalen Roster-Platz, und du kannst dafür einen Ersatzspieler vom <a class="gloss-link" href="#term-waiver-wire">Waiver Wire</a> holen. Ist der Spieler wieder einsatzbereit, musst du dich entscheiden: den Ersatzspieler behalten oder zurück auf den ursprünglichen Spieler wechseln.</p>
+      <p class="copy">IR-Slot-tauglich sind Spieler mit NFL-Status <a class="gloss-link" href="#term-ir">IR</a>, <a class="gloss-link" href="#term-pup">PUP</a> oder <a class="gloss-link" href="#term-nfi">NFI</a> – <a class="gloss-link" href="#term-suspended">Suspendierte</a> Spieler dagegen nicht, die blockieren einen normalen Roster-Platz.</p>
     </section>
 
     <section id="scoring" data-yard="16" data-label="Scoring">
@@ -1797,42 +1810,53 @@
       <div class="kicker">Vokabeln zum Nachschlagen</div>
       <h2>Glossar</h2>
       <div class="glossary">
+        <div class="glossary-category">Draft &amp; Format</div>
         <details class="term-card" id="term-draft"><summary><span class="term">Draft</span><span class="caret">+</span></summary><p class="def">Die Auswahlrunde zu Saisonbeginn, bei der jeder Manager sein Team aus echten NFL-Spielern zusammenstellt.</p></details>
         <details class="term-card" id="term-snake-draft"><summary><span class="term">Snake Draft</span><span class="caret">+</span></summary><p class="def">Draft-Reihenfolge dreht sich nach jeder Runde um (1→10, dann 10→1, usw.).</p></details>
+        <details class="term-card" id="term-mock-draft"><summary><span class="term">Mock Draft</span><span class="caret">+</span></summary><p class="def">Kostenlose Proberunde des Drafts, oft gegen Bots – zum Üben, zählt nicht für die echte Liga.</p></details>
+        <details class="term-card" id="term-adp"><summary><span class="term">ADP</span><span class="caret">+</span></summary><p class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</p></details>
+        <details class="term-card" id="term-ppr"><summary><span class="term">PPR</span><span class="caret">+</span></summary><p class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte. Bei uns Full PPR (1 Punkt/Catch); andere Ligen nutzen oft Half-PPR (0,5 Punkte) oder Standard-Scoring (0 Punkte, nur Yards/TDs zählen).</p></details>
+
+        <div class="glossary-category">Roster &amp; Lineup</div>
         <details class="term-card" id="term-roster"><summary><span class="term">Roster</span><span class="caret">+</span></summary><p class="def">Der komplette Kader eines Teams (Starter + Bench + IR).</p></details>
         <details class="term-card" id="term-starter-lineup"><summary><span class="term">Starter/Lineup</span><span class="caret">+</span></summary><p class="def">Die Spieler, die in der jeweiligen Woche aktiv Punkte sammeln.</p></details>
         <details class="term-card" id="term-bench"><summary><span class="term">Bench</span><span class="caret">+</span></summary><p class="def">Reservespieler, die nicht in der Startaufstellung stehen.</p></details>
-        <details class="term-card" id="term-ir"><summary><span class="term">IR (Injured Reserve)</span><span class="caret">+</span></summary><p class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz.</p></details>
         <details class="term-card" id="term-flex"><summary><span class="term">Flex</span><span class="caret">+</span></summary><p class="def">Slot, der mit mehreren Positionen besetzt werden kann (bei uns: RB oder WR).</p></details>
+        <details class="term-card" id="term-start-sit"><summary><span class="term">Start/Sit</span><span class="caret">+</span></summary><p class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</p></details>
+        <details class="term-card" id="term-lineup-lock"><summary><span class="term">Lineup-Lock</span><span class="caret">+</span></summary><p class="def">Der Zeitpunkt, ab dem ein Spieler nicht mehr aus deinem Lineup getauscht werden kann – meist der Kickoff seines NFL-Spiels.</p></details>
+
+        <div class="glossary-category">Verletzungsstatus &amp; Spezial-Listen</div>
+        <details class="term-card" id="term-ir"><summary><span class="term">IR (Injured Reserve)</span><span class="caret">+</span></summary><p class="def">Spezial-Slot für verletzte Spieler, blockiert keinen normalen Roster-Platz. Ein NFL-Spieler auf IR muss mindestens 4 Spiele pausieren, bevor er zurückkehren darf – danach hat sein Team ein 21-Tage-Fenster, um ihn wieder in den 53-Mann-Kader zu aktivieren. Nur Spieler mit IR-, PUP- oder NFI-Status sind für den Fantasy-IR-Slot zulässig, Suspendierte nicht.</p></details>
+        <details class="term-card" id="term-pup"><summary><span class="term">PUP</span><span class="caret">+</span></summary><p class="def">Physically Unable to Perform – Liste zu Saisonbeginn für Spieler, die die Vorbereitung verletzungsbedingt verpasst haben. Wer beim finalen Rosterschnitt auf der Reserve/PUP-Liste landet, verpasst mindestens die ersten 4 Saisonspiele, bevor überhaupt ein Comeback möglich wird.</p></details>
+        <details class="term-card" id="term-nfi"><summary><span class="term">NFI</span><span class="caret">+</span></summary><p class="def">Non-Football Injury/Illness – wie PUP, aber für Verletzungen oder Erkrankungen ohne Football-Bezug. Gleiche Mindestpause wie bei PUP: mindestens die ersten 4 Saisonspiele, bevor ein Comeback möglich wird.</p></details>
+        <details class="term-card" id="term-suspended"><summary><span class="term">Suspended</span><span class="caret">+</span></summary><p class="def">Sperre der NFL wegen Regel- oder Verhaltensverstössen (z.B. Doping) – die Dauer legt die Liga fest, nicht das Team, variiert also von Fall zu Fall. Wichtig für Fantasy: Suspendierte Spieler sind NICHT für den IR-Slot zulässig, sie blockieren einen normalen Roster-Platz.</p></details>
+        <details class="term-card" id="term-questionable"><summary><span class="term">Questionable (Q)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz ungewiss, 50/50.</p></details>
+        <details class="term-card" id="term-doubtful"><summary><span class="term">Doubtful (D)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz unwahrscheinlich.</p></details>
+        <details class="term-card" id="term-out"><summary><span class="term">Out (O)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: spielt diese Woche sicher nicht.</p></details>
+        <details class="term-card" id="term-injury-report"><summary><span class="term">Injury Report</span><span class="caret">+</span></summary><p class="def">Offizielle NFL-Liste mit dem Verletzungsstatus aller Spieler vor dem Spieltag (Questionable/Doubtful/Out) – Basis für deine Start/Sit-Entscheidungen.</p></details>
+        <details class="term-card" id="term-bye-week"><summary><span class="term">Bye Week</span><span class="caret">+</span></summary><p class="def">Woche, in der ein NFL-Team spielfrei hat.</p></details>
+        <details class="term-card" id="term-bye-week-stacking"><summary><span class="term">Bye-Week-Stacking</span><span class="caret">+</span></summary><p class="def">Wenn zu viele Starter derselben Position in derselben Woche gleichzeitig Bye haben – schwächt dein Lineup in genau dieser Woche empfindlich.</p></details>
+        <details class="term-card" id="term-bye-week-fill"><summary><span class="term">Bye-Week-Fill</span><span class="caret">+</span></summary><p class="def">Ein Ersatzspieler auf der Bench, der einspringt, wenn ein Stammspieler Bye Week hat.</p></details>
+
+        <div class="glossary-category">Waiver &amp; Trades</div>
         <details class="term-card" id="term-waiver-wire"><summary><span class="term">Waiver Wire</span><span class="caret">+</span></summary><p class="def">Pool aller Spieler, die aktuell in keinem Team stehen.</p></details>
         <details class="term-card" id="term-free-agent"><summary><span class="term">Free Agent</span><span class="caret">+</span></summary><p class="def">Spieler auf dem Waiver Wire, der sofort ohne Anspruch geholt werden kann.</p></details>
         <details class="term-card" id="term-waiver-priority-order"><summary><span class="term">Waiver Priority/Order</span><span class="caret">+</span></summary><p class="def">Reihenfolge, in der Manager Zugriff auf Waiver-Spieler haben.</p></details>
+        <details class="term-card" id="term-faab"><summary><span class="term">FAAB</span><span class="caret">+</span></summary><p class="def">Free Agent Acquisition Budget – ein Budget-System, mit dem Manager in manchen Ligen für Waiver-Spieler bieten. Bei uns nicht im Einsatz: Wir regeln Waiver-Zugriff stattdessen über eine feste Waiver Priority/Order.</p></details>
+        <details class="term-card" id="term-waiver-stash"><summary><span class="term">Waiver-Stash</span><span class="caret">+</span></summary><p class="def">Ein aussichtsreicher Spieler, den du auf Verdacht vom Waiver Wire holst und erstmal nur auf der Bench "bunkerst", falls er später wichtig wird.</p></details>
         <details class="term-card" id="term-trade"><summary><span class="term">Trade</span><span class="caret">+</span></summary><p class="def">Spielertausch zwischen zwei Managern.</p></details>
-        <details class="term-card" id="term-bye-week"><summary><span class="term">Bye Week</span><span class="caret">+</span></summary><p class="def">Woche, in der ein NFL-Team spielfrei hat.</p></details>
-        <details class="term-card" id="term-start-sit"><summary><span class="term">Start/Sit</span><span class="caret">+</span></summary><p class="def">Die wöchentliche Entscheidung, wer ins Lineup kommt.</p></details>
-        <details class="term-card" id="term-lineup-lock"><summary><span class="term">Lineup-Lock</span><span class="caret">+</span></summary><p class="def">Der Zeitpunkt, ab dem ein Spieler nicht mehr aus deinem Lineup getauscht werden kann – meist der Kickoff seines NFL-Spiels.</p></details>
-        <details class="term-card" id="term-adp"><summary><span class="term">ADP</span><span class="caret">+</span></summary><p class="def">Average Draft Position – durchschnittliche Position, an der ein Spieler in Drafts gewählt wird.</p></details>
+
+        <div class="glossary-category">Strategie &amp; Analyse</div>
         <details class="term-card" id="term-handcuff"><summary><span class="term">Handcuff</span><span class="caret">+</span></summary><p class="def">Der Backup-Spieler hinter einem wichtigen Starter (meist RB).</p></details>
         <details class="term-card" id="term-sleeper"><summary><span class="term">Sleeper</span><span class="caret">+</span></summary><p class="def">Ein unterschätzter Spieler mit Potenzial.</p></details>
         <details class="term-card" id="term-bust"><summary><span class="term">Bust</span><span class="caret">+</span></summary><p class="def">Ein hoch gedrafteter Spieler, der enttäuscht.</p></details>
         <details class="term-card" id="term-streaming"><summary><span class="term">Streaming</span><span class="caret">+</span></summary><p class="def">Wöchentliches Wechseln einer Position je nach bestem Matchup.</p></details>
-        <details class="term-card" id="term-ppr"><summary><span class="term">PPR</span><span class="caret">+</span></summary><p class="def">Points per Reception – jeder Catch bringt zusätzliche Punkte. Bei uns Full PPR (1 Punkt/Catch); andere Ligen nutzen oft Half-PPR (0,5 Punkte) oder Standard-Scoring (0 Punkte, nur Yards/TDs zählen).</p></details>
-        <details class="term-card" id="term-questionable"><summary><span class="term">Questionable (Q)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz ungewiss, 50/50.</p></details>
-        <details class="term-card" id="term-doubtful"><summary><span class="term">Doubtful (D)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: Einsatz unwahrscheinlich.</p></details>
-        <details class="term-card" id="term-out"><summary><span class="term">Out (O)</span><span class="caret">+</span></summary><p class="def">Verletzungsstatus: spielt diese Woche sicher nicht.</p></details>
-        <details class="term-card" id="term-pup"><summary><span class="term">PUP</span><span class="caret">+</span></summary><p class="def">Physically Unable to Perform – Liste zu Saisonbeginn für Spieler, die die Vorbereitung verletzungsbedingt verpasst haben.</p></details>
-        <details class="term-card" id="term-injury-report"><summary><span class="term">Injury Report</span><span class="caret">+</span></summary><p class="def">Offizielle NFL-Liste mit dem Verletzungsstatus aller Spieler vor dem Spieltag (Questionable/Doubtful/Out) – Basis für deine Start/Sit-Entscheidungen.</p></details>
-        <details class="term-card" id="term-mock-draft"><summary><span class="term">Mock Draft</span><span class="caret">+</span></summary><p class="def">Kostenlose Proberunde des Drafts, oft gegen Bots – zum Üben, zählt nicht für die echte Liga.</p></details>
-        <details class="term-card" id="term-faab"><summary><span class="term">FAAB</span><span class="caret">+</span></summary><p class="def">Free Agent Acquisition Budget – ein Budget-System, mit dem Manager in manchen Ligen für Waiver-Spieler bieten. Bei uns nicht im Einsatz: Wir regeln Waiver-Zugriff stattdessen über eine feste Waiver Priority/Order.</p></details>
-        <details class="term-card" id="term-bye-week-stacking"><summary><span class="term">Bye-Week-Stacking</span><span class="caret">+</span></summary><p class="def">Wenn zu viele Starter derselben Position in derselben Woche gleichzeitig Bye haben – schwächt dein Lineup in genau dieser Woche empfindlich.</p></details>
         <details class="term-card" id="term-zero-rb-hero-rb"><summary><span class="term">Zero-RB / Hero-RB</span><span class="caret">+</span></summary><p class="def">Draft-Strategien: Zero-RB verzichtet in frühen Runden bewusst auf RBs zugunsten von WR/TE/QB, RB-Tiefe kommt später über Waiver. Hero-RB sichert nur einen einzigen Elite-RB früh und fokussiert danach auf andere Positionen.</p></details>
         <details class="term-card" id="term-buy-low-sell-high"><summary><span class="term">Buy-Low / Sell-High</span><span class="caret">+</span></summary><p class="def">Trade-Strategie: Spieler nach einer schwachen Phase günstig einsammeln (Buy-Low), gehypte Spieler nach starken Wochen abgeben, solange ihr Marktwert noch hoch ist (Sell-High).</p></details>
         <details class="term-card" id="term-strength-of-schedule"><summary><span class="term">Strength of Schedule (SOS)</span><span class="caret">+</span></summary><p class="def">Wie schwierig oder leicht die kommenden Gegner-Defenses eines Spielers sind – wichtig bei Waiver-, Trade- und vor allem Playoff-Entscheidungen.</p></details>
         <details class="term-card" id="term-target-share"><summary><span class="term">Target Share</span><span class="caret">+</span></summary><p class="def">Anteil der Team-Pässe, die auf einen bestimmten Spieler abzielen. Ein hoher Wert deutet auf konstante Fantasy-Relevanz hin, unabhängig vom Ergebnis einzelner Wochen.</p></details>
         <details class="term-card" id="term-snap-count"><summary><span class="term">Snap Count / Snap-%</span><span class="caret">+</span></summary><p class="def">Anzahl bzw. Anteil der gespielten Offense-Snaps eines Spielers – zeigt, wie fest er im Gameplan seines Teams verankert ist.</p></details>
         <details class="term-card" id="term-red-zone"><summary><span class="term">Red Zone / Red-Zone-Looks</span><span class="caret">+</span></summary><p class="def">Der Bereich innerhalb der gegnerischen 20-Yard-Linie. Viele Targets oder Carries dort (Red-Zone-Looks) bedeuten hohe Touchdown-Chancen.</p></details>
-        <details class="term-card" id="term-waiver-stash"><summary><span class="term">Waiver-Stash</span><span class="caret">+</span></summary><p class="def">Ein aussichtsreicher Spieler, den du auf Verdacht vom Waiver Wire holst und erstmal nur auf der Bench "bunkerst", falls er später wichtig wird.</p></details>
-        <details class="term-card" id="term-bye-week-fill"><summary><span class="term">Bye-Week-Fill</span><span class="caret">+</span></summary><p class="def">Ein Ersatzspieler auf der Bench, der einspringt, wenn ein Stammspieler Bye Week hat.</p></details>
       </div>
     </section>
   </main>
