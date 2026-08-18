@@ -32,3 +32,8 @@ create policy draftroom_settings_update_anon
   to anon
   using (true)
   with check (true);
+
+create policy draftroom_settings_delete_anon
+  on public.draftroom_settings for delete
+  to anon
+  using (true);

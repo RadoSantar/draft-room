@@ -44,11 +44,31 @@
     if(res.error) throw res.error;
   }
 
+  async function listNames(){
+    var c = getClient();
+    if(!c) return [];
+    var res = await c.from('draftroom_settings').select('name').order('name');
+    if(res.error) throw res.error;
+    return (res.data || []).map(function(r){ return r.name; });
+  }
+
+  async function deleteName(name){
+    var c = getClient();
+    if(!c || !name) return;
+    // .select() macht die gelöschte(n) Zeile(n) sichtbar – ohne DELETE-Policy in der DB liefert
+    // Supabase sonst fälschlich Erfolg (0 betroffene Zeilen, aber kein Fehler).
+    var res = await c.from('draftroom_settings').delete().eq('name', name).select();
+    if(res.error) throw res.error;
+    if(!res.data || !res.data.length) throw new Error('not-deleted');
+  }
+
   global.DraftRoomSync = {
     getName: getName,
     setName: setName,
     pull: pull,
     push: push,
+    listNames: listNames,
+    deleteName: deleteName,
     isConfigured: function(){ return !!getClient(); }
   };
 })(window);

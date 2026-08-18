@@ -1097,7 +1097,10 @@
           <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
         </div>
         <span class="theme-picker-label mono">Sync</span>
-        <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync">
+        <div class="sync-name-wrap">
+          <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync" autocomplete="off">
+          <div class="sync-dropdown" id="syncDropdown" hidden></div>
+        </div>
         <span class="sync-status mono" id="syncStatus"></span>
       </div>
 
@@ -2711,6 +2714,7 @@
   var syncHandle = window.DraftRoomShared.initSyncBar({
     nameInput: document.getElementById('syncName'),
     statusEl: document.getElementById('syncStatus'),
+    dropdownEl: document.getElementById('syncDropdown'),
     onPull: function(row){
       if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
     }
