@@ -17,17 +17,17 @@ create table if not exists public.draftroom_settings (
 
 alter table public.draftroom_settings enable row level security;
 
-create policy "anon kann alle Zeilen lesen"
+create policy draftroom_settings_select_anon
   on public.draftroom_settings for select
   to anon
   using (true);
 
-create policy "anon kann eigene Zeile anlegen"
+create policy draftroom_settings_insert_anon
   on public.draftroom_settings for insert
   to anon
   with check (true);
 
-create policy "anon kann Zeilen aktualisieren"
+create policy draftroom_settings_update_anon
   on public.draftroom_settings for update
   to anon
   using (true)
