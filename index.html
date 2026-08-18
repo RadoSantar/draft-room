@@ -750,6 +750,31 @@
     color:var(--chalk);
     opacity:.85;
   }
+  .calc-chart-wrap{margin-top:18px;}
+  .calc-chart-box{
+    position:relative;
+    background:var(--turf);
+    border-radius:10px;
+    padding:16px 12px 26px;
+  }
+  .calc-chart-baseline{position:absolute;left:12px;right:12px;height:1px;background:rgba(255,255,255,0.18);}
+  .calc-chart{position:relative;display:flex;align-items:stretch;gap:3px;height:140px;}
+  .chart-col{flex:1;position:relative;min-width:0;}
+  .chart-bar{position:absolute;left:15%;right:15%;border-radius:2px 2px 0 0;}
+  .chart-bar.chart-pos{background:var(--amber);}
+  .chart-bar.chart-neg{background:var(--endzone-soft);border-radius:0 0 2px 2px;}
+  .chart-bar.chart-bye{left:32%;right:32%;height:0 !important;border-top:2px dashed var(--hash);}
+  .chart-wk{
+    position:absolute;
+    left:0;
+    right:0;
+    bottom:-18px;
+    text-align:center;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9px;
+    color:var(--chalk);
+    opacity:.7;
+  }
 
   /* Beliebteste Picks */
   .pos-tabs{
@@ -1469,6 +1494,18 @@
         <div class="scoreboard" id="calcBreakdown"></div>
       </div>
 
+      <div class="calc-chart-wrap" id="calcChartWrap" hidden>
+        <div class="calc-total">
+          <div class="calc-total-label" id="calcChartLabel"></div>
+          <div class="calc-total-value" id="calcChartValue"></div>
+          <div class="calc-total-meta" id="calcChartMeta"></div>
+        </div>
+        <div class="calc-chart-box">
+          <div class="calc-chart-baseline" id="calcChartBaseline"></div>
+          <div class="calc-chart" id="calcChart"></div>
+        </div>
+      </div>
+
       <div class="note-box">
         <span class="flag">Hinweis</span>
         <span id="calcNote">Datenquelle: öffentliche ESPN-Daten. 2pt-Conversions und der 50+-Yard-TD-Bonus werden erkannt, der QB-Rushing-First-Down-Bonus (+0.5/Stück) ist in diesen Daten aber nicht enthalten und fehlt daher in der Berechnung – bei laufstarken QBs kann der echte Wert dadurch etwas höher liegen.</span>
@@ -2004,6 +2041,12 @@
   var totalValueEl = document.getElementById('calcTotalValue');
   var totalMetaEl = document.getElementById('calcTotalMeta');
   var noteEl = document.getElementById('calcNote');
+  var chartWrapEl = document.getElementById('calcChartWrap');
+  var chartEl = document.getElementById('calcChart');
+  var chartBaselineEl = document.getElementById('calcChartBaseline');
+  var chartLabelEl = document.getElementById('calcChartLabel');
+  var chartValueEl = document.getElementById('calcChartValue');
+  var chartMetaEl = document.getElementById('calcChartMeta');
 
   if(!playerSelect) return;
 
@@ -2022,6 +2065,10 @@
     wOpt.textContent = 'Woche ' + w;
     weekSelect.appendChild(wOpt);
   }
+  var seasonOpt = document.createElement('option');
+  seasonOpt.value = 'season';
+  seasonOpt.textContent = 'Ganze Saison';
+  weekSelect.appendChild(seasonOpt);
 
   function fmtPts(n){
     var r = Math.round(n * 10) / 10;
@@ -2131,11 +2178,18 @@
     return res.json();
   }
 
-  async function fetchGamelog(playerId, year){
-    var gl = await fetchJson(GAMELOG_BASE + playerId + '/gamelog?season=' + year);
-    var regSeason = (gl.seasonTypes || []).filter(function(st){ return /Regular Season/i.test(st.displayName || ''); })[0];
-    if(!regSeason) throw { code: 'no-data' };
-    return { gl: gl, regSeason: regSeason };
+  var gamelogCache = {};
+  function fetchGamelog(playerId, year){
+    var key = playerId + '_' + year;
+    if(!gamelogCache[key]){
+      gamelogCache[key] = (async function(){
+        var gl = await fetchJson(GAMELOG_BASE + playerId + '/gamelog?season=' + year);
+        var regSeason = (gl.seasonTypes || []).filter(function(st){ return /Regular Season/i.test(st.displayName || ''); })[0];
+        if(!regSeason) throw { code: 'no-data' };
+        return { gl: gl, regSeason: regSeason };
+      })().catch(function(err){ delete gamelogCache[key]; throw err; });
+    }
+    return gamelogCache[key];
   }
 
   function findWeekEvent(gl, week){
@@ -2394,8 +2448,18 @@
     return { total: total, meta: gameMetaText(w.gameInfo), rows: rows };
   }
 
+  var teamScheduleCache = {};
+  function fetchTeamSchedule(slug, year){
+    var key = slug + '_' + year;
+    if(!teamScheduleCache[key]){
+      teamScheduleCache[key] = fetchJson(TEAM_BASE + slug + '/schedule?season=' + year)
+        .catch(function(err){ delete teamScheduleCache[key]; throw err; });
+    }
+    return teamScheduleCache[key];
+  }
+
   async function calcDST(slug, teamName, year, week){
-    var schedule = await fetchJson(TEAM_BASE + slug + '/schedule?season=' + year);
+    var schedule = await fetchTeamSchedule(slug, year);
     var event = (schedule.events || []).filter(function(ev){
       return ev.week && ev.week.number === week && ev.seasonType && ev.seasonType.type === 2;
     })[0];
@@ -2446,18 +2510,95 @@
 
   var CALCULATORS = { QB: calcQB, RB: calcRB, WR: calcWRTE, TE: calcWRTE, K: calcK, DST: calcDST };
 
+  function renderChart(weeks){
+    var totals = weeks.map(function(w){ return w.total; }).filter(function(v){ return v !== null; });
+    var maxPos = Math.max(0, totals.reduce(function(m, v){ return Math.max(m, v); }, 0));
+    var maxNeg = Math.max(0, totals.reduce(function(m, v){ return Math.max(m, -v); }, 0));
+    var chartH = 140;
+    var posH = maxNeg > 0 ? Math.round(chartH * (maxPos / (maxPos + maxNeg))) : chartH;
+    var negH = chartH - posH;
+    chartBaselineEl.style.top = posH + 'px';
+
+    chartEl.innerHTML = '';
+    weeks.forEach(function(w){
+      var col = document.createElement('div');
+      col.className = 'chart-col';
+      var bar = document.createElement('div');
+      if(w.total === null){
+        bar.className = 'chart-bar chart-bye';
+        bar.style.top = posH + 'px';
+        col.title = 'Woche ' + w.week + ': kein Spiel (Bye Week oder außerhalb der Saison)';
+      } else {
+        var isPos = w.total >= 0;
+        var avail = isPos ? posH : negH;
+        var ref = isPos ? (maxPos || 1) : (maxNeg || 1);
+        var h = Math.max(2, Math.round(Math.abs(w.total) / ref * avail));
+        bar.className = 'chart-bar ' + (isPos ? 'chart-pos' : 'chart-neg');
+        bar.style.top = (isPos ? (posH - h) : posH) + 'px';
+        bar.style.height = h + 'px';
+        col.title = 'Woche ' + w.week + ': ' + fmtPts(w.total) + ' Pkt' + (w.meta ? ' · ' + w.meta : '');
+      }
+      col.appendChild(bar);
+      var lbl = document.createElement('span');
+      lbl.className = 'chart-wk';
+      lbl.textContent = w.week;
+      col.appendChild(lbl);
+      chartEl.appendChild(col);
+    });
+  }
+
+  async function calculateSeason(pos, id, name, year){
+    setStatus('Lade Saisondaten von ESPN… (mehrere Wochen, kann etwas dauern)', false);
+    try {
+      var weekNums = [];
+      for(var w = 1; w <= 18; w++) weekNums.push(w);
+      var weeks = await Promise.all(weekNums.map(function(wk){
+        return CALCULATORS[pos](id, name, year, wk)
+          .then(function(r){ return { week: wk, total: r.total, meta: r.meta }; })
+          .catch(function(){ return { week: wk, total: null, meta: null }; });
+      }));
+
+      var valid = weeks.filter(function(r){ return r.total !== null; });
+      if(!valid.length){
+        setStatus('Keine Saison-Daten für dieses Jahr gefunden.', true);
+        return;
+      }
+      var seasonSum = valid.reduce(function(a, r){ return a + r.total; }, 0);
+      var seasonAvg = seasonSum / valid.length;
+
+      chartLabelEl.textContent = name + ' · ' + year + ' · Saisonverlauf';
+      chartValueEl.textContent = fmtPts(seasonSum) + ' Pkt gesamt';
+      chartMetaEl.textContent = valid.length + ' Spiele · Ø ' + fmtPts(seasonAvg) + ' Pkt/Spiel';
+      renderChart(weeks);
+
+      setStatus('', false);
+      chartWrapEl.hidden = false;
+    } catch(err){
+      setStatus('Daten konnten nicht geladen werden. Bitte später erneut versuchen.', true);
+    }
+  }
+
   async function calculate(){
     var pos = posSelect.value;
     var id = playerSelect.value;
     var name = playerSelect.options[playerSelect.selectedIndex] ? playerSelect.options[playerSelect.selectedIndex].dataset.name : null;
     var year = yearSelect.value;
-    var week = parseInt(weekSelect.value, 10);
+    var weekVal = weekSelect.value;
 
     if(!id || !name){ setStatus('Bitte warten, bis die Liste geladen ist.', true); return; }
 
     resultEl.hidden = true;
+    chartWrapEl.hidden = true;
     breakdownEl.innerHTML = '';
     calcBtn.disabled = true;
+
+    if(weekVal === 'season'){
+      await calculateSeason(pos, id, name, year);
+      calcBtn.disabled = false;
+      return;
+    }
+
+    var week = parseInt(weekVal, 10);
     setStatus('Lade Daten von ESPN…', false);
 
     try {
