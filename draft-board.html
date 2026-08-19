@@ -74,6 +74,9 @@
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:64ch;}
 
+  .db-layout{display:flex;flex-direction:column;}
+  .db-main-col{min-width:0;}
+
   .db-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0 4px;}
   .pos-tabs{display:flex;flex-wrap:wrap;gap:8px;}
   .pos-tab{
@@ -134,20 +137,30 @@
     transition:background-color .2s ease, opacity .2s ease;
   }
   .db-row:last-child{border-bottom:none;}
-  .db-reorder{display:flex;flex-direction:column;gap:2px;}
-  .db-arrow{
-    background:rgba(255,255,255,0.08);
+  .db-drag-handle{
+    background:none;
     border:none;
     color:var(--chalk);
-    width:22px;
-    height:18px;
-    font-size:9px;
+    opacity:.45;
+    cursor:grab;
+    touch-action:none;
+    padding:4px 6px;
+    font-size:14px;
+    letter-spacing:2px;
     line-height:1;
-    cursor:pointer;
-    border-radius:3px;
+    flex:0 0 auto;
   }
-  .db-arrow:hover{background:var(--amber);color:var(--turf);}
-  .db-arrow:disabled{opacity:.25;cursor:default;background:rgba(255,255,255,0.08);color:var(--chalk);}
+  .db-drag-handle:hover{opacity:.9;}
+  .db-row.is-dragging{
+    background:rgba(233,167,59,0.16);
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    border-radius:8px;
+    position:relative;
+    z-index:10;
+    transition:none;
+  }
+  .db-row.is-dragging .db-drag-handle{cursor:grabbing;opacity:1;}
+  .db-row.is-shiftable{transition:transform .15s ease;}
   .db-rank{color:var(--hash);min-width:24px;}
   .db-name{font-family:'Source Serif 4', serif;font-size:14px;flex:1;}
   .db-team{color:var(--hash);margin-left:6px;}
@@ -167,6 +180,7 @@
     cursor:pointer;
   }
   .db-sort-btn.active{background:var(--amber);border-color:var(--amber);color:var(--turf);font-weight:600;}
+  .db-status-group{display:flex;gap:6px;flex:0 0 auto;}
   .db-status-btn{
     font-family:'IBM Plex Mono', monospace;
     font-size:10px;
@@ -175,17 +189,17 @@
     border:1px solid rgba(255,255,255,0.25);
     background:none;
     color:var(--chalk);
-    opacity:.8;
+    opacity:.7;
     border-radius:14px;
     padding:5px 10px;
     cursor:pointer;
-    min-width:96px;
   }
+  .db-status-btn:hover{opacity:1;}
+  .db-status-btn.db-status-draft.active{background:var(--amber);color:var(--turf);border-color:var(--amber);opacity:1;font-weight:600;}
+  .db-status-btn.db-status-taken.active{background:var(--endzone-soft);color:var(--turf);border-color:var(--endzone-soft);opacity:1;font-weight:600;}
   .db-row.is-me{background:rgba(233,167,59,0.16);}
-  .db-row.is-me .db-status-btn{background:var(--amber);color:var(--turf);border-color:var(--amber);opacity:1;font-weight:600;}
   .db-row.is-other{opacity:.45;}
   .db-row.is-other .db-name{text-decoration:line-through;}
-  .db-row.is-other .db-status-btn{border-color:var(--endzone-soft);color:var(--endzone-soft);opacity:1;}
   .db-row.is-filtered-out{display:none;}
 
   .db-legend{display:flex;flex-wrap:wrap;gap:16px;margin-top:14px;font-size:13px;color:var(--ink-soft);}
@@ -212,13 +226,20 @@
 
   .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:64ch;}
 
+  @media (min-width:960px){
+    main{max-width:1100px;}
+    .db-layout{flex-direction:row-reverse;align-items:flex-start;gap:28px;}
+    .db-main-col{flex:1;}
+    .db-side-col{flex:0 0 320px;position:sticky;top:80px;}
+  }
+
   @media (max-width:640px){
     header.topbar{padding:12px 16px;flex-wrap:wrap;}
     main{padding:24px 16px 80px;}
     .db-row{padding:8px 10px;gap:6px;font-size:12px;}
     .db-adp{min-width:56px;}
     .db-proj{min-width:48px;}
-    .db-status-btn{min-width:auto;padding:5px 8px;}
+    .db-status-btn{padding:5px 8px;}
   }
 </style>
 </head>
@@ -259,49 +280,55 @@
 
   <div class="kicker">Eigenes Cheat-Sheet</div>
   <h1>Draft Board</h1>
-  <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, mit den Pfeilen bringst du Spieler in deine eigene Reihenfolge. Am Draft-Tag klickst du Spieler einfach durch, um zu tracken, wer schon weg ist.</p>
+  <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, am Griff-Symbol links kannst du Spieler per Maus oder Touch in deine eigene Reihenfolge ziehen. Am Draft-Tag markierst du Spieler einfach mit "Draft" bzw. "Vergeben", um zu tracken, wer schon weg ist.</p>
   <p class="copy">Ohne Namenseingabe bei "Sync" oben wird alles nur auf diesem Gerät im Browser gespeichert – auf einem anderen Gerät startest du dann mit einer leeren Liste. Trägst du oben denselben Namen auf mehreren Geräten ein, synct sich deine Reihenfolge und dein Draft-Status automatisch zwischen ihnen.</p>
 
-  <div class="roster-panel">
-    <div class="roster-panel-head">
-      <span class="roster-panel-title mono">Mein Roster</span>
-      <span class="roster-panel-count mono" id="rosterCount">0 / 20</span>
+  <div class="db-layout">
+    <aside class="db-side-col">
+      <div class="roster-panel">
+        <div class="roster-panel-head">
+          <span class="roster-panel-title mono">Mein Roster</span>
+          <span class="roster-panel-count mono" id="rosterCount">0 / 20</span>
+        </div>
+        <div class="roster-panel-body" id="rosterBody"><div class="roster-panel-empty">Noch keine Spieler markiert.</div></div>
+      </div>
+    </aside>
+
+    <div class="db-main-col">
+      <div class="db-controls">
+        <div class="pos-tabs" id="posTabs">
+          <button class="pos-tab active" data-pos="QB" type="button">QB</button>
+          <button class="pos-tab" data-pos="RB" type="button">RB</button>
+          <button class="pos-tab" data-pos="WR" type="button">WR</button>
+          <button class="pos-tab" data-pos="TE" type="button">TE</button>
+          <button class="pos-tab" data-pos="K" type="button">K</button>
+          <button class="pos-tab" data-pos="DST" type="button">DEF</button>
+        </div>
+        <input class="db-search" id="dbSearch" type="text" placeholder="Spieler suchen…" aria-label="Spieler suchen">
+        <div class="db-sort-toggle" id="dbSortToggle">
+          <button class="db-sort-btn active" data-sort="custom" type="button">Eigene Reihenfolge</button>
+          <button class="db-sort-btn" data-sort="proj" type="button">Nach Projektion</button>
+        </div>
+      </div>
+
+      <div class="calc-status" id="dbStatus" aria-live="polite">Lade Live-Daten…</div>
+      <div class="db-list" id="dbList" style="display:none"></div>
+
+      <div class="db-legend">
+        <span><span class="dot available"></span> Verfügbar</span>
+        <span><span class="dot me"></span> Von mir gedraftet</span>
+        <span><span class="dot other"></span> Vergeben</span>
+      </div>
+
+      <div class="db-reset-row">
+        <button class="db-reset-btn" id="dbResetBtn" type="button">Draft-Status zurücksetzen</button>
+      </div>
+
+      <p class="note-text">ADP = durchschnittliche Draft-Position über alle ESPN-Fantasy-Ligen. Deine eigene Reihenfolge und der Draft-Status werden getrennt gespeichert – "Zurücksetzen" löscht nur die Verfügbar/Vergeben-Markierungen, nicht deine Sortierung.</p>
+      <p class="note-text">"Starter"/"Bench" im Roster nebenan sind eine automatische Einordnung nach ADP innerhalb jeder Position – keine echte Slot-Zuweisung, nur zur Orientierung. Fragen wie "brauche ich einen Backup-QB?" oder "was gehört auf die Bench?" beantwortet <a class="gloss-link" href="index.html#roster-tipps">dieses Kapitel</a>.</p>
+      <p class="note-text">"Proj." ist eine Näherung der Saison-Punkte nach eurem individuellen Scoring, berechnet aus ESPNs Saison-Projektion – keine exakte Reproduktion des Punkterechners. Bei QB/RB/WR/TE fehlen wochenbasierte Boni (z.B. 300+-Yard-Spiele, 50+-Yard-TD-Bonus, 2pt-Conversions), da eine Saison-Projektion keine einzelnen Spiele ausweist. Bei K werden 50–59 und 60+ Yards beide als "50+" mit +5 genähert. Bei DEF fliessen nur Punkte/Yards erlaubt (auf Basis des Saison-Schnitts) und Sacks ein – Interceptions, Fumble-Recoveries und Defensive-TDs fehlen. Zum genauen Punktestand einzelner vergangener Wochen siehe den <a class="gloss-link" href="index.html#rechner">Punkterechner</a>.</p>
     </div>
-    <div class="roster-panel-body" id="rosterBody"><div class="roster-panel-empty">Noch keine Spieler markiert.</div></div>
   </div>
-
-  <div class="db-controls">
-    <div class="pos-tabs" id="posTabs">
-      <button class="pos-tab active" data-pos="QB" type="button">QB</button>
-      <button class="pos-tab" data-pos="RB" type="button">RB</button>
-      <button class="pos-tab" data-pos="WR" type="button">WR</button>
-      <button class="pos-tab" data-pos="TE" type="button">TE</button>
-      <button class="pos-tab" data-pos="K" type="button">K</button>
-      <button class="pos-tab" data-pos="DST" type="button">DEF</button>
-    </div>
-    <input class="db-search" id="dbSearch" type="text" placeholder="Spieler suchen…" aria-label="Spieler suchen">
-    <div class="db-sort-toggle" id="dbSortToggle">
-      <button class="db-sort-btn active" data-sort="custom" type="button">Eigene Reihenfolge</button>
-      <button class="db-sort-btn" data-sort="proj" type="button">Nach Projektion</button>
-    </div>
-  </div>
-
-  <div class="calc-status" id="dbStatus" aria-live="polite">Lade Live-Daten…</div>
-  <div class="db-list" id="dbList" style="display:none"></div>
-
-  <div class="db-legend">
-    <span><span class="dot available"></span> Verfügbar</span>
-    <span><span class="dot me"></span> Von mir gedraftet</span>
-    <span><span class="dot other"></span> Vergeben</span>
-  </div>
-
-  <div class="db-reset-row">
-    <button class="db-reset-btn" id="dbResetBtn" type="button">Draft-Status zurücksetzen</button>
-  </div>
-
-  <p class="note-text">ADP = durchschnittliche Draft-Position über alle ESPN-Fantasy-Ligen. Deine eigene Reihenfolge und der Draft-Status werden getrennt gespeichert – "Zurücksetzen" löscht nur die Verfügbar/Vergeben-Markierungen, nicht deine Sortierung.</p>
-  <p class="note-text">"Starter"/"Bench" im Roster oben sind eine automatische Einordnung nach ADP innerhalb jeder Position – keine echte Slot-Zuweisung, nur zur Orientierung. Fragen wie "brauche ich einen Backup-QB?" oder "was gehört auf die Bench?" beantwortet <a class="gloss-link" href="index.html#roster-tipps">dieses Kapitel</a>.</p>
-  <p class="note-text">"Proj." ist eine Näherung der Saison-Punkte nach eurem individuellen Scoring, berechnet aus ESPNs Saison-Projektion – keine exakte Reproduktion des Punkterechners. Bei QB/RB/WR/TE fehlen wochenbasierte Boni (z.B. 300+-Yard-Spiele, 50+-Yard-TD-Bonus, 2pt-Conversions), da eine Saison-Projektion keine einzelnen Spiele ausweist. Bei K werden 50–59 und 60+ Yards beide als "50+" mit +5 genähert. Bei DEF fliessen nur Punkte/Yards erlaubt (auf Basis des Saison-Schnitts) und Sacks ein – Interceptions, Fumble-Recoveries und Defensive-TDs fehlen. Zum genauen Punktestand einzelner vergangener Wochen siehe den <a class="gloss-link" href="index.html#rechner">Punkterechner</a>.</p>
 </main>
 
 <button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
@@ -514,20 +541,19 @@
 
   function rowHtml(p, i, showReorder){
     var status = draftStatus[p.id] || 'available';
-    var statusLabel = status === 'me' ? 'Von mir' : status === 'other' ? 'Vergeben' : 'Verfügbar';
     var rowCls = 'db-row' + (status === 'me' ? ' is-me' : status === 'other' ? ' is-other' : '');
     var projText = (p.proj === null || p.proj === undefined) ? '–' : p.proj.toFixed(1);
     return '<div class="' + rowCls + '" data-id="' + p.id + '" data-name="' + p.name.toLowerCase() + '">' +
       (showReorder ?
-      '<div class="db-reorder">' +
-        '<button class="db-arrow db-up" type="button" aria-label="Nach oben"' + (i === 0 ? ' disabled' : '') + '>▲</button>' +
-        '<button class="db-arrow db-down" type="button" aria-label="Nach unten">▼</button>' +
-      '</div>' : '') +
+        '<button class="db-drag-handle" type="button" aria-label="Zum Sortieren ziehen">⠿</button>' : '') +
       '<span class="db-rank mono">' + (i + 1) + '</span>' +
       '<span class="db-name">' + p.name + '<span class="db-team mono">' + p.team + '</span></span>' +
       '<span class="db-proj mono" title="Projizierte Saison-Punkte (Näherung)">' + projText + ' Pkt.</span>' +
       '<span class="db-adp mono">ADP ' + p.adp.toFixed(1) + '</span>' +
-      '<button class="db-status-btn" type="button" data-status="' + status + '">' + statusLabel + '</button>' +
+      '<div class="db-status-group">' +
+        '<button class="db-status-btn db-status-draft' + (status === 'me' ? ' active' : '') + '" type="button" aria-pressed="' + (status === 'me') + '">Draft</button>' +
+        '<button class="db-status-btn db-status-taken' + (status === 'other' ? ' active' : '') + '" type="button" aria-pressed="' + (status === 'other') + '">Vergeben</button>' +
+      '</div>' +
     '</div>';
   }
 
@@ -544,9 +570,6 @@
       startHeight = listEl.offsetHeight;
     }
     listEl.innerHTML = data.map(function(p, i){ return rowHtml(p, i, showReorder); }).join('');
-    // disable last row's down-arrow
-    var lastDown = listEl.querySelector('.db-row:last-child .db-down');
-    if(lastDown) lastDown.disabled = true;
     listEl.style.display = '';
     statusEl.textContent = '';
     applyFilter();
@@ -649,25 +672,12 @@
     if(!row) return;
     var id = row.dataset.id;
 
-    if(e.target.closest('.db-up') || e.target.closest('.db-down')){
-      var list = cache[activePos];
-      var idx = list.findIndex(function(p){ return p.id === id; });
-      if(idx === -1) return;
-      var dir = e.target.closest('.db-up') ? -1 : 1;
-      var swapIdx = idx + dir;
-      if(swapIdx < 0 || swapIdx >= list.length) return;
-      var tmp = list[idx];
-      list[idx] = list[swapIdx];
-      list[swapIdx] = tmp;
-      saveOrder(activePos);
-      render(activePos, true);
-      pushDraftBoard();
-      return;
-    }
-
-    if(e.target.closest('.db-status-btn')){
+    var draftBtn = e.target.closest('.db-status-draft');
+    var takenBtn = e.target.closest('.db-status-taken');
+    if(draftBtn || takenBtn){
       var current = draftStatus[id] || 'available';
-      var next = current === 'available' ? 'me' : current === 'me' ? 'other' : 'available';
+      var wanted = draftBtn ? 'me' : 'other';
+      var next = current === wanted ? 'available' : wanted;
       if(next === 'available') delete draftStatus[id];
       else draftStatus[id] = next;
       saveStatus();
@@ -676,6 +686,78 @@
       pushDraftBoard();
     }
   });
+
+  // ---- Reihenfolge per Ziehen (Maus + Touch, über den Griff-Handle) ----
+  (function initDrag(){
+    var drag = null;
+
+    listEl.addEventListener('pointerdown', function(e){
+      if(sortMode !== 'custom') return;
+      var handle = e.target.closest('.db-drag-handle');
+      if(!handle) return;
+      var row = handle.closest('.db-row');
+      if(!row) return;
+      var rows = Array.prototype.slice.call(listEl.querySelectorAll('.db-row'));
+      var startIdx = rows.indexOf(row);
+      if(startIdx === -1) return;
+      e.preventDefault();
+      drag = {
+        pointerId: e.pointerId,
+        handle: handle,
+        row: row,
+        rows: rows,
+        startIdx: startIdx,
+        currentIdx: startIdx,
+        startY: e.clientY,
+        rowH: row.getBoundingClientRect().height
+      };
+      row.classList.add('is-dragging');
+      rows.forEach(function(r){ if(r !== row) r.classList.add('is-shiftable'); });
+      try { handle.setPointerCapture(e.pointerId); } catch(err){}
+    });
+
+    listEl.addEventListener('pointermove', function(e){
+      if(!drag || e.pointerId !== drag.pointerId) return;
+      var dy = e.clientY - drag.startY;
+      drag.row.style.transform = 'translateY(' + dy + 'px)';
+
+      var rawIdx = drag.startIdx + Math.round(dy / drag.rowH);
+      var newIdx = Math.max(0, Math.min(drag.rows.length - 1, rawIdx));
+      if(newIdx !== drag.currentIdx){
+        drag.currentIdx = newIdx;
+        drag.rows.forEach(function(r, i){
+          if(r === drag.row) return;
+          var shift = 0;
+          if(drag.startIdx < drag.currentIdx && i > drag.startIdx && i <= drag.currentIdx) shift = -1;
+          else if(drag.startIdx > drag.currentIdx && i < drag.startIdx && i >= drag.currentIdx) shift = 1;
+          r.style.transform = shift ? 'translateY(' + (shift * drag.rowH) + 'px)' : '';
+        });
+      }
+    });
+
+    function endDrag(e){
+      if(!drag || (e.pointerId !== undefined && e.pointerId !== drag.pointerId)) return;
+      var startIdx = drag.startIdx;
+      var finalIdx = drag.currentIdx;
+
+      drag.row.classList.remove('is-dragging');
+      drag.row.style.transform = '';
+      drag.rows.forEach(function(r){ r.classList.remove('is-shiftable'); r.style.transform = ''; });
+
+      if(finalIdx !== startIdx){
+        var list = cache[activePos];
+        var item = list.splice(startIdx, 1)[0];
+        list.splice(finalIdx, 0, item);
+        saveOrder(activePos);
+        pushDraftBoard();
+      }
+      render(activePos);
+      drag = null;
+    }
+
+    listEl.addEventListener('pointerup', endDrag);
+    listEl.addEventListener('pointercancel', endDrag);
+  })();
 
   resetBtn.addEventListener('click', function(){
     if(!confirm('Draft-Status wirklich zurücksetzen? Deine eigene Reihenfolge bleibt erhalten.')) return;
