@@ -164,6 +164,15 @@
   .db-rank{color:var(--hash);min-width:24px;}
   .db-name{font-family:'Source Serif 4', serif;font-size:14px;flex:1;}
   .db-team{color:var(--hash);margin-left:6px;}
+  .db-pos-tag{
+    background:rgba(233,167,59,0.2);
+    color:var(--amber);
+    font-size:10px;
+    letter-spacing:.03em;
+    border-radius:4px;
+    padding:1px 5px;
+    margin-left:6px;
+  }
   .db-adp{color:var(--amber);min-width:70px;text-align:right;}
   .db-proj{color:var(--chalk);opacity:.85;min-width:64px;text-align:right;}
   .db-sort-toggle{display:flex;gap:6px;}
@@ -280,7 +289,7 @@
 
   <div class="kicker">Eigenes Cheat-Sheet</div>
   <h1>Draft Board</h1>
-  <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, am Griff-Symbol links kannst du Spieler per Maus oder Touch in deine eigene Reihenfolge ziehen. Am Draft-Tag markierst du Spieler einfach mit "Draft" bzw. "Vergeben", um zu tracken, wer schon weg ist.</p>
+  <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, am Griff-Symbol links kannst du Spieler per Maus oder Touch in deine eigene Reihenfolge ziehen. Unter "Alle" sortierst du positionsübergreifend (z.B. 1. ein QB, 2. ein RB, 3. noch ein RB …), die einzelnen Positions-Tabs geben dir zusätzlich eine reine Positions-Liste. Am Draft-Tag markierst du Spieler einfach mit "Draft" bzw. "Vergeben", um zu tracken, wer schon weg ist.</p>
   <p class="copy">Ohne Namenseingabe bei "Sync" oben wird alles nur auf diesem Gerät im Browser gespeichert – auf einem anderen Gerät startest du dann mit einer leeren Liste. Trägst du oben denselben Namen auf mehreren Geräten ein, synct sich deine Reihenfolge und dein Draft-Status automatisch zwischen ihnen.</p>
 
   <div class="db-layout">
@@ -297,7 +306,8 @@
     <div class="db-main-col">
       <div class="db-controls">
         <div class="pos-tabs" id="posTabs">
-          <button class="pos-tab active" data-pos="QB" type="button">QB</button>
+          <button class="pos-tab active" data-pos="ALL" type="button">Alle</button>
+          <button class="pos-tab" data-pos="QB" type="button">QB</button>
           <button class="pos-tab" data-pos="RB" type="button">RB</button>
           <button class="pos-tab" data-pos="WR" type="button">WR</button>
           <button class="pos-tab" data-pos="TE" type="button">TE</button>
@@ -400,7 +410,8 @@
   if(!tabsEl) return;
 
   var cache = {};
-  var activePos = 'QB';
+  var rawCache = {};
+  var activePos = 'ALL';
   var sortMode = 'custom';
   var listAnimation = null;
   var draftStatus = loadStatus();
@@ -516,7 +527,7 @@
   function pushDraftBoard(){
     if(!window.__draftRoomSync) return;
     var orders = {};
-    POSITIONS.forEach(function(pos){
+    POSITIONS.concat(['ALL']).forEach(function(pos){
       var saved = loadOrder(pos);
       if(saved) orders[pos] = saved;
     });
@@ -539,7 +550,7 @@
     renderRosterPanel();
   };
 
-  function rowHtml(p, i, showReorder){
+  function rowHtml(p, i, showReorder, showPos){
     var status = draftStatus[p.id] || 'available';
     var rowCls = 'db-row' + (status === 'me' ? ' is-me' : status === 'other' ? ' is-other' : '');
     var projText = (p.proj === null || p.proj === undefined) ? '–' : p.proj.toFixed(1);
@@ -547,7 +558,7 @@
       (showReorder ?
         '<button class="db-drag-handle" type="button" aria-label="Zum Sortieren ziehen">⠿</button>' : '') +
       '<span class="db-rank mono">' + (i + 1) + '</span>' +
-      '<span class="db-name">' + p.name + '<span class="db-team mono">' + p.team + '</span></span>' +
+      '<span class="db-name">' + p.name + (showPos ? '<span class="db-pos-tag mono">' + POS_LABEL_FULL[p.pos] + '</span>' : '') + '<span class="db-team mono">' + p.team + '</span></span>' +
       '<span class="db-proj mono" title="Projizierte Saison-Punkte (Näherung)">' + projText + ' Pkt.</span>' +
       '<span class="db-adp mono">ADP ' + p.adp.toFixed(1) + '</span>' +
       '<div class="db-status-group">' +
@@ -559,6 +570,7 @@
 
   function render(pos, animate){
     var showReorder = sortMode === 'custom';
+    var showPos = pos === 'ALL';
     var data = showReorder ? cache[pos] : cache[pos].slice().sort(function(a, b){
       var ap = a.proj === null || a.proj === undefined ? -Infinity : a.proj;
       var bp = b.proj === null || b.proj === undefined ? -Infinity : b.proj;
@@ -569,7 +581,7 @@
       if(listAnimation) listAnimation.cancel();
       startHeight = listEl.offsetHeight;
     }
-    listEl.innerHTML = data.map(function(p, i){ return rowHtml(p, i, showReorder); }).join('');
+    listEl.innerHTML = data.map(function(p, i){ return rowHtml(p, i, showReorder, showPos); }).join('');
     listEl.style.display = '';
     statusEl.textContent = '';
     applyFilter();
@@ -618,26 +630,36 @@
         name: pl.fullName,
         team: TEAM_ABBR[pl.proTeamId] || '',
         adp: own.averageDraftPosition || 999,
-        proj: shared.projectedPoints(pos, projStats)
+        proj: shared.projectedPoints(pos, projStats),
+        pos: pos
       };
     }).sort(function(a, b){ return a.adp - b.adp; });
+    rawCache[pos] = list;
     cache[pos] = applyStoredOrder(pos, list);
     return cache[pos];
   }
 
-  function warmCache(pos){
-    if(cache[pos]) return;
-    fetchAndCachePosition(pos).then(function(){ renderRosterPanel(); }).catch(function(){});
+  async function fetchAndCacheAll(){
+    if(cache.ALL) return cache.ALL;
+    await Promise.all(POSITIONS.map(function(pos){ return fetchAndCachePosition(pos); }));
+    var merged = [];
+    POSITIONS.forEach(function(pos){
+      rawCache[pos].forEach(function(p){ merged.push(p); });
+    });
+    merged.sort(function(a, b){ return a.adp - b.adp; });
+    cache.ALL = applyStoredOrder('ALL', merged);
+    return cache.ALL;
   }
 
   async function loadPosition(pos){
     activePos = pos;
     if(cache[pos]){ render(pos); return; }
-    statusEl.textContent = 'Lade Live-Daten…';
+    statusEl.textContent = pos === 'ALL' ? 'Lade alle Positionen…' : 'Lade Live-Daten…';
     statusEl.classList.remove('error');
     listEl.style.display = 'none';
     try {
-      await fetchAndCachePosition(pos);
+      if(pos === 'ALL') await fetchAndCacheAll();
+      else await fetchAndCachePosition(pos);
       if(activePos === pos) render(pos);
       renderRosterPanel();
     } catch(err){
@@ -768,8 +790,7 @@
     pushDraftBoard();
   });
 
-  loadPosition('QB');
-  POSITIONS.forEach(function(pos){ if(pos !== 'QB') warmCache(pos); });
+  loadPosition('ALL');
   renderRosterPanel();
 })();
 </script>
