@@ -72,7 +72,29 @@
     margin-bottom:6px;
   }
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
+  h2.section-head{font-size:22px;margin:32px 0 4px;}
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:64ch;}
+  .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
+  .calc-status.error{color:var(--endzone);}
+
+  .standings-table{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin:14px 0;}
+  .standings-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:13px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
+  }
+  .standings-row:last-child{border-bottom:none;}
+  .standings-row.head{color:var(--hash);font-size:10px;text-transform:uppercase;letter-spacing:.05em;}
+  .standings-rank{min-width:22px;color:var(--hash);}
+  .standings-name{font-family:'Source Serif 4', serif;font-size:14px;flex:1;}
+  .standings-record{min-width:64px;text-align:right;}
+  .standings-pf{min-width:76px;text-align:right;color:var(--amber);}
+  .standings-streak{min-width:52px;text-align:right;}
+  .standings-streak.win{color:var(--amber);}
 
   .sched-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0;}
   .sched-select{
@@ -143,6 +165,8 @@
   .conf-badge.nfc{background:rgba(233,167,59,0.2);color:var(--amber);}
   .conf-badge.afc{background:rgba(255,255,255,0.14);color:var(--chalk);}
   .sched-vs{color:var(--hash);font-size:10px;text-transform:uppercase;flex:0 0 auto;}
+  .sched-score{color:var(--amber);font-size:12px;flex:0 0 auto;font-weight:600;}
+  .sched-game.is-final .side-a.winner .name, .sched-game.is-final .side-b.winner .name{color:var(--amber);}
   .sched-game.is-filtered-out{display:none;}
   .sched-game.is-mine .name{color:var(--amber);font-weight:600;}
 
@@ -199,6 +223,12 @@
   <h1>Spielplan</h1>
   <p class="copy">Der komplette Liga-Phase-Spielplan: 10 Teams in zwei Conferences (NFC/AFC), 15 Wochen, jede Woche genau 5 Spiele – jedes Team spielt jede Woche. Jeden Conference-Gegner triffst du zweimal, jeden Interconference-Gegner mindestens einmal – bei 10 Paarungen sogar als Doppel-Duell über die Conference-Grenze hinweg. In den Wochen 1, 8 und 13–15 stehen bewusst möglichst viele Conference-interne Spiele auf dem Plan. Wähle unten dein Team, um nur deine 15 Matchups zu sehen.</p>
 
+  <h2 class="section-head">Standings</h2>
+  <div class="calc-status" id="standingsStatus">Lade aktuelle Tabelle…</div>
+  <div class="standings-table" id="standingsTable" style="display:none"></div>
+  <p class="note-text" id="standingsNote"></p>
+
+  <h2 class="section-head">Spielplan</h2>
   <div class="sched-controls">
     <select class="sched-select" id="teamFilter" aria-label="Team filtern">
       <option value="">Alle Teams – kompletter Spielplan</option>
@@ -334,12 +364,33 @@
     };
     function weekDateRange(w){ return WEEK_DATES[w] || ''; }
 
-    function gameHtml(g){
+    var SCORES_BY_WEEK = {};
+    function findScore(wk, t1, t2){
+      var games = SCORES_BY_WEEK[wk];
+      if(!games) return null;
+      for(var i = 0; i < games.length; i++){
+        var g = games[i];
+        if((g.homeName === t1 && g.awayName === t2) || (g.homeName === t2 && g.awayName === t1)) return g;
+      }
+      return null;
+    }
+
+    function gameHtml(g, wk){
       var t1 = g[0], c1 = g[1], t2 = g[2], c2 = g[3], kind = g[4], double = g[5];
-      return '<div class="sched-game" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
-        '<span class="sched-team side-a"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
-        '<span class="sched-vs">vs</span>' +
-        '<span class="sched-team side-b"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
+      var score = findScore(wk, t1, t2);
+      var isFinal = score && score.winner !== 'UNDECIDED';
+      var vsOrScore = '<span class="sched-vs">vs</span>';
+      var winA = false, winB = false;
+      if(isFinal){
+        var s1 = score.homeName === t1 ? score.homeScore : score.awayScore;
+        var s2 = score.homeName === t2 ? score.homeScore : score.awayScore;
+        vsOrScore = '<span class="sched-score mono">' + s1.toFixed(1) + '–' + s2.toFixed(1) + '</span>';
+        winA = s1 > s2; winB = s2 > s1;
+      }
+      return '<div class="sched-game' + (isFinal ? ' is-final' : '') + '" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
+        '<span class="sched-team side-a' + (winA ? ' winner' : '') + '"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
+        vsOrScore +
+        '<span class="sched-team side-b' + (winB ? ' winner' : '') + '"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
       '</div>';
     }
 
@@ -347,11 +398,46 @@
       var html = SCHEDULE.map(function(wk){
         return '<div class="sched-week">' +
           '<div class="sched-week-head"><span class="sched-week-meta"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-date">' + weekDateRange(wk.w) + '</span></span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span></div>' +
-          '<div class="sched-games">' + wk.g.map(gameHtml).join('') + '</div>' +
+          '<div class="sched-games">' + wk.g.map(function(g){ return gameHtml(g, wk.w); }).join('') + '</div>' +
         '</div>';
       }).join('');
       weeksEl.innerHTML = html;
       applyFilter();
+    }
+
+    function loadScores(){
+      fetch('data/scoreboard.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
+        (wrap.data || []).forEach(function(wk){ SCORES_BY_WEEK[wk.week] = wk.games; });
+        render();
+      }).catch(function(){});
+    }
+
+    function renderStandings(){
+      var statusEl = document.getElementById('standingsStatus');
+      var tableEl = document.getElementById('standingsTable');
+      var noteEl = document.getElementById('standingsNote');
+      fetch('data/standings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
+        var rows = wrap.data || [];
+        var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf">Punkte</span><span class="standings-streak">Streak</span></div>';
+        html += rows.map(function(r, i){
+          var streakLabel = r.streakLength ? (r.streakType === 'WIN' ? 'W' : 'L') + r.streakLength : '–';
+          return '<div class="standings-row">' +
+            '<span class="standings-rank">' + (i + 1) + '</span>' +
+            '<span class="standings-name">' + r.name + '</span>' +
+            '<span class="standings-record">' + r.wins + '-' + r.losses + (r.ties ? '-' + r.ties : '') + '</span>' +
+            '<span class="standings-pf">' + r.pointsFor.toFixed(1) + '</span>' +
+            '<span class="standings-streak' + (r.streakType === 'WIN' ? ' win' : '') + '">' + streakLabel + '</span>' +
+          '</div>';
+        }).join('');
+        tableEl.innerHTML = html;
+        tableEl.style.display = '';
+        statusEl.textContent = '';
+        var d = new Date(wrap.lastUpdated);
+        noteEl.textContent = 'Stand: ' + d.toLocaleDateString('de-CH') + ' ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }) + ' – aktualisiert sich automatisch, sobald Spiele gewertet wurden.';
+      }).catch(function(){
+        statusEl.textContent = 'Standings konnten nicht geladen werden.';
+        statusEl.classList.add('error');
+      });
     }
 
     function applyFilter(){
@@ -394,6 +480,8 @@
     });
     render();
     updateMyTeamBtn();
+    loadScores();
+    renderStandings();
   })();
 </script>
 

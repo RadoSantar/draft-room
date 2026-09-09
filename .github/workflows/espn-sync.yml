@@ -1,0 +1,43 @@
+name: ESPN Sync
+
+# Holt Standings/Scoreboard/Transaktionen/Power-Rankings-Zahlen aus der privaten
+# ESPN-Liga und committet die aktualisierten data/*.json-Dateien.
+# Rührt NIE data/team-content.json (handgeschriebene Analysen/Ausblicke) an.
+on:
+  schedule:
+    # Jeden Dienstag um 07:00 UTC (nach Monday Night Football)
+    - cron: '0 7 * * 2'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: ESPN-Daten synchronisieren
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+        run: node scripts/sync-espn.mjs
+
+      - name: Änderungen committen
+        run: |
+          git config user.name "espn-sync-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/
+          if git diff --cached --quiet; then
+            echo "Keine Änderungen, nichts zu committen."
+          else
+            git commit -m "Automatischer ESPN-Sync: Standings, Scoreboard, Transaktionen, Power Rankings"
+            git push
+          fi
