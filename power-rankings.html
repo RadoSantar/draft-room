@@ -246,14 +246,38 @@
   .pos-table td.delta.neg{color:var(--endzone-soft);font-weight:600;}
   .pos-table tr:last-child td{border-bottom:none;}
 
+  .recap-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.08em;
+    color:var(--hash);
+    margin:0 0 6px;
+  }
   .team-analysis p{font-size:14.5px;color:var(--ink-soft);margin-bottom:10px;max-width:68ch;}
   .team-analysis strong{color:var(--ink);}
-  .team-analysis p.trade-note{
+
+  .trade-update{
     background:rgba(233,167,59,0.08);
     border-left:3px solid var(--amber);
-    padding:8px 12px;
     border-radius:0 6px 6px 0;
+    margin:16px 0;
+    padding:2px 12px;
   }
+  .trade-update summary{
+    cursor:pointer;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:#8a5f10;
+    padding:8px 0;
+    list-style:none;
+  }
+  .trade-update summary::-webkit-details-marker{display:none;}
+  .trade-update summary::before{content:'\26A1 ';}
+  .trade-update p{font-size:14.5px;color:var(--ink-soft);margin:0 0 10px;max-width:68ch;font-style:italic;}
+  .trade-update strong{color:var(--ink);}
 
   .hype-box{
     background:linear-gradient(135deg, var(--turf) 0%, var(--turf-2) 100%);
@@ -316,6 +340,34 @@
 
   .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:66ch;}
 
+  /* Power-Ranking-Verlauf */
+  .history-scroll{overflow-x:auto;margin:14px 0;border-radius:10px;}
+  .history-table{width:100%;border-collapse:collapse;background:var(--turf);color:var(--chalk);font-size:12.5px;white-space:nowrap;}
+  .history-table th{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--hash);
+    text-align:center;
+    padding:8px 10px;
+    border-bottom:1px solid rgba(255,255,255,0.12);
+  }
+  .history-table th:first-child{text-align:left;position:sticky;left:0;background:var(--turf);}
+  .history-table td{padding:7px 10px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.06);font-family:'IBM Plex Mono', monospace;}
+  .history-table td:first-child{
+    text-align:left;
+    font-family:'Source Serif 4', serif;
+    font-size:13px;
+    position:sticky;
+    left:0;
+    background:var(--turf);
+  }
+  .history-table tr:last-child td{border-bottom:none;}
+  .history-cell.up{color:#7fd99a;}
+  .history-cell.down{color:var(--endzone-soft);}
+  .history-cell .arrow{font-size:9px;margin-left:2px;}
+
   @media (max-width:640px){
     header.topbar{padding:12px 16px;flex-wrap:wrap;}
     main{padding:24px 16px 80px;}
@@ -375,6 +427,10 @@
   <h2 class="section-head">Power Ranking</h2>
   <div class="calc-status" id="rankStatus">Lade aktuelle Daten…</div>
   <div class="rank-list" id="rankList"></div>
+
+  <h2 class="section-head">Power-Ranking-Verlauf</h2>
+  <p class="copy">Wie sich die Rangliste seit dem Draft entwickelt hat: 1. nach dem Draft, 2. vor dem ersten Spieltag (inkl. Trades/Waiver bis dahin), danach automatisch nach jedem abgeschlossenen Spieltag.</p>
+  <div class="history-scroll"><div id="historyTable"></div></div>
 
   <div id="teamCards"></div>
 
@@ -466,12 +522,45 @@
     return '<span class="rank-move down mono">▼ ' + (t.rank - t.previousRank) + '</span>';
   }
 
+  function renderHistory(historyWrap, teamOrder){
+    var snapshots = (historyWrap && historyWrap.snapshots) || [];
+    var historyEl = document.getElementById('historyTable');
+    if(!snapshots.length){ historyEl.innerHTML = ''; return; }
+
+    var rankByTeamAndSnapshot = {};
+    snapshots.forEach(function(snap, si){
+      snap.teams.forEach(function(t){
+        rankByTeamAndSnapshot[t.id] = rankByTeamAndSnapshot[t.id] || {};
+        rankByTeamAndSnapshot[t.id][si] = t.rank;
+      });
+    });
+
+    var headerRow = '<tr><th>Team</th>' + snapshots.map(function(s){ return '<th>' + s.label + '</th>'; }).join('') + '</tr>';
+    var bodyRows = teamOrder.map(function(t){
+      var cells = snapshots.map(function(s, si){
+        var rank = rankByTeamAndSnapshot[t.id] ? rankByTeamAndSnapshot[t.id][si] : undefined;
+        if(rank === undefined) return '<td>–</td>';
+        var prevRank = si > 0 && rankByTeamAndSnapshot[t.id] ? rankByTeamAndSnapshot[t.id][si - 1] : undefined;
+        var cls = '', arrow = '';
+        if(prevRank !== undefined && prevRank !== rank){
+          if(rank < prevRank){ cls = 'up'; arrow = '<span class="arrow">▲</span>'; }
+          else { cls = 'down'; arrow = '<span class="arrow">▼</span>'; }
+        }
+        return '<td class="history-cell ' + cls + '">' + rank + arrow + '</td>';
+      }).join('');
+      return '<tr><td>' + t.name + '</td>' + cells + '</tr>';
+    }).join('');
+
+    historyEl.innerHTML = '<table class="history-table"><thead>' + headerRow + '</thead><tbody>' + bodyRows + '</tbody></table>';
+  }
+
   Promise.all([
     fetch('data/power-rankings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
     fetch('data/team-content.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
-    fetch('data/transactions.json', { cache: 'no-store' }).then(function(r){ return r.json(); })
+    fetch('data/transactions.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
+    fetch('data/power-rankings-history.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { snapshots: [] }; })
   ]).then(function(results){
-    var powerWrap = results[0], contentList = results[1], txWrap = results[2];
+    var powerWrap = results[0], contentList = results[1], txWrap = results[2], historyWrap = results[3];
     var power = powerWrap.data;
     var contentById = {};
     contentList.forEach(function(c){ contentById[c.id] = c; });
@@ -513,7 +602,9 @@
         '</div>' +
         posTableHtml(t) +
         (t.hype ? '<div class="hype-box"><div class="hype-label mono">⚡ Saison-Ausblick</div><div class="hype-text">' + t.hype + '</div></div>' : '') +
-        '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p>' + (t.p3 ? '<p class="trade-note">' + t.p3 + '</p>' : '') + '</div>' +
+        (t.p3 ? '<details class="trade-update"' + ' open><summary>Update</summary><p>' + t.p3 + '</p></details>' : '') +
+        '<div class="recap-label mono">📋 Draft Recap</div>' +
+        '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
         '<details class="board-details"><summary>Komplettes Draft Board (20 Picks)</summary>' + boardTableHtml(t) + '</details>' +
       '</section>';
     }).join('');
@@ -537,6 +628,8 @@
       }).join('');
       return '<details class="tx-week"' + (idx === 0 ? ' open' : '') + '><summary>Woche ' + wk + ' (' + byWeek[wk].length + ')</summary><div class="tx-feed">' + items + '</div></details>';
     }).join('');
+
+    renderHistory(historyWrap, TEAMS);
   }).catch(function(err){
     statusKickerEl.textContent = 'Fehler beim Laden der Daten';
     rankStatusEl.textContent = 'Daten konnten nicht geladen werden. Bitte später erneut versuchen.';

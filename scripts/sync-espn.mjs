@@ -193,6 +193,26 @@ async function main() {
   const scoreboard = Object.keys(weeksMap).map(Number).sort((a, b) => a - b).map((wk) => ({ week: wk, games: weeksMap[wk] }));
   await writeJson('scoreboard.json', { lastUpdated: nowIso(), data: scoreboard });
 
+  // ---- Power-Ranking-Verlauf: ein Snapshot pro abgeschlossenem Spieltag ----
+  // ("Nach dem Draft" und "Vor dem 1. Spieltag" sind einmalig von Hand gesetzt und
+  // werden hier nie verändert; ab der ersten komplett gewerteten Woche kommt pro
+  // Woche automatisch ein neuer bzw. aktualisierter Snapshot dazu.)
+  let lastCompletedWeek = 0;
+  for (const wk of scoreboard) {
+    if (wk.games.length && wk.games.every((g) => g.winner !== 'UNDECIDED')) lastCompletedWeek = wk.week;
+    else break;
+  }
+  if (lastCompletedWeek > 0) {
+    const history = await readJsonSafe('power-rankings-history.json', { snapshots: [] });
+    const key = 'week-' + lastCompletedWeek;
+    const snapshotTeams = teamsComputed.map((t) => ({ id: t.id, name: t.name, rank: t.rank, starterTotal: t.starterTotal }));
+    const newSnapshot = { key, label: 'Nach Woche ' + lastCompletedWeek, date: new Date().toLocaleDateString('de-CH'), teams: snapshotTeams };
+    const idx = history.snapshots.findIndex((s) => s.key === key);
+    if (idx >= 0) history.snapshots[idx] = newSnapshot;
+    else history.snapshots.push(newSnapshot);
+    await writeJson('power-rankings-history.json', { lastUpdated: nowIso(), snapshots: history.snapshots });
+  }
+
   // ---- Transaktionen: Roster-Diff gegen letzten Snapshot (erkennt Trades/Adds/Drops generisch) ----
   const currentWeek = teamData.status?.currentMatchupPeriod || teamData.scoringPeriodId || 1;
   const snapshot = await readJsonSafe('roster-snapshot.json', {});
