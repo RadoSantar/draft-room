@@ -1,5 +1,11 @@
 /* Fantasy Playbook – gemeinsame Konstanten/Helfer für alle Seiten (index.html, draft-board.html, schedule.html). */
 (function(global){
+  if('serviceWorker' in navigator){
+    window.addEventListener('load', function(){
+      navigator.serviceWorker.register('sw.js').catch(function(){});
+    });
+  }
+
   var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
   var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
   var TEAM_ABBR = {
