@@ -1018,6 +1018,15 @@
     color:var(--amber);
     min-width:28px;
   }
+  .mobile-menu .menu-section-label{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:24px 0 4px;
+  }
+  .mobile-menu .menu-section-label:first-of-type{margin-top:0;}
 
   a:focus-visible, button:focus-visible{
     outline:2px solid var(--amber);
@@ -1113,6 +1122,13 @@
 
 <div id="mobileMenu" class="mobile-menu">
   <button class="close-btn" id="menuCloseBtn" aria-label="Menü schließen">×</button>
+  <div class="menu-section-label mono">Tools</div>
+  <ul>
+    <li><a href="draft-board.html">Draft Board</a></li>
+    <li><a href="schedule.html">Spielplan</a></li>
+    <li><a href="power-rankings.html">Power Rankings</a></li>
+  </ul>
+  <div class="menu-section-label mono">Kapitel</div>
   <ul>
     <li><a href="#uebersicht">Übersicht</a></li>
     <li><a href="#basics">Basics</a></li>
