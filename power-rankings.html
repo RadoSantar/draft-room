@@ -444,14 +444,18 @@
     <div class="rank-list" id="rankListAFC"></div>
   </div>
 
+  <h2 class="section-head">Power-Ranking-Verlauf</h2>
+  <p class="copy">Wie sich die Rangliste seit dem Draft entwickelt hat: 1. nach dem Draft, 2. vor dem ersten Spieltag (inkl. Trades/Waiver bis dahin), danach automatisch nach jedem abgeschlossenen Spieltag.</p>
+  <div class="history-scroll"><div id="historyTable"></div></div>
+
   <h2 class="section-head">Strength of Schedule</h2>
   <p class="copy">Wie stark sind im Schnitt die 15 Gegner, auf die jedes Team diese Saison trifft (der Conference-Gegner zählt doppelt, da man ihn zweimal spielt) – gemessen am aktuellen Power-Ranking-Score der Gegner. Rang 1 = schwierigster Spielplan. Die Werte verschieben sich automatisch mit, sobald sich die Power Rankings durch Trades, Waiver oder gespielte Wochen ändern – kein fixer Vorschau-Wert, sondern ein Live-Blick auf "wie hart ist mein Spielplan gerade".</p>
   <div class="calc-status" id="sosStatus">Lade aktuelle Daten…</div>
   <div class="rank-list" id="sosList"></div>
 
-  <h2 class="section-head">Power-Ranking-Verlauf</h2>
-  <p class="copy">Wie sich die Rangliste seit dem Draft entwickelt hat: 1. nach dem Draft, 2. vor dem ersten Spieltag (inkl. Trades/Waiver bis dahin), danach automatisch nach jedem abgeschlossenen Spieltag.</p>
-  <div class="history-scroll"><div id="historyTable"></div></div>
+  <h2 class="section-head">Strength-of-Schedule-Verlauf</h2>
+  <p class="copy">Wie sich der SOS-Rang je Team seit dem Draft entwickelt hat, in denselben Etappen wie oben beim Power-Ranking-Verlauf: 1. nach dem Draft, 2. vor dem ersten Spieltag, danach nach jedem abgeschlossenen Spieltag. Grün = Spielplan wird im Vergleich leichter (SOS-Rang steigt), Rot = Spielplan wird härter (SOS-Rang sinkt Richtung 1).</p>
+  <div class="history-scroll"><div id="sosHistoryTable"></div></div>
 
   <div id="teamCards"></div>
 
@@ -602,6 +606,52 @@
     historyEl.innerHTML = '<table class="history-table"><thead>' + headerRow + '</thead><tbody>' + bodyRows + '</tbody></table>';
   }
 
+  function sosRankByIdForSnapshot(snapTeams){
+    var starterTotalByName = {};
+    snapTeams.forEach(function(t){ starterTotalByName[t.name] = t.starterTotal; });
+    var withSos = snapTeams.map(function(t){
+      var opponents = TEAM_OPPONENTS[t.name] || [];
+      var sum = opponents.reduce(function(acc, name){ return acc + (starterTotalByName[name] || 0); }, 0);
+      return { id: t.id, sos: opponents.length ? sum / opponents.length : 0 };
+    }).sort(function(a, b){ return b.sos - a.sos; });
+    var rankById = {};
+    withSos.forEach(function(t, i){ rankById[t.id] = i + 1; });
+    return rankById;
+  }
+
+  function renderSosHistory(historyWrap, teamOrder){
+    var snapshots = (historyWrap && historyWrap.snapshots) || [];
+    var historyEl = document.getElementById('sosHistoryTable');
+    if(!snapshots.length){ historyEl.innerHTML = ''; return; }
+
+    var rankByTeamAndSnapshot = {};
+    snapshots.forEach(function(snap, si){
+      var rankById = sosRankByIdForSnapshot(snap.teams);
+      Object.keys(rankById).forEach(function(id){
+        rankByTeamAndSnapshot[id] = rankByTeamAndSnapshot[id] || {};
+        rankByTeamAndSnapshot[id][si] = rankById[id];
+      });
+    });
+
+    var headerRow = '<tr><th>Team</th>' + snapshots.map(function(s){ return '<th>' + s.label + '</th>'; }).join('') + '</tr>';
+    var bodyRows = teamOrder.map(function(t){
+      var cells = snapshots.map(function(s, si){
+        var rank = rankByTeamAndSnapshot[t.id] ? rankByTeamAndSnapshot[t.id][si] : undefined;
+        if(rank === undefined) return '<td>–</td>';
+        var prevRank = si > 0 && rankByTeamAndSnapshot[t.id] ? rankByTeamAndSnapshot[t.id][si - 1] : undefined;
+        var cls = '', arrow = '';
+        if(prevRank !== undefined && prevRank !== rank){
+          if(rank < prevRank){ cls = 'down'; arrow = '<span class="arrow">▼</span>'; }
+          else { cls = 'up'; arrow = '<span class="arrow">▲</span>'; }
+        }
+        return '<td class="history-cell ' + cls + '">' + rank + arrow + '</td>';
+      }).join('');
+      return '<tr><td>' + t.name + '</td>' + cells + '</tr>';
+    }).join('');
+
+    historyEl.innerHTML = '<table class="history-table"><thead>' + headerRow + '</thead><tbody>' + bodyRows + '</tbody></table>';
+  }
+
   Promise.all([
     fetch('data/power-rankings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
     fetch('data/team-content.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
@@ -682,6 +732,7 @@
     }).join('');
 
     renderHistory(historyWrap, TEAMS);
+    renderSosHistory(historyWrap, TEAMS);
   }).catch(function(err){
     statusKickerEl.textContent = 'Fehler beim Laden der Daten';
     rankStatusEl.textContent = 'Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
