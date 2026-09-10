@@ -1721,7 +1721,7 @@
       </div>
 
       <h3 class="sub-head">Fairness-Rechner</h3>
-      <p class="copy">Vergleicht die ungefähren Marktwerte beider Trade-Seiten anhand der aktuellen ESPN-Draft-Position (<a class="gloss-link" href="#term-adp">ADP</a>) – ein grober, neutraler Anhaltspunkt, ob ein Trade objektiv ausgeglichen ist.</p>
+      <p class="copy">Vergleicht die Saison-Projektionen beider Trade-Seiten nach unserem eigenen Liga-Scoring – ein grober Anhaltspunkt, ob ein Trade objektiv ausgeglichen ist.</p>
 
       <div class="trade-calc">
         <div class="trade-side">
@@ -1758,7 +1758,7 @@
 
       <div class="note-box">
         <span class="flag">Wichtig</span>
-        <span>Der Rechner kennt nur den neutralen Marktwert über alle ESPN-Ligen hinweg – nicht deinen <a class="gloss-link" href="#term-roster">Roster</a> oder deinen Bedarf. Ein Trade kann laut Rechner rechnerisch "unfair" gegen dich sein und trotzdem genau richtig für dich – etwa wenn du an einer Position dringend Tiefe brauchst, den Spieler unbedingt willst oder er perfekt zu deinem Restplan passt. Nutze das Ergebnis als groben Ausgangspunkt für die Diskussion, nicht als letztes Wort.</span>
+        <span>Der Rechner kennt nur die reine Saison-Projektion nach unserem Scoring – nicht deinen <a class="gloss-link" href="#term-roster">Roster</a> oder deinen Bedarf. Ein Trade kann laut Rechner rechnerisch "unfair" gegen dich sein und trotzdem genau richtig für dich – etwa wenn du an einer Position dringend Tiefe brauchst, den Spieler unbedingt willst oder er perfekt zu deinem Restplan passt. Nutze das Ergebnis als groben Ausgangspunkt für die Diskussion, nicht als letztes Wort.</span>
       </div>
     </section>
 
@@ -2920,7 +2920,6 @@
   var SLOT_IDS = shared.SLOT_IDS;
   var TEAM_ABBR = shared.TEAM_ABBR;
   var POS_LABELS = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
-  var VALUE_ADP_CAP = 260;
 
   var sideAEl = document.getElementById('tradeSideA');
   var sideBEl = document.getElementById('tradeSideB');
@@ -2936,27 +2935,28 @@
   var breakdownBEl = document.getElementById('tradeBreakdownB');
   if(!sideAEl) return;
 
-  var adpCache = {};
-  async function fetchAdpList(pos){
-    if(adpCache[pos]) return adpCache[pos];
+  var playerCache = {};
+  async function fetchPlayerList(pos){
+    if(playerCache[pos]) return playerCache[pos];
     var filter = JSON.stringify({
       players: {
         filterSlotIds: { value: [SLOT_IDS[pos]] },
+        filterStatsForSourceIds: { value: [1] },
+        filterStatsForSplitTypeIds: { value: [0] },
         sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
         limit: 50,
-        offset: 0,
-        filterStatsForTopScoringPeriodIds: { value: 2, additionalValue: ['002026', '102026', '002025'] }
+        offset: 0
       }
     });
     var res = await fetch(ADP_URL, { headers: { 'x-fantasy-filter': filter }, cache: 'no-store' });
-    if(!res.ok) throw new Error('adp-fetch-failed');
+    if(!res.ok) throw new Error('player-fetch-failed');
     var data = await res.json();
     var list = (data.players || []).map(function(p){
       var pl = p.player;
-      var own = pl.ownership || {};
-      return { id: String(pl.id), name: pl.fullName, team: TEAM_ABBR[pl.proTeamId] || '', adp: own.averageDraftPosition || 999 };
-    }).sort(function(a, b){ return a.adp - b.adp; });
-    adpCache[pos] = list;
+      var projStats = shared.findSeasonProjection(pl.stats);
+      return { id: String(pl.id), name: pl.fullName, team: TEAM_ABBR[pl.proTeamId] || '', proj: shared.projectedPoints(pos, projStats) };
+    }).sort(function(a, b){ return (b.proj || -999) - (a.proj || -999); });
+    playerCache[pos] = list;
     return list;
   }
 
@@ -2987,13 +2987,13 @@
       playerSelect.innerHTML = '<option>Lade…</option>';
       playerSelect.disabled = true;
       try {
-        var list = await fetchAdpList(posSelect.value);
+        var list = await fetchPlayerList(posSelect.value);
         playerSelect.innerHTML = '';
         list.forEach(function(p){
           var opt = document.createElement('option');
           opt.value = p.id;
           opt.textContent = p.name + ' (' + p.team + ')';
-          opt.dataset.adp = p.adp;
+          opt.dataset.proj = p.proj || 0;
           opt.dataset.name = p.name;
           playerSelect.appendChild(opt);
         });
@@ -3029,8 +3029,7 @@
       var sel = row.querySelector('.trade-player-select');
       var opt = sel.options[sel.selectedIndex];
       if(!opt || !opt.value) return;
-      var adp = parseFloat(opt.dataset.adp);
-      var value = Math.max(0, VALUE_ADP_CAP - adp);
+      var value = parseFloat(opt.dataset.proj) || 0;
       players.push({ name: opt.dataset.name, value: value });
     });
     return players;

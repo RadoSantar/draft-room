@@ -250,7 +250,7 @@
     <div id="mtFreeAgents"></div>
 
     <h2 class="section-head">Trade-Ideen</h2>
-    <p class="copy">Konkrete 1-für-1-Vorschläge: ein Bankspieler von dir gegen einen Bankspieler eines anderen Teams an deiner Schwachposition – möglichst ausgeglichen nach Marktwert (derselbe ADP-basierte Wert wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>: 260 minus ADP, je niedriger die ADP desto wertvoller).</p>
+    <p class="copy">Konkrete 1-für-1-Vorschläge: ein Bankspieler von dir gegen einen Bankspieler eines anderen Teams an deiner Schwachposition – möglichst ausgeglichen nach Saison-Projektion, derselbe Massstab wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>.</p>
     <div id="mtTrades"></div>
 
     <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, ADP) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a>. Kader-Daten aktualisieren sich automatisch etwa wöchentlich per GitHub Actions; Free-Agent-Empfehlungen sind live bei jedem Seitenaufruf.</p>
@@ -305,7 +305,6 @@
   var shared = window.DraftRoomShared;
   var POS_ORDER = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
   var POS_LABEL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
-  var VALUE_ADP_CAP = 260;
 
   var teamPickEl = document.getElementById('myTeamSelect');
   var statusKickerEl = document.getElementById('statusKicker');
@@ -326,7 +325,7 @@
     var r = Math.round(n * 10) / 10;
     return (r > 0 ? '+' : '') + r.toFixed(1);
   }
-  function tradeValue(adp){ return Math.max(0, VALUE_ADP_CAP - (adp === undefined || adp === null ? 999 : adp)); }
+  function tradeValue(proj){ return proj || 0; }
 
   function computeLeagueAvg(power){
     var sums = {}, counts = {};
@@ -464,8 +463,8 @@
   }
 
   function tradeCardHtml(idea){
-    var giveVal = tradeValue(idea.give.adp);
-    var getVal = tradeValue(idea.get.adp);
+    var giveVal = tradeValue(idea.give.proj);
+    var getVal = tradeValue(idea.get.proj);
     var diffPct = Math.max(giveVal, getVal) > 0 ? Math.abs(giveVal - getVal) / Math.max(giveVal, getVal) * 100 : 0;
     var verdict;
     if(diffPct < 8) verdict = 'Sehr ausgeglichen';
@@ -478,13 +477,13 @@
         '<div class="mt-trade-side">' +
           '<div class="mt-trade-side-label mono">Du gibst</div>' +
           '<div class="mt-trade-side-player">' + idea.give.name + '</div>' +
-          '<div class="mt-trade-side-meta">' + POS_LABEL[idea.give.pos] + ' · Proj. ' + fmt(idea.give.proj) + ' · Wert ' + Math.round(giveVal) + '</div>' +
+          '<div class="mt-trade-side-meta">' + POS_LABEL[idea.give.pos] + ' · Proj. ' + fmt(giveVal) + '</div>' +
         '</div>' +
         '<span class="mt-trade-arrow">⇄</span>' +
         '<div class="mt-trade-side">' +
           '<div class="mt-trade-side-label mono">Du bekommst</div>' +
           '<div class="mt-trade-side-player">' + idea.get.name + '</div>' +
-          '<div class="mt-trade-side-meta">' + POS_LABEL[idea.get.pos] + ' · Proj. ' + fmt(idea.get.proj) + ' · Wert ' + Math.round(getVal) + '</div>' +
+          '<div class="mt-trade-side-meta">' + POS_LABEL[idea.get.pos] + ' · Proj. ' + fmt(getVal) + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="mt-trade-verdict">' + verdict + '</div>' +
@@ -503,10 +502,10 @@
           .sort(function(a, b){ return (b.proj || -999) - (a.proj || -999); });
         if(!candidates.length) return;
         var target = candidates[0];
-        var targetValue = tradeValue(target.adp);
+        var targetValue = tradeValue(target.proj);
         if(!myRoster.bench.length) return;
         var myBenchSorted = myRoster.bench.slice().sort(function(a, b){
-          return Math.abs(tradeValue(a.adp) - targetValue) - Math.abs(tradeValue(b.adp) - targetValue);
+          return Math.abs(tradeValue(a.proj) - targetValue) - Math.abs(tradeValue(b.proj) - targetValue);
         });
         var offer = myBenchSorted[0];
         ideas.push({ otherTeam: other.name, give: offer, get: target });
@@ -514,8 +513,8 @@
     });
 
     ideas.sort(function(a, b){
-      var diffA = Math.abs(tradeValue(a.give.adp) - tradeValue(a.get.adp));
-      var diffB = Math.abs(tradeValue(b.give.adp) - tradeValue(b.get.adp));
+      var diffA = Math.abs(tradeValue(a.give.proj) - tradeValue(a.get.proj));
+      var diffB = Math.abs(tradeValue(b.give.proj) - tradeValue(b.get.proj));
       return diffA - diffB;
     });
 
