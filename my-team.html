@@ -424,8 +424,10 @@
       });
   }
 
+  var BENCH_SIZE = 9;
+
   function weakestBenchDrop(team){
-    if(!team.bench.length) return null;
+    if(team.bench.length < BENCH_SIZE) return null; // Bank hat noch freien Platz, kein Drop nötig
     return team.bench.slice().sort(function(a, b){ return (a.proj || -999) - (b.proj || -999); })[0];
   }
 
@@ -439,6 +441,7 @@
     faEl.innerHTML = '';
 
     var drop = weakestBenchDrop(team);
+    var benchHasRoom = team.bench.length < BENCH_SIZE;
 
     Promise.all(targetPositions.map(fetchFreeAgents)).then(function(results){
       if(token !== faRequestToken) return;
@@ -452,7 +455,10 @@
             '<div class="mt-rec-proj">Proj. ' + fmt(p.proj) + ' · ADP ' + fmt(p.adp) + '</div>' +
           '</div>';
         }).join('');
-        var dropHint = drop ? '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', Proj. ' + fmt(drop.proj) + ') – dein schwächster Bankspieler aktuell.</p>' : '';
+        var dropHint;
+        if(benchHasRoom) dropHint = '<p class="copy">Deine Bank hat noch einen freien Platz (' + team.bench.length + '/' + BENCH_SIZE + ') – du kannst direkt hinzufügen, ohne jemanden droppen zu müssen.</p>';
+        else if(drop) dropHint = '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', Proj. ' + fmt(drop.proj) + ') – dein schwächster Bankspieler aktuell.</p>';
+        else dropHint = '';
         return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
       }).join('') || '<p class="copy">Keine passenden Free Agents gefunden.</p>';
     }).catch(function(){
