@@ -168,9 +168,11 @@
   .mt-trade-partner{font-family:'IBM Plex Mono', monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);margin-bottom:8px;}
   .mt-trade-sides{display:flex;gap:14px;flex-wrap:wrap;align-items:center;}
   .mt-trade-side{flex:1;min-width:180px;}
-  .mt-trade-side-label{font-family:'IBM Plex Mono', monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);margin-bottom:2px;}
-  .mt-trade-side-player{font-size:15px;font-weight:600;}
-  .mt-trade-side-meta{font-size:12.5px;color:var(--ink-soft);}
+  .mt-trade-side-label{font-family:'IBM Plex Mono', monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);margin-bottom:4px;}
+  .mt-trade-player{display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;}
+  .mt-trade-player-name{font-size:14.5px;font-weight:600;}
+  .mt-trade-player-meta{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+  .mt-trade-side-total{font-size:12px;color:var(--hash);margin-top:4px;padding-top:4px;border-top:1px solid var(--card-border);}
   .mt-trade-arrow{font-family:'Anton', sans-serif;font-size:20px;color:var(--amber);flex:0 0 auto;}
   .mt-trade-verdict{margin-top:10px;font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--turf);}
 
@@ -250,7 +252,7 @@
     <div id="mtFreeAgents"></div>
 
     <h2 class="section-head">Trade-Ideen</h2>
-    <p class="copy">Konkrete 1-für-1-Vorschläge: ein Bankspieler von dir gegen einen Bankspieler eines anderen Teams an deiner Schwachposition – möglichst ausgeglichen nach Saison-Projektion, derselbe Massstab wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>.</p>
+    <p class="copy">Konkrete Vorschläge – auch als Paket (z.B. 2-für-1 oder 3-für-2), nicht nur 1-für-1: Bankspieler von dir gegen Bankspieler eines anderen Teams an deiner Schwachposition, möglichst ausgeglichen nach Saison-Projektion, derselbe Massstab wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>.</p>
     <div id="mtTrades"></div>
 
     <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, ADP) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a>. Kader-Daten aktualisieren sich automatisch etwa wöchentlich per GitHub Actions; Free-Agent-Empfehlungen sind live bei jedem Seitenaufruf.</p>
@@ -468,9 +470,37 @@
     });
   }
 
+  // [Anzahl Spieler von dir, Anzahl Spieler vom anderen Team] – auch Paket-Trades, nicht nur 1-für-1
+  var TRADE_SHAPES = [[1, 1], [2, 1], [3, 1], [3, 2], [2, 3]];
+
+  function packageValue(players){
+    return players.reduce(function(sum, p){ return sum + tradeValue(p.proj); }, 0);
+  }
+
+  function combinations(arr, k){
+    if(k === 0) return [[]];
+    if(arr.length < k) return [];
+    var result = [];
+    (function helper(start, combo){
+      if(combo.length === k){ result.push(combo.slice()); return; }
+      for(var i = start; i < arr.length; i++){
+        combo.push(arr[i]);
+        helper(i + 1, combo);
+        combo.pop();
+      }
+    })(0, []);
+    return result;
+  }
+
+  function tradeSidePlayersHtml(players){
+    return players.map(function(p){
+      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + '</span><span class="mt-trade-player-meta mono">' + POS_LABEL[p.pos] + ' · ' + fmt(p.proj) + '</span></div>';
+    }).join('');
+  }
+
   function tradeCardHtml(idea){
-    var giveVal = tradeValue(idea.give.proj);
-    var getVal = tradeValue(idea.get.proj);
+    var giveVal = packageValue(idea.give);
+    var getVal = packageValue(idea.get);
     var diffPct = Math.max(giveVal, getVal) > 0 ? Math.abs(giveVal - getVal) / Math.max(giveVal, getVal) * 100 : 0;
     var verdict;
     if(diffPct < 8) verdict = 'Sehr ausgeglichen';
@@ -478,22 +508,44 @@
     else verdict = giveVal > getVal ? 'Deutlicher Vorteil für dich' : 'Deutlicher Vorteil für ' + idea.otherTeam;
 
     return '<div class="mt-trade-card">' +
-      '<div class="mt-trade-partner mono">Mit ' + idea.otherTeam + '</div>' +
+      '<div class="mt-trade-partner mono">Mit ' + idea.otherTeam + ' · ' + idea.give.length + ' für ' + idea.get.length + '</div>' +
       '<div class="mt-trade-sides">' +
         '<div class="mt-trade-side">' +
           '<div class="mt-trade-side-label mono">Du gibst</div>' +
-          '<div class="mt-trade-side-player">' + idea.give.name + '</div>' +
-          '<div class="mt-trade-side-meta">' + POS_LABEL[idea.give.pos] + ' · Proj. ' + fmt(giveVal) + '</div>' +
+          tradeSidePlayersHtml(idea.give) +
+          '<div class="mt-trade-side-total mono">Gesamt ' + fmt(giveVal) + '</div>' +
         '</div>' +
         '<span class="mt-trade-arrow">⇄</span>' +
         '<div class="mt-trade-side">' +
           '<div class="mt-trade-side-label mono">Du bekommst</div>' +
-          '<div class="mt-trade-side-player">' + idea.get.name + '</div>' +
-          '<div class="mt-trade-side-meta">' + POS_LABEL[idea.get.pos] + ' · Proj. ' + fmt(getVal) + '</div>' +
+          tradeSidePlayersHtml(idea.get) +
+          '<div class="mt-trade-side-total mono">Gesamt ' + fmt(getVal) + '</div>' +
         '</div>' +
       '</div>' +
       '<div class="mt-trade-verdict">' + verdict + '</div>' +
     '</div>';
+  }
+
+  function ideaFairness(idea){
+    var giveVal = packageValue(idea.give);
+    var getVal = packageValue(idea.get);
+    return Math.max(giveVal, getVal) > 0 ? Math.abs(giveVal - getVal) / Math.max(giveVal, getVal) : 0;
+  }
+
+  function bestIdeaForShape(myRoster, otherTeam, pos, giveCount, getCount){
+    var candidates = otherTeam.bench.filter(function(p){ return p.pos === pos; })
+      .sort(function(a, b){ return (b.proj || -999) - (a.proj || -999); });
+    if(candidates.length < getCount) return null;
+    var getPackage = candidates.slice(0, getCount);
+    var targetValue = packageValue(getPackage);
+
+    var myCombos = combinations(myRoster.bench, giveCount);
+    if(!myCombos.length) return null;
+    myCombos.sort(function(a, b){
+      return Math.abs(packageValue(a) - targetValue) - Math.abs(packageValue(b) - targetValue);
+    });
+
+    return { otherTeam: otherTeam.name, give: myCombos[0], get: getPackage };
   }
 
   function buildTradeIdeas(myTeamId, myRoster, weakPositions){
@@ -504,30 +556,20 @@
     ROSTER.forEach(function(other){
       if(other.id === myTeamId) return;
       targetPositions.forEach(function(pos){
-        var candidates = other.bench.filter(function(p){ return p.pos === pos; })
-          .sort(function(a, b){ return (b.proj || -999) - (a.proj || -999); });
-        if(!candidates.length) return;
-        var target = candidates[0];
-        var targetValue = tradeValue(target.proj);
-        if(!myRoster.bench.length) return;
-        var myBenchSorted = myRoster.bench.slice().sort(function(a, b){
-          return Math.abs(tradeValue(a.proj) - targetValue) - Math.abs(tradeValue(b.proj) - targetValue);
+        TRADE_SHAPES.forEach(function(shape){
+          var idea = bestIdeaForShape(myRoster, other, pos, shape[0], shape[1]);
+          if(idea) ideas.push(idea);
         });
-        var offer = myBenchSorted[0];
-        ideas.push({ otherTeam: other.name, give: offer, get: target });
       });
     });
 
-    ideas.sort(function(a, b){
-      var diffA = Math.abs(tradeValue(a.give.proj) - tradeValue(a.get.proj));
-      var diffB = Math.abs(tradeValue(b.give.proj) - tradeValue(b.get.proj));
-      return diffA - diffB;
-    });
+    ideas.sort(function(a, b){ return ideaFairness(a) - ideaFairness(b); });
 
+    // Höchstens eine Idee pro Team+Position, sonst dominiert ein einzelnes Team die ganze Liste
     var seen = {};
     var deduped = [];
     ideas.forEach(function(idea){
-      var key = idea.give.playerId + '-' + idea.get.playerId;
+      var key = idea.otherTeam + '-' + idea.get[0].pos;
       if(seen[key]) return;
       seen[key] = true;
       deduped.push(idea);
