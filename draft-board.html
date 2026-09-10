@@ -267,6 +267,10 @@
     <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
     <span class="title">Fantasy Playbook</span>
   </a>
+  <div class="header-sync-wrap">
+    <select class="header-sync-select" id="syncTeamSelect" aria-label="Dein Team für geräteübergreifenden Sync"></select>
+    <span class="header-sync-status mono" id="syncStatus"></span>
+  </div>
   <div class="tool-nav">
     <a href="index.html#draft-tipps">← Übersicht</a>
     <a href="schedule.html">Spielplan</a>
@@ -288,18 +292,12 @@
       <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
       <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
     </div>
-    <span class="theme-picker-label mono">Sync</span>
-    <div class="sync-name-wrap">
-      <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync" autocomplete="off">
-      <div class="sync-dropdown" id="syncDropdown" hidden></div>
-    </div>
-    <span class="sync-status mono" id="syncStatus"></span>
   </div>
 
   <div class="kicker">Eigenes Cheat-Sheet</div>
   <h1>Draft Board</h1>
   <p class="copy">Bereite deine persönliche Draft-Rangliste vor: Start ist die Live-ADP von ESPN, am Griff-Symbol links kannst du Spieler per Maus oder Touch in deine eigene Reihenfolge ziehen. Unter "Alle" sortierst du positionsübergreifend (z.B. 1. ein QB, 2. ein RB, 3. noch ein RB …), die einzelnen Positions-Tabs geben dir zusätzlich eine reine Positions-Liste. Am Draft-Tag markierst du Spieler einfach mit "Draft" bzw. "Vergeben", um zu tracken, wer schon weg ist.</p>
-  <p class="copy">Ohne Namenseingabe bei "Sync" oben wird alles nur auf diesem Gerät im Browser gespeichert – auf einem anderen Gerät startest du dann mit einer leeren Liste. Trägst du oben denselben Namen auf mehreren Geräten ein, synct sich deine Reihenfolge und dein Draft-Status automatisch zwischen ihnen.</p>
+  <p class="copy">Ohne Team-Auswahl oben im Header wird alles nur auf diesem Gerät im Browser gespeichert – auf einem anderen Gerät startest du dann mit einer leeren Liste. Wählst du oben auf mehreren Geräten dasselbe Team, synct sich deine Reihenfolge und dein Draft-Status automatisch zwischen ihnen.</p>
 
   <div class="db-layout">
     <aside class="db-side-col">
@@ -366,9 +364,8 @@
   });
 
   window.__draftRoomSync = window.DraftRoomShared.initSyncBar({
-    nameInput: document.getElementById('syncName'),
+    nameInput: document.getElementById('syncTeamSelect'),
     statusEl: document.getElementById('syncStatus'),
-    dropdownEl: document.getElementById('syncDropdown'),
     onPull: function(row){
       if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
       if(row.draft_board && window.__applyRemoteDraftBoard) window.__applyRemoteDraftBoard(row.draft_board);
@@ -555,7 +552,9 @@
       draftStatus = remote.status;
       saveStatus();
     }
-    render(activePos);
+    // cache[activePos] kann hier noch leer sein, wenn der Sync-Pull schneller war als der ESPN-Fetch
+    // (loadPosition rendert danach von selbst, sobald die Live-Daten da sind – siehe loadPosition()).
+    if(cache[activePos]) render(activePos);
     renderRosterPanel();
   };
 

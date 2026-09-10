@@ -8,6 +8,12 @@
 
   var ADP_URL = 'https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/2026/segments/0/leaguedefaults/3?view=kona_player_info';
   var SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+  /* Einzige Quelle für die 10 Liga-Teamnamen (Sync-Team-Auswahl im Header) – bewusst hier zentral
+     gepflegt statt pro Seite dupliziert, siehe die "Queen of Chaos"/"Apukalypse Now"-Verwechslung. */
+  var TEAM_NAMES = [
+    'Apukalypse Now', 'Buhaaner', 'Hopp Schwiiz', 'Queen of Chaos', 'Run CMC',
+    'Saints of Anarchy', 'Sherlock Mahomes', 'TM06', 'Tackleberry Finn', 'Zurich City Ravens'
+  ];
   var TEAM_ABBR = {
     1:'ATL', 2:'BUF', 3:'CHI', 4:'CIN', 5:'CLE', 6:'DAL', 7:'DEN', 8:'DET', 9:'GB', 10:'TEN',
     11:'IND', 12:'KC', 13:'LV', 14:'LAR', 15:'MIA', 16:'MIN', 17:'NE', 18:'NO', 19:'NYG', 20:'NYJ',
@@ -102,25 +108,37 @@
     return { applyTheme: applyTheme };
   }
 
-  /* Verdrahtet ein Namensfeld mit DraftRoomSync (sync.js): lädt beim Eintragen/Auswählen des Namens
-     den gespeicherten Stand, liefert eine push()-Funktion für spätere Änderungen zurück.
-     config: { nameInput, statusEl, dropdownEl, onPull } – nameInput ist Pflicht, onPull(row) wird
-     nach jedem erfolgreichen Laden mit den Server-Daten aufgerufen. dropdownEl (optional) zeigt beim
-     Fokussieren alle bereits bekannten Namen zum Anklicken/Löschen – schützt vor Tippfehlern, die
-     sonst eine neue, separate (leere) Zeile statt der eigenen erzeugen würden. Gibt null zurück,
-     wenn Sync nicht konfiguriert ist (sync.js ohne Zugangsdaten) oder kein nameInput übergeben wurde. */
+  /* Verdrahtet das Team-Auswahlfeld (<select>, id="syncTeamSelect") im Header mit DraftRoomSync
+     (sync.js): lädt beim Auswählen des Teams den gespeicherten Stand, liefert eine push()-Funktion
+     für spätere Änderungen zurück. config: { nameInput, statusEl, onPull } – nameInput ist Pflicht
+     (wird automatisch mit TEAM_NAMES befüllt, falls noch leer), onPull(row) wird nach jedem
+     erfolgreichen Laden mit den Server-Daten aufgerufen. Gibt null zurück, wenn Sync nicht
+     konfiguriert ist (sync.js ohne Zugangsdaten) oder kein nameInput übergeben wurde. */
   function initSyncBar(config){
     var sync = global.DraftRoomSync;
     var nameInput = config.nameInput;
     var statusEl = config.statusEl;
-    var dropdownEl = config.dropdownEl;
     if(!nameInput) return null;
+
+    if(nameInput.tagName === 'SELECT' && !nameInput.options.length){
+      var placeholderOpt = document.createElement('option');
+      placeholderOpt.value = '';
+      placeholderOpt.textContent = 'Team wählen…';
+      nameInput.appendChild(placeholderOpt);
+      TEAM_NAMES.forEach(function(name){
+        var opt = document.createElement('option');
+        opt.value = name;
+        opt.textContent = name;
+        nameInput.appendChild(opt);
+      });
+    }
 
     function setStatus(text){ if(statusEl) statusEl.textContent = text || ''; }
 
     if(!sync || !sync.isConfigured()){
       nameInput.disabled = true;
-      nameInput.placeholder = 'Sync nicht verfügbar';
+      if(nameInput.tagName === 'SELECT' && nameInput.options.length) nameInput.options[0].textContent = 'Sync nicht verfügbar';
+      else nameInput.placeholder = 'Sync nicht verfügbar';
       return null;
     }
 
@@ -135,79 +153,18 @@
       }).catch(function(){ setStatus('Sync-Fehler'); });
     }
 
-    function selectName(name){
-      nameInput.value = name;
-      sync.setName(name);
-      doPull();
-    }
-
     nameInput.addEventListener('change', function(){
-      selectName(nameInput.value.trim());
-      loadNames();
+      sync.setName(nameInput.value);
+      doPull();
     });
 
-    var knownNames = [];
-
-    function renderDropdown(){
-      if(!dropdownEl) return;
-      dropdownEl.innerHTML = knownNames.length ? knownNames.map(function(n){
-        var esc = n.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
-        return '<div class="sync-dropdown-row" data-name="' + esc + '">' +
-          '<span class="sync-dropdown-name">' + esc + '</span>' +
-          '<button type="button" class="sync-dropdown-del" data-name="' + esc + '" aria-label="' + esc + ' löschen">×</button>' +
-        '</div>';
-      }).join('') : '<div class="sync-dropdown-empty">Noch keine gespeicherten Namen</div>';
-    }
-
-    function loadNames(){
-      if(!dropdownEl) return;
-      sync.listNames().then(function(names){
-        knownNames = names;
-        renderDropdown();
-      }).catch(function(){});
-    }
-
-    if(dropdownEl){
-      nameInput.addEventListener('focus', function(){
-        dropdownEl.hidden = false;
-        loadNames();
-      });
-      document.addEventListener('click', function(e){
-        if(e.target !== nameInput && !dropdownEl.contains(e.target)) dropdownEl.hidden = true;
-      });
-      dropdownEl.addEventListener('click', function(e){
-        var delBtn = e.target.closest('.sync-dropdown-del');
-        if(delBtn){
-          e.stopPropagation();
-          var delName = delBtn.dataset.name;
-          if(!global.confirm('Gespeicherte Daten für "' + delName + '" wirklich löschen?')) return;
-          sync.deleteName(delName).then(function(){
-            knownNames = knownNames.filter(function(n){ return n !== delName; });
-            renderDropdown();
-            if(sync.getName() === delName){
-              sync.setName('');
-              nameInput.value = '';
-              setStatus('');
-            }
-          }).catch(function(){ global.alert('Löschen fehlgeschlagen.'); });
-          return;
-        }
-        var row = e.target.closest('.sync-dropdown-row');
-        if(row){
-          selectName(row.dataset.name);
-          dropdownEl.hidden = true;
-        }
-      });
-    }
-
     doPull();
-    loadNames();
 
     return {
       push: function(fields){
         if(!sync.getName()) return;
         setStatus('Speichere…');
-        sync.push(fields).then(function(){ setStatus('Synchronisiert'); loadNames(); }).catch(function(){ setStatus('Sync-Fehler'); });
+        sync.push(fields).then(function(){ setStatus('Synchronisiert'); }).catch(function(){ setStatus('Sync-Fehler'); });
       }
     };
   }
@@ -309,6 +266,7 @@
     ADP_URL: ADP_URL,
     SLOT_IDS: SLOT_IDS,
     TEAM_ABBR: TEAM_ABBR,
+    TEAM_NAMES: TEAM_NAMES,
     STAT: STAT,
     projectedPoints: projectedPoints,
     findSeasonProjection: findSeasonProjection,

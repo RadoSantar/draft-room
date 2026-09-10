@@ -85,8 +85,10 @@
   }
   header.topbar .row{
     display:flex;
+    flex-wrap:wrap;
     justify-content:space-between;
     align-items:center;
+    gap:8px 14px;
     width:100%;
   }
   .chapter-nav{
@@ -1075,7 +1077,10 @@
         <span class="bar"></span> Kapitel
       </button>
     </div>
-    <span class="sub" style="display:none">Liga · Full PPR · Snake Draft</span>
+    <div class="header-sync-wrap">
+      <select class="header-sync-select" id="syncTeamSelect" aria-label="Dein Team für geräteübergreifenden Sync"></select>
+      <span class="header-sync-status mono" id="syncStatus"></span>
+    </div>
   </div>
   <div class="mobile-progress">
     <div class="track">
@@ -1145,12 +1150,6 @@
           <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
           <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
         </div>
-        <span class="theme-picker-label mono">Sync</span>
-        <div class="sync-name-wrap">
-          <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync" autocomplete="off">
-          <div class="sync-dropdown" id="syncDropdown" hidden></div>
-        </div>
-        <span class="sync-status mono" id="syncStatus"></span>
       </div>
 
       <h1>Willkommen im Fantasy Playbook</h1>
@@ -2899,9 +2898,8 @@
   });
 
   var syncHandle = window.DraftRoomShared.initSyncBar({
-    nameInput: document.getElementById('syncName'),
+    nameInput: document.getElementById('syncTeamSelect'),
     statusEl: document.getElementById('syncStatus'),
-    dropdownEl: document.getElementById('syncDropdown'),
     onPull: function(row){
       if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
     }

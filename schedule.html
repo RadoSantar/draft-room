@@ -224,6 +224,10 @@
     <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
     <span class="title">Fantasy Playbook</span>
   </a>
+  <div class="header-sync-wrap">
+    <select class="header-sync-select" id="syncTeamSelect" aria-label="Dein Team für geräteübergreifenden Sync"></select>
+    <span class="header-sync-status mono" id="syncStatus"></span>
+  </div>
   <div class="tool-nav">
     <a href="index.html#basics">← Übersicht</a>
     <a href="draft-board.html">Draft Board</a>
@@ -245,12 +249,6 @@
       <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
       <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
     </div>
-    <span class="theme-picker-label mono">Sync</span>
-    <div class="sync-name-wrap">
-      <input type="text" class="sync-name" id="syncName" placeholder="Dein Name" aria-label="Dein Name für geräteübergreifenden Sync" autocomplete="off">
-      <div class="sync-dropdown" id="syncDropdown" hidden></div>
-    </div>
-    <span class="sync-status mono" id="syncStatus"></span>
   </div>
 
   <div class="kicker">Saison 2026 · 09.09.–21.12. · 15 Wochen</div>
@@ -305,9 +303,8 @@
   });
 
   window.__draftRoomSync = window.DraftRoomShared.initSyncBar({
-    nameInput: document.getElementById('syncName'),
+    nameInput: document.getElementById('syncTeamSelect'),
     statusEl: document.getElementById('syncStatus'),
-    dropdownEl: document.getElementById('syncDropdown'),
     onPull: function(row){
       if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
       if(row.my_team && window.__applyRemoteMyTeam) window.__applyRemoteMyTeam(row.my_team);
