@@ -123,12 +123,14 @@ async function main() {
   const oldRankById = {};
   (oldPower.data || []).forEach((t) => { oldRankById[t.id] = t.rank; });
 
+  const rosterByTeam = {};
   const teamsComputed = teamData.teams.map((t) => {
     const roster = currentRosterIds[t.id].map((id) => {
       const info = playerInfo(id);
-      return { playerId: id, name: info.name, pos: info.pos, proTeam: info.proTeam, proj: info.proj };
+      return { playerId: id, name: info.name, pos: info.pos, proTeam: info.proTeam, proj: info.proj, adp: info.adp };
     });
     const { starters, bench } = buildOptimalLineup(roster);
+    rosterByTeam[t.id] = { id: t.id, name: teamNames[t.id], starters, bench };
     const starterTotal = starters.reduce((sum, p) => sum + (p.proj || 0), 0);
     const benchTotal = bench.reduce((sum, p) => sum + (p.proj || 0), 0);
     const posTotals = {};
@@ -159,6 +161,13 @@ async function main() {
   });
 
   await writeJson('power-rankings.json', { lastUpdated: nowIso(), data: teamsComputed });
+
+  // ---- Kompletter aktueller Kader je Team (Starter/Bench inkl. adp) für my-team.html ----
+  await writeJson('roster.json', { lastUpdated: nowIso(), data: Object.values(rosterByTeam) });
+
+  // ---- Alle aktuell irgendwo rostered player-IDs (liga-öffentlich) für Free-Agent-Filterung ----
+  const rosteredIds = [...new Set(Object.values(currentRosterIds).flat())];
+  await writeJson('rostered-ids.json', { lastUpdated: nowIso(), ids: rosteredIds });
 
   // ---- Standings ----
   const standings = teamData.teams.map((t) => {
