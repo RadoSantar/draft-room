@@ -96,6 +96,12 @@
   .standings-streak{min-width:52px;text-align:right;}
   .standings-streak.win{color:var(--amber);}
 
+  .standings-tabs{display:flex;gap:8px;margin:14px 0 0;}
+  .standings-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .standings-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
+  .standings-div-label{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:18px 0 4px;}
+  .standings-div-label:first-of-type{margin-top:14px;}
+
   .sched-controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin:20px 0;}
   .sched-select{
     font-family:'Source Serif 4', serif;
@@ -247,7 +253,17 @@
 
   <h2 class="section-head">Standings</h2>
   <div class="calc-status" id="standingsStatus">Lade aktuelle Tabelle…</div>
+  <div class="standings-tabs" id="standingsTabs" style="display:none" role="tablist">
+    <button type="button" class="standings-tab is-active" data-view="league">Liga</button>
+    <button type="button" class="standings-tab" data-view="conf">Nach Conference</button>
+  </div>
   <div class="standings-table" id="standingsTable" style="display:none"></div>
+  <div class="standings-conf-wrap" id="standingsConfWrap" style="display:none">
+    <div class="standings-div-label mono">NFC</div>
+    <div class="standings-table" id="standingsTableNFC"></div>
+    <div class="standings-div-label mono">AFC</div>
+    <div class="standings-table" id="standingsTableAFC"></div>
+  </div>
   <p class="note-text" id="standingsNote"></p>
 
   <h2 class="section-head">Spielplan</h2>
@@ -461,25 +477,35 @@
       }).catch(function(){});
     }
 
+    function standingsRowsHtml(rows){
+      var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf">Punkte</span><span class="standings-streak">Streak</span></div>';
+      html += rows.map(function(r, i){
+        var streakLabel = r.streakLength ? (r.streakType === 'WIN' ? 'W' : 'L') + r.streakLength : '–';
+        return '<div class="standings-row">' +
+          '<span class="standings-rank">' + (i + 1) + '</span>' +
+          '<span class="standings-name">' + r.name + '</span>' +
+          '<span class="standings-record">' + r.wins + '-' + r.losses + (r.ties ? '-' + r.ties : '') + '</span>' +
+          '<span class="standings-pf">' + r.pointsFor.toFixed(1) + '</span>' +
+          '<span class="standings-streak' + (r.streakType === 'WIN' ? ' win' : '') + '">' + streakLabel + '</span>' +
+        '</div>';
+      }).join('');
+      return html;
+    }
+
     function renderStandings(){
       var statusEl = document.getElementById('standingsStatus');
       var tableEl = document.getElementById('standingsTable');
+      var tabsEl = document.getElementById('standingsTabs');
+      var nfcEl = document.getElementById('standingsTableNFC');
+      var afcEl = document.getElementById('standingsTableAFC');
       var noteEl = document.getElementById('standingsNote');
       fetch('data/standings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         var rows = wrap.data || [];
-        var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf">Punkte</span><span class="standings-streak">Streak</span></div>';
-        html += rows.map(function(r, i){
-          var streakLabel = r.streakLength ? (r.streakType === 'WIN' ? 'W' : 'L') + r.streakLength : '–';
-          return '<div class="standings-row">' +
-            '<span class="standings-rank">' + (i + 1) + '</span>' +
-            '<span class="standings-name">' + r.name + '</span>' +
-            '<span class="standings-record">' + r.wins + '-' + r.losses + (r.ties ? '-' + r.ties : '') + '</span>' +
-            '<span class="standings-pf">' + r.pointsFor.toFixed(1) + '</span>' +
-            '<span class="standings-streak' + (r.streakType === 'WIN' ? ' win' : '') + '">' + streakLabel + '</span>' +
-          '</div>';
-        }).join('');
-        tableEl.innerHTML = html;
+        tableEl.innerHTML = standingsRowsHtml(rows);
         tableEl.style.display = '';
+        nfcEl.innerHTML = standingsRowsHtml(rows.filter(function(r){ return teams[r.name] === 'NFC'; }));
+        afcEl.innerHTML = standingsRowsHtml(rows.filter(function(r){ return teams[r.name] === 'AFC'; }));
+        tabsEl.style.display = '';
         statusEl.textContent = '';
         var d = new Date(wrap.lastUpdated);
         noteEl.textContent = 'Stand: ' + d.toLocaleDateString('de-CH') + ' ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }) + ' – aktualisiert sich automatisch, sobald Spiele gewertet wurden.';
@@ -488,6 +514,15 @@
         statusEl.classList.add('error');
       });
     }
+
+    document.getElementById('standingsTabs').addEventListener('click', function(e){
+      var btn = e.target.closest('.standings-tab');
+      if(!btn) return;
+      document.querySelectorAll('.standings-tab').forEach(function(b){ b.classList.toggle('is-active', b === btn); });
+      var isConf = btn.dataset.view === 'conf';
+      document.getElementById('standingsTable').style.display = isConf ? 'none' : '';
+      document.getElementById('standingsConfWrap').style.display = isConf ? '' : 'none';
+    });
 
     function applyFilter(){
       var team = filterEl.value;
