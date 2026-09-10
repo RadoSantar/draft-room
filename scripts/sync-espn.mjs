@@ -8,6 +8,7 @@ import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { POS_MAP, TEAM_ABBR, projectedPoints, findSeasonProjection, buildOptimalLineup } from './scoring.mjs';
+import { generateRecapsForGames } from './generate-recaps.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const DATA_DIR = path.join(__dirname, '..', 'data');
@@ -211,6 +212,27 @@ async function main() {
     if (idx >= 0) history.snapshots[idx] = newSnapshot;
     else history.snapshots.push(newSnapshot);
     await writeJson('power-rankings-history.json', { lastUpdated: nowIso(), snapshots: history.snapshots });
+  }
+
+  // ---- Spiel-Recaps (von Claude geschrieben, im Stil des Saison-Ausblicks) ----
+  // Nur für die Woche, die gerade komplett abgeschlossen wurde – läuft ohne
+  // ANTHROPIC_API_KEY einfach nicht (siehe generate-recaps.mjs).
+  if (lastCompletedWeek > 0) {
+    const starterTotalById = Object.fromEntries(teamsComputed.map((t) => [t.id, t.starterTotal]));
+    const weekGames = scoreboard.find((w) => w.week === lastCompletedWeek)?.games || [];
+    const enrichedGames = weekGames.map((g) => ({
+      ...g,
+      week: lastCompletedWeek,
+      homeProj: starterTotalById[g.homeId] || 0,
+      awayProj: starterTotalById[g.awayId] || 0
+    }));
+
+    const oldRecaps = await readJsonSafe('game-recaps.json', { data: {} });
+    const existing = oldRecaps.data || {};
+    const newRecaps = await generateRecapsForGames(enrichedGames, existing);
+    if (Object.keys(newRecaps).length) {
+      await writeJson('game-recaps.json', { lastUpdated: nowIso(), data: { ...existing, ...newRecaps } });
+    }
   }
 
   // ---- Transaktionen: Roster-Diff gegen letzten Snapshot (erkennt Trades/Adds/Drops generisch) ----

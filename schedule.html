@@ -140,6 +140,9 @@
   .sched-week-type{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;}
 
   .sched-games{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);}
+  .sched-game-wrap{border-bottom:1px solid rgba(255,255,255,0.08);}
+  .sched-game-wrap:last-child{border-bottom:none;}
+  .sched-game-wrap.is-filtered-out{display:none;}
   .sched-game{
     display:flex;
     align-items:center;
@@ -147,9 +150,29 @@
     padding:10px 14px;
     font-family:'IBM Plex Mono', monospace;
     font-size:13px;
-    border-bottom:1px solid rgba(255,255,255,0.08);
   }
-  .sched-game:last-child{border-bottom:none;}
+  .game-recap{padding:0 14px 10px;}
+  .game-recap summary{
+    cursor:pointer;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--amber);
+    opacity:.85;
+    list-style:none;
+  }
+  .game-recap summary::-webkit-details-marker{display:none;}
+  .game-recap summary::before{content:'📰 ';}
+  .game-recap p{
+    font-family:'Source Serif 4', serif;
+    font-style:italic;
+    font-size:13.5px;
+    color:var(--chalk);
+    opacity:.92;
+    margin-top:8px;
+    max-width:64ch;
+  }
   .sched-team{display:flex;align-items:center;gap:6px;flex:1;min-width:0;}
   .sched-team.side-a{justify-content:flex-end;text-align:right;}
   .sched-team.side-b{justify-content:flex-start;text-align:left;}
@@ -167,7 +190,6 @@
   .sched-vs{color:var(--hash);font-size:10px;text-transform:uppercase;flex:0 0 auto;}
   .sched-score{color:var(--amber);font-size:12px;flex:0 0 auto;font-weight:600;}
   .sched-game.is-final .side-a.winner .name, .sched-game.is-final .side-b.winner .name{color:var(--amber);}
-  .sched-game.is-filtered-out{display:none;}
   .sched-game.is-mine .name{color:var(--amber);font-weight:600;}
 
   .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:64ch;}
@@ -375,6 +397,17 @@
       return null;
     }
 
+    var RECAPS_BY_WEEK = {};
+    function findRecap(wk, t1, t2){
+      var recaps = RECAPS_BY_WEEK[wk];
+      if(!recaps) return null;
+      for(var i = 0; i < recaps.length; i++){
+        var r = recaps[i];
+        if((r.homeName === t1 && r.awayName === t2) || (r.homeName === t2 && r.awayName === t1)) return r;
+      }
+      return null;
+    }
+
     function gameHtml(g, wk){
       var t1 = g[0], c1 = g[1], t2 = g[2], c2 = g[3], kind = g[4], double = g[5];
       var score = findScore(wk, t1, t2);
@@ -387,10 +420,15 @@
         vsOrScore = '<span class="sched-score mono">' + s1.toFixed(1) + '–' + s2.toFixed(1) + '</span>';
         winA = s1 > s2; winB = s2 > s1;
       }
-      return '<div class="sched-game' + (isFinal ? ' is-final' : '') + '" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
-        '<span class="sched-team side-a' + (winA ? ' winner' : '') + '"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
-        vsOrScore +
-        '<span class="sched-team side-b' + (winB ? ' winner' : '') + '"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
+      var recap = isFinal ? findRecap(wk, t1, t2) : null;
+      var recapHtml = recap ? '<details class="game-recap"><summary>Recap</summary><p>' + recap.recap + '</p></details>' : '';
+      return '<div class="sched-game-wrap">' +
+        '<div class="sched-game' + (isFinal ? ' is-final' : '') + '" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
+          '<span class="sched-team side-a' + (winA ? ' winner' : '') + '"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
+          vsOrScore +
+          '<span class="sched-team side-b' + (winB ? ' winner' : '') + '"><span class="conf-badge ' + c2.toLowerCase() + '">' + c2 + '</span><span class="name">' + t2 + '</span></span>' +
+        '</div>' +
+        recapHtml +
       '</div>';
     }
 
@@ -408,6 +446,17 @@
     function loadScores(){
       fetch('data/scoreboard.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         (wrap.data || []).forEach(function(wk){ SCORES_BY_WEEK[wk.week] = wk.games; });
+        render();
+      }).catch(function(){});
+    }
+
+    function loadRecaps(){
+      fetch('data/game-recaps.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
+        var byId = wrap.data || {};
+        Object.keys(byId).forEach(function(key){
+          var r = byId[key];
+          (RECAPS_BY_WEEK[r.week] = RECAPS_BY_WEEK[r.week] || []).push(r);
+        });
         render();
       }).catch(function(){});
     }
@@ -447,11 +496,12 @@
       weeksEl.querySelectorAll('.sched-week').forEach(function(weekEl){
         var anyVisible = false;
         weekEl.querySelectorAll('.sched-game').forEach(function(row){
+          var wrap = row.closest('.sched-game-wrap') || row;
           var matchesTeam = !team || row.dataset.t1 === team || row.dataset.t2 === team;
           var matchesDouble = !doubleOnly || row.dataset.double === '1';
           var matchesConf = !confOnly || row.dataset.kind === 'intern';
           var visible = matchesTeam && matchesDouble && matchesConf;
-          row.classList.toggle('is-filtered-out', !visible);
+          wrap.classList.toggle('is-filtered-out', !visible);
           row.classList.toggle('is-mine', !!team && visible);
           if(visible) anyVisible = true;
         });
@@ -481,6 +531,7 @@
     render();
     updateMyTeamBtn();
     loadScores();
+    loadRecaps();
     renderStandings();
   })();
 </script>
