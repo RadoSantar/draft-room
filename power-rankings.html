@@ -181,6 +181,12 @@
   .rank-score{font-family:'IBM Plex Mono', monospace;font-size:15px;color:var(--amber);text-align:right;flex:0 0 auto;white-space:nowrap;}
   .rank-score small{display:block;font-size:9px;color:var(--chalk);opacity:.7;text-transform:uppercase;letter-spacing:.05em;}
 
+  .rank-tabs{display:flex;gap:8px;margin:20px 0 0;}
+  .rank-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid var(--card-border);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .rank-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
+  .rank-div-label{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--hash);margin:18px 0 4px;}
+  .rank-div-label:first-of-type{margin-top:14px;}
+
   /* Team cards */
   .team-card{
     background:var(--card);
@@ -426,7 +432,22 @@
 
   <h2 class="section-head">Power Ranking</h2>
   <div class="calc-status" id="rankStatus">Lade aktuelle Daten…</div>
+  <div class="rank-tabs" id="rankTabs" style="display:none" role="tablist">
+    <button type="button" class="rank-tab is-active" data-view="league">Liga</button>
+    <button type="button" class="rank-tab" data-view="conf">Nach Conference</button>
+  </div>
   <div class="rank-list" id="rankList"></div>
+  <div class="rank-conf-wrap" id="rankConfWrap" style="display:none">
+    <div class="rank-div-label mono">NFC</div>
+    <div class="rank-list" id="rankListNFC"></div>
+    <div class="rank-div-label mono">AFC</div>
+    <div class="rank-list" id="rankListAFC"></div>
+  </div>
+
+  <h2 class="section-head">Strength of Schedule</h2>
+  <p class="copy">Wie stark sind im Schnitt die 15 Gegner, auf die jedes Team diese Saison trifft (der Conference-Gegner zählt doppelt, da man ihn zweimal spielt) – gemessen am aktuellen Power-Ranking-Score der Gegner. Rang 1 = schwierigster Spielplan. Die Werte verschieben sich automatisch mit, sobald sich die Power Rankings durch Trades, Waiver oder gespielte Wochen ändern – kein fixer Vorschau-Wert, sondern ein Live-Blick auf "wie hart ist mein Spielplan gerade".</p>
+  <div class="calc-status" id="sosStatus">Lade aktuelle Daten…</div>
+  <div class="rank-list" id="sosList"></div>
 
   <h2 class="section-head">Power-Ranking-Verlauf</h2>
   <p class="copy">Wie sich die Rangliste seit dem Draft entwickelt hat: 1. nach dem Draft, 2. vor dem ersten Spieltag (inkl. Trades/Waiver bis dahin), danach automatisch nach jedem abgeschlossenen Spieltag.</p>
@@ -475,6 +496,9 @@
   var POS_LABEL = {QB:"QB",RB:"RB",WR:"WR",TE:"TE",K:"K",DST:"DEF"};
   var TX_BADGE_LABEL = {TRADE:"Trade",DECLINED:"Abgelehnt",WAIVER:"Waiver",WAIVER_FAILED:"Waiver (gescheitert)",FREEAGENT:"Free Agent"};
 
+  var TEAM_CONF = {"Saints of Anarchy":"NFC","Tackleberry Finn":"NFC","Hopp Schwiiz":"NFC","Buhaaner":"NFC","Queen of Chaos":"NFC","Zurich City Ravens":"AFC","Run CMC":"AFC","Sherlock Mahomes":"AFC","TM06":"AFC","Apukalypse Now":"AFC"};
+  var TEAM_OPPONENTS = {"Tackleberry Finn":["Queen of Chaos","TM06","Zurich City Ravens","Sherlock Mahomes","Buhaaner","Hopp Schwiiz","Queen of Chaos","Run CMC","Saints of Anarchy","Apukalypse Now","Sherlock Mahomes","Run CMC","Saints of Anarchy","Hopp Schwiiz","Buhaaner"],"Queen of Chaos":["Tackleberry Finn","Saints of Anarchy","Buhaaner","Run CMC","Apukalypse Now","TM06","Tackleberry Finn","Hopp Schwiiz","Sherlock Mahomes","Zurich City Ravens","Hopp Schwiiz","TM06","Buhaaner","Saints of Anarchy","Apukalypse Now"],"Hopp Schwiiz":["Buhaaner","Zurich City Ravens","TM06","Saints of Anarchy","Sherlock Mahomes","Tackleberry Finn","Apukalypse Now","Queen of Chaos","Run CMC","Buhaaner","Queen of Chaos","Apukalypse Now","TM06","Tackleberry Finn","Saints of Anarchy"],"Buhaaner":["Hopp Schwiiz","Run CMC","Queen of Chaos","Apukalypse Now","Tackleberry Finn","Sherlock Mahomes","Zurich City Ravens","Saints of Anarchy","TM06","Hopp Schwiiz","Zurich City Ravens","Saints of Anarchy","Queen of Chaos","Sherlock Mahomes","Tackleberry Finn"],"Run CMC":["Apukalypse Now","Buhaaner","Sherlock Mahomes","Queen of Chaos","Zurich City Ravens","Apukalypse Now","Saints of Anarchy","Tackleberry Finn","Hopp Schwiiz","TM06","Saints of Anarchy","Tackleberry Finn","Sherlock Mahomes","Zurich City Ravens","TM06"],"Apukalypse Now":["Run CMC","Sherlock Mahomes","Saints of Anarchy","Buhaaner","Queen of Chaos","Run CMC","Hopp Schwiiz","Sherlock Mahomes","Zurich City Ravens","Tackleberry Finn","TM06","Hopp Schwiiz","Zurich City Ravens","TM06","Queen of Chaos"],"Sherlock Mahomes":["TM06","Apukalypse Now","Run CMC","Tackleberry Finn","Hopp Schwiiz","Buhaaner","TM06","Apukalypse Now","Queen of Chaos","Saints of Anarchy","Tackleberry Finn","Zurich City Ravens","Run CMC","Buhaaner","Zurich City Ravens"],"TM06":["Sherlock Mahomes","Tackleberry Finn","Hopp Schwiiz","Zurich City Ravens","Saints of Anarchy","Queen of Chaos","Sherlock Mahomes","Zurich City Ravens","Buhaaner","Run CMC","Apukalypse Now","Queen of Chaos","Hopp Schwiiz","Apukalypse Now","Run CMC"],"Saints of Anarchy":["Zurich City Ravens","Queen of Chaos","Apukalypse Now","Hopp Schwiiz","TM06","Zurich City Ravens","Run CMC","Buhaaner","Tackleberry Finn","Sherlock Mahomes","Run CMC","Buhaaner","Tackleberry Finn","Queen of Chaos","Hopp Schwiiz"],"Zurich City Ravens":["Saints of Anarchy","Hopp Schwiiz","Tackleberry Finn","TM06","Run CMC","Saints of Anarchy","Buhaaner","TM06","Apukalypse Now","Queen of Chaos","Buhaaner","Sherlock Mahomes","Apukalypse Now","Run CMC","Sherlock Mahomes"]};
+
   var rankListEl = document.getElementById('rankList');
   var teamCardsEl = document.getElementById('teamCards');
   var txWeeksEl = document.getElementById('txWeeks');
@@ -520,6 +544,30 @@
     if(t.previousRank === undefined || t.previousRank === t.rank) return '';
     if(t.previousRank > t.rank) return '<span class="rank-move up mono">▲ ' + (t.previousRank - t.rank) + '</span>';
     return '<span class="rank-move down mono">▼ ' + (t.rank - t.previousRank) + '</span>';
+  }
+
+  function rankItemHtml(t){
+    return '<a class="rank-item" href="#team-' + t.id + '">' +
+      '<span class="rank-num mono">' + t.rank + '</span>' +
+      '<span class="rank-info">' +
+        '<span class="rank-name">' + t.name + '</span>' +
+        '<span class="rank-owner mono"> · ' + t.owner + '</span>' +
+        rankMoveHtml(t) +
+        '<span class="rank-tagline">' + (t.tagline || '') + '</span>' +
+      '</span>' +
+      '<span class="rank-score">' + fmt(t.starterTotal) + '<small>Start-Proj.</small></span>' +
+    '</a>';
+  }
+
+  function sosItemHtml(t, sosRank){
+    return '<a class="rank-item" href="#team-' + t.id + '">' +
+      '<span class="rank-num mono">' + sosRank + '</span>' +
+      '<span class="rank-info">' +
+        '<span class="rank-name">' + t.name + '</span>' +
+        '<span class="rank-owner mono"> · ' + t.owner + ' · ' + TEAM_CONF[t.name] + '</span>' +
+      '</span>' +
+      '<span class="rank-score">' + fmt(t.sos) + '<small>Ø Gegner</small></span>' +
+    '</a>';
   }
 
   function renderHistory(historyWrap, teamOrder){
@@ -572,18 +620,21 @@
     statusKickerEl.textContent = 'Nach dem Draft · Stand ' + fmtDate(powerWrap.lastUpdated);
     rankStatusEl.textContent = '';
 
-    rankListEl.innerHTML = TEAMS.map(function(t){
-      return '<a class="rank-item" href="#team-' + t.id + '">' +
-        '<span class="rank-num mono">' + t.rank + '</span>' +
-        '<span class="rank-info">' +
-          '<span class="rank-name">' + t.name + '</span>' +
-          '<span class="rank-owner mono"> · ' + t.owner + '</span>' +
-          rankMoveHtml(t) +
-          '<span class="rank-tagline">' + (t.tagline || '') + '</span>' +
-        '</span>' +
-        '<span class="rank-score">' + fmt(t.starterTotal) + '<small>Start-Proj.</small></span>' +
-      '</a>';
-    }).join('');
+    rankListEl.innerHTML = TEAMS.map(rankItemHtml).join('');
+    document.getElementById('rankListNFC').innerHTML = TEAMS.filter(function(t){ return TEAM_CONF[t.name] === 'NFC'; }).map(rankItemHtml).join('');
+    document.getElementById('rankListAFC').innerHTML = TEAMS.filter(function(t){ return TEAM_CONF[t.name] === 'AFC'; }).map(rankItemHtml).join('');
+    document.getElementById('rankTabs').style.display = '';
+
+    var starterTotalByName = {};
+    TEAMS.forEach(function(t){ starterTotalByName[t.name] = t.starterTotal; });
+    TEAMS.forEach(function(t){
+      var opponents = TEAM_OPPONENTS[t.name] || [];
+      var sum = opponents.reduce(function(acc, name){ return acc + (starterTotalByName[name] || 0); }, 0);
+      t.sos = opponents.length ? sum / opponents.length : 0;
+    });
+    var sosSorted = TEAMS.slice().sort(function(a, b){ return b.sos - a.sos; });
+    document.getElementById('sosList').innerHTML = sosSorted.map(function(t, i){ return sosItemHtml(t, i + 1); }).join('');
+    document.getElementById('sosStatus').textContent = '';
 
     teamCardsEl.innerHTML = TEAMS.map(function(t){
       return '<section class="team-card" id="team-' + t.id + '">' +
@@ -599,6 +650,7 @@
           '<div class="team-stat"><div class="team-stat-label mono">Start-Projektion</div><div class="team-stat-value amber">' + fmt(t.starterTotal) + '</div></div>' +
           '<div class="team-stat"><div class="team-stat-label mono">Bench-Projektion</div><div class="team-stat-value">' + fmt(t.benchTotal) + '</div></div>' +
           '<div class="team-stat"><div class="team-stat-label mono">Gesamt</div><div class="team-stat-value">' + fmt(t.starterTotal + t.benchTotal) + '</div></div>' +
+          '<div class="team-stat"><div class="team-stat-label mono">SOS (Ø Gegner)</div><div class="team-stat-value">' + fmt(t.sos) + '</div></div>' +
         '</div>' +
         posTableHtml(t) +
         (t.hype ? '<div class="hype-box"><div class="hype-label mono">⚡ Saison-Ausblick</div><div class="hype-text">' + t.hype + '</div></div>' : '') +
@@ -634,6 +686,15 @@
     statusKickerEl.textContent = 'Fehler beim Laden der Daten';
     rankStatusEl.textContent = 'Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
     console.error(err);
+  });
+
+  document.getElementById('rankTabs').addEventListener('click', function(e){
+    var btn = e.target.closest('.rank-tab');
+    if(!btn) return;
+    document.querySelectorAll('.rank-tab').forEach(function(b){ b.classList.toggle('is-active', b === btn); });
+    var isConf = btn.dataset.view === 'conf';
+    rankListEl.style.display = isConf ? 'none' : '';
+    document.getElementById('rankConfWrap').style.display = isConf ? '' : 'none';
   });
 })();
 </script>
