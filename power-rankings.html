@@ -204,7 +204,6 @@
     flex:0 0 auto;
   }
   .team-card h2{font-size:26px;margin:0;}
-  .team-owner{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--hash);margin-bottom:14px;}
   .team-tagline{font-size:14px;color:var(--ink-soft);font-style:italic;margin-bottom:14px;max-width:64ch;}
 
   .team-links{margin-bottom:16px;}
@@ -555,7 +554,6 @@
       '<span class="rank-num mono">' + t.rank + '</span>' +
       '<span class="rank-info">' +
         '<span class="rank-name">' + t.name + '</span>' +
-        '<span class="rank-owner mono"> · ' + t.owner + '</span>' +
         rankMoveHtml(t) +
         '<span class="rank-tagline">' + (t.tagline || '') + '</span>' +
       '</span>' +
@@ -568,7 +566,7 @@
       '<span class="rank-num mono">' + sosRank + '</span>' +
       '<span class="rank-info">' +
         '<span class="rank-name">' + t.name + '</span>' +
-        '<span class="rank-owner mono"> · ' + t.owner + ' · ' + TEAM_CONF[t.name] + '</span>' +
+        '<span class="rank-owner mono"> · ' + TEAM_CONF[t.name] + '</span>' +
       '</span>' +
       '<span class="rank-score">' + fmt(t.sos) + '<small>Ø Gegner</small></span>' +
     '</a>';
@@ -693,7 +691,6 @@
           '<h2>' + t.name + '</h2>' +
           rankMoveHtml(t) +
         '</div>' +
-        '<div class="team-owner">Owner: ' + t.owner + '</div>' +
         '<p class="team-tagline">' + (t.tagline || '') + '</p>' +
         '<div class="team-links"><a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN →</a></div>' +
         '<div class="team-stats">' +

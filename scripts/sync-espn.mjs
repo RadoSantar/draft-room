@@ -83,8 +83,6 @@ async function main() {
 
   const teamNames = {};
   teamData.teams.forEach((t) => { teamNames[t.id] = (t.name || '').trim(); });
-  const members = {};
-  (teamData.members || []).forEach((m) => { members[m.id] = ((m.firstName || '') + ' ' + (m.lastName || '')).trim() || m.displayName || '?'; });
 
   // ---- Aktuelle Kader + Spieler-Pool (für Namen/Positionen/Team) ----
   const playerPool = {};
@@ -147,7 +145,6 @@ async function main() {
     return {
       id: t.id,
       name: teamNames[t.id],
-      owner: members[(t.owners || [])[0]] || '?',
       starterTotal: Math.round(starterTotal * 10) / 10,
       benchTotal: Math.round(benchTotal * 10) / 10,
       posTotals: Object.fromEntries(Object.entries(posTotals).map(([k, v]) => [k, Math.round(v * 10) / 10])),
