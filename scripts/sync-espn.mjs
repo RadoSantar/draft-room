@@ -108,6 +108,7 @@ async function fetchWeeklyKeyMomentsByTeam(week) {
           const p = e.playerPoolEntry?.player;
           if (!p) return;
           const entry = {
+            playerId: p.id,
             name: p.fullName,
             pos: POS_MAP[p.defaultPositionId] || '?',
             points: e.playerPoolEntry.appliedStatTotal || 0
@@ -307,6 +308,100 @@ function findPlayoffRaceFact(game, standings, confStandings) {
   return [home, away].filter(Boolean).sort((a, b) => priority[a.status] - priority[b.status])[0] || null;
 }
 
+// Pechvogel der Woche: verliert, hätte mit diesem Score aber mindestens eines der ANDEREN Spiele
+// dieser Woche gewonnen. Reine Woche-intern-Betrachtung, braucht keine Zusatz-Fetches.
+function findUnluckyLoserFact(game, weekGames) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const loserName = game.winner === 'HOME' ? game.awayName : game.homeName;
+  const loserScore = game.winner === 'HOME' ? game.awayScore : game.homeScore;
+  const beatenCount = weekGames.filter((g) => {
+    if (g.homeId === game.homeId && g.awayId === game.awayId) return false;
+    const otherWinnerScore = g.winner === 'HOME' ? g.homeScore : g.winner === 'AWAY' ? g.awayScore : null;
+    return otherWinnerScore != null && loserScore > otherWinnerScore;
+  }).length;
+  if (!beatenCount) return null;
+  return { team: loserName, score: loserScore, beatenCount };
+}
+
+// Hässlicher Sieg: gewinnt mit der niedrigsten Siegerpunktzahl der gesamten Woche.
+function findUglyWinFact(game, weekGames) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const winnerName = game.winner === 'HOME' ? game.homeName : game.awayName;
+  const winnerScore = game.winner === 'HOME' ? game.homeScore : game.awayScore;
+  const allWinningScores = weekGames
+    .filter((g) => g.winner === 'HOME' || g.winner === 'AWAY')
+    .map((g) => (g.winner === 'HOME' ? g.homeScore : g.awayScore));
+  if (allWinningScores.length < 2) return null;
+  if (winnerScore !== Math.min(...allWinningScores)) return null;
+  return { team: winnerName, score: winnerScore };
+}
+
+// Revanche: die beiden Teams sind sich diese Saison schon einmal begegnet (Conference-Gegner
+// spielen zweimal) – Verweis auf das erste Duell inkl. ob's diesmal Revanche gab oder Wiederholung.
+function findRematchFact(game, scoreboard) {
+  const pairKey = (a, b) => [a, b].sort((x, y) => x - y).join('-');
+  const thisKey = pairKey(game.homeId, game.awayId);
+  let earlier = null;
+  scoreboard.forEach((wk) => {
+    if (wk.week >= game.week) return;
+    wk.games.forEach((g) => {
+      if (g.winner === 'UNDECIDED') return;
+      if (pairKey(g.homeId, g.awayId) === thisKey) earlier = { ...g, week: wk.week };
+    });
+  });
+  if (!earlier) return null;
+  const earlierWinner = earlier.winner === 'HOME' ? earlier.homeName : earlier.winner === 'AWAY' ? earlier.awayName : null;
+  const thisWinner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
+  return {
+    week: earlier.week,
+    winner: earlierWinner,
+    scoreLine: `${earlier.homeName} ${earlier.homeScore.toFixed(1)} : ${earlier.awayScore.toFixed(1)} ${earlier.awayName}`,
+    isRevenge: !!(earlierWinner && thisWinner && earlierWinner !== thisWinner)
+  };
+}
+
+// Kicker/Defense hat's entschieden: der Sieg-Vorsprung ist kleiner oder gleich dem, was ein
+// einzelner K/DST-Starter des Siegers allein beisteuerte – ohne den hätte es nicht gereicht.
+function findKickerDecisiveFact(game, homePerf, awayPerf) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const margin = Math.abs(game.homeScore - game.awayScore);
+  if (margin <= 0) return null;
+  const winnerName = game.winner === 'HOME' ? game.homeName : game.awayName;
+  const winnerPerf = game.winner === 'HOME' ? homePerf : awayPerf;
+  if (!winnerPerf) return null;
+  const decisive = winnerPerf.starters
+    .filter((p) => p.pos === 'K' || p.pos === 'DST')
+    .find((p) => p.points >= margin);
+  if (!decisive) return null;
+  return { team: winnerName, name: decisive.name, pos: decisive.pos, points: decisive.points, margin };
+}
+
+// Waiver-Wire-Karma: einer der beiden Teams hatte diese Saison schon mal einen Spieler abgeworfen,
+// der jetzt im Kader (Start oder Bank) des GEGNERS steht und dort ordentlich punktet. Braucht die
+// transactions.json-Drop-Einträge (playerId/teamId) gegen die echten Wochen-Boxscore-Daten.
+function findWaiverKarmaFact(game, homePerf, awayPerf, transactions) {
+  if (!transactions?.length) return null;
+  const dropsByTeam = {};
+  transactions.forEach((t) => {
+    if (t.type === 'FREEAGENT' && t.playerId != null && t.teamId != null && t.id?.startsWith('drop-')) {
+      (dropsByTeam[t.teamId] = dropsByTeam[t.teamId] || new Set()).add(t.playerId);
+    }
+  });
+
+  const check = (droppingTeamId, droppingTeamName, opponentPerf, opponentName) => {
+    const dropped = dropsByTeam[droppingTeamId];
+    if (!dropped || !opponentPerf) return null;
+    const allOpp = [...opponentPerf.starters, ...opponentPerf.bench];
+    const karmaPlayer = allOpp.find((p) => dropped.has(p.playerId) && p.points >= 10);
+    if (!karmaPlayer) return null;
+    return { droppingTeam: droppingTeamName, karmaTeam: opponentName, player: karmaPlayer };
+  };
+
+  return check(game.homeId, game.homeName, awayPerf, game.awayName)
+    || check(game.awayId, game.awayName, homePerf, game.homeName)
+    || null;
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -366,6 +461,26 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
     const awayNextOpp = findNextOpponent(game.awayId, ctx.scoreboard, game.week + 1, ctx.standingsById, ctx.confStandings);
     if (homeNextOpp) result.homeNextOpp = homeNextOpp;
     if (awayNextOpp) result.awayNextOpp = awayNextOpp;
+  }
+
+  if (ctx?.weekGames) {
+    const unluckyLoser = findUnluckyLoserFact(game, ctx.weekGames);
+    if (unluckyLoser) result.unluckyLoser = unluckyLoser;
+    const uglyWin = findUglyWinFact(game, ctx.weekGames);
+    if (uglyWin) result.uglyWin = uglyWin;
+  }
+
+  if (ctx?.scoreboard) {
+    const rematch = findRematchFact(game, ctx.scoreboard);
+    if (rematch) result.rematch = rematch;
+  }
+
+  const kickerDecisive = findKickerDecisiveFact(game, homePerf, awayPerf);
+  if (kickerDecisive) result.kickerDecisive = kickerDecisive;
+
+  if (ctx?.transactions) {
+    const waiverKarma = findWaiverKarmaFact(game, homePerf, awayPerf, ctx.transactions);
+    if (waiverKarma) result.waiverKarma = waiverKarma;
   }
 
   return result;
@@ -566,7 +681,8 @@ async function main() {
     const weekGames = scoreboard.find((w) => w.week === lastCompletedWeek)?.games || [];
     const keyMomentsByTeam = await fetchWeeklyKeyMomentsByTeam(lastCompletedWeek);
     const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
-    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard };
+    const existingTransactions = (await readJsonSafe('transactions.json', { data: [] })).data || [];
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
@@ -650,6 +766,7 @@ async function main() {
         newTx.push({
           id: 'drop-' + t.id + '-' + id + '-' + Date.now(),
           week: currentWeek, date: todayStr, type: 'FREEAGENT',
+          teamId: t.id, playerId: id,
           title: `${teamNames[t.id]} wirft ${playerInfo(id).name} ab`,
           detail: `${teamNames[t.id]} lässt ${playerInfo(id).name} (${playerInfo(id).pos}, ${playerInfo(id).proTeam}) frei.`,
           note: ''
