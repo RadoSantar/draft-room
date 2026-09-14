@@ -6,7 +6,7 @@ const MODEL = 'claude-sonnet-5';
 
 const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-5 Sätze, auf Deutsch) für "Fantasy Playbook", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech und pointiert: scheu dich nicht vor Spott, Sarkasmus und einer scharfen Zunge, gerne mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (z.B. eine schlechte Bank-Aufstellung, ein enttäuschender Star-Spieler, ein sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
 
-Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext eine "Vorschau auf die kommende Woche" gegeben ist, schliesse den Recap mit JE EINEM kurzen Teaser-Satz PRO TEAM ab – wie ein Trailer auf die jeweils nächste Partie, ruhig mit einer frechen kleinen Prognose-Anspielung, aber locker hingeworfen statt als separater Absatz. Wenn im Kontext ein "Playoff-Kontext" gegeben ist, passe den Ton entsprechend an: beim Gewinner-Bracket darf die übliche grosse Championship-Dramatik noch eine Schippe drauflegen; beim Toilet Bowl dreht sich der Humor um, wird selbstironisch-komisch – es geht darum, NICHT Letzter zu werden, das ist die Pointe, nicht sportlicher Ruhm. Wenn im Kontext ein "Playoff-Rennen"-Fakt gegeben ist, darfst du hier besonders bissig-ironisch werden: ein rechnerisch bereits eliminiertes Team wird mit süffisantem Mitleid bedacht (es spielt ja "nur noch um die Ehre"), ein Team mit knappem Rückstand oder wenig Polster steht dagegen unter echtem Druck – das darf sich im Ton wie ein Muss-Sieg anfühlen. Wenn "Waiver-Wire-Karma" gegeben ist, zelebriere das genüsslich als Schicksalsironie – das Team hat den eigenen Untergang quasi selbst herbeigeholt. "Pechvogel der Woche" und "Hässlicher Sieg" dürfen ebenfalls mit spürbarem Sarkasmus serviert werden (einmal Mitleid mit Häme gemischt, einmal ein süffisantes "Sieg ist Sieg, aber..."). Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
+Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext eine "Vorschau auf die kommende Woche" gegeben ist, schliesse den Recap mit JE EINEM kurzen Teaser-Satz PRO TEAM ab – wie ein Trailer auf die jeweils nächste Partie, ruhig mit einer frechen kleinen Prognose-Anspielung, aber locker hingeworfen statt als separater Absatz. Wenn im Kontext ein "Playoff-Kontext" gegeben ist, passe den Ton entsprechend an: beim Gewinner-Bracket darf die übliche grosse Championship-Dramatik noch eine Schippe drauflegen; beim Toilet Bowl dreht sich der Humor um, wird selbstironisch-komisch – es geht darum, NICHT Letzter zu werden, das ist die Pointe, nicht sportlicher Ruhm. Wenn im Kontext ein "Playoff-Rennen"-Fakt gegeben ist, darfst du hier besonders bissig-ironisch werden: ein rechnerisch bereits eliminiertes Team wird mit süffisantem Mitleid bedacht (es spielt ja "nur noch um die Ehre"), ein Team mit knappem Rückstand oder wenig Polster steht dagegen unter echtem Druck – das darf sich im Ton wie ein Muss-Sieg anfühlen. Wenn "Waiver-Wire-Karma" gegeben ist, zelebriere das genüsslich als Schicksalsironie – das Team hat den eigenen Untergang quasi selbst herbeigeholt. "Pechvogel der Woche" und "Hässlicher Sieg" dürfen ebenfalls mit spürbarem Sarkasmus serviert werden (einmal Mitleid mit Häme gemischt, einmal ein süffisantes "Sieg ist Sieg, aber..."). Wenn ein "Kollaps/Comeback"-Fakt gegeben ist, ist das dein grosser erzählerischer Moment: zeichne den vollen Spannungsbogen nach – wie stark das Team zunächst dominierte (gerne mit einem bildhaften Vergleich, "legte los wie X"), wie ihnen dann die Kontrolle entglitt, und wie bitter das Ende für sie ausfiel. Halte dich dabei an den Rahmen "laut unseren Zwischenständen" (wir haben nur einzelne Momentaufnahmen der Woche, keinen lückenlosen Live-Verlauf) – das schränkt die Dramatik nicht ein, nur die behauptete Präzision: keine erfundenen exakten Zeitpunkte oder Spielzüge. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
 async function callClaude(userPrompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -148,6 +148,15 @@ function collectFacts(game) {
     facts.push(`Waiver-Wire-Karma: ${wk.droppingTeam} warf ${wk.player.name} diese Saison schon mal ab – jetzt spielt er für ${wk.karmaTeam} und liefert ausgerechnet gegen die alten Besitzer ${wk.player.points.toFixed(1)} Punkte ab.`);
   }
 
+  if (game.comeback) {
+    const c = game.comeback;
+    facts.push(`Kollaps/Comeback laut unseren Zwischenständen im Wochenverlauf: ${c.collapsedTeam} lag zeitweise mit rund ${c.peakLead.toFixed(1)} Punkten voran, am Ende gewann aber trotzdem ${c.winnerTeam}.`);
+  }
+
+  if (game.leadChanges) {
+    facts.push(`Nervenkrieg laut unseren Zwischenständen: Die Führung wechselte im Wochenverlauf mindestens ${game.leadChanges.changes} Mal den Besitzer.`);
+  }
+
   return facts;
 }
 
@@ -240,6 +249,13 @@ const BADGE_POOL = {
   ],
   waiverKarma: [
     'Karma ist eine Diva', 'Der Fluch des Drops', 'Selbst schuld', 'Zurückgekehrt, um sich zu rächen', 'Die eigene Entscheidung rächt sich'
+  ],
+  comeback: [
+    'Der Kollaps der Woche', 'Vom Sicher-Geglaubten zum Nichts', 'Zurück in die Gosse, wo sie herkamen',
+    'Die Feuerwehr, die ausging', 'Der grosse Einbruch', 'Zu früh gefeiert'
+  ],
+  seesaw: [
+    'Nervenkrieg mit Ansage', 'Das Hin und Her der Woche', 'Wer zuletzt lacht...', 'Die Wundertüte der Woche'
   ]
 };
 
@@ -267,6 +283,8 @@ function pickBadge(game, wasUpset, margin) {
   if (game.rematch && !game.rematch.isRevenge) categories.push('repeatResult');
   if (game.kickerDecisive) categories.push('kickerHero');
   if (game.waiverKarma) categories.push('waiverKarma');
+  if (game.comeback) categories.push('comeback');
+  if (game.leadChanges) categories.push('seesaw');
 
   const candidates = categories.flatMap((c) => BADGE_POOL[c]);
   if (!candidates.length) return null;

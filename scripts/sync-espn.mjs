@@ -4,24 +4,9 @@
 //
 // Schreibt NIE team-content.json (die handgeschriebenen Analysen/Ausblicke) – das bleibt
 // ausschliesslich manuell gepflegt.
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { POS_MAP, TEAM_ABBR, projectedPoints, findSeasonProjection, buildOptimalLineup } from './scoring.mjs';
 import { generateRecapsForGames } from './generate-recaps.mjs';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const DATA_DIR = path.join(__dirname, '..', 'data');
-
-const LEAGUE_ID = process.env.ESPN_LEAGUE_ID || '686672943';
-const SEASON = process.env.ESPN_SEASON || '2026';
-const ESPN_S2 = process.env.ESPN_S2;
-const ESPN_SWID = process.env.ESPN_SWID;
-
-if (!ESPN_S2 || !ESPN_SWID) {
-  console.error('ESPN_S2 und/oder ESPN_SWID fehlen als Umgebungsvariable. Abbruch.');
-  process.exit(1);
-}
+import { SEASON, fetchLeague, readJsonSafe, writeJson, nowIso } from './espn-client.mjs';
 
 // Conference-Zuordnung – deckungsgleich mit TEAM_CONF in power-rankings.html/schedule.html.
 // ESPNs API liefert für diese Liga keine nutzbare Conference/Division-Info, daher von Hand gepflegt.
@@ -31,17 +16,7 @@ const TEAM_CONF = {
   'Saints of Anarchy': 'NFC', 'Zurich City Ravens': 'AFC'
 };
 
-const COOKIE = `SWID=${ESPN_SWID}; espn_s2=${ESPN_S2}`;
-const LEAGUE_BASE = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leagues/${LEAGUE_ID}`;
 const DEFAULTS_URL = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leaguedefaults/3?view=kona_player_info`;
-
-async function fetchLeague(views, scoringPeriodId) {
-  let url = LEAGUE_BASE + '?' + views.map((v) => 'view=' + v).join('&');
-  if (scoringPeriodId) url += '&scoringPeriodId=' + scoringPeriodId;
-  const res = await fetch(url, { headers: { Cookie: COOKIE } });
-  if (!res.ok) throw new Error(`ESPN-Fetch fehlgeschlagen (${res.status}): ${url}`);
-  return res.json();
-}
 
 async function fetchProjections(ids) {
   if (!ids.length) return {};
@@ -63,25 +38,6 @@ async function fetchProjections(ids) {
     };
   });
   return out;
-}
-
-async function readJsonSafe(file, fallback) {
-  try {
-    const raw = await readFile(path.join(DATA_DIR, file), 'utf8');
-    return JSON.parse(raw);
-  } catch (e) {
-    return fallback;
-  }
-}
-
-async function writeJson(file, value) {
-  await mkdir(DATA_DIR, { recursive: true });
-  await writeFile(path.join(DATA_DIR, file), JSON.stringify(value), 'utf8');
-  console.log('geschrieben:', file);
-}
-
-function nowIso() {
-  return new Date().toISOString();
 }
 
 // ESPN-Lineup-Slot-IDs: 20 = Bench, 21 = IR – alle anderen sind Start-Slots (QB/RB/WR/TE/FLEX/K/DEF).
@@ -402,6 +358,57 @@ function findWaiverKarmaFact(game, homePerf, awayPerf, transactions) {
     || null;
 }
 
+// Extrahiert für dieses eine Spiel die Score-Differenz (Heim minus Auswärts) aus jedem
+// Live-Zwischenstand der Woche, in chronologischer Reihenfolge, plus den Endstand als letzten Punkt.
+// Basis für findComebackFact()/findLeadChangesFact() – kommt von snapshot-live-scores.mjs, das
+// mehrmals pro Spieltag läuft (siehe .github/workflows/espn-live-snapshot.yml). Ohne diese Snapshots
+// (z.B. weil das Zusatz-Feature nicht aktiv ist) einfach leeres Array – die beiden Fakten bleiben
+// dann schlicht aus, kein Fehler.
+function extractDiffTimeline(game, liveSnapshots) {
+  const diffs = [];
+  (liveSnapshots || []).forEach((s) => {
+    const g = s.games.find((gg) => gg.homeId === game.homeId && gg.awayId === game.awayId);
+    if (g) diffs.push(g.homeScore - g.awayScore);
+  });
+  diffs.push(game.homeScore - game.awayScore);
+  return diffs;
+}
+
+// Kollaps/Comeback: eines der beiden Teams lag laut unseren Zwischenständen irgendwann deutlich
+// (≥15 Punkte) vorne, verlor am Ende aber trotzdem. Bewusst als Näherung kommuniziert ("laut unseren
+// Zwischenständen") – wir sehen nur die paar Momentaufnahmen, an denen tatsächlich snapshotted wurde,
+// nicht den kompletten Verlauf.
+function findComebackFact(game, liveSnapshots) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const diffs = extractDiffTimeline(game, liveSnapshots);
+  if (diffs.length < 2) return null;
+  const maxHomeLead = Math.max(0, ...diffs);
+  const maxAwayLead = Math.max(0, ...diffs.map((d) => -d));
+
+  if (game.winner === 'AWAY' && maxHomeLead >= 15) {
+    return { collapsedTeam: game.homeName, peakLead: maxHomeLead, winnerTeam: game.awayName };
+  }
+  if (game.winner === 'HOME' && maxAwayLead >= 15) {
+    return { collapsedTeam: game.awayName, peakLead: maxAwayLead, winnerTeam: game.homeName };
+  }
+  return null;
+}
+
+// Nervenkrieg: wie oft wechselte die Führung laut unseren Zwischenständen den Besitzer.
+function findLeadChangesFact(game, liveSnapshots) {
+  if (game.winner === 'TIE') return null;
+  const diffs = extractDiffTimeline(game, liveSnapshots);
+  let changes = 0;
+  let lastSign = 0;
+  diffs.forEach((d) => {
+    const sign = d > 0 ? 1 : d < 0 ? -1 : 0;
+    if (sign !== 0 && lastSign !== 0 && sign !== lastSign) changes++;
+    if (sign !== 0) lastSign = sign;
+  });
+  if (changes < 2) return null;
+  return { changes };
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -481,6 +488,13 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   if (ctx?.transactions) {
     const waiverKarma = findWaiverKarmaFact(game, homePerf, awayPerf, ctx.transactions);
     if (waiverKarma) result.waiverKarma = waiverKarma;
+  }
+
+  if (ctx?.liveSnapshots) {
+    const comeback = findComebackFact(game, ctx.liveSnapshots);
+    if (comeback) result.comeback = comeback;
+    const leadChanges = findLeadChangesFact(game, ctx.liveSnapshots);
+    if (leadChanges) result.leadChanges = leadChanges;
   }
 
   return result;
@@ -682,7 +696,9 @@ async function main() {
     const keyMomentsByTeam = await fetchWeeklyKeyMomentsByTeam(lastCompletedWeek);
     const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
     const existingTransactions = (await readJsonSafe('transactions.json', { data: [] })).data || [];
-    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions };
+    const liveSnapshotData = await readJsonSafe('live-snapshots.json', { week: null, snapshots: [] });
+    const liveSnapshots = liveSnapshotData.week === lastCompletedWeek ? liveSnapshotData.snapshots : null;
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
