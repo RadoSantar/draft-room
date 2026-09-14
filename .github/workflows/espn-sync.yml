@@ -6,8 +6,12 @@ name: ESPN Sync
 # Rührt NIE data/team-content.json (handgeschriebene Analysen/Ausblicke) an.
 on:
   schedule:
-    # Jeden Dienstag um 05:00 UTC (nach Monday Night Football) = 07:00 Schweizer Sommerzeit
-    - cron: '0 5 * * 2'
+    # Jeden Dienstag ab 05:00 UTC (= 07:00 Schweizer Sommerzeit), danach alle 2h bis 13:00 UTC.
+    # Ist die letzte Woche (z.B. wegen eines späten Monday-Night-Spiels) bei einem Lauf noch nicht
+    # komplett gewertet, überspringt sync-espn.mjs Recap/History für diese Woche einfach (siehe dort)
+    # und der nächste Lauf 2h später prüft automatisch erneut – ganz ohne eigene Retry-Logik, weil
+    # jeder Lauf ohnehin den kompletten aktuellen Stand neu von ESPN lädt.
+    - cron: '0 5,7,9,11,13 * * 2'
   workflow_dispatch: {}
 
 permissions:
