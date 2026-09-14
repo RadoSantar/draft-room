@@ -118,15 +118,55 @@ function collectFacts(game) {
 // mehrere Kategorien zu (z.B. Blowout + Bank-Reue), landen alle passenden Spitznamen in einem
 // gemeinsamen Topf, aus dem – wieder seedbasiert-deterministisch – nur einer gezogen wird.
 const BADGE_POOL = {
-  blowout: ['Die Klatsche der Woche', 'Frühstück serviert', 'Schulhof-Abreibung', 'Der Elfmeter der Woche', 'Liga-Massaker'],
-  nailbiter: ['Herzschlagfinale der Woche', 'Zitterpartie der Woche', 'Photo Finish', 'Nervenkrieg pur'],
-  upset: ['David gegen Goliath', 'Der Aussenseiter-Coup', 'Vorschau? Welche Vorschau?', 'Papierform war gestern'],
-  fatalBenchRegret: ['Eigentor der Woche', 'Selbstzerstörung par excellence', 'Bank-Bankrott', 'Hausgemachte Pleite'],
-  standout: ['Ein-Mann-Armee', 'MVP der Woche', 'Der Unaufhaltsame', 'Solo-Gala'],
-  winStreak: ['Die Dampfwalze rollt', 'Unaufhaltsam', 'Auf Erfolgskurs', 'Der Lauf geht weiter'],
-  lossStreak: ['Free Fall', 'Krisenmodus', 'Der Absturz geht weiter', 'Kein Land in Sicht'],
-  dominance: ['One-Man-Show', 'Die Übermacht', 'Allein gegen alle – und gewonnen'],
-  tie: ['Unentschieden-Drama', 'Keiner wollte gewinnen', 'Geteiltes Leid']
+  blowout: [
+    'Die Klatsche der Woche', 'Frühstück serviert', 'Schulhof-Abreibung', 'Der Elfmeter der Woche',
+    'Liga-Massaker', 'Exekution ohne Gnade', 'Der Offenbarungseid', 'Keine Partie, eine Demontage'
+  ],
+  nailbiter: [
+    'Herzschlagfinale der Woche', 'Zitterpartie der Woche', 'Photo Finish', 'Nervenkrieg pur',
+    'Bis zur letzten Sekunde', 'Der Krimi der Woche', 'Kopf-an-Kopf-Rennen', 'Das Fotofinish der Liga'
+  ],
+  upset: [
+    'David gegen Goliath', 'Der Aussenseiter-Coup', 'Vorschau? Welche Vorschau?', 'Papierform war gestern',
+    'Der Prophet lag falsch', 'Aussenseiter schreiben Geschichte', 'Wer hätte das gedacht?',
+    'Die Rechnung ohne den Wirt gemacht', 'Die Umfragewerte für die Tonne'
+  ],
+  fatalBenchRegret: [
+    'Eigentor der Woche', 'Selbstzerstörung par excellence', 'Bank-Bankrott', 'Hausgemachte Pleite',
+    'Der Bank-GAU', 'Eigenverschuldetes Debakel', 'Der Griff ins Klo', 'Selbstsabotage vom Feinsten'
+  ],
+  standout: [
+    'Ein-Mann-Armee', 'MVP der Woche', 'Der Unaufhaltsame', 'Solo-Gala',
+    'Der Alleinunterhalter', 'Der Königsmacher', 'Einzelkämpfer der Extraklasse', 'Die Ein-Personen-Gala'
+  ],
+  winStreak: [
+    'Die Dampfwalze rollt', 'Unaufhaltsam', 'Auf Erfolgskurs', 'Der Lauf geht weiter',
+    'Der Siegeszug', 'Nicht zu stoppen', 'Die Erfolgsserie wächst'
+  ],
+  lossStreak: [
+    'Free Fall', 'Krisenmodus', 'Der Absturz geht weiter', 'Kein Land in Sicht',
+    'Der Negativrekord ruft', 'Die Pechsträhne hält', 'Tiefer geht immer'
+  ],
+  dominance: [
+    'One-Man-Show', 'Die Übermacht', 'Allein gegen alle – und gewonnen',
+    'Der Alleingang', 'Eine Positionsgruppe, ein Sieg', 'Im Alleingang zum Sieg getragen'
+  ],
+  tie: [
+    'Unentschieden-Drama', 'Keiner wollte gewinnen', 'Geteiltes Leid',
+    'Der Punktegleichstand', 'Niemand verliert, niemand gewinnt so richtig'
+  ],
+  lineupDisaster: [
+    'Der Bank-Fluch', 'Verschenktes Potential', 'Hätte, hätte, Fahrradkette',
+    'Der Aufstellungs-Patzer der Woche', 'Selbst im Weg gestanden', 'Die Bank wusste es besser'
+  ],
+  seasonHigh: [
+    'Saisonrekord geknackt', 'Die Bestmarke der Saison', 'Die Woche des Jahres',
+    'Neuer Punkte-Höchststand', 'So gut war noch niemand', 'Der Saisonhöhepunkt'
+  ],
+  seasonLow: [
+    'Der Tiefpunkt der Saison', 'Saison-Fiasko', 'Die schwächste Vorstellung des Jahres',
+    'Neuer Negativrekord', 'So schlecht war noch niemand', 'Der Saison-Tiefschlag'
+  ]
 };
 
 function pickBadge(game, wasUpset, margin) {
@@ -140,6 +180,9 @@ function pickBadge(game, wasUpset, margin) {
   if (game.streak?.streakType === 'WIN' && game.streak.streakLength >= 3) categories.push('winStreak');
   if (game.streak?.streakType === 'LOSS' && game.streak.streakLength >= 3) categories.push('lossStreak');
   if (game.positionalDominance) categories.push('dominance');
+  if (game.optimalLineupGap && game.optimalLineupGap.gap >= 15) categories.push('lineupDisaster');
+  if (game.seasonExtreme?.type === 'high') categories.push('seasonHigh');
+  if (game.seasonExtreme?.type === 'low') categories.push('seasonLow');
 
   const candidates = categories.flatMap((c) => BADGE_POOL[c]);
   if (!candidates.length) return null;

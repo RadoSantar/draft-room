@@ -434,11 +434,17 @@ async function main() {
       .forEach((s, i) => { confStandings[s.id] = { conf, rank: i + 1, wins: s.wins, losses: s.losses, ties: s.ties }; });
   });
 
-  // ---- Scoreboard (Regular Season, Wochen 1-15) ----
+  // ---- Scoreboard (Regular Season Wochen 1-15 + Playoff-Wochen danach) ----
+  // Kein hartes Limit auf Woche 15 mehr: ESPN liefert im selben Schedule auch die Playoff-Wochen
+  // (bei dieser Liga aktuell 2), die einfach mit übernommen werden – die Zahl 25 ist nur eine grobe
+  // Notbremse gegen kaputte/unerwartete Daten, keine echte funktionale Grenze. Playoff-Matchups mit
+  // einem Freilos (kein echter Gegner) werden übersprungen, da für diese kein sinnvoller Recap/
+  // Vergleich möglich ist.
   const weeksMap = {};
   (scoreData.schedule || []).forEach((e) => {
     const wk = e.matchupPeriodId;
-    if (wk > 15) return;
+    if (wk > 25) return;
+    if (!e.home?.teamId || !e.away?.teamId) return;
     (weeksMap[wk] = weeksMap[wk] || []).push({
       homeId: e.home.teamId, homeName: teamNames[e.home.teamId], homeScore: Math.round(e.home.totalPoints * 10) / 10,
       awayId: e.away.teamId, awayName: teamNames[e.away.teamId], awayScore: Math.round(e.away.totalPoints * 10) / 10,
