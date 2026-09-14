@@ -6,7 +6,7 @@ const MODEL = 'claude-sonnet-5';
 
 const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-5 Sätze, auf Deutsch) für "Fantasy Playbook", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech und pointiert: scheu dich nicht vor Spott, Sarkasmus und einer scharfen Zunge, gerne mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (z.B. eine schlechte Bank-Aufstellung, ein enttäuschender Star-Spieler, ein sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
 
-Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext eine "Vorschau auf die kommende Woche" gegeben ist, schliesse den Recap mit JE EINEM kurzen Teaser-Satz PRO TEAM ab – wie ein Trailer auf die jeweils nächste Partie, ruhig mit einer frechen kleinen Prognose-Anspielung, aber locker hingeworfen statt als separater Absatz. Wenn im Kontext ein "Playoff-Kontext" gegeben ist, passe den Ton entsprechend an: beim Gewinner-Bracket darf die übliche grosse Championship-Dramatik noch eine Schippe drauflegen; beim Toilet Bowl dreht sich der Humor um, wird selbstironisch-komisch – es geht darum, NICHT Letzter zu werden, das ist die Pointe, nicht sportlicher Ruhm. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
+Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext eine "Vorschau auf die kommende Woche" gegeben ist, schliesse den Recap mit JE EINEM kurzen Teaser-Satz PRO TEAM ab – wie ein Trailer auf die jeweils nächste Partie, ruhig mit einer frechen kleinen Prognose-Anspielung, aber locker hingeworfen statt als separater Absatz. Wenn im Kontext ein "Playoff-Kontext" gegeben ist, passe den Ton entsprechend an: beim Gewinner-Bracket darf die übliche grosse Championship-Dramatik noch eine Schippe drauflegen; beim Toilet Bowl dreht sich der Humor um, wird selbstironisch-komisch – es geht darum, NICHT Letzter zu werden, das ist die Pointe, nicht sportlicher Ruhm. Wenn im Kontext ein "Playoff-Rennen"-Fakt gegeben ist, darfst du hier besonders bissig-ironisch werden: ein rechnerisch bereits eliminiertes Team wird mit süffisantem Mitleid bedacht (es spielt ja "nur noch um die Ehre"), ein Team mit knappem Rückstand oder wenig Polster steht dagegen unter echtem Druck – das darf sich im Ton wie ein Muss-Sieg anfühlen. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
 async function callClaude(userPrompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -110,6 +110,17 @@ function collectFacts(game) {
       : `${e.team} erzielt mit ${e.score.toFixed(1)} Punkten die bisher niedrigste Wochenpunktzahl der gesamten Saison.`);
   }
 
+  if (game.playoffRace) {
+    const r = game.playoffRace;
+    if (r.status === 'eliminated') {
+      facts.push(`Playoff-Rennen: ${r.team} kann selbst mit einer perfekten Restsaison rechnerisch nicht mehr an den letzten Playoff-Platz herankommen – schon draussen.`);
+    } else if (r.status === 'chasing') {
+      facts.push(`Playoff-Rennen: ${r.team} liegt ${r.winsBehind} Sieg(e) hinter dem letzten Playoff-Platz zurück, ist aber noch nicht rechnerisch raus.`);
+    } else if (r.status === 'in') {
+      facts.push(`Playoff-Rennen: ${r.team} steht aktuell auf einem Playoff-Platz (Seed ${r.seed})${r.cushion != null ? `, mit ${r.cushion} Sieg(en) Polster auf das erste Team ausserhalb` : ''}.`);
+    }
+  }
+
   return facts;
 }
 
@@ -174,6 +185,14 @@ const BADGE_POOL = {
   toiletBowl: [
     'Der Kampf um die rote Laterne', 'Niemand will das hier gewinnen', 'Willkommen im Toilet Bowl',
     'Der Wettbewerb, den keiner will', 'Ruhm? Fehlanzeige', 'Der Trostpreis-Krieg'
+  ],
+  raceEliminated: [
+    'Playoffs? Schon vorbei', 'Die Saison ist gelaufen', 'Ab in den Toilet-Bowl-Modus',
+    'Mathematisch schon Geschichte', 'Der Traum ist ausgeträumt', 'Rechnerisch schon im Winterschlaf'
+  ],
+  raceMustWin: [
+    'Muss-Gewinn-Spiel', 'Der letzte Strohhalm', 'Jetzt oder nie',
+    'Alles oder nichts', 'Die letzte Chance klopft an', 'Der Point of no Return'
   ]
 };
 
@@ -193,6 +212,8 @@ function pickBadge(game, wasUpset, margin) {
   if (game.seasonExtreme?.type === 'low') categories.push('seasonLow');
   if (game.playoffTier === 'WINNERS_BRACKET') categories.push('championshipHunt');
   if (game.playoffTier === 'LOSERS_BRACKET') categories.push('toiletBowl');
+  if (game.playoffRace?.status === 'eliminated') categories.push('raceEliminated');
+  if (game.playoffRace?.status === 'chasing' && game.playoffRace.winsBehind <= 1) categories.push('raceMustWin');
 
   const candidates = categories.flatMap((c) => BADGE_POOL[c]);
   if (!candidates.length) return null;

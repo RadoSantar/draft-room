@@ -253,6 +253,60 @@ function findNextOpponent(teamId, scoreboard, nextWeek, standingsById, confStand
   };
 }
 
+// Bildet ESPNs echtes 4-Team-Playoff-Bracket nach: die 2 Conference-Sieger (Seed 1/2, sortiert nach
+// Gesamt-Bilanz) plus die 2 besten Nicht-Conference-Sieger nach Gesamt-Bilanz als Wildcards
+// (Seed 3/4) – Quelle: ESPNs eigene Fan-Support-Doku ("Division winners always occupy the top
+// seeds... the team with the best winning percentage earns the higher seed" für die Wildcards,
+// Tiebreaker zuerst Points For). Bewusst KEINE Tiebreaker über Punkte simuliert (nur Siege, dann
+// Punkte als Tiebreak wie überall sonst in diesem Script) – bei echten Gleichständen kann ESPNs
+// exakte Einordnung leicht abweichen, das ist hier nur die Grundlage fürs Playoff-Rennen-Narrativ,
+// nicht die offizielle Quelle für den tatsächlichen Bracket.
+function computePlayoffPicture(standings, confStandings) {
+  const confLeaders = standings.filter((s) => confStandings[s.id]?.rank === 1);
+  const leaderIds = new Set(confLeaders.map((s) => s.id));
+  const seeded12 = confLeaders.slice().sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
+  const wildcardPool = standings
+    .filter((s) => !leaderIds.has(s.id))
+    .slice()
+    .sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
+  const seeded34 = wildcardPool.slice(0, 2);
+  const outside = wildcardPool.slice(2);
+  const playoffTeams = [...seeded12, ...seeded34].map((t, i) => ({ ...t, seed: i + 1 }));
+  const cutoffWins = seeded34.length ? seeded34[seeded34.length - 1].wins : (seeded12[seeded12.length - 1]?.wins ?? 0);
+  return { playoffTeams, outside, cutoffWins };
+}
+
+// Playoff-Rennen-Kontext ab Woche 8: steht ein Team aktuell auf einem Playoff-Platz (mit wie viel
+// Polster), jagt es den letzten Platz noch ein, oder ist es rechnerisch schon draussen (Elimination
+// hier als einfache Maximal-Siege-Schranke: selbst mit ausschliesslich Siegen aus allen verbleibenden
+// Spielen würde es nicht mehr an den aktuellen 4. Seed herankommen – eine bewusst simple Näherung
+// ohne Restspielplan-Simulation, aber als "rechnerisch chancenlos"-Aussage korrekt). Nur für Wochen
+// 8-15 relevant, danach steht der Bracket fest (siehe playoffTier).
+function findPlayoffRaceFact(game, standings, confStandings) {
+  if (game.week < 8 || game.week > 15) return null;
+  const { playoffTeams, outside, cutoffWins } = computePlayoffPicture(standings, confStandings);
+  const remainingGames = 15 - game.week;
+
+  const describe = (teamId, teamName) => {
+    const seeded = playoffTeams.find((t) => t.id === teamId);
+    if (seeded) {
+      const firstOut = outside[0];
+      const cushion = firstOut ? seeded.wins - firstOut.wins : null;
+      return { team: teamName, status: 'in', seed: seeded.seed, cushion };
+    }
+    const out = standings.find((s) => s.id === teamId);
+    if (!out) return null;
+    const maxPossibleWins = out.wins + remainingGames;
+    if (maxPossibleWins < cutoffWins) return { team: teamName, status: 'eliminated' };
+    return { team: teamName, status: 'chasing', winsBehind: cutoffWins - out.wins };
+  };
+
+  const home = describe(game.homeId, game.homeName);
+  const away = describe(game.awayId, game.awayName);
+  const priority = { eliminated: 0, chasing: 1, in: 2 };
+  return [home, away].filter(Boolean).sort((a, b) => priority[a.status] - priority[b.status])[0] || null;
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -295,6 +349,11 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   if (ctx?.confStandings) {
     const confStanding = findConferenceStandingFact(game, ctx.confStandings, ctx.prevConfRankById || {});
     if (confStanding) result.confStanding = confStanding;
+  }
+
+  if (ctx?.standings && ctx?.confStandings) {
+    const playoffRace = findPlayoffRaceFact(game, ctx.standings, ctx.confStandings);
+    if (playoffRace) result.playoffRace = playoffRace;
   }
 
   if (ctx?.scoreboard) {
@@ -507,7 +566,7 @@ async function main() {
     const weekGames = scoreboard.find((w) => w.week === lastCompletedWeek)?.games || [];
     const keyMomentsByTeam = await fetchWeeklyKeyMomentsByTeam(lastCompletedWeek);
     const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
-    const ctx = { standingsById, confStandings, prevConfRankById, scoreboard };
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
