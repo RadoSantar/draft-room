@@ -409,6 +409,147 @@ function findLeadChangesFact(game, liveSnapshots) {
   return { changes };
 }
 
+// Schnellstarter/Spätzünder: Anteil des Endstands, den ein Team schon beim ALLERERSTEN Snapshot der
+// Woche (meist Donnerstagabend) draufhatte – relativ statt absolut gemessen, damit es unabhängig vom
+// genauen Scoring-Niveau dieser Liga funktioniert.
+function findPaceFact(game, liveSnapshots) {
+  if (!liveSnapshots?.length) return null;
+  const first = liveSnapshots[0];
+  const check = (teamId, teamName, finalScore) => {
+    if (finalScore < 20) return null;
+    const g = first.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
+    if (!g) return null;
+    const earlyScore = g.homeId === teamId ? g.homeScore : g.awayScore;
+    const share = earlyScore / finalScore;
+    if (share >= 0.35) return { type: 'fast', team: teamName, earlyScore, finalScore };
+    if (share <= 0.05) return { type: 'slow', team: teamName, earlyScore, finalScore };
+    return null;
+  };
+  return check(game.homeId, game.homeName, game.homeScore) || check(game.awayId, game.awayName, game.awayScore) || null;
+}
+
+// Zittersieg: das SIEGER-Team lag laut unseren Zwischenständen irgendwann mit ≥20 Punkten vorne,
+// dieser Vorsprung schmolz aber um ≥15 Punkte, bevor es am Ende doch noch reichte – anders als
+// findComebackFact() (das nur greift, wenn das führende Team am Ende WIRKLICH verliert).
+function findSurvivedScareFact(game, liveSnapshots) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const diffs = extractDiffTimeline(game, liveSnapshots);
+  if (diffs.length < 2) return null;
+  const winnerIsHome = game.winner === 'HOME';
+  const peakOwnLead = winnerIsHome ? Math.max(0, ...diffs) : Math.max(0, ...diffs.map((d) => -d));
+  const finalMargin = Math.abs(game.homeScore - game.awayScore);
+  const shrink = peakOwnLead - finalMargin;
+  if (peakOwnLead >= 20 && shrink >= 15) {
+    return { team: winnerIsHome ? game.homeName : game.awayName, peakLead: peakOwnLead, finalMargin, shrink };
+  }
+  return null;
+}
+
+// Monday-Night-Rettung: das Team lag beim letzten Snapshot VOR Montagabend (grosszügig: vor 18:00
+// UTC Montag, weit vor jedem realistischen MNF-Kickoff, siehe espn-live-snapshot.yml) noch zurück,
+// gewann das Spiel am Ende aber trotzdem – kann also nur dank der Montagabend-Spieler passiert sein.
+function findMondayNightRescueFact(game, liveSnapshots) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  if (!liveSnapshots?.length) return null;
+  const preMonday = liveSnapshots.filter((s) => {
+    const d = new Date(s.at);
+    return d.getUTCDay() !== 1 || d.getUTCHours() < 18;
+  }).slice(-1)[0];
+  if (!preMonday) return null;
+  const g = preMonday.games.find((gg) => gg.homeId === game.homeId && gg.awayId === game.awayId);
+  if (!g) return null;
+  const preDiff = g.homeScore - g.awayScore;
+  if (game.winner === 'HOME' && preDiff < -1) return { team: game.homeName, deficitBeforeMonday: Math.abs(preDiff) };
+  if (game.winner === 'AWAY' && preDiff > 1) return { team: game.awayName, deficitBeforeMonday: Math.abs(preDiff) };
+  return null;
+}
+
+// Nagelbeisser über mehrere Checkpoints: der Vorsprung war nicht nur am Ende knapp, sondern über
+// mindestens 3 aufeinanderfolgende Snapshots hinweg unter 5 Punkten – mehr Dauerspannung als der
+// simple Nailbiter-Badge (der nur den Endstand betrachtet).
+function findSustainedNailbiterFact(game, liveSnapshots) {
+  if (!liveSnapshots?.length || liveSnapshots.length < 2) return null;
+  const diffs = extractDiffTimeline(game, liveSnapshots);
+  let streak = 0, maxStreak = 0;
+  diffs.forEach((d) => {
+    if (Math.abs(d) < 5) { streak++; maxStreak = Math.max(maxStreak, streak); }
+    else streak = 0;
+  });
+  if (maxStreak < 3) return null;
+  return { streak: maxStreak };
+}
+
+// Saison-Persönlichkeit: aus data/season-personality.json (siehe archiveLiveSnapshotWeek() weiter
+// unten) – ein Team, das über mehrere Wochen hinweg auffällig oft comebackt/kollabiert/im
+// Nervenkrieg steckt/von vorne bis hinten führt, bekommt dafür einen wiederkehrenden Beinamen. Erst
+// ab 3 Spielen mit Live-Daten aussagekräftig, sonst zu kleine Stichprobe.
+function findSeasonPersonalityFact(game, archive) {
+  if (!archive?.teams) return null;
+  const MIN_GAMES = 3;
+  const TRAIT_DEFS = [
+    { key: 'comebackWins', label: 'notorischer Last-Minute-Held' },
+    { key: 'collapseLosses', label: 'notorischer Vorsprungs-Verspieler' },
+    { key: 'sustainedNailbiters', label: 'Dauergast in Nervenkriegen' },
+    { key: 'ledWireToWire', label: 'Kontrollfreak (führt am liebsten von Anfang bis Ende durch)' }
+  ];
+  const describe = (teamId, teamName) => {
+    const t = archive.teams[teamId];
+    if (!t || t.games < MIN_GAMES) return null;
+    const traits = TRAIT_DEFS
+      .map((def) => ({ ...def, count: t[def.key] || 0 }))
+      .filter((tr) => tr.count >= 2 && tr.count / t.games >= 0.4)
+      .sort((a, b) => b.count / t.games - a.count / t.games);
+    if (!traits.length) return null;
+    return { team: teamName, key: traits[0].key, label: traits[0].label, count: traits[0].count, games: t.games };
+  };
+  return describe(game.homeId, game.homeName) || describe(game.awayId, game.awayName) || null;
+}
+
+// Aktualisiert data/season-personality.json um die gerade abgeschlossene Woche – einmalig pro Woche
+// dank weeksArchived-Guard (idempotent bei mehrfachen Sync-Läufen). Läuft NACH der Recap-Generierung
+// (siehe main()), damit findSeasonPersonalityFact() im Recap dieser Woche noch die Persönlichkeit
+// VOR diesem Spiel zeigt, nicht bereits inklusive seines eigenen Ergebnisses.
+async function archiveLiveSnapshotWeek(week, weekGames, liveSnapshots) {
+  const archive = await readJsonSafe('season-personality.json', { weeksArchived: [], teams: {} });
+  if (archive.weeksArchived.includes(week)) return;
+
+  const bump = (teamId, patch) => {
+    const t = archive.teams[teamId] || { games: 0, comebackWins: 0, collapseLosses: 0, sustainedNailbiters: 0, ledWireToWire: 0 };
+    t.games++;
+    Object.keys(patch).forEach((k) => { if (patch[k]) t[k]++; });
+    archive.teams[teamId] = t;
+  };
+
+  weekGames.forEach((g) => {
+    if (g.winner !== 'HOME' && g.winner !== 'AWAY') return;
+    const diffs = extractDiffTimeline(g, liveSnapshots);
+    if (diffs.length < 2) return;
+    const maxHomeLead = Math.max(0, ...diffs);
+    const maxAwayLead = Math.max(0, ...diffs.map((d) => -d));
+    const homeNeverTrailed = diffs.every((d) => d >= -1);
+    const awayNeverTrailed = diffs.every((d) => d <= 1);
+    let streak = 0, maxStreak = 0;
+    diffs.forEach((d) => { if (Math.abs(d) < 5) { streak++; maxStreak = Math.max(maxStreak, streak); } else streak = 0; });
+    const sustainedNailbiter = maxStreak >= 3;
+
+    bump(g.homeId, {
+      comebackWins: g.winner === 'HOME' && maxAwayLead >= 15,
+      collapseLosses: g.winner === 'AWAY' && maxHomeLead >= 15,
+      sustainedNailbiters: sustainedNailbiter,
+      ledWireToWire: g.winner === 'HOME' && homeNeverTrailed
+    });
+    bump(g.awayId, {
+      comebackWins: g.winner === 'AWAY' && maxHomeLead >= 15,
+      collapseLosses: g.winner === 'HOME' && maxAwayLead >= 15,
+      sustainedNailbiters: sustainedNailbiter,
+      ledWireToWire: g.winner === 'AWAY' && awayNeverTrailed
+    });
+  });
+
+  archive.weeksArchived.push(week);
+  await writeJson('season-personality.json', archive);
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -495,6 +636,19 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
     if (comeback) result.comeback = comeback;
     const leadChanges = findLeadChangesFact(game, ctx.liveSnapshots);
     if (leadChanges) result.leadChanges = leadChanges;
+    const pace = findPaceFact(game, ctx.liveSnapshots);
+    if (pace) result.pace = pace;
+    const survivedScare = findSurvivedScareFact(game, ctx.liveSnapshots);
+    if (survivedScare) result.survivedScare = survivedScare;
+    const mondayRescue = findMondayNightRescueFact(game, ctx.liveSnapshots);
+    if (mondayRescue) result.mondayRescue = mondayRescue;
+    const sustainedNailbiter = findSustainedNailbiterFact(game, ctx.liveSnapshots);
+    if (sustainedNailbiter) result.sustainedNailbiter = sustainedNailbiter;
+  }
+
+  if (ctx?.seasonPersonality) {
+    const personality = findSeasonPersonalityFact(game, ctx.seasonPersonality);
+    if (personality) result.seasonPersonality = personality;
   }
 
   return result;
@@ -698,7 +852,8 @@ async function main() {
     const existingTransactions = (await readJsonSafe('transactions.json', { data: [] })).data || [];
     const liveSnapshotData = await readJsonSafe('live-snapshots.json', { week: null, snapshots: [] });
     const liveSnapshots = liveSnapshotData.week === lastCompletedWeek ? liveSnapshotData.snapshots : null;
-    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots };
+    const seasonPersonality = await readJsonSafe('season-personality.json', { weeksArchived: [], teams: {} });
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
@@ -714,6 +869,10 @@ async function main() {
     const newRecaps = await generateRecapsForGames(enrichedGames, existing);
     if (Object.keys(newRecaps).length) {
       await writeJson('game-recaps.json', { lastUpdated: nowIso(), data: { ...existing, ...newRecaps } });
+    }
+
+    if (liveSnapshots) {
+      await archiveLiveSnapshotWeek(lastCompletedWeek, weekGames, liveSnapshots);
     }
   }
 
