@@ -6,8 +6,8 @@ name: ESPN Sync
 # Rührt NIE data/team-content.json (handgeschriebene Analysen/Ausblicke) an.
 on:
   schedule:
-    # Jeden Dienstag um 07:00 UTC (nach Monday Night Football)
-    - cron: '0 7 * * 2'
+    # Jeden Dienstag um 05:00 UTC (nach Monday Night Football) = 07:00 Schweizer Sommerzeit
+    - cron: '0 5 * * 2'
   workflow_dispatch: {}
 
 permissions:
