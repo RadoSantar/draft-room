@@ -6,7 +6,7 @@ const MODEL = 'claude-sonnet-5';
 
 const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-5 Sätze, auf Deutsch) für "Fantasy Playbook", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech und pointiert: scheu dich nicht vor Spott, Sarkasmus und einer scharfen Zunge, gerne mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (z.B. eine schlechte Bank-Aufstellung, ein enttäuschender Star-Spieler, ein sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
 
-Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
+Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext ein "Ausblick auf die kommende Woche" gegeben ist, schliesse den Recap mit einem knappen, einzelnen Satz dazu ab (locker hingeworfen, nicht als separater Absatz). Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
 async function callClaude(userPrompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -86,6 +86,30 @@ function collectFacts(game) {
       : `${s.team} kassiert damit die ${s.streakLength}. Niederlage in Folge.`);
   }
 
+  if (game.optimalLineupGap) {
+    const g = game.optimalLineupGap;
+    facts.push(`Aufstellungs-Patzer: ${g.team} spielte ${g.actualTotal.toFixed(1)} Punkte, mit der bestmöglichen Aufstellung aus dem kompletten Kader wären ${g.optimalTotal.toFixed(1)} Punkte drin gewesen – ${g.gap.toFixed(1)} Punkte leichtfertig liegen gelassen.`);
+  }
+
+  if (game.confStanding) {
+    const c = game.confStanding;
+    const record = `${c.wins}-${c.losses}${c.ties ? '-' + c.ties : ''}`;
+    if (c.prevRank != null && c.prevRank !== c.rank) {
+      facts.push(c.rank < c.prevRank
+        ? `${c.team} klettert in der ${c.conf}-Tabelle von Platz ${c.prevRank} auf Platz ${c.rank} (Bilanz ${record}).`
+        : `${c.team} fällt in der ${c.conf}-Tabelle von Platz ${c.prevRank} auf Platz ${c.rank} zurück (Bilanz ${record}).`);
+    } else {
+      facts.push(`${c.team} steht in der ${c.conf}-Tabelle auf Platz ${c.rank} (Bilanz ${record}).`);
+    }
+  }
+
+  if (game.seasonExtreme) {
+    const e = game.seasonExtreme;
+    facts.push(e.type === 'high'
+      ? `${e.team} erzielt mit ${e.score.toFixed(1)} Punkten die bisher höchste Wochenpunktzahl der gesamten Saison.`
+      : `${e.team} erzielt mit ${e.score.toFixed(1)} Punkten die bisher niedrigste Wochenpunktzahl der gesamten Saison.`);
+  }
+
   return facts;
 }
 
@@ -147,6 +171,10 @@ function buildPrompt(game) {
 
   const badge = pickBadge(game, wasUpset, margin);
   if (badge) context += `Spitzname für dieses Spiel: "${badge}". `;
+
+  if (game.homeNextOpp || game.awayNextOpp) {
+    context += `Ausblick auf die kommende Woche: ${game.homeName} trifft als nächstes auf ${game.homeNextOpp || 'noch unbekannt'}, ${game.awayName} auf ${game.awayNextOpp || 'noch unbekannt'}. `;
+  }
 
   context += 'Schreibe jetzt den Recap.';
   return context;

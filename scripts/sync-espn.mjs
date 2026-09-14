@@ -23,6 +23,14 @@ if (!ESPN_S2 || !ESPN_SWID) {
   process.exit(1);
 }
 
+// Conference-Zuordnung – deckungsgleich mit TEAM_CONF in power-rankings.html/schedule.html.
+// ESPNs API liefert für diese Liga keine nutzbare Conference/Division-Info, daher von Hand gepflegt.
+const TEAM_CONF = {
+  'Tackleberry Finn': 'NFC', 'Apukalypse Now': 'NFC', 'Hopp Schwiiz': 'NFC', 'Buhaaner': 'NFC',
+  'Run CMC': 'AFC', 'Queen of Chaos': 'AFC', 'Sherlock Mahomes': 'AFC', 'TM06': 'AFC',
+  'Saints of Anarchy': 'NFC', 'Zurich City Ravens': 'AFC'
+};
+
 const COOKIE = `SWID=${ESPN_SWID}; espn_s2=${ESPN_S2}`;
 const LEAGUE_BASE = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leagues/${LEAGUE_ID}`;
 const DEFAULTS_URL = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leaguedefaults/3?view=kona_player_info`;
@@ -165,10 +173,77 @@ function findStreakFact(game, standingsById) {
   return { team: s.name, streakType: s.streakType, streakLength: s.streakLength };
 }
 
+// Positionsgruppe (QB/RB/WR/TE/K/DST) mit dem grössten Punktegewinn, falls eine Aufstellung nach
+// STARTER_SLOTS (inkl. Flex) aus dem KOMPLETTEN Kader (Starter+Bank) dieser Woche mehr geholt hätte
+// als die tatsächlich gespielte – nutzt dieselbe buildOptimalLineup()-Logik wie die Power Rankings,
+// nur mit den echten Wochenpunkten statt der Saison-Projektion als "proj".
+function findOptimalLineupGap(perf, teamName) {
+  if (!perf || !perf.starters.length) return null;
+  const actualTotal = perf.starters.reduce((sum, p) => sum + p.points, 0);
+  const fullRoster = [...perf.starters, ...perf.bench].map((p) => ({ ...p, proj: p.points }));
+  const optimal = buildOptimalLineup(fullRoster);
+  const optimalTotal = optimal.starters.reduce((sum, p) => sum + (p.proj || 0), 0);
+  const gap = Math.round((optimalTotal - actualTotal) * 10) / 10;
+  if (gap < 3) return null;
+  return { team: teamName, actualTotal: Math.round(actualTotal * 10) / 10, optimalTotal: Math.round(optimalTotal * 10) / 10, gap };
+}
+
+// Conference-Tabellenstand nach diesem Spiel (primär das, wonach in der Liga eigentlich geschaut
+// wird – nicht die projektionsbasierten Power Rankings). Ist aus dem Vorwochen-Snapshot ein
+// Rang-Wechsel bekannt, wird der grössere Wechsel der beiden Teams bevorzugt; sonst einfach die
+// aktuelle Position des Siegers (bzw. Heimteams bei Unentschieden).
+function findConferenceStandingFact(game, confStandings, prevConfRankById) {
+  const info = (id, name) => {
+    const cur = confStandings[id];
+    if (!cur) return null;
+    const prevRank = prevConfRankById[id];
+    return { team: name, conf: cur.conf, rank: cur.rank, wins: cur.wins, losses: cur.losses, ties: cur.ties, prevRank: prevRank != null ? prevRank : null };
+  };
+  const home = info(game.homeId, game.homeName);
+  const away = info(game.awayId, game.awayName);
+  const withMovement = [home, away].filter((t) => t && t.prevRank != null && t.prevRank !== t.rank);
+  if (withMovement.length) {
+    return withMovement.sort((a, b) => Math.abs(b.prevRank - b.rank) - Math.abs(a.prevRank - a.rank))[0];
+  }
+  return game.winner === 'AWAY' ? away : home;
+}
+
+// Saison-Bestwert/Negativrekord: prüft, ob eines der beiden Teams in DIESEM Spiel die höchste bzw.
+// niedrigste Wochenpunktzahl der bisherigen Saison erzielt hat.
+function findSeasonExtremeFact(game, scoreboard, lastCompletedWeek) {
+  const allScores = [];
+  scoreboard.forEach((wk) => {
+    if (wk.week > lastCompletedWeek) return;
+    wk.games.forEach((g) => {
+      if (g.winner === 'UNDECIDED') return;
+      allScores.push({ team: g.homeName, score: g.homeScore, week: wk.week });
+      allScores.push({ team: g.awayName, score: g.awayScore, week: wk.week });
+    });
+  });
+  if (!allScores.length) return null;
+  const maxEntry = allScores.reduce((a, b) => (b.score > a.score ? b : a));
+  const minEntry = allScores.reduce((a, b) => (b.score < a.score ? b : a));
+  const thisWeek = [{ team: game.homeName, score: game.homeScore }, { team: game.awayName, score: game.awayScore }];
+  const isHigh = thisWeek.find((t) => t.team === maxEntry.team && t.score === maxEntry.score && maxEntry.week === game.week);
+  if (isHigh) return { type: 'high', team: isHigh.team, score: isHigh.score };
+  const isLow = thisWeek.find((t) => t.team === minEntry.team && t.score === minEntry.score && minEntry.week === game.week);
+  if (isLow) return { type: 'low', team: isLow.team, score: isLow.score };
+  return null;
+}
+
+// Gegner der kommenden Woche je Team – für den kleinen Ausblick am Ende des Recaps.
+function findNextOpponent(teamId, scoreboard, nextWeek) {
+  const wk = scoreboard.find((w) => w.week === nextWeek);
+  if (!wk) return null;
+  const g = wk.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
+  if (!g) return null;
+  return g.homeId === teamId ? g.awayName : g.homeName;
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
-function findKeyMoments(game, homePerf, awayPerf, standingsById) {
+function findKeyMoments(game, homePerf, awayPerf, ctx) {
   const result = {};
 
   const bestStarter = (perf, side) => {
@@ -194,9 +269,31 @@ function findKeyMoments(game, homePerf, awayPerf, standingsById) {
   const dominance = findPositionalDominance(game, homePerf, awayPerf);
   if (dominance) result.positionalDominance = dominance;
 
-  if (standingsById) {
-    const streak = findStreakFact(game, standingsById);
+  if (ctx?.standingsById) {
+    const streak = findStreakFact(game, ctx.standingsById);
     if (streak) result.streak = streak;
+  }
+
+  const homeGap = findOptimalLineupGap(homePerf, game.homeName);
+  const awayGap = findOptimalLineupGap(awayPerf, game.awayName);
+  const biggerGap = [homeGap, awayGap].filter(Boolean).sort((a, b) => b.gap - a.gap)[0];
+  if (biggerGap) result.optimalLineupGap = biggerGap;
+
+  if (ctx?.confStandings) {
+    const confStanding = findConferenceStandingFact(game, ctx.confStandings, ctx.prevConfRankById || {});
+    if (confStanding) result.confStanding = confStanding;
+  }
+
+  if (ctx?.scoreboard) {
+    const extreme = findSeasonExtremeFact(game, ctx.scoreboard, game.week);
+    if (extreme) result.seasonExtreme = extreme;
+  }
+
+  if (ctx?.scoreboard) {
+    const homeNextOpp = findNextOpponent(game.homeId, ctx.scoreboard, game.week + 1);
+    const awayNextOpp = findNextOpponent(game.awayId, ctx.scoreboard, game.week + 1);
+    if (homeNextOpp) result.homeNextOpp = homeNextOpp;
+    if (awayNextOpp) result.awayNextOpp = awayNextOpp;
   }
 
   return result;
@@ -313,6 +410,17 @@ async function main() {
   }).sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
   await writeJson('standings.json', { lastUpdated: nowIso(), data: standings });
 
+  // ---- Conference-Tabellenstand (für Recap-Storylines "vor allem" relevant, nicht die
+  // projektionsbasierten Power Rankings – siehe findConferenceStandingFact()) ----
+  const confStandings = {};
+  ['NFC', 'AFC'].forEach((conf) => {
+    standings
+      .filter((s) => TEAM_CONF[s.name] === conf)
+      .slice()
+      .sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor)
+      .forEach((s, i) => { confStandings[s.id] = { conf, rank: i + 1, wins: s.wins, losses: s.losses, ties: s.ties }; });
+  });
+
   // ---- Scoreboard (Regular Season, Wochen 1-15) ----
   const weeksMap = {};
   (scoreData.schedule || []).forEach((e) => {
@@ -347,6 +455,26 @@ async function main() {
     await writeJson('power-rankings-history.json', { lastUpdated: nowIso(), snapshots: history.snapshots });
   }
 
+  // ---- Conference-Standings-Verlauf: analog zum Power-Ranking-Verlauf, ein Snapshot pro
+  // abgeschlossenem Spieltag. Dient hier primär dazu, im Recap eine Rang-Bewegung ("klettert von
+  // Platz 4 auf Platz 2") erkennen zu können – der Vorwochen-Snapshot wird VOR dem Überschreiben
+  // ausgelesen, siehe prevConfRankById unten.
+  let prevConfRankById = {};
+  if (lastCompletedWeek > 0) {
+    const confHistory = await readJsonSafe('conference-standings-history.json', { snapshots: [] });
+    const prevKey = 'week-' + (lastCompletedWeek - 1);
+    const prevSnapshot = confHistory.snapshots.find((s) => s.key === prevKey);
+    if (prevSnapshot) prevSnapshot.teams.forEach((t) => { prevConfRankById[t.id] = t.rank; });
+
+    const key = 'week-' + lastCompletedWeek;
+    const snapshotTeams = Object.entries(confStandings).map(([id, c]) => ({ id: Number(id), name: teamNames[id], ...c }));
+    const newSnapshot = { key, label: 'Nach Woche ' + lastCompletedWeek, date: new Date().toLocaleDateString('de-CH'), teams: snapshotTeams };
+    const idx = confHistory.snapshots.findIndex((s) => s.key === key);
+    if (idx >= 0) confHistory.snapshots[idx] = newSnapshot;
+    else confHistory.snapshots.push(newSnapshot);
+    await writeJson('conference-standings-history.json', { lastUpdated: nowIso(), snapshots: confHistory.snapshots });
+  }
+
   // ---- Spiel-Recaps (von Claude geschrieben, im Stil des Saison-Ausblicks) ----
   // Nur für die Woche, die gerade komplett abgeschlossen wurde – läuft ohne
   // ANTHROPIC_API_KEY einfach nicht (siehe generate-recaps.mjs).
@@ -355,6 +483,7 @@ async function main() {
     const weekGames = scoreboard.find((w) => w.week === lastCompletedWeek)?.games || [];
     const keyMomentsByTeam = await fetchWeeklyKeyMomentsByTeam(lastCompletedWeek);
     const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
+    const ctx = { standingsById, confStandings, prevConfRankById, scoreboard };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
@@ -362,7 +491,7 @@ async function main() {
         homeProj: starterTotalById[g.homeId] || 0,
         awayProj: starterTotalById[g.awayId] || 0
       };
-      return { ...base, ...findKeyMoments(base, keyMomentsByTeam[g.homeId], keyMomentsByTeam[g.awayId], standingsById) };
+      return { ...base, ...findKeyMoments(base, keyMomentsByTeam[g.homeId], keyMomentsByTeam[g.awayId], ctx) };
     });
 
     const oldRecaps = await readJsonSafe('game-recaps.json', { data: {} });
