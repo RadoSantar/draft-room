@@ -440,6 +440,10 @@ async function main() {
   // Notbremse gegen kaputte/unerwartete Daten, keine echte funktionale Grenze. Playoff-Matchups mit
   // einem Freilos (kein echter Gegner) werden übersprungen, da für diese kein sinnvoller Recap/
   // Vergleich möglich ist.
+  // ESPN markiert Playoff-Matchups selbst mit playoffTierType ('WINNERS_BRACKET' = Championship-Jagd,
+  // 'LOSERS_BRACKET' = Platzierungsspiele/Toilet Bowl, 'NONE'/fehlend = normale Regular-Season-Partie).
+  // Wir bilden ESPNs eigene Playoff-Seeding-Logik damit NICHT selbst nach – wir übernehmen nur, wie
+  // ESPN das jeweilige Spiel bereits selbst einordnet.
   const weeksMap = {};
   (scoreData.schedule || []).forEach((e) => {
     const wk = e.matchupPeriodId;
@@ -448,6 +452,7 @@ async function main() {
     (weeksMap[wk] = weeksMap[wk] || []).push({
       homeId: e.home.teamId, homeName: teamNames[e.home.teamId], homeScore: Math.round(e.home.totalPoints * 10) / 10,
       awayId: e.away.teamId, awayName: teamNames[e.away.teamId], awayScore: Math.round(e.away.totalPoints * 10) / 10,
+      playoffTier: e.playoffTierType && e.playoffTierType !== 'NONE' ? e.playoffTierType : null,
       winner: e.winner
     });
   });
