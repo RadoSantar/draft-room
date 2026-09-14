@@ -308,11 +308,16 @@ function findRematchFact(game, scoreboard) {
   if (!earlier) return null;
   const earlierWinner = earlier.winner === 'HOME' ? earlier.homeName : earlier.winner === 'AWAY' ? earlier.awayName : null;
   const thisWinner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
+  // Da sich zwei Teams laut Liga-Format maximal zweimal pro Saison begegnen, gibt es innerhalb einer
+  // Saison keine "3. Sieg in Serie"-Serienzählung – als Ersatz dafür markieren wir, ob dies (weil kein
+  // weiteres Duell mehr im Restspielplan steht) das letzte Aufeinandertreffen der Saison war.
+  const hasFutureMeeting = scoreboard.some((wk) => wk.week > game.week && wk.games.some((g) => pairKey(g.homeId, g.awayId) === thisKey));
   return {
     week: earlier.week,
     winner: earlierWinner,
     scoreLine: `${earlier.homeName} ${earlier.homeScore.toFixed(1)} : ${earlier.awayScore.toFixed(1)} ${earlier.awayName}`,
-    isRevenge: !!(earlierWinner && thisWinner && earlierWinner !== thisWinner)
+    isRevenge: !!(earlierWinner && thisWinner && earlierWinner !== thisWinner),
+    isFinalMeeting: !hasFutureMeeting
   };
 }
 
@@ -550,6 +555,73 @@ async function archiveLiveSnapshotWeek(week, weekGames, liveSnapshots) {
   await writeJson('season-personality.json', archive);
 }
 
+// Erwartungswert-Bilanz (vereinfachte Pythagorean-Expectation, Exponent 2 statt des "echten"
+// Football-Exponenten ~2,37 – für eine Fantasy-Liga mit eigenem Scoring reicht die einfache Variante
+// völlig): aus pointsFor/pointsAgainst lässt sich eine "eigentlich verdiente" Siegquote berechnen.
+// Weicht die tatsächliche Bilanz um ≥1,5 Siege davon ab, ist das ein netter "die Bilanz lügt"-Fakt.
+function findExpectationFact(game, standingsById) {
+  const classify = (teamId, teamName) => {
+    const s = standingsById[teamId];
+    if (!s) return null;
+    const gamesPlayed = s.wins + s.losses + (s.ties || 0);
+    if (gamesPlayed < 3) return null;
+    const pf2 = s.pointsFor ** 2;
+    const pa2 = s.pointsAgainst ** 2;
+    if (pf2 + pa2 === 0) return null;
+    const expectedWins = (pf2 / (pf2 + pa2)) * gamesPlayed;
+    const diff = s.wins - expectedWins;
+    if (Math.abs(diff) < 1.5) return null;
+    return { team: teamName, actualWins: s.wins, expectedWins, diff, lucky: diff > 0 };
+  };
+  const home = classify(game.homeId, game.homeName);
+  const away = classify(game.awayId, game.awayName);
+  return [home, away].filter(Boolean).sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))[0] || null;
+}
+
+// Schnäppchen der Woche / Draft-Reue: nutzt playerId, das schon auf standout/loserBenchRegret hängt
+// (siehe fetchWeeklyKeyMomentsByTeam), gegen die Draft-Runde des Spielers. Ein Standout, der erst
+// spät gezogen wurde (Runde ≥10), ist ein Schnäppchen; ein Bankspieler, der einen früh gezogenen
+// Starter (Runde ≤3) blamiert, ist Draft-Reue in Reinform.
+function findDraftValueFact(game, result, draftRoundByPlayerId) {
+  if (!draftRoundByPlayerId) return null;
+  if (result.standout) {
+    const round = draftRoundByPlayerId[result.standout.playerId];
+    if (round != null && round >= 10) {
+      const team = result.standout.side === 'home' ? game.homeName : game.awayName;
+      return { type: 'bargain', team, name: result.standout.name, round, points: result.standout.points };
+    }
+  }
+  if (result.loserBenchRegret) {
+    const round = draftRoundByPlayerId[result.loserBenchRegret.starter.playerId];
+    if (round != null && round <= 3) {
+      return { type: 'draftRegret', team: result.loserBenchRegret.team, name: result.loserBenchRegret.starter.name, round, points: result.loserBenchRegret.starter.points };
+    }
+  }
+  return null;
+}
+
+// "Imperium"-Storylines: griffige, bewusst grosse Erzähl-Etiketten für Team-Meilensteine (Rekord-
+// basiert, nicht Wochen-Ergebnis-basiert) – auf Wunsch fürs bissig-witzige "das Imperium ist
+// zementiert" & Co. Priorität bei mehreren zutreffenden Fällen: die dramatischste Geschichte zuerst.
+function findEmpireStorylineFact(game, standingsById) {
+  if (game.winner === 'TIE') return null;
+  const classify = (teamId, teamName, isWinner) => {
+    const s = standingsById[teamId];
+    if (!s) return null;
+    if (isWinner && s.wins === 1 && s.losses >= 3) return { team: teamName, type: 'firstWinBroken', wins: s.wins, losses: s.losses };
+    if (s.wins === 0 && s.losses >= 4) return { team: teamName, type: 'winless', losses: s.losses };
+    if (s.losses === 0 && (s.ties || 0) === 0 && s.wins >= 4) return { team: teamName, type: 'perfectRecord', wins: s.wins };
+    if (isWinner && s.wins >= 5 && s.losses <= 2) return { team: teamName, type: 'empire', wins: s.wins, losses: s.losses };
+    if (!isWinner && s.wins >= 5) return { team: teamName, type: 'empireCrumbling', wins: s.wins, losses: s.losses };
+    if (s.streakType === 'WIN' && s.streakLength >= 3 && s.wins < s.losses) return { team: teamName, type: 'turnaround', streak: s.streakLength, wins: s.wins, losses: s.losses };
+    return null;
+  };
+  const home = classify(game.homeId, game.homeName, game.winner === 'HOME');
+  const away = classify(game.awayId, game.awayName, game.winner === 'AWAY');
+  const priority = { firstWinBroken: 0, empireCrumbling: 1, winless: 2, empire: 3, turnaround: 4, perfectRecord: 5 };
+  return [home, away].filter(Boolean).sort((a, b) => priority[a.type] - priority[b.type])[0] || null;
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -651,6 +723,18 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
     if (personality) result.seasonPersonality = personality;
   }
 
+  if (ctx?.standingsById) {
+    const expectation = findExpectationFact(game, ctx.standingsById);
+    if (expectation) result.expectation = expectation;
+    const empireStoryline = findEmpireStorylineFact(game, ctx.standingsById);
+    if (empireStoryline) result.empireStoryline = empireStoryline;
+  }
+
+  if (ctx?.draftRoundByPlayerId) {
+    const draftValue = findDraftValueFact(game, result, ctx.draftRoundByPlayerId);
+    if (draftValue) result.draftValue = draftValue;
+  }
+
   return result;
 }
 
@@ -683,6 +767,7 @@ async function main() {
 
   // ---- Draft-Picks für die "board"-Historie ----
   const picks = draftData.draftDetail?.picks || [];
+  const draftRoundByPlayerId = Object.fromEntries(picks.map((p) => [p.playerId, p.roundId]));
   const draftedIds = [...new Set(picks.map((p) => p.playerId))];
   const missingIds = draftedIds.filter((id) => !playerPool[id]);
   const allNeededIds = [...new Set([...draftedIds, ...Object.values(currentRosterIds).flat()])];
@@ -853,7 +938,7 @@ async function main() {
     const liveSnapshotData = await readJsonSafe('live-snapshots.json', { week: null, snapshots: [] });
     const liveSnapshots = liveSnapshotData.week === lastCompletedWeek ? liveSnapshotData.snapshots : null;
     const seasonPersonality = await readJsonSafe('season-personality.json', { weeksArchived: [], teams: {} });
-    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality };
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality, draftRoundByPlayerId };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
