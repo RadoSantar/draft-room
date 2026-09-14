@@ -117,10 +117,58 @@ async function fetchWeeklyKeyMomentsByTeam(week) {
   }
 }
 
-// Standout: bester Starter beider Teams. Bank-Reue: fürs Verlierer-Team der Fall, wo ein Bankspieler
-// mehr punktete als ein Starter auf derselben Position – das ist immer ein regelkonform möglicher
-// Tausch (gleiche Position), keine Vermutung über Flex-Berechtigung nötig.
-function findKeyMoments(game, homePerf, awayPerf) {
+// Grösster gleichpositioneller Bank-vs-Starter-Punktegewinn für ein Team – immer ein regelkonform
+// möglicher Tausch (gleiche Position), keine Vermutung über Flex-Berechtigung nötig.
+function benchRegret(perf, teamName) {
+  if (!perf || !perf.bench.length || !perf.starters.length) return null;
+  const byPos = {};
+  perf.bench.forEach((p) => { (byPos[p.pos] = byPos[p.pos] || []).push(p); });
+  let best = null;
+  perf.starters.forEach((starter) => {
+    (byPos[starter.pos] || []).forEach((benchPlayer) => {
+      const gain = benchPlayer.points - starter.points;
+      if (gain > 0 && (!best || gain > best.gain)) best = { benchPlayer, starter, gain };
+    });
+  });
+  if (!best) return null;
+  return { team: teamName, benchPlayer: best.benchPlayer, starter: best.starter, gain: best.gain };
+}
+
+// Falls eine einzelne Positionsgruppe (z.B. alle RBs) eines Teams allein schon mehr Punkte holte
+// als das GESAMTE gegnerische Team – eine griffige "carried by"-Storyline.
+function findPositionalDominance(game, homePerf, awayPerf) {
+  const groupTotals = (perf) => {
+    const totals = {};
+    (perf?.starters || []).forEach((p) => { totals[p.pos] = (totals[p.pos] || 0) + p.points; });
+    return totals;
+  };
+  const candidates = [];
+  Object.entries(groupTotals(homePerf)).forEach(([pos, total]) => {
+    if (total > game.awayScore) candidates.push({ team: game.homeName, opponent: game.awayName, pos, groupTotal: total, opponentTotal: game.awayScore });
+  });
+  Object.entries(groupTotals(awayPerf)).forEach(([pos, total]) => {
+    if (total > game.homeScore) candidates.push({ team: game.awayName, opponent: game.homeName, pos, groupTotal: total, opponentTotal: game.homeScore });
+  });
+  if (!candidates.length) return null;
+  return candidates.sort((a, b) => (b.groupTotal - b.opponentTotal) - (a.groupTotal - a.opponentTotal))[0];
+}
+
+// Nennenswerte Sieges-/Niederlagenserie (ab 2) unter den beiden beteiligten Teams, laut ESPNs
+// eigener Serien-Zählung (spiegelt bereits den Stand nach der soeben abgeschlossenen Woche).
+function findStreakFact(game, standingsById) {
+  const candidates = [game.homeId, game.awayId]
+    .map((id) => standingsById[id])
+    .filter((s) => s && (s.streakType === 'WIN' || s.streakType === 'LOSS') && s.streakLength >= 2)
+    .sort((a, b) => b.streakLength - a.streakLength);
+  if (!candidates.length) return null;
+  const s = candidates[0];
+  return { team: s.name, streakType: s.streakType, streakLength: s.streakLength };
+}
+
+// Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
+// tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
+// liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
+function findKeyMoments(game, homePerf, awayPerf, standingsById) {
   const result = {};
 
   const bestStarter = (perf, side) => {
@@ -133,27 +181,22 @@ function findKeyMoments(game, homePerf, awayPerf) {
     .sort((a, b) => b.points - a.points)[0];
   if (standout) result.standout = standout;
 
-  const benchRegret = (perf, teamName, margin) => {
-    if (!perf || !perf.bench.length || !perf.starters.length) return null;
-    const byPos = {};
-    perf.bench.forEach((p) => { (byPos[p.pos] = byPos[p.pos] || []).push(p); });
-    let best = null;
-    perf.starters.forEach((starter) => {
-      (byPos[starter.pos] || []).forEach((benchPlayer) => {
-        const gain = benchPlayer.points - starter.points;
-        if (gain > 0 && (!best || gain > best.gain)) best = { benchPlayer, starter, gain };
-      });
-    });
-    if (!best) return null;
-    return { team: teamName, benchPlayer: best.benchPlayer, starter: best.starter, gain: best.gain, wouldHaveWon: best.gain >= margin };
-  };
-
+  const homeRegret = benchRegret(homePerf, game.homeName);
+  const awayRegret = benchRegret(awayPerf, game.awayName);
   if (game.winner === 'HOME') {
-    const regret = benchRegret(awayPerf, game.awayName, game.homeScore - game.awayScore);
-    if (regret) result.loserBenchRegret = regret;
+    if (awayRegret) result.loserBenchRegret = { ...awayRegret, wouldHaveWon: awayRegret.gain >= (game.homeScore - game.awayScore) };
+    if (homeRegret) result.winnerBenchRegret = homeRegret;
   } else if (game.winner === 'AWAY') {
-    const regret = benchRegret(homePerf, game.homeName, game.awayScore - game.homeScore);
-    if (regret) result.loserBenchRegret = regret;
+    if (homeRegret) result.loserBenchRegret = { ...homeRegret, wouldHaveWon: homeRegret.gain >= (game.awayScore - game.homeScore) };
+    if (awayRegret) result.winnerBenchRegret = awayRegret;
+  }
+
+  const dominance = findPositionalDominance(game, homePerf, awayPerf);
+  if (dominance) result.positionalDominance = dominance;
+
+  if (standingsById) {
+    const streak = findStreakFact(game, standingsById);
+    if (streak) result.streak = streak;
   }
 
   return result;
@@ -311,6 +354,7 @@ async function main() {
     const starterTotalById = Object.fromEntries(teamsComputed.map((t) => [t.id, t.starterTotal]));
     const weekGames = scoreboard.find((w) => w.week === lastCompletedWeek)?.games || [];
     const keyMomentsByTeam = await fetchWeeklyKeyMomentsByTeam(lastCompletedWeek);
+    const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
@@ -318,7 +362,7 @@ async function main() {
         homeProj: starterTotalById[g.homeId] || 0,
         awayProj: starterTotalById[g.awayId] || 0
       };
-      return { ...base, ...findKeyMoments(base, keyMomentsByTeam[g.homeId], keyMomentsByTeam[g.awayId]) };
+      return { ...base, ...findKeyMoments(base, keyMomentsByTeam[g.homeId], keyMomentsByTeam[g.awayId], standingsById) };
     });
 
     const oldRecaps = await readJsonSafe('game-recaps.json', { data: {} });

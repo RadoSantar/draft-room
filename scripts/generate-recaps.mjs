@@ -31,6 +31,64 @@ async function callClaude(userPrompt) {
   return (data.content?.[0]?.text || '').trim();
 }
 
+// Deterministischer Pseudo-Zufall aus einem String-Seed (kein echter Zufall nötig – soll bei
+// wiederholten Läufen mit denselben Daten dieselbe Auswahl treffen). Liefert eine gemischte Kopie
+// von items, aus der der Aufrufer die ersten `count` nimmt.
+function seededShuffle(items, seedStr) {
+  let seed = 0;
+  for (let i = 0; i < seedStr.length; i++) seed = (seed * 31 + seedStr.charCodeAt(i)) >>> 0;
+  const rand = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const arr = items.slice();
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// Sammelt alle verfügbaren Storyline-Fakten für ein Spiel als fertige Kontext-Sätze. Nicht jedes
+// Spiel hat jeden Fakt (z.B. positionale Dominanz oder eine Serie gibt es nicht immer) – das allein
+// sorgt schon für Abwechslung, zusätzlich wird unten nur eine Zufallsauswahl davon in den Prompt
+// aufgenommen, damit sich nicht jede Woche nach demselben Schema liest.
+function collectFacts(game) {
+  const facts = [];
+
+  if (game.standout) {
+    const s = game.standout;
+    const standoutTeam = s.side === 'home' ? game.homeName : game.awayName;
+    facts.push(`Standout-Leistung des Spiels: ${s.name} (${s.pos}) mit ${s.points.toFixed(1)} Punkten für ${standoutTeam}.`);
+  }
+
+  if (game.loserBenchRegret) {
+    const r = game.loserBenchRegret;
+    let t = `Bank-Reue: ${r.team} liess ${r.benchPlayer.name} (${r.benchPlayer.pos}, ${r.benchPlayer.points.toFixed(1)} Punkte) auf der Bank sitzen, während Starter ${r.starter.name} (${r.starter.points.toFixed(1)} Punkte) spielte.`;
+    t += r.wouldHaveWon ? ' Mit dem Tausch hätte es sogar zum Sieg gereicht!' : ' Auch mit dem Tausch hätte es nicht ganz zum Sieg gereicht, aber es wäre knapper geworden.';
+    facts.push(t);
+  }
+
+  if (game.winnerBenchRegret) {
+    const r = game.winnerBenchRegret;
+    facts.push(`Trotz Sieg liess ${r.team} auf der Bank Punkte liegen: ${r.benchPlayer.name} (${r.benchPlayer.pos}, ${r.benchPlayer.points.toFixed(1)} Punkte) sass draussen, während Starter ${r.starter.name} nur ${r.starter.points.toFixed(1)} Punkte brachte – am Ende reichte es trotzdem.`);
+  }
+
+  if (game.positionalDominance) {
+    const d = game.positionalDominance;
+    facts.push(`Positionale Dominanz: Allein die ${d.pos}s von ${d.team} holten ${d.groupTotal.toFixed(1)} Punkte – mehr als das komplette Team von ${d.opponent} (${d.opponentTotal.toFixed(1)}) zusammen.`);
+  }
+
+  if (game.streak) {
+    const s = game.streak;
+    facts.push(s.streakType === 'WIN'
+      ? `${s.team} gewinnt damit das ${s.streakLength}. Spiel in Folge.`
+      : `${s.team} kassiert damit die ${s.streakLength}. Niederlage in Folge.`);
+  }
+
+  return facts;
+}
+
 function buildPrompt(game) {
   const margin = Math.abs(game.homeScore - game.awayScore);
   const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
@@ -48,18 +106,11 @@ function buildPrompt(game) {
       ? `${favorite} galt vor der Saison als das stärker aufgestellte Team – ${winner} hat hier also den Außenseiter-Sieg gelandet. `
       : `${winner} war schon vor der Saison das stärker aufgestellte Team und bestätigt das hier. `;
   }
-  if (game.standout) {
-    const s = game.standout;
-    const standoutTeam = s.side === 'home' ? game.homeName : game.awayName;
-    context += `Standout-Leistung des Spiels: ${s.name} (${s.pos}) mit ${s.points.toFixed(1)} Punkten für ${standoutTeam}. `;
-  }
-  if (game.loserBenchRegret) {
-    const r = game.loserBenchRegret;
-    context += `Bank-Reue: ${r.team} liess ${r.benchPlayer.name} (${r.benchPlayer.pos}, ${r.benchPlayer.points.toFixed(1)} Punkte) auf der Bank sitzen, während Starter ${r.starter.name} (${r.starter.points.toFixed(1)} Punkte) spielte. `;
-    context += r.wouldHaveWon
-      ? 'Mit dem Tausch hätte es sogar zum Sieg gereicht! '
-      : 'Auch mit dem Tausch hätte es nicht ganz zum Sieg gereicht, aber es wäre knapper geworden. ';
-  }
+
+  const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-');
+  const picked = seededShuffle(collectFacts(game), key).slice(0, 2);
+  picked.forEach((sentence) => { context += sentence + ' '; });
+
   context += 'Schreibe jetzt den Recap.';
   return context;
 }
