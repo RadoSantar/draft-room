@@ -108,7 +108,7 @@ const BADGE_POOL = {
 function pickBadge(game, wasUpset, margin) {
   const categories = [];
   if (game.winner === 'TIE') categories.push('tie');
-  if (margin >= 30) categories.push('blowout');
+  if (margin >= 50) categories.push('blowout');
   if (margin > 0 && margin <= 5) categories.push('nailbiter');
   if (wasUpset) categories.push('upset');
   if (game.loserBenchRegret?.wouldHaveWon) categories.push('fatalBenchRegret');
