@@ -6,7 +6,7 @@ const MODEL = 'claude-sonnet-5';
 
 const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-5 Sätze, auf Deutsch) für "Fantasy Playbook", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech und pointiert: scheu dich nicht vor Spott, Sarkasmus und einer scharfen Zunge, gerne mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (z.B. eine schlechte Bank-Aufstellung, ein enttäuschender Star-Spieler, ein sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
 
-Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
+Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
 async function callClaude(userPrompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -89,6 +89,40 @@ function collectFacts(game) {
   return facts;
 }
 
+// Kuratierte "Spitznamen" pro Spiel-Situation – mehrere pro Kategorie für Abwechslung, gedacht als
+// wiederkehrendes, augenzwinkerndes Liga-Ritual (ähnlich "Tor des Monats"). Trifft eine Situation auf
+// mehrere Kategorien zu (z.B. Blowout + Bank-Reue), landen alle passenden Spitznamen in einem
+// gemeinsamen Topf, aus dem – wieder seedbasiert-deterministisch – nur einer gezogen wird.
+const BADGE_POOL = {
+  blowout: ['Die Klatsche der Woche', 'Frühstück serviert', 'Schulhof-Abreibung', 'Der Elfmeter der Woche', 'Liga-Massaker'],
+  nailbiter: ['Herzschlagfinale der Woche', 'Zitterpartie der Woche', 'Photo Finish', 'Nervenkrieg pur'],
+  upset: ['David gegen Goliath', 'Der Aussenseiter-Coup', 'Vorschau? Welche Vorschau?', 'Papierform war gestern'],
+  fatalBenchRegret: ['Eigentor der Woche', 'Selbstzerstörung par excellence', 'Bank-Bankrott', 'Hausgemachte Pleite'],
+  standout: ['Ein-Mann-Armee', 'MVP der Woche', 'Der Unaufhaltsame', 'Solo-Gala'],
+  winStreak: ['Die Dampfwalze rollt', 'Unaufhaltsam', 'Auf Erfolgskurs', 'Der Lauf geht weiter'],
+  lossStreak: ['Free Fall', 'Krisenmodus', 'Der Absturz geht weiter', 'Kein Land in Sicht'],
+  dominance: ['One-Man-Show', 'Die Übermacht', 'Allein gegen alle – und gewonnen'],
+  tie: ['Unentschieden-Drama', 'Keiner wollte gewinnen', 'Geteiltes Leid']
+};
+
+function pickBadge(game, wasUpset, margin) {
+  const categories = [];
+  if (game.winner === 'TIE') categories.push('tie');
+  if (margin >= 30) categories.push('blowout');
+  if (margin > 0 && margin <= 5) categories.push('nailbiter');
+  if (wasUpset) categories.push('upset');
+  if (game.loserBenchRegret?.wouldHaveWon) categories.push('fatalBenchRegret');
+  if (game.standout && game.standout.points >= 30) categories.push('standout');
+  if (game.streak?.streakType === 'WIN' && game.streak.streakLength >= 3) categories.push('winStreak');
+  if (game.streak?.streakType === 'LOSS' && game.streak.streakLength >= 3) categories.push('lossStreak');
+  if (game.positionalDominance) categories.push('dominance');
+
+  const candidates = categories.flatMap((c) => BADGE_POOL[c]);
+  if (!candidates.length) return null;
+  const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + '-badge';
+  return seededShuffle(candidates, key)[0];
+}
+
 function buildPrompt(game) {
   const margin = Math.abs(game.homeScore - game.awayScore);
   const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
@@ -110,6 +144,9 @@ function buildPrompt(game) {
   const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-');
   const picked = seededShuffle(collectFacts(game), key).slice(0, 2);
   picked.forEach((sentence) => { context += sentence + ' '; });
+
+  const badge = pickBadge(game, wasUpset, margin);
+  if (badge) context += `Spitzname für dieses Spiel: "${badge}". `;
 
   context += 'Schreibe jetzt den Recap.';
   return context;
