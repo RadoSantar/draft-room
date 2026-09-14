@@ -27,8 +27,9 @@ const COOKIE = `SWID=${ESPN_SWID}; espn_s2=${ESPN_S2}`;
 const LEAGUE_BASE = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leagues/${LEAGUE_ID}`;
 const DEFAULTS_URL = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leaguedefaults/3?view=kona_player_info`;
 
-async function fetchLeague(views) {
-  const url = LEAGUE_BASE + '?' + views.map((v) => 'view=' + v).join('&');
+async function fetchLeague(views, scoringPeriodId) {
+  let url = LEAGUE_BASE + '?' + views.map((v) => 'view=' + v).join('&');
+  if (scoringPeriodId) url += '&scoringPeriodId=' + scoringPeriodId;
   const res = await fetch(url, { headers: { Cookie: COOKIE } });
   if (!res.ok) throw new Error(`ESPN-Fetch fehlgeschlagen (${res.status}): ${url}`);
   return res.json();
@@ -73,6 +74,89 @@ async function writeJson(file, value) {
 
 function nowIso() {
   return new Date().toISOString();
+}
+
+// ESPN-Lineup-Slot-IDs: 20 = Bench, 21 = IR – alle anderen sind Start-Slots (QB/RB/WR/TE/FLEX/K/DEF).
+const BENCH_SLOT_ID = 20;
+const IR_SLOT_ID = 21;
+
+// Holt für eine abgeschlossene Woche je Team, wer tatsächlich startete/auf der Bank sass und was
+// jeder Spieler in genau dieser Woche wirklich erzielt hat (ESPNs appliedStatTotal, nach unseren
+// eigenen Liga-Scoring-Regeln – genauer als unsere Saison-Projektion, aber nur für vergangene Wochen
+// verfügbar). Dient ausschliesslich dazu, Claude beim Recap echte "Bank-Reue"/Standout-Momente zu
+// liefern. Bei Fehlern (z.B. unerwartete API-Form) einfach ein leeres Ergebnis zurückgeben – der
+// Recap läuft dann ohne diese Zusatz-Storylines ganz normal weiter, siehe findKeyMoments().
+async function fetchWeeklyKeyMomentsByTeam(week) {
+  try {
+    const data = await fetchLeague(['mBoxscore', 'mMatchupScore'], week);
+    const byTeam = {};
+    (data.schedule || []).forEach((matchup) => {
+      if (matchup.matchupPeriodId !== week) return;
+      [matchup.home, matchup.away].forEach((side) => {
+        if (!side || !side.teamId) return;
+        const starters = [];
+        const bench = [];
+        (side.rosterForCurrentScoringPeriod?.entries || []).forEach((e) => {
+          const p = e.playerPoolEntry?.player;
+          if (!p) return;
+          const entry = {
+            name: p.fullName,
+            pos: POS_MAP[p.defaultPositionId] || '?',
+            points: e.playerPoolEntry.appliedStatTotal || 0
+          };
+          if (e.lineupSlotId === BENCH_SLOT_ID || e.lineupSlotId === IR_SLOT_ID) bench.push(entry);
+          else starters.push(entry);
+        });
+        byTeam[side.teamId] = { starters, bench };
+      });
+    });
+    return byTeam;
+  } catch (e) {
+    console.error('Wochen-Boxscore konnte nicht geladen werden, Recaps laufen ohne Zusatz-Storylines weiter:', e.message);
+    return {};
+  }
+}
+
+// Standout: bester Starter beider Teams. Bank-Reue: fürs Verlierer-Team der Fall, wo ein Bankspieler
+// mehr punktete als ein Starter auf derselben Position – das ist immer ein regelkonform möglicher
+// Tausch (gleiche Position), keine Vermutung über Flex-Berechtigung nötig.
+function findKeyMoments(game, homePerf, awayPerf) {
+  const result = {};
+
+  const bestStarter = (perf, side) => {
+    if (!perf || !perf.starters.length) return null;
+    const best = perf.starters.slice().sort((a, b) => b.points - a.points)[0];
+    return { ...best, side };
+  };
+  const standout = [bestStarter(homePerf, 'home'), bestStarter(awayPerf, 'away')]
+    .filter(Boolean)
+    .sort((a, b) => b.points - a.points)[0];
+  if (standout) result.standout = standout;
+
+  const benchRegret = (perf, teamName, margin) => {
+    if (!perf || !perf.bench.length || !perf.starters.length) return null;
+    const byPos = {};
+    perf.bench.forEach((p) => { (byPos[p.pos] = byPos[p.pos] || []).push(p); });
+    let best = null;
+    perf.starters.forEach((starter) => {
+      (byPos[starter.pos] || []).forEach((benchPlayer) => {
+        const gain = benchPlayer.points - starter.points;
+        if (gain > 0 && (!best || gain > best.gain)) best = { benchPlayer, starter, gain };
+      });
+    });
+    if (!best) return null;
+    return { team: teamName, benchPlayer: best.benchPlayer, starter: best.starter, gain: best.gain, wouldHaveWon: best.gain >= margin };
+  };
+
+  if (game.winner === 'HOME') {
+    const regret = benchRegret(awayPerf, game.awayName, game.homeScore - game.awayScore);
+    if (regret) result.loserBenchRegret = regret;
+  } else if (game.winner === 'AWAY') {
+    const regret = benchRegret(homePerf, game.homeName, game.awayScore - game.homeScore);
+    if (regret) result.loserBenchRegret = regret;
+  }
+
+  return result;
 }
 
 async function main() {
@@ -226,12 +310,16 @@ async function main() {
   if (lastCompletedWeek > 0) {
     const starterTotalById = Object.fromEntries(teamsComputed.map((t) => [t.id, t.starterTotal]));
     const weekGames = scoreboard.find((w) => w.week === lastCompletedWeek)?.games || [];
-    const enrichedGames = weekGames.map((g) => ({
-      ...g,
-      week: lastCompletedWeek,
-      homeProj: starterTotalById[g.homeId] || 0,
-      awayProj: starterTotalById[g.awayId] || 0
-    }));
+    const keyMomentsByTeam = await fetchWeeklyKeyMomentsByTeam(lastCompletedWeek);
+    const enrichedGames = weekGames.map((g) => {
+      const base = {
+        ...g,
+        week: lastCompletedWeek,
+        homeProj: starterTotalById[g.homeId] || 0,
+        awayProj: starterTotalById[g.awayId] || 0
+      };
+      return { ...base, ...findKeyMoments(base, keyMomentsByTeam[g.homeId], keyMomentsByTeam[g.awayId]) };
+    });
 
     const oldRecaps = await readJsonSafe('game-recaps.json', { data: {} });
     const existing = oldRecaps.data || {};
