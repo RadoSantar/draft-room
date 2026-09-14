@@ -231,13 +231,26 @@ function findSeasonExtremeFact(game, scoreboard, lastCompletedWeek) {
   return null;
 }
 
-// Gegner der kommenden Woche je Team – für den kleinen Ausblick am Ende des Recaps.
-function findNextOpponent(teamId, scoreboard, nextWeek) {
+// Gegner der kommenden Woche je Team, inkl. dessen aktueller Bilanz und Conference-Rang – damit
+// generate-recaps.mjs daraus einen echten kleinen Teaser bauen kann statt nur den nackten Namen zu
+// nennen.
+function findNextOpponent(teamId, scoreboard, nextWeek, standingsById, confStandings) {
   const wk = scoreboard.find((w) => w.week === nextWeek);
   if (!wk) return null;
   const g = wk.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
   if (!g) return null;
-  return g.homeId === teamId ? g.awayName : g.homeName;
+  const oppId = g.homeId === teamId ? g.awayId : g.homeId;
+  const oppName = g.homeId === teamId ? g.awayName : g.homeName;
+  const rec = standingsById?.[oppId];
+  const conf = confStandings?.[oppId];
+  return {
+    name: oppName,
+    wins: rec?.wins ?? null,
+    losses: rec?.losses ?? null,
+    ties: rec?.ties ?? null,
+    confRank: conf?.rank ?? null,
+    conf: conf?.conf ?? null
+  };
 }
 
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
@@ -290,8 +303,8 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   }
 
   if (ctx?.scoreboard) {
-    const homeNextOpp = findNextOpponent(game.homeId, ctx.scoreboard, game.week + 1);
-    const awayNextOpp = findNextOpponent(game.awayId, ctx.scoreboard, game.week + 1);
+    const homeNextOpp = findNextOpponent(game.homeId, ctx.scoreboard, game.week + 1, ctx.standingsById, ctx.confStandings);
+    const awayNextOpp = findNextOpponent(game.awayId, ctx.scoreboard, game.week + 1, ctx.standingsById, ctx.confStandings);
     if (homeNextOpp) result.homeNextOpp = homeNextOpp;
     if (awayNextOpp) result.awayNextOpp = awayNextOpp;
   }

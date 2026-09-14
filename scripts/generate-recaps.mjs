@@ -6,7 +6,7 @@ const MODEL = 'claude-sonnet-5';
 
 const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-5 Sätze, auf Deutsch) für "Fantasy Playbook", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech und pointiert: scheu dich nicht vor Spott, Sarkasmus und einer scharfen Zunge, gerne mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (z.B. eine schlechte Bank-Aufstellung, ein enttäuschender Star-Spieler, ein sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
 
-Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext ein "Ausblick auf die kommende Woche" gegeben ist, schliesse den Recap mit einem knappen, einzelnen Satz dazu ab (locker hingeworfen, nicht als separater Absatz). Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
+Wenn im Kontext eine "Standout-Leistung" gegeben ist, baue sie als eigene Pointe ein (z.B. wie dieser eine Spieler das gegnerische Team alt aussehen liess). Wenn eine "Bank-Reue" gegeben ist, mach daraus genüsslich eine Schlüsselszene – vor allem wenn der Tausch laut Kontext sogar zum Sieg gereicht hätte, darf das richtig auf die Spitze getrieben werden. Wenn im Kontext ein "Spitzname für dieses Spiel" gegeben ist, flechte ihn wie einen eingängigen Rubrik-Titel natürlich in den Text ein (z.B. als zugespitzte Formulierung mittendrin, nicht zwingend als separate Überschrift) – er soll sich anfühlen wie ein wiederkehrendes Liga-Ritual ("Klatsche der Woche" & Co.), nicht wie eine angeklebte Floskel. Wenn im Kontext eine "Vorschau auf die kommende Woche" gegeben ist, schliesse den Recap mit JE EINEM kurzen Teaser-Satz PRO TEAM ab – wie ein Trailer auf die jeweils nächste Partie, ruhig mit einer frechen kleinen Prognose-Anspielung, aber locker hingeworfen statt als separater Absatz. Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
 async function callClaude(userPrompt) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -172,8 +172,19 @@ function buildPrompt(game) {
   const badge = pickBadge(game, wasUpset, margin);
   if (badge) context += `Spitzname für dieses Spiel: "${badge}". `;
 
-  if (game.homeNextOpp || game.awayNextOpp) {
-    context += `Ausblick auf die kommende Woche: ${game.homeName} trifft als nächstes auf ${game.homeNextOpp || 'noch unbekannt'}, ${game.awayName} auf ${game.awayNextOpp || 'noch unbekannt'}. `;
+  const teaser = (teamName, opp) => {
+    if (!opp) return null;
+    let t = `${teamName} trifft nächste Woche auf ${opp.name}`;
+    if (opp.wins != null) {
+      t += ` (Bilanz ${opp.wins}-${opp.losses}${opp.ties ? '-' + opp.ties : ''}`;
+      t += opp.confRank != null ? `, Platz ${opp.confRank} der ${opp.conf})` : ')';
+    }
+    return t + '.';
+  };
+  const homeTeaser = teaser(game.homeName, game.homeNextOpp);
+  const awayTeaser = teaser(game.awayName, game.awayNextOpp);
+  if (homeTeaser || awayTeaser) {
+    context += `Vorschau auf die kommende Woche (für beide Teams je einen eigenen Teaser-Satz schreiben): ${[homeTeaser, awayTeaser].filter(Boolean).join(' ')} `;
   }
 
   context += 'Schreibe jetzt den Recap.';
