@@ -83,9 +83,13 @@ Folge-Wunsch: die Vorschau wird zwar schon dienstags generiert, soll aber – ko
 
 **Verifiziert per Playwright** (gemocktes Datum): Dienstag → 0 Vorschau-Elemente im DOM, Mittwoch/Donnerstag → 1 Element sichtbar.
 
+## 6. Standings: kassierte Punkte + Differenz ergänzt
+
+`data/standings.json` enthielt `pointsAgainst` schon seit längerem (Sync-Skript liefert es mit), die Tabelle in `schedule.html` zeigte bisher aber nur `pointsFor` ("Punkte"). Statt einer zusätzlichen vollen Spalte (auf Mobile bei 390px kein Platz mehr – die bestehenden 4 Spalten neben dem Teamnamen sind schon eng) wurde die bestehende Punkte-Spalte zweizeilig gemacht: erzielte Punkte oben (wie bisher, amber/gross), kassierte Punkte + Differenz (`+47.5`/`-30.0` etc.) klein darunter (`.standings-pf-sub`). Diff wird clientseitig berechnet (`pointsFor - pointsAgainst`), keine Backend-/Sync-Änderung nötig. Mit Playwright bei 390px und 1200px geprüft – passt sauber ohne Umbruch.
+
 ## Offene, noch nicht umgesetzte Punkte (unverändert seit letzter Session)
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 
 ## Nächster Schritt (Stand Ende dieser Session)
-Woche 2 abwarten und beobachten, ob die Fakten-Varianz (jetzt mit einer Woche Saison-Historie mehr) die Bank-Thema-Häufung weiter reduziert. Ausserdem beobachten, ob die Wochen-Vorschau ab Woche 3 (mit dann 2 Wochen Historie für `formTrend`/`consistency`/etc.) inhaltlich reichhaltiger wird.
+Woche 2 abwarten und beobachten, ob die Fakten-Varianz (jetzt mit einer Woche Saison-Historie mehr) die Bank-Thema-Häufung weiter reduziert. Ausserdem beobachten, ob die Wochen-Vorschau ab Woche 3 (mit dann 2 Wochen Historie für `formTrend`/`consistency`/etc.) inhaltlich reichhaltiger wird. Nutzer hat zusätzlich Interesse an einem breiteren, NFL-artigen Statistik-Ökosystem geäussert ("für alles gibt's irgendeine Statistik") – Vorschläge dafür wurden präsentiert, Umsetzung noch nicht bestätigt/beauftragt.
