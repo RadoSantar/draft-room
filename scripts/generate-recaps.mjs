@@ -338,7 +338,12 @@ function collectFacts(game) {
 // (sonst könnten z.B. 4 von 5 Spielen irgendeine Bank-Geschichte erzählen statt max. 2).
 const CATEGORY_GROUP = {
   loserBenchRegret: 'benchRegret',
-  winnerBenchRegret: 'benchRegret'
+  winnerBenchRegret: 'benchRegret',
+  // optimalLineupGap ("Die Bank wusste es besser"/lineupDisaster-Badges) und seasonBenchTotal
+  // (Saison-Summe) sind technisch andere Fakten, lesen sich für die Leserschaft aber wie dieselbe
+  // "Bank-Missmanagement"-Geschichte wie loser-/winnerBenchRegret - deshalb dasselbe Budget.
+  optimalLineupGap: 'benchRegret',
+  seasonBenchTotal: 'benchRegret'
 };
 function groupOf(category) { return CATEGORY_GROUP[category] || category; }
 
