@@ -37,7 +37,11 @@ async function callClaude(userPrompt) {
     throw new Error(`Claude-API-Fehler (${res.status}): ${text}`);
   }
   const data = await res.json();
-  return (data.content?.[0]?.text || '').trim();
+  const text = (data.content?.[0]?.text || '').trim();
+  if (!text) {
+    throw new Error(`Claude-Antwort war leer (stop_reason: ${data.stop_reason || '?'})`);
+  }
+  return text;
 }
 
 // Deterministischer Pseudo-Zufall aus einem String-Seed (kein echter Zufall nötig – soll bei
