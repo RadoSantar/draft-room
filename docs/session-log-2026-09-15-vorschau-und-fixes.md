@@ -122,12 +122,27 @@ Neu angelegt: **`data/league-history.json`** (Platzhalter-Schema: `{ lastUpdated
 
 **Wichtige Korrektur vom Nutzer selbst:** Die Team-Reihenfolge in ESPNs History-Ansicht ist die finale PLAYOFF-Platzierung, nicht nach Regular-Season-Bilanz sortiert – 2025 hatte Sherlock Mahomes mit 13-2 die mit Abstand beste Bilanz der Liga, landete laut Bracket-Ergebnis aber nur auf Rang 3, während Tackleberry Finn mit nur 6-9 bis ins Championship-Spiel kam (Rang 2). Schema deshalb von `standings` (hätte Bilanz-Sortierung impliziert) auf `finalStandings` mit explizitem `rank`-Feld umbenannt, plus deutlicher Hinweis-Kommentar in der Datei selbst, damit das nicht später fälschlich als bilanz-sortierte Tabelle missverstanden wird. `pointsFor` war in beiden Screenshots nicht ersichtlich, bewusst `null` gelassen statt geraten. Beide Saisons hatten offenbar nur 6 Teams (Wachstum auf die aktuellen 10 muss zwischen 2025 und 2026 passiert sein).
 
-Noch offen: ob 2025 wirklich die letzte Vorsaison war oder ob es noch ältere Saisons gibt; noch keine Fakten-Funktionen auf `league-history.json` aufgebaut (folgt als nächster Schritt).
+**Weitere Updates, noch im selben Gespräch:**
+- Nutzer hat den kompletten 2025er-Playoff-Bracket nachgeliefert (Woche 16 Halbfinale + Woche 17 Finale/3.-Platz-Spiel/5.-Platz-Spiel, mit Seeds und echten Scores) → in `league-history.json` unter `seasons.2025.playoffs` eingetragen. Bestätigt/erklärt die schon vorhandenen `finalStandings`: Seed-1 Sherlock Mahomes (13-2) verlor überraschend im Halbfinale gegen Seed-4 Tackleberry Finn (6-9), die dann im Finale gegen Zurich City Ravens verloren.
+- Nutzer hat drei Hall-of-Fame-Screenshots geschickt (Champions, meiste Team-Punkte pro Saison, meiste Team-Punkte in einer Woche, meiste Spieler-Punkte in einer Woche, je 2024 vs. 2025) → in `league-history.json` unter `hallOfFame` eingetragen. Bestätigt nebenbei explizit: Liga "Est. 2024", 2025 war die "2nd Saison" → beantwortet die offene Frage von oben.
+- Per `AskUserQuestion` nachgefragt, ob 2024 wirklich die Gründungssaison war (vs. noch ältere Daten abzuwarten) → Nutzer hat bestätigt: 2024 war die erste Saison, keine älteren Daten zu erwarten. `leagueFounded: 2024` im JSON vermerkt.
+
+**Damit Punkt D fertig umgesetzt:** Drei neue `find*Fact()`-Funktionen in `sync-espn.mjs` (Kommentarblock "Punkt D: Liga-Historie", direkt nach `findLeagueActivityFact`):
+- `findDefendingChampionFact` – Titelverteidiger-Storyline, nur früh in der neuen Saison (≤6 Spiele) relevant.
+- `findAllTimeRecordFact` – diese Woche wird ein All-Time-Liga-Rekord (Spieler- oder Team-Wochenpunkte) aus der Hall of Fame geknackt; braucht echte Spielleistung, deshalb NICHT vorschau-tauglich.
+- `findPlayoffHistoryFact` – die beiden Teams trafen sich schon in einem früheren Playoff-Spiel (durchsucht alle erfassten Saisons' `playoffs`-Objekte) – grössere Geschichte als die reguläre Saison-Revanche (`findRematchFact`, nur innerhalb derselben Saison).
+
+`defendingChampion`/`playoffHistory` sind vorschau-tauglich und laufen deshalb auch in `buildPreviewMoments`. `main()` lädt jetzt zusätzlich `league-history.json` und reicht es als `ctx.leagueHistory` sowohl in den Recap- als auch den Preview-Kontext durch.
+
+In `generate-recaps.mjs`: alle drei Kategorien in `collectFacts()` UND `collectPreviewFacts()` (mit forward-looking Formulierung für Letzteres), `BADGE_POOL` (`defendingChampion`, `allTimeRecord`, `playoffHistory`), `BADGE_CATEGORY_TO_FACT_CATEGORY` und `pickBadge()` verdrahtet.
+
+Getestet via gemocktem Claude-API-Call: alle drei Kategorien rendern korrekt sowohl im Einzel-Recap- als auch im Wochen-Vorschau-Prompt.
 
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
-- Punkt D (Liga-Historie): Daten für 2024/2025 jetzt vorhanden – als nächstes Fakten-Funktionen dafür schreiben (Titelverteidiger-Storyline, Mehrjahres-Bilanz-Kontext etc.), sobald vom Nutzer bestätigt, dass keine weiteren Saisons mehr nachkommen bzw. auf Zuruf erweiterbar bleiben.
+
+Alle in dieser Session besprochenen Punkte (Standings-Erweiterung, 8 neue Stats-Kategorien, Punkt D/Liga-Historie) sind damit umgesetzt.
 
 ## Nächster Schritt (Stand Ende dieser Session)
-Woche 2 abwarten, dann beim nächsten Dienstags-Sync verifizieren, dass `archiveSeasonStats()` und die 8 neuen Fakten-Kategorien mit echten Daten fehlerfrei laufen (insbesondere die migrationssicheren Defaults für die schon bestehenden Woche-1-Team-Einträge). Ausserdem: sobald der Nutzer grünes Licht gibt (keine weiteren Vorsaisons-Screenshots mehr zu erwarten), Fakten-Funktionen für `league-history.json` bauen und in Recaps/Vorschau einstreuen.
+Woche 2 abwarten, dann beim nächsten Dienstags-Sync verifizieren, dass `archiveSeasonStats()`, die 8 neuen Saison-Stats-Kategorien UND die 3 neuen Liga-Historie-Kategorien mit echten Daten fehlerfrei laufen (insbesondere die migrationssicheren Defaults für die schon bestehenden Woche-1-Team-Einträge in `season-stats.json`). `findDefendingChampionFact` sollte ab Woche 1-2 der neuen Saison sofort greifen (Zurich City Ravens als Titelverteidiger 2025), gut beobachtbar beim nächsten Recap.
