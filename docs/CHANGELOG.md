@@ -89,3 +89,17 @@ reisserischer im Kopf (Schlagzeile) und cross-game statt pro Spiel.
 
 data/week-recaps.json startet leer, wird beim nächsten Sync-Lauf nach
 Woche 1 befüllt.
+
+## 2026-09-15 – `cfffcb6` Recaps: Claude-Antwort verliert Text bei führendem Nicht-Text-Block
+
+Zweiter Fehlschlag des Wochen-Recaps trotz höherem max_tokens: diesmal
+"stop_reason: end_turn" (kein Truncation) aber trotzdem leerer Text.
+Ursache: callClaude() nahm bisher nur content[0].text - steht vor dem
+eigentlichen Text-Block ein anderer Block (z.B. ein Thinking-Block bei
+aktiviertem Extended Thinking), ist content[0].text undefined und wir
+werfen fälschlich "Antwort war leer", obwohl der echte Text irgendwo
+weiter hinten im content-Array steht.
+
+Fix: alle Blöcke vom Typ "text" aus content sammeln und aneinanderhängen,
+statt blind auf Position 0 zu vertrauen. Betrifft auch die Einzel-Recaps
+(dort bisher offenbar nie ausgelöst, aber derselbe Bug).
