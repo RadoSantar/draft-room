@@ -372,6 +372,25 @@ function collectFacts(game) {
     facts.push({ category: 'leagueActivity', text: `Kader-Dauerbaustelle: ${a.team} hat diese Saison schon ${a.count} Kaderbewegungen (Waiver/Trades) hinter sich – so viele wie kein anderes Team der Liga.` });
   }
 
+  // ---- Punkt D: Liga-Historie (siehe sync-espn.mjs) ----
+
+  if (game.defendingChampion) {
+    const d = game.defendingChampion;
+    facts.push({ category: 'defendingChampion', text: `Titelverteidiger: ${d.team} gewann die Meisterschaft ${d.year} und steht diese Saison bei ${d.wins}-${d.losses}.` });
+  }
+
+  if (game.allTimeRecord) {
+    const r = game.allTimeRecord;
+    facts.push({ category: 'allTimeRecord', text: r.type === 'playerWeek'
+      ? `Liga-Rekord geknackt: ${r.name} von ${r.team} stellt mit ${r.points.toFixed(1)} Punkten einen neuen All-Time-Liga-Rekord auf – der alte Rekord stand bei ${r.prevRecord.toFixed(1)} Punkten (${r.prevHolder}, Saison ${r.prevYear}).`
+      : `Liga-Rekord geknackt: ${r.team} stellt mit ${r.points.toFixed(1)} Team-Punkten in einer Woche einen neuen All-Time-Liga-Rekord auf – der alte Rekord stand bei ${r.prevRecord.toFixed(1)} (${r.prevHolder}, Saison ${r.prevYear}).` });
+  }
+
+  if (game.playoffHistory) {
+    const p = game.playoffHistory;
+    facts.push({ category: 'playoffHistory', text: `Playoff-Geschichte: ${p.team1} und ${p.team2} standen sich schon in den ${p.year}er-Playoffs gegenüber (${p.score1.toFixed(1)}:${p.score2.toFixed(1)}), damals gewann ${p.winner}.` });
+  }
+
   return facts;
 }
 
@@ -650,6 +669,15 @@ const BADGE_POOL = {
   ],
   activeManager: [
     'Der Waiver-Wire-Junkie', 'Nie zufrieden mit dem Kader', 'Dauerhaft am Umbauen'
+  ],
+  defendingChampion: [
+    'Der Titelverteidiger', 'Trägt die Krone', 'Regierender Meister im Härtetest'
+  ],
+  allTimeRecord: [
+    'Neuer Liga-Rekord', 'Geschichte geschrieben', 'Die Bestenliste hat einen neuen Namen'
+  ],
+  playoffHistory: [
+    'Die alte Playoff-Rechnung', 'Revanche für die Bracket-Geschichte', 'Wiedersehen aus den Playoffs'
   ]
 };
 
@@ -722,7 +750,10 @@ const BADGE_CATEGORY_TO_FACT_CATEGORY = {
   ironMan: 'ironMan',
   mountRushmore: 'topWeeklyPerformance',
   milestone: 'seasonMilestone',
-  activeManager: 'leagueActivity'
+  activeManager: 'leagueActivity',
+  defendingChampion: 'defendingChampion',
+  allTimeRecord: 'allTimeRecord',
+  playoffHistory: 'playoffHistory'
 };
 
 function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
@@ -797,6 +828,9 @@ function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   if (game.seasonDraftValue?.type === 'bargain') categories.push('bargain');
   if (game.seasonDraftValue?.type === 'bust') categories.push('draftRegret');
   if (game.leagueActivity) categories.push('activeManager');
+  if (game.defendingChampion) categories.push('defendingChampion');
+  if (game.allTimeRecord) categories.push('allTimeRecord');
+  if (game.playoffHistory) categories.push('playoffHistory');
 
   // Fakten-gebundene Kategorien rausfiltern, deren Thema diese Woche schon am Limit ist. Anders als
   // bei den Fakten selbst gibt es hier KEIN Zurückfallen auf die überstrapazierte Kategorie: ein
@@ -1022,6 +1056,16 @@ function collectPreviewFacts(game) {
     let t = `Bereits in Woche ${r.week} standen sich diese beiden Teams gegenüber (${r.scoreLine}), damals gewann ${r.winner}.`;
     t += r.isFinalMeeting ? ' Letzte Chance in dieser Saison auf Wiedergutmachung.' : ' Die zweite Runde folgt.';
     facts.push({ category: 'rematch', text: t });
+  }
+
+  if (game.defendingChampion) {
+    const d = game.defendingChampion;
+    facts.push({ category: 'defendingChampion', text: `Titelverteidiger: ${d.team} gewann die Meisterschaft ${d.year} und geht mit ${d.wins}-${d.losses} in diese Woche.` });
+  }
+
+  if (game.playoffHistory) {
+    const p = game.playoffHistory;
+    facts.push({ category: 'playoffHistory', text: `Playoff-Geschichte: ${p.team1} und ${p.team2} standen sich schon in den ${p.year}er-Playoffs gegenüber (${p.score1.toFixed(1)}:${p.score2.toFixed(1)}), damals gewann ${p.winner} – heute geht's um die Revanche in der regulären Saison.` });
   }
 
   return facts;

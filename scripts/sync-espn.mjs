@@ -1059,6 +1059,12 @@ function buildPreviewMoments(game, ctx) {
     const rematch = findRematchFact(game, ctx.scoreboard);
     if (rematch) result.rematch = rematch;
   }
+  if (ctx?.leagueHistory) {
+    const defendingChampion = findDefendingChampionFact(game, ctx.standingsById || {}, ctx.leagueHistory);
+    if (defendingChampion) result.defendingChampion = defendingChampion;
+    const playoffHistory = findPlayoffHistoryFact(game, ctx.leagueHistory);
+    if (playoffHistory) result.playoffHistory = playoffHistory;
+  }
   return result;
 }
 
@@ -1195,6 +1201,83 @@ function findLeagueActivityFact(game, transactions) {
     return { team: teamName, count: maxCount };
   };
   return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// ==== Punkt D: Liga-Historie (2026-09-15) ====
+// Nutzt data/league-history.json (manuell gepflegt aus ESPN-App-Screenshots, siehe Datei-Kommentar
+// dort - Vorsaisons-Meister/Standings/Playoff-Brackets/Hall-of-Fame-Rekorde). Alle drei Funktionen
+// sind bewusst so gebaut, dass sie auch mit nur 2 erfassten Saisons schon sinnvolle Ergebnisse liefern
+// und automatisch reichhaltiger werden, sobald weitere Saisons dazukommen.
+
+// D-Historie 1: Titelverteidiger-Storyline - der Meister der jüngsten erfassten Saison, früh in der
+// neuen Saison (danach verliert "Titelverteidiger" an Reiz, jedes Team hat dann längst sein eigenes
+// Momentum).
+function findDefendingChampionFact(game, standingsById, leagueHistory) {
+  if (!leagueHistory?.seasons) return null;
+  const years = Object.keys(leagueHistory.seasons).map(Number).sort((a, b) => b - a);
+  if (!years.length) return null;
+  const latestYear = years[0];
+  const latestChampion = leagueHistory.seasons[latestYear].champion;
+  if (!latestChampion) return null;
+  const check = (teamId, teamName) => {
+    if (teamName !== latestChampion) return null;
+    const s = standingsById[teamId];
+    if (!s) return null;
+    const gamesPlayed = s.wins + s.losses + (s.ties || 0);
+    if (gamesPlayed > 6) return null;
+    return { team: teamName, year: latestYear, wins: s.wins, losses: s.losses };
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// D-Historie 2: Diese Woche wird ein ALL-TIME-Liga-Rekord (über alle erfassten Saisons hinweg, nicht
+// nur diese Saison) aus der Hall of Fame geknackt - Spieler-Wochenpunkte oder Team-Wochenpunkte.
+// Braucht echte Performance-Daten dieses Spiels, deshalb NICHT vorschau-tauglich (im Unterschied zu
+// findDefendingChampionFact/findPlayoffHistoryFact).
+function findAllTimeRecordFact(game, result, leagueHistory) {
+  const hof = leagueHistory?.hallOfFame;
+  if (!hof) return null;
+
+  if (result.standout && hof.mostPlayerPointsWeek?.length) {
+    const recordHolder = hof.mostPlayerPointsWeek.reduce((a, b) => (b.points > a.points ? b : a));
+    if (result.standout.points > recordHolder.points) {
+      const team = result.standout.side === 'home' ? game.homeName : game.awayName;
+      return { type: 'playerWeek', team, name: result.standout.name, points: result.standout.points, prevRecord: recordHolder.points, prevHolder: recordHolder.player, prevYear: recordHolder.year };
+    }
+  }
+
+  if (hof.mostTeamPointsWeek?.length) {
+    const recordHolder = hof.mostTeamPointsWeek.reduce((a, b) => (b.points > a.points ? b : a));
+    const checkTeamWeek = (teamName, score) => (score > recordHolder.points
+      ? { type: 'teamWeek', team: teamName, points: score, prevRecord: recordHolder.points, prevHolder: recordHolder.team, prevYear: recordHolder.year }
+      : null);
+    const hit = checkTeamWeek(game.homeName, game.homeScore) || checkTeamWeek(game.awayName, game.awayScore);
+    if (hit) return hit;
+  }
+
+  return null;
+}
+
+// D-Historie 3: Diese beiden Teams standen sich schon einmal in einem früheren PLAYOFF-Spiel
+// gegenüber - grössere Geschichte als die reguläre Saison-Revanche (findRematchFact, die nur
+// innerhalb derselben Saison sucht).
+function findPlayoffHistoryFact(game, leagueHistory) {
+  if (!leagueHistory?.seasons) return null;
+  const pair = new Set([game.homeName, game.awayName]);
+  const years = Object.keys(leagueHistory.seasons).map(Number).sort((a, b) => b - a);
+  for (const year of years) {
+    const po = leagueHistory.seasons[year]?.playoffs;
+    if (!po) continue;
+    const allGames = [
+      ...(po.winnersBracket?.semifinal || []),
+      po.winnersBracket?.championship,
+      po.winnersBracket?.thirdPlaceGame,
+      po.consolationBracket?.fifthPlaceGame
+    ].filter(Boolean);
+    const hit = allGames.find((g) => pair.has(g.team1) && pair.has(g.team2));
+    if (hit) return { year, team1: hit.team1, score1: hit.score1, team2: hit.team2, score2: hit.score2, winner: hit.winner };
+  }
+  return null;
 }
 
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
@@ -1374,6 +1457,16 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   if (ctx?.transactions) {
     const leagueActivity = findLeagueActivityFact(game, ctx.transactions);
     if (leagueActivity) result.leagueActivity = leagueActivity;
+  }
+
+  // ---- Punkt D: Liga-Historie (siehe Definitionen oben) ----
+  if (ctx?.leagueHistory) {
+    const defendingChampion = findDefendingChampionFact(game, ctx.standingsById || {}, ctx.leagueHistory);
+    if (defendingChampion) result.defendingChampion = defendingChampion;
+    const allTimeRecord = findAllTimeRecordFact(game, result, ctx.leagueHistory);
+    if (allTimeRecord) result.allTimeRecord = allTimeRecord;
+    const playoffHistory = findPlayoffHistoryFact(game, ctx.leagueHistory);
+    if (playoffHistory) result.playoffHistory = playoffHistory;
   }
 
   return result;
@@ -1581,7 +1674,8 @@ async function main() {
     const seasonPersonality = await readJsonSafe('season-personality.json', { weeksArchived: [], teams: {} });
     const powerRankingsHistory = await readJsonSafe('power-rankings-history.json', { snapshots: [] });
     const seasonStats = await readJsonSafe('season-stats.json', { weeksArchived: [], teams: {}, players: {} });
-    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality, draftRoundByPlayerId, powerRankingsHistory, keyMomentsByTeam, seasonStats };
+    const leagueHistory = await readJsonSafe('league-history.json', { seasons: {} });
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality, draftRoundByPlayerId, powerRankingsHistory, keyMomentsByTeam, seasonStats, leagueHistory };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
@@ -1624,7 +1718,8 @@ async function main() {
     if (notYetPlayed) {
       const starterTotalById = Object.fromEntries(teamsComputed.map((t) => [t.id, t.starterTotal]));
       const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
-      const previewCtx = { standingsById, standings, confStandings, prevConfRankById, scoreboard };
+      const leagueHistory = await readJsonSafe('league-history.json', { seasons: {} });
+      const previewCtx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, leagueHistory };
       const previewGames = upcomingGames.map((g) => {
         const base = {
           ...g,
