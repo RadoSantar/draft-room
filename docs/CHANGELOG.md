@@ -166,31 +166,3 @@ Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
 inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
 einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
 unverändert, kein Abschneiden).
-
-## 2026-09-15 – `0150360` Recaps: Bank-Reue-Varianten teilen sich jetzt ein gemeinsames Budget
-
-Nach dem ersten Live-Test mit der neuen Kategorie-Deckelung: die
-Woche-1-Recaps zeigten immer noch in 4 von 5 Spielen irgendeine
-Bank-Geschichte. Ursache: loserBenchRegret (Verlierer liess Punkte
-liegen) und winnerBenchRegret (Sieger liess trotzdem Punkte liegen)
-sind zwei technisch getrennte Kategorien, jede für sich mit eigenem
-2-Spiele-Budget - für die Leserschaft ist das aber dieselbe Geschichte
-("schon wieder Bank-Reue"), macht zusammen also bis zu 4 statt 2.
-
-Fix: neue CATEGORY_GROUP-Zuordnung, beide Varianten teilen sich jetzt
-ein gemeinsames "benchRegret"-Budget. Mit gemockter API gegen
-realistischere Fakten-Mengen getestet (6-7 Fakten pro Spiel statt der
-zu kargen ersten Test-Daten) - hält die Obergrenze jetzt sauber ein.
-
-Wichtiger Kontext fürs Verständnis der Woche-1-Ergebnisse: Woche 1 ist
-für Fakten-Vielfalt der ungünstigste Fall der ganzen Saison, weil viele
-Kategorien Saison-Historie brauchen, die es in Woche 1 schlicht noch
-nicht gibt (Serie, Erwartungswert-Bilanz, Revanche, Waiver-Wire-Karma,
-Saison-Persönlichkeit) - der verfügbare Fakten-Pool pro Spiel ist damit
-kleiner als ab Woche 2, wo diese Kategorien dazukommen. Etwas
-Wiederholung in Woche 1 ist deshalb ein Daten-Limit, kein Bug in der
-Auswahl-Logik - verifiziert mit einem Test, der die volle Kategorie-
-Breite simuliert (dort hält die Obergrenze zuverlässig).
-
-data/game-recaps.json und data/week-recaps.json für Woche 1 nochmal
-geleert, damit sie mit dem gruppierten Budget sauber neu generiert werden.
