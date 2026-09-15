@@ -347,9 +347,9 @@ const CATEGORY_GROUP = {
 };
 function groupOf(category) { return CATEGORY_GROUP[category] || category; }
 
-function pickFactsForGame(game, categoryUsage, seedSuffix, maxFacts, capPerCategory) {
+function pickFactsForGame(game, categoryUsage, seedSuffix, maxFacts, capPerCategory, factCollector = collectFacts) {
   const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + seedSuffix;
-  const shuffled = seededShuffle(collectFacts(game), key);
+  const shuffled = seededShuffle(factCollector(game), key);
   const fresh = [];
   const overused = [];
   shuffled.forEach((fact) => {
@@ -858,6 +858,119 @@ export async function generateWeekRecap(games, existingWeeks) {
     return { week, headline, recap, generatedAt: new Date().toISOString() };
   } catch (err) {
     console.error('Wochen-Recap fehlgeschlagen für Woche', week, ':', err.message);
+    return null;
+  }
+}
+
+// ==== Wochen-Vorschau (2026-09-15) ====
+// Analog zum Wochen-Recap, aber VOR dem ersten Spiel des Spieltags und nach vorne gerichtet: was
+// steht diese Woche auf dem Spiel, statt was ist passiert. Nutzt bewusst NUR Fakten, die schon vor
+// dem Anpfiff feststehen (Bilanz, Serie, Tabellenplatz, Playoff-Kontext, Erwartungswert, frühere
+// Duelle) - siehe buildPreviewMoments() in sync-espn.mjs, das dieselben Fakten-Funktionen wie
+// findKeyMoments() wiederverwendet, aber ohne alles, was tatsächliche Spielleistung braucht.
+
+const WEEK_PREVIEW_SYSTEM_PROMPT = `Du schreibst die WOCHEN-VORSCHAU für "Fantasy Playbook", eine private Fantasy-Football-Liga - im selben reisserischen Sport-Boulevard-Stil wie der Wochenüberblick, aber nach vorne gerichtet: was steht diese Woche auf dem Spiel, statt was ist passiert. Du bekommst alle Spiele der KOMMENDEN Woche mit Bilanz, Tabellenstand, Serie, Playoff-Kontext und ggf. früheren Duellen dieser Saison - daraus baust du EINEN Ausblick, keine Aneinanderreihung von Einzelvorschauen.
+
+FORM (exakt einhalten):
+Zeile 1: Eine einzige, knackige Schlagzeile (maximal 8 Wörter, reisserisch, OHNE Anführungszeichen, OHNE Punkt am Ende) - die auffälligste Storyline der kommenden Woche.
+Dann eine Leerzeile.
+Danach 4-6 Sätze Fliesstext: wähle 3-4 der interessantesten Storylines aus (grösstes Prestige-Duell laut Papierform, gefährlichste Serie auf dem Spiel, spannendste Playoff-Implikation, pikanteste Revanche) und verwebe sie zu EINEM Erzählbogen mit echten Übergängen. Nenne nicht jedes Spiel der Woche - nur die Highlights.
+
+WICHTIG: Das hier ist eine VORSCHAU, kein Rückblick - schreib im Konjunktiv/Futur ("könnte", "droht", "steht auf dem Spiel", "muss beweisen"), erfinde KEINE Ergebnisse oder Spielverläufe, die noch nicht stattgefunden haben (die Spiele sind noch nicht gespielt!). Nutze nur die gelieferten Fakten (Bilanzen, Serien, Tabellenstände, frühere Duelle, Papierform-Projektion).
+
+Stil: frech, Vorfreude/Spannung statt Schadenfreude (die kommt erst nach den Spielen), Sport-Boulevard-Vokabular ("Showdown", "Prüfstein", "Härtetest", "steht auf dem Spiel"). Vermeide technische Begriffe wie "Snapshot" oder "Projektion" im engeren Sinne - sprich von "Papierform" oder "Vorschau-Stärke". Schreib NUR Schlagzeile + Leerzeile + Fliesstext, keine weitere Einleitung, keine Überschrift wie "Vorschau:".`;
+
+// Sammelt Vorschau-taugliche Fakten für ein noch nicht gespieltes Spiel - Gegenstück zu
+// collectFacts(), aber bewusst ohne alles, was tatsächliche Spielleistung voraussetzt (kein
+// Standout, keine Bank-Reue etc., die gibt's vor dem Anpfiff ja noch nicht).
+function collectPreviewFacts(game) {
+  const facts = [];
+
+  if (game.streak) {
+    const s = game.streak;
+    facts.push({ category: 'streak', text: s.streakType === 'WIN'
+      ? `${s.team} geht mit einer Serie von ${s.streakLength} Siegen in Folge in diese Woche.`
+      : `${s.team} steckt in einer Serie von ${s.streakLength} Niederlagen in Folge und braucht dringend eine Trendwende.` });
+  }
+
+  if (game.confStanding) {
+    const c = game.confStanding;
+    const record = `${c.wins}-${c.losses}${c.ties ? '-' + c.ties : ''}`;
+    facts.push({ category: 'confStanding', text: `${c.team} geht als Tabellen-${c.rank}. der ${c.conf} (Bilanz ${record}) in diese Woche.` });
+  }
+
+  if (game.playoffRace) {
+    const r = game.playoffRace;
+    let t = null;
+    if (r.status === 'eliminated') t = `Playoff-Kontext: Für ${r.team} geht es diese Woche rechnerisch um nichts mehr im Playoff-Rennen - schon eliminiert.`;
+    else if (r.status === 'chasing') t = `Playoff-Kontext: ${r.team} liegt ${r.winsBehind} Sieg(e) hinter dem letzten Playoff-Platz zurück - Druck pur.`;
+    else if (r.status === 'in') t = `Playoff-Kontext: ${r.team} steht aktuell auf einem Playoff-Platz (Seed ${r.seed}) und will den diese Woche verteidigen.`;
+    if (t) facts.push({ category: 'playoffRace', text: t });
+  }
+
+  if (game.expectation) {
+    const e = game.expectation;
+    facts.push({ category: 'expectation', text: e.lucky
+      ? `Erwartungswert-Check: ${e.team} steht bei ${e.actualWins} Siegen, verdient hätte laut Punkteverhältnis aber nur ${e.expectedWins.toFixed(1)} - die Bilanz könnte sich diese Woche rächen.`
+      : `Erwartungswert-Check: ${e.team} steht bei nur ${e.actualWins} Siegen, verdient hätte laut Punkteverhältnis aber ${e.expectedWins.toFixed(1)} - eigentlich überfällig für einen Befreiungsschlag.` });
+  }
+
+  if (game.rematch) {
+    const r = game.rematch;
+    let t = `Bereits in Woche ${r.week} standen sich diese beiden Teams gegenüber (${r.scoreLine}), damals gewann ${r.winner}.`;
+    t += r.isFinalMeeting ? ' Letzte Chance in dieser Saison auf Wiedergutmachung.' : ' Die zweite Runde folgt.';
+    facts.push({ category: 'rematch', text: t });
+  }
+
+  return facts;
+}
+
+// Baut aus allen Spielen der KOMMENDEN Woche einen Fakten-Digest für die Vorschau - analog zu
+// buildWeekPrompt(), aber mit Bilanz statt Endstand (die Spiele sind ja noch nicht gespielt) und
+// collectPreviewFacts() statt collectFacts() als Quelle.
+function buildWeekPreviewPrompt(games) {
+  const week = games[0].week;
+  const categoryUsage = {};
+  let context = `Woche ${week}: Hier sind alle ${games.length} Spiele der KOMMENDEN Woche (noch nicht gespielt) mit Bilanz und Kontext. Schreibe daraus EINE Wochen-Vorschau:\n\n`;
+  games.forEach((game, i) => {
+    const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+    const homeRecord = game.homeRecord ? `${game.homeRecord.wins}-${game.homeRecord.losses}${game.homeRecord.ties ? '-' + game.homeRecord.ties : ''}` : '0-0';
+    const awayRecord = game.awayRecord ? `${game.awayRecord.wins}-${game.awayRecord.losses}${game.awayRecord.ties ? '-' + game.awayRecord.ties : ''}` : '0-0';
+
+    let line = `Spiel ${i + 1}: ${game.homeName} (Bilanz ${homeRecord}) gegen ${game.awayName} (Bilanz ${awayRecord}). Papierform-Favorit laut Vorschau-Stärke: ${favorite}.`;
+
+    const facts = pickFactsForGame(game, categoryUsage, '-preview', 2, 2, collectPreviewFacts);
+    facts.forEach((fact) => { line += ' ' + fact.text; });
+    context += line + '\n';
+  });
+  context += '\nSchreibe jetzt die Wochen-Vorschau.';
+  return context;
+}
+
+/**
+ * @param {Array} games - alle Spiele der KOMMENDEN (noch nicht gespielten) Woche, angereichert mit
+ *   week/homeProj/awayProj/homeRecord/awayRecord + Vorschau-Fakten (siehe buildPreviewMoments in sync-espn.mjs).
+ * @param {Object} existingPreviews - bereits vorhandene Wochen-Vorschauen (week -> Eintrag), um Doppel-Calls zu vermeiden.
+ * @returns {Promise<Object|null>} { week, headline, preview, generatedAt } oder null, wenn nichts Neues generiert wurde.
+ */
+export async function generateWeekPreview(games, existingPreviews) {
+  if (!ANTHROPIC_API_KEY) return null;
+  if (!games.length) return null;
+  const week = games[0].week;
+  if (existingPreviews[week]) return null;
+  try {
+    const prompt = buildWeekPreviewPrompt(games);
+    const raw = await callClaude(prompt, WEEK_PREVIEW_SYSTEM_PROMPT, 1500);
+    const parts = raw.split(/\n\s*\n/);
+    const headline = (parts.shift() || '').trim();
+    const preview = parts.join('\n\n').trim();
+    if (!headline || !preview) {
+      throw new Error('Wochen-Vorschau-Antwort hatte nicht das erwartete Schlagzeile+Text-Format');
+    }
+    console.log('Wochen-Vorschau generiert für Woche', week);
+    return { week, headline, preview, generatedAt: new Date().toISOString() };
+  } catch (err) {
+    console.error('Wochen-Vorschau fehlgeschlagen für Woche', week, ':', err.message);
     return null;
   }
 }

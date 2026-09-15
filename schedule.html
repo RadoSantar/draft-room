@@ -197,6 +197,16 @@
   .week-recap-arrow{flex:0 0 auto;font-size:14px;color:var(--amber);line-height:1.4;transition:transform .15s ease;}
   .week-recap[open] .week-recap-arrow{transform:rotate(90deg);}
   .week-recap-body{font-size:13.5px;line-height:1.55;color:var(--chalk);opacity:.92;margin:0;padding:0 16px 16px;}
+  .week-preview{background:var(--turf);color:var(--chalk);border-radius:10px;margin-bottom:10px;border-left:4px solid var(--amber);}
+  .week-preview summary{cursor:pointer;list-style:none;padding:14px 16px;}
+  .week-preview summary::-webkit-details-marker{display:none;}
+  .week-preview summary:hover, .week-preview summary:focus-visible{opacity:.9;}
+  .week-preview-tag{font-family:'IBM Plex Mono', monospace;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);display:block;margin-bottom:5px;}
+  .week-preview-head{display:flex;align-items:flex-start;gap:10px;}
+  .week-preview-headline{font-family:'Anton', sans-serif;font-size:19px;line-height:1.2;text-transform:uppercase;letter-spacing:.01em;margin:0;flex:1;}
+  .week-preview-arrow{flex:0 0 auto;font-size:14px;color:var(--amber);line-height:1.4;transition:transform .15s ease;}
+  .week-preview[open] .week-preview-arrow{transform:rotate(90deg);}
+  .week-preview-body{font-size:13.5px;line-height:1.55;color:var(--chalk);opacity:.92;margin:0;padding:0 16px 16px;}
   .game-recap p{
     font-family:'Source Serif 4', serif;
     font-style:italic;
@@ -489,11 +499,23 @@
         '<p class="week-recap-body">' + wr.recap + '</p></details>';
     }
 
+    var WEEK_PREVIEWS_BY_WEEK = {};
+    function weekPreviewHtml(wk){
+      var wp = WEEK_PREVIEWS_BY_WEEK[wk.w];
+      if(!wp) return '';
+      return '<details class="week-preview"><summary>' +
+          '<span class="week-preview-tag">🔮 Vorschau auf die Woche</span>' +
+          '<span class="week-preview-head"><span class="week-preview-headline">' + wp.headline + '</span><span class="week-preview-arrow">▸</span></span>' +
+        '</summary>' +
+        '<p class="week-preview-body">' + wp.preview + '</p></details>';
+    }
+
     function render(){
       var html = SCHEDULE.map(function(wk){
         return '<div class="sched-week">' +
           '<div class="sched-week-head"><span class="sched-week-meta"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-date">' + weekDateRange(wk.w) + '</span></span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span></div>' +
           weekRecapHtml(wk) +
+          weekPreviewHtml(wk) +
           '<div class="sched-games">' + wk.g.map(function(g){ return gameHtml(g, wk.w); }).join('') + '</div>' +
         '</div>';
       }).join('');
@@ -522,6 +544,13 @@
     function loadWeekRecaps(){
       fetch('data/week-recaps.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         WEEK_RECAPS_BY_WEEK = wrap.data || {};
+        render();
+      }).catch(function(){});
+    }
+
+    function loadWeekPreviews(){
+      fetch('data/week-previews.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
+        WEEK_PREVIEWS_BY_WEEK = wrap.data || {};
         render();
       }).catch(function(){});
     }
@@ -619,6 +648,7 @@
     loadScores();
     loadRecaps();
     loadWeekRecaps();
+    loadWeekPreviews();
     renderStandings();
   })();
 </script>

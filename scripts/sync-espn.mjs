@@ -5,7 +5,7 @@
 // Schreibt NIE team-content.json (die handgeschriebenen Analysen/Ausblicke) – das bleibt
 // ausschliesslich manuell gepflegt.
 import { POS_MAP, TEAM_ABBR, projectedPoints, findSeasonProjection, buildOptimalLineup } from './scoring.mjs';
-import { generateRecapsForGames, generateWeekRecap } from './generate-recaps.mjs';
+import { generateRecapsForGames, generateWeekRecap, generateWeekPreview } from './generate-recaps.mjs';
 import { SEASON, fetchLeague, readJsonSafe, writeJson, nowIso } from './espn-client.mjs';
 
 // Conference-Zuordnung – deckungsgleich mit TEAM_CONF in power-rankings.html/schedule.html.
@@ -959,6 +959,36 @@ async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
   await writeJson('season-stats.json', { lastUpdated: nowIso(), teams: stats.teams, players: stats.players, weeksArchived: stats.weeksArchived });
 }
 
+// Baut für ein Spiel der KOMMENDEN (noch nicht gespielten) Woche einen leichten Vorschau-Fakten-Satz
+// - anders als findKeyMoments() unten bewusst OHNE alles, was tatsächliche Spielleistung braucht
+// (kein Standout, keine Bank-Reue - die Performance-Daten gibt's vor dem Anpfiff ja noch nicht).
+// Nutzt dafür Fakten-Funktionen wieder, die ohnehin nur game.week/homeId/awayId/homeName/awayName
+// plus Bilanz/Historie brauchen, keine Scores DIESES Spiels: findStreakFact, findConferenceStandingFact
+// (der game.winner-Fallback am Ende greift bei "UNDECIDED" einfach auf das Heimteam zurück, harmlos),
+// findPlayoffRaceFact, findExpectationFact, findRematchFact.
+function buildPreviewMoments(game, ctx) {
+  const result = {};
+  if (ctx?.standingsById) {
+    const streak = findStreakFact(game, ctx.standingsById);
+    if (streak) result.streak = streak;
+    const expectation = findExpectationFact(game, ctx.standingsById);
+    if (expectation) result.expectation = expectation;
+  }
+  if (ctx?.confStandings) {
+    const confStanding = findConferenceStandingFact(game, ctx.confStandings, ctx.prevConfRankById || {});
+    if (confStanding) result.confStanding = confStanding;
+  }
+  if (ctx?.standings && ctx?.confStandings) {
+    const playoffRace = findPlayoffRaceFact(game, ctx.standings, ctx.confStandings);
+    if (playoffRace) result.playoffRace = playoffRace;
+  }
+  if (ctx?.scoreboard) {
+    const rematch = findRematchFact(game, ctx.scoreboard);
+    if (rematch) result.rematch = rematch;
+  }
+  return result;
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -1346,6 +1376,40 @@ async function main() {
       await archiveLiveSnapshotWeek(lastCompletedWeek, weekGames, liveSnapshots);
     }
     await archiveSeasonStats(lastCompletedWeek, enrichedGames, keyMomentsByTeam);
+  }
+
+  // ---- Wochen-Vorschau (Claude schreibt einen Ausblick auf die KOMMENDE Woche, im selben
+  // Boulevard-Stil wie der Wochen-Recap) - läuft UNABHÄNGIG vom obigen Block, weil sie schon vor
+  // Woche 1 sinnvoll ist (lastCompletedWeek=0 -> upcomingWeek=1). Der Sync läuft laut Cron nur
+  // dienstags (siehe oben in dieser Datei bzw. .github/workflows/espn-sync.yml) - für die kommende
+  // Woche (erstes Spiel meist Donnerstag) ist das rechtzeitig vor dem Anpfiff.
+  {
+    const upcomingWeek = lastCompletedWeek + 1;
+    const upcomingGames = scoreboard.find((w) => w.week === upcomingWeek)?.games || [];
+    const notYetPlayed = upcomingGames.length > 0 && upcomingGames.every((g) => g.winner === 'UNDECIDED');
+    if (notYetPlayed) {
+      const starterTotalById = Object.fromEntries(teamsComputed.map((t) => [t.id, t.starterTotal]));
+      const standingsById = Object.fromEntries(standings.map((s) => [s.id, s]));
+      const previewCtx = { standingsById, standings, confStandings, prevConfRankById, scoreboard };
+      const previewGames = upcomingGames.map((g) => {
+        const base = {
+          ...g,
+          week: upcomingWeek,
+          homeProj: starterTotalById[g.homeId] || 0,
+          awayProj: starterTotalById[g.awayId] || 0,
+          homeRecord: standingsById[g.homeId] ? { wins: standingsById[g.homeId].wins, losses: standingsById[g.homeId].losses, ties: standingsById[g.homeId].ties } : null,
+          awayRecord: standingsById[g.awayId] ? { wins: standingsById[g.awayId].wins, losses: standingsById[g.awayId].losses, ties: standingsById[g.awayId].ties } : null
+        };
+        return { ...base, ...buildPreviewMoments(base, previewCtx) };
+      });
+
+      const oldPreviews = await readJsonSafe('week-previews.json', { data: {} });
+      const existingPreviews = oldPreviews.data || {};
+      const newPreview = await generateWeekPreview(previewGames, existingPreviews);
+      if (newPreview) {
+        await writeJson('week-previews.json', { lastUpdated: nowIso(), data: { ...existingPreviews, [newPreview.week]: newPreview } });
+      }
+    }
   }
 
   // ---- Transaktionen: Roster-Diff gegen letzten Snapshot (erkennt Trades/Adds/Drops generisch) ----
