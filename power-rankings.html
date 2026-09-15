@@ -733,8 +733,18 @@
       '</section>';
     }).join('');
 
-    // Transactions grouped by week, newest open
-    var tx = txWrap.data;
+    // Transactions grouped by week, newest open; innerhalb einer Woche nach Datum sortiert (neuste
+    // zuerst). Datum kommt als de-CH-String (T.M.JJJJ, nicht immer nullgepolstert) – zuverlässiger
+    // zu parsen als über die id, weil ältere Platzhalter-Transaktionen eine andere id-Form haben
+    // (z.B. "fa-12353e34", was Number() als 12353e34 in Exponentialschreibweise fehlinterpretiert).
+    function txTimestamp(t){
+      var parts = String(t.date || '').split('.');
+      if (parts.length !== 3) return 0;
+      var day = Number(parts[0]), month = Number(parts[1]), year = Number(parts[2]);
+      if (!day || !month || !year) return 0;
+      return new Date(year, month - 1, day).getTime();
+    }
+    var tx = txWrap.data.slice().sort(function(a, b){ return txTimestamp(b) - txTimestamp(a); });
     var byWeek = {};
     tx.forEach(function(t){ (byWeek[t.week] = byWeek[t.week] || []).push(t); });
     var weekNums = Object.keys(byWeek).map(Number).sort(function(a,b){ return b - a; });
