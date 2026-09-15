@@ -166,3 +166,25 @@ Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
 inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
 einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
 unverändert, kein Abschneiden).
+
+## 2026-09-15 – `ad96919` Recaps: pro Spiel nur noch 2 statt 3 Fakten - hält die Obergrenze in fakten-armen Wochen ein
+
+Zweiter Live-Test: trotz gruppiertem Bank-Reue-Budget zeigten weiterhin
+alle 5 Woche-1-Recaps eine Bank-Geschichte. Ursache identifiziert per
+Analyse der generierten Texte: in Woche 1 sind Standout, Tabellenplatz
+und Bank-Reue praktisch in jedem Spiel verfügbar (die einzigen "immer
+da"-Kategorien, da Serie/Erwartungswert/Revanche/Waiver-Karma/Saison-
+Persönlichkeit erst mit Saison-Historie dazukommen) - bei 3 Fakten pro
+Spiel und 5 Spielen sind das 15 benötigte Fakten-Slots, aber nur eine
+Handvoll echt verfügbarer Kategorien à 2 Slots Obergrenze. Die Prompt-
+Vorgabe an Claude sagt ohnehin "wähle die 1-2 stärksten aus, was du
+bekommst" - 3 mitzugeben statt 2 kostete also unnötig Budget, ohne dass
+es den Recaps zugutekam.
+
+Fix: maxFacts für die Einzel-Recaps von 3 auf 2 gesenkt (Wochen-Recap
+war schon bei 2, unverändert). Mit einer Rekonstruktion des echten
+Woche-1-Fakten-Musters getestet (gemockte API): Bank-Reue jetzt
+zuverlässig bei 2 von 5 Spielen, vorher 5 von 5.
+
+data/game-recaps.json und data/week-recaps.json für Woche 1 nochmal
+geleert für den finalen Regenerations-Lauf.
