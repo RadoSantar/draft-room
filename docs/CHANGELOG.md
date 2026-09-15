@@ -26,3 +26,17 @@ Die Liga-weite Tabelle war der Default-Tab, Conference-Aufteilung nur
 per Klick erreichbar - umgedreht, da die Conference-Einteilung für die
 Liga die relevantere Sicht ist. render Standings() respektiert jetzt
 den aktuell aktiven Tab statt hart die Liga-Ansicht einzublenden.
+
+## 2026-09-15 – `c8d9d06` Transaktionen: neuste zuerst statt chronologisch aufsteigend
+
+Innerhalb einer Woche standen die Transaktionen bisher in Einfüge-
+Reihenfolge (älteste zuerst), da neue Einträge einfach ans Array
+angehängt werden. Jetzt nach Datum absteigend sortiert.
+
+Sortiert über das Datumsfeld (de-CH-String, T.M.JJJJ), nicht über die
+id: ein erster Versuch, die id (die bei echten Sync-Einträgen mit
+Date.now() endet) für die Sortierung zu nutzen, scheiterte an älteren
+Platzhalter-Transaktionen mit anderer id-Form (z.B. "fa-12353e34" –
+Number() interpretiert das als Exponentialschreibweise 12353e34, eine
+riesige Zahl, die fälschlich als "neuste" sortiert hätte). Mit echten
+Daten gegen diese Falle getestet, bevor gepusht wurde.
