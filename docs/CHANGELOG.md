@@ -59,3 +59,33 @@ falscher Kachel-Eintrag.
 Mit Playwright bei 390px (Handy) und 1200px (Desktop) getestet, inkl.
 Klick-Test dass die ganze Kachel (auch der Beschreibungstext, nicht nur
 der Titel) den Link auslöst.
+
+## 2026-09-15 – `c842b1b` Neues Feature: wöchentlicher Gesamt-Recap im Boulevard-Stil
+
+Zusätzlich zu den bestehenden Einzel-Spiel-Recaps schreibt Claude jetzt
+pro abgeschlossener Woche einen separaten Überblick über den gesamten
+Spieltag - Schlagzeile + Fliesstext, der die 3-4 interessantesten
+Geschichten der Woche (Upsets, Standout-Leistungen, Kollapse, Bank-
+Patzer, Team-Storylines) zu einem Erzählbogen verwebt statt jedes Spiel
+einzeln abzuklappern. Neuer System-Prompt mit explizitem Boulevard-
+Zeitungs-Ton, angelehnt an den bestehenden Recap-Stil aber bewusst
+reisserischer im Kopf (Schlagzeile) und cross-game statt pro Spiel.
+
+- generate-recaps.mjs: callClaude() nimmt jetzt systemPrompt/maxTokens
+  als Parameter (vorher hart auf den Einzel-Recap-Prompt/600 Tokens
+  verdrahtet), damit Einzel- und Wochen-Recap denselben API-Call-Code
+  teilen können. Neue buildWeekPrompt() baut aus allen Spielen der
+  Woche einen kompakten Fakten-Digest (Endstand + Upset-Info + 2
+  stärkste Fakten pro Spiel aus derselben collectFacts()-Quelle wie
+  die Einzel-Recaps). generateWeekRecap() parst die Antwort an der
+  Leerzeile in Schlagzeile/Text.
+- sync-espn.mjs: ruft generateWeekRecap() im bestehenden Recap-Block
+  auf und schreibt das Ergebnis idempotent (ein Eintrag pro Woche) nach
+  data/week-recaps.json.
+- schedule.html: neuer Anzeige-Block pro Woche, visuell klar getrennt
+  von den einzelnen Spiel-Recap-Buttons (dunkle Karte mit Amber-Rand,
+  Schlagzeile in Display-Font). Mit Playwright bei 390px und 1200px
+  getestet.
+
+data/week-recaps.json startet leer, wird beim nächsten Sync-Lauf nach
+Woche 1 befüllt.
