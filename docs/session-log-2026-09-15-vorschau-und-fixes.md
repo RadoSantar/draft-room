@@ -114,10 +114,20 @@ ESPNs History-Seite (`fantasy.espn.com/football/league/history?leagueId=68667294
 
 Neu angelegt: **`data/league-history.json`** (Platzhalter-Schema: `{ lastUpdated: null, seasons: {}, note: "..." }`) – wird befüllt, sobald die Screenshots da sind. Noch KEINE Fakten-Funktionen dafür geschrieben (macht ohne echte Daten keinen Sinn) – das folgt, sobald Vorsaisons-Standings/Meister bekannt sind (z.B. "Titelverteidiger", "seit Saison 2024 nicht mehr gegen X verloren", Mehrjahres-Head-to-Head).
 
+**Verifikation des Stats-Ökosystems:** Ein echter `espn-sync.yml`-Lauf nach dem Push war fehlerfrei (Job-Logs geprüft), aber `archiveSeasonStats()` griff dabei noch nicht wirklich, weil Woche 2 zum Zeitpunkt des Laufs noch nicht abgeschlossen war (`lastCompletedWeek` unverändert bei 1) – die neue Logik bekommt ihren ersten echten Testlauf erst beim nächsten Dienstags-Sync nach Abschluss von Woche 2. `data/season-stats.json` wurde beim Testlauf nicht verändert (korrekt, da der ganze Recap-Block übersprungen wird) – noch offen/zu beobachten.
+
+**Update, noch im selben Gespräch:** Nutzer hat zwei ESPN-App-Screenshots der Liga-Historie geschickt (Saison 2024 und 2025, jeweils Champion/2./3. Platz + komplette Endtabelle mit 6 Teams). Direkt in `data/league-history.json` eingetragen:
+- **2024**: Champion Tackleberry Finn, 2. Saints of Anarchy, 3. Lord of the Rings (Team existiert im aktuellen 2026er-Kader nicht mehr – keine Annahme über Umbenennung getroffen).
+- **2025**: Champion Zurich City Ravens, 2. Tackleberry Finn, 3. Sherlock Mahomes.
+
+**Wichtige Korrektur vom Nutzer selbst:** Die Team-Reihenfolge in ESPNs History-Ansicht ist die finale PLAYOFF-Platzierung, nicht nach Regular-Season-Bilanz sortiert – 2025 hatte Sherlock Mahomes mit 13-2 die mit Abstand beste Bilanz der Liga, landete laut Bracket-Ergebnis aber nur auf Rang 3, während Tackleberry Finn mit nur 6-9 bis ins Championship-Spiel kam (Rang 2). Schema deshalb von `standings` (hätte Bilanz-Sortierung impliziert) auf `finalStandings` mit explizitem `rank`-Feld umbenannt, plus deutlicher Hinweis-Kommentar in der Datei selbst, damit das nicht später fälschlich als bilanz-sortierte Tabelle missverstanden wird. `pointsFor` war in beiden Screenshots nicht ersichtlich, bewusst `null` gelassen statt geraten. Beide Saisons hatten offenbar nur 6 Teams (Wachstum auf die aktuellen 10 muss zwischen 2025 und 2026 passiert sein).
+
+Noch offen: ob 2025 wirklich die letzte Vorsaison war oder ob es noch ältere Saisons gibt; noch keine Fakten-Funktionen auf `league-history.json` aufgebaut (folgt als nächster Schritt).
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
-- Punkt D (Liga-Historie): wartet auf Screenshots vom Nutzer, dann Fakten-Funktionen darauf aufbauen.
+- Punkt D (Liga-Historie): Daten für 2024/2025 jetzt vorhanden – als nächstes Fakten-Funktionen dafür schreiben (Titelverteidiger-Storyline, Mehrjahres-Bilanz-Kontext etc.), sobald vom Nutzer bestätigt, dass keine weiteren Saisons mehr nachkommen bzw. auf Zuruf erweiterbar bleiben.
 
 ## Nächster Schritt (Stand Ende dieser Session)
-Nach dem Push wurde ein echter `espn-sync.yml`-Lauf getriggert, um die 8 neuen Kategorien + die erweiterte `archiveSeasonStats()` gegen echte Liga-Daten zu verifizieren (Job-Logs auf Fehler prüfen, `data/season-stats.json` danach inhaltlich inspizieren – insbesondere ob die migrationssicheren Defaults für die bereits bestehenden Woche-1-Team-Einträge sauber gegriffen haben, keine NaN-Werte). Ausserdem: Woche 2 abwarten und beobachten, ob die Fakten-Varianz weiter zunimmt.
+Woche 2 abwarten, dann beim nächsten Dienstags-Sync verifizieren, dass `archiveSeasonStats()` und die 8 neuen Fakten-Kategorien mit echten Daten fehlerfrei laufen (insbesondere die migrationssicheren Defaults für die schon bestehenden Woche-1-Team-Einträge). Ausserdem: sobald der Nutzer grünes Licht gibt (keine weiteren Vorsaisons-Screenshots mehr zu erwarten), Fakten-Funktionen für `league-history.json` bauen und in Recaps/Vorschau einstreuen.
