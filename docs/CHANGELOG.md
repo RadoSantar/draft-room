@@ -40,3 +40,22 @@ Platzhalter-Transaktionen mit anderer id-Form (z.B. "fa-12353e34" –
 Number() interpretiert das als Exponentialschreibweise 12353e34, eine
 riesige Zahl, die fälschlich als "neuste" sortiert hätte). Mit echten
 Daten gegen diese Falle getestet, bevor gepusht wurde.
+
+## 2026-09-15 – `2d1acf1` Startseite: Interaktive-Tools-Sektion als klar klickbare Kachel-Karten
+
+Bisher stand pro Tool nur ein unterstrichenes Link-Wort am Zeilenanfang,
+gefolgt von normalem Fliesstext ("Punkterechner – Stats eintragen...")
+– auf Touchscreens nicht erkennbar als klickbar, und der tatsächliche
+Tap-Bereich war winzig (nur das erste Wort).
+
+Ersetzt durch ein Kachel-Grid (analog zum bestehenden Kapitel-
+Übersichts-Grid direkt darüber): jede Karte ist komplett anklickbar
+(Titel + Beschreibung + ein durchgehend sichtbarer amberfarbener
+Pfeil-Button), nicht nur hover-abhängig, damit es auch ohne Maus/Hover
+sofort als Button erkennbar ist. "Team-Design" (kein echter Link) aus
+der Liste raus, jetzt als eigener Hinweistext unter dem Grid statt als
+falscher Kachel-Eintrag.
+
+Mit Playwright bei 390px (Handy) und 1200px (Desktop) getestet, inkl.
+Klick-Test dass die ganze Kachel (auch der Beschreibungstext, nicht nur
+der Titel) den Link auslöst.
