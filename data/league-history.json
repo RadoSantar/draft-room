@@ -49,5 +49,25 @@
       }
     }
   },
-  "note": "Wird manuell befüllt, sobald weitere Screenshots/History-Daten aus der ESPN-App vorliegen - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, finalStandings: [{ rank, name, wins, losses, ties, pointsFor }] }. WICHTIG: 'rank' ist die finale Platzierung nach Playoff-Ergebnis, nicht die nach Sieganzahl sortierte Regular-Season-Tabelle - beides kann stark auseinanderfallen (Playoffs sind ein K.-o.-Bracket, keine reine Bilanz-Fortsetzung)."
+  "leagueFounded": 2024,
+  "hallOfFame": {
+    "champions": [
+      { "year": 2025, "team": "Zurich City Ravens", "record": "11-4-0" },
+      { "year": 2024, "team": "Tackleberry Finn", "record": "9-6-0" }
+    ],
+    "mostTeamPointsSeason": [
+      { "year": 2025, "team": "Zurich City Ravens", "points": 2265.16 },
+      { "year": 2024, "team": "Tackleberry Finn", "points": 2088.30 }
+    ],
+    "mostTeamPointsWeek": [
+      { "year": 2025, "team": "Tackleberry Finn", "week": 15, "points": 199.00 },
+      { "year": 2024, "team": "Zurich City Ravens", "week": 14, "points": 188.38 }
+    ],
+    "mostPlayerPointsWeek": [
+      { "year": 2025, "player": "J. Allen", "pos": "QB", "proTeam": "BUF", "team": "Zurich City Ravens", "week": 11, "points": 57.18 },
+      { "year": 2024, "player": "J. Chase", "pos": "WR", "proTeam": "CIN", "team": "Tackleberry Finn", "week": 10, "points": 55.40 }
+    ],
+    "note": "Direkt aus der 'Ruhmeshalle' (Hall of Fame) der ESPN-App entnommen (Screenshots vom Nutzer). Jeweils der Rekordhalter pro Saison - noch keine echte 'All-Time'-Einzelspitze über beide Saisons hinweg errechnet (z.B. wäre die beste Team-Saison aller Zeiten 2025 Zurich City Ravens mit 2265.16, die beste Einzelwoche eines Spielers aller Zeiten J. Allen mit 57.18 - aus den beiden Jahreswerten oben ableitbar, aber bewusst nicht zusammengefasst gespeichert, um nicht zu interpretieren/geraten, falls doch noch ältere Daten auftauchen)."
+  },
+  "note": "Wird manuell befüllt, sobald weitere Screenshots/History-Daten aus der ESPN-App vorliegen - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, finalStandings: [{ rank, name, wins, losses, ties, pointsFor }] }. WICHTIG: 'rank' ist die finale Platzierung nach Playoff-Ergebnis, nicht die nach Sieganzahl sortierte Regular-Season-Tabelle - beides kann stark auseinanderfallen (Playoffs sind ein K.-o.-Bracket, keine reine Bilanz-Fortsetzung). Nutzer hat bestätigt: 2024 war die Gründungssaison der Liga, keine älteren Daten zu erwarten."
 }
