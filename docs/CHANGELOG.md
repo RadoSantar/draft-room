@@ -89,11 +89,3 @@ reisserischer im Kopf (Schlagzeile) und cross-game statt pro Spiel.
 
 data/week-recaps.json startet leer, wird beim nächsten Sync-Lauf nach
 Woche 1 befüllt.
-
-## 2026-09-15 – `458fc84` Wochen-Recap: max_tokens erhöht, erster Lauf lief in Truncation
-
-Erster echter Lauf des neuen Gesamt-Recap-Features ist mit
-"stop_reason: max_tokens" leer zurückgekommen - 700 Tokens reichten
-nicht für Schlagzeile + 4-6 Sätze über 5 Spiele mit Fakten-Digest.
-Gleiche Fehlerklasse wie schon bei den Einzel-Recaps (dort war die
-Lösung ebenfalls: Budget hochsetzen). Auf 1200 angehoben.
