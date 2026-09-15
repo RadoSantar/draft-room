@@ -563,7 +563,7 @@ export async function generateWeekRecap(games, existingWeeks) {
   if (existingWeeks[week]) return null;
   try {
     const prompt = buildWeekPrompt(games);
-    const raw = await callClaude(prompt, WEEK_SYSTEM_PROMPT, 700);
+    const raw = await callClaude(prompt, WEEK_SYSTEM_PROMPT, 1200);
     const parts = raw.split(/\n\s*\n/);
     const headline = (parts.shift() || '').trim();
     const recap = parts.join('\n\n').trim();
