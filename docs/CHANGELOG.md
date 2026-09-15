@@ -128,3 +128,41 @@ Verhaltensänderung am Desktop.
 Mit Playwright auf allen 4 Seiten bei 390px (Toggle sichtbar,
 Sync/Nav initial eingeklappt, nach Klick aufgeklappt) und 1200px
 (Toggle unsichtbar, alles wie gehabt sichtbar) getestet.
+
+## 2026-09-15 – `bf7b509` Cache-Busting für theme.css/shared.js + Kapitel-Header-Umbruch auf der Startseite gefixt
+
+1. Cache-Busting (?v=20260915 an theme.css/shared.js in allen 5 Seiten):
+   Nach dem letzten Header-Umbau hat der Nutzer das Update auf dem Handy
+   nicht gesehen - höchstwahrscheinlich eine alte gecachte Kopie von
+   theme.css/shared.js im Browser, da beide bisher ohne Versionierung
+   eingebunden waren. Kommentar in beiden Dateien ergänzt: bei künftigen
+   inhaltlichen Änderungen das v= in ALLEN Seiten mit hochzählen.
+
+2. Startseite: Kapitel-Anzeige im Header sprang bei langen Namen um
+   (z.B. "Draft-Ablauf") auf eine eigene Zeile, weil chapter-nav dann
+   nicht mehr neben dem Titel in die Zeile passte. Root Cause beim
+   Debuggen zweimal verschoben:
+   - Erster Versuch (flex:1 auf chapter-nav) liess es stattdessen IMMER
+     umbrechen (flex-grow verändert die Wrap-Entscheidung selbst).
+   - Eigentliche Ursache: .title-group hatte keinen white-space:nowrap
+     auf dem Titel-Text - unter Shrink-Druck konnte "Fantasy Playbook"
+     selbst intern umbrechen (min-content einer wrappenden Textzeile ist
+     nur das längste Wort), was die ganze Header-Zeile aufblähte.
+   Fix: neuer .header-top-row-Wrapper um Titel+Kapitel-Anzeige (am
+   Desktop per display:contents transparent, unverändertes Verhalten),
+   am Handy ein eigener nowrap-Flex-Block mit fixer Breite - der Name
+   wird bei Platzmangel mit "…" abgeschnitten statt umzubrechen, der
+   Titel bleibt garantiert einzeilig (white-space:nowrap).
+
+3. Beim Debuggen von (2) einen echten Bug aus dem letzten Header-Umbau
+   gefunden: die Collapse-Regel in theme.css (header.topbar
+   .header-sync-wrap{display:none}) war zu breit gefasst und traf auch
+   die Startseite, die aber gar keinen .nav-toggle-Button hat - die
+   Team-Sync-Auswahl war dort auf dem Handy dauerhaft unsichtbar, ohne
+   Weg sie aufzuklappen. Gefixt mit :has(.nav-toggle), damit die
+   Collapse-Regel nur die 4 Seiten mit echtem Toggle-Button trifft.
+
+Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
+inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
+einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
+unverändert, kein Abschneiden).
