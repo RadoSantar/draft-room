@@ -26,3 +26,21 @@ Die Liga-weite Tabelle war der Default-Tab, Conference-Aufteilung nur
 per Klick erreichbar - umgedreht, da die Conference-Einteilung für die
 Liga die relevantere Sicht ist. render Standings() respektiert jetzt
 den aktuell aktiven Tab statt hart die Liga-Ansicht einzublenden.
+
+## 2026-09-15 – `e654899` Workflows: Push-Race gegen main abgesichert (live aufgetreten)
+
+Der erste echte Dienstags-Sync ist gerade real mit "! [rejected] main ->
+main (fetch first)" fehlgeschlagen: der Sync-Schritt lief durch, aber
+der Push scheiterte, weil zwischen Checkout und Push ein anderer Commit
+auf main gelandet war (Changelog-Bot + eigene Pushes in derselben
+Zeitspanne). Alle drei automatisierten Workflows (espn-sync,
+espn-live-snapshot, changelog) hatten dasselbe Muster: einfaches "git
+push" ohne jede Absicherung.
+
+Fix: fetch+reset+recommit-Retry (0/2/4/8/16s) statt Rebase – da alle
+betroffenen Dateien (data/*.json, docs/CHANGELOG.md) bei jedem Lauf
+ohnehin frisch neu geschrieben/angehängt werden, ist "auf dem neuesten
+main neu committen" robuster als ein Rebase, der bei geänderter Basis
+in Konflikte laufen könnte. Lokal mit einer simulierten Race (zwei
+Klone, konkurrierender Push) verifiziert: saubere lineare Historie,
+kein Datenverlust auf beiden Seiten.
