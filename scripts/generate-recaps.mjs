@@ -445,7 +445,54 @@ const BADGE_POOL = {
   ]
 };
 
-function pickBadge(game, wasUpset, margin) {
+// Ordnet Badge-Kategorien der zugrundeliegenden Fakten-Kategorie zu (siehe collectFacts/
+// CATEGORY_GROUP weiter oben). Ohne das könnte z.B. der Spitzname "Die Bank wusste es besser"
+// (fatalBenchRegret) in einem Spiel auftauchen, obwohl die Bank-Reue als FAKT diese Woche schon
+// deckelbedingt nicht mehr ausgewählt wurde - der Spitzname würde das Thema trotzdem wieder
+// hochspülen. Kategorien ohne Eintrag hier (blowout, nailbiter, tie, upset, championshipHunt,
+// toiletBowl) hängen nicht an einem Fakt, sondern an Score/Kontext und sind von der Deckelung
+// nicht betroffen.
+const BADGE_CATEGORY_TO_FACT_CATEGORY = {
+  fatalBenchRegret: 'loserBenchRegret',
+  standout: 'standout',
+  winStreak: 'streak',
+  lossStreak: 'streak',
+  dominance: 'positionalDominance',
+  lineupDisaster: 'optimalLineupGap',
+  seasonHigh: 'seasonExtreme',
+  seasonLow: 'seasonExtreme',
+  raceEliminated: 'playoffRace',
+  raceMustWin: 'playoffRace',
+  unluckyLoser: 'unluckyLoser',
+  uglyWin: 'uglyWin',
+  revenge: 'rematch',
+  repeatResult: 'rematch',
+  kickerHero: 'kickerDecisive',
+  waiverKarma: 'waiverKarma',
+  comeback: 'comeback',
+  seesaw: 'leadChanges',
+  fastStart: 'pace',
+  slowStart: 'pace',
+  survivedScare: 'survivedScare',
+  mondayRescue: 'mondayRescue',
+  sustainedNailbiter: 'sustainedNailbiter',
+  seasonPersonalityComeback: 'seasonPersonality',
+  seasonPersonalityCollapse: 'seasonPersonality',
+  seasonPersonalityNailbiter: 'seasonPersonality',
+  seasonPersonalityWireToWire: 'seasonPersonality',
+  pythagoreanLucky: 'expectation',
+  pythagoreanUnlucky: 'expectation',
+  bargain: 'draftValue',
+  draftRegret: 'draftValue',
+  empireFirstWinBroken: 'empireStoryline',
+  empireWinless: 'empireStoryline',
+  empirePerfect: 'empireStoryline',
+  empireDynasty: 'empireStoryline',
+  empireCrumbling: 'empireStoryline',
+  empireTurnaround: 'empireStoryline'
+};
+
+function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   const categories = [];
   if (game.winner === 'TIE') categories.push('tie');
   if (margin >= 50) categories.push('blowout');
@@ -491,13 +538,28 @@ function pickBadge(game, wasUpset, margin) {
   if (game.empireStoryline?.type === 'empireCrumbling') categories.push('empireCrumbling');
   if (game.empireStoryline?.type === 'turnaround') categories.push('empireTurnaround');
 
-  const candidates = categories.flatMap((c) => BADGE_POOL[c]);
+  // Fakten-gebundene Kategorien rausfiltern, deren Thema diese Woche schon am Limit ist. Anders als
+  // bei den Fakten selbst gibt es hier KEIN Zurückfallen auf die überstrapazierte Kategorie: ein
+  // Spiel ganz ohne Spitzname ist unauffällig, ein Spitzname wie "Die Bank wusste es besser" in
+  // einem 3. Spiel würde das Thema aber genau wieder hochspülen, das die Fakten-Deckelung vermeiden soll.
+  const eligible = categories.filter((c) => {
+    const factCategory = BADGE_CATEGORY_TO_FACT_CATEGORY[c];
+    if (!factCategory) return true;
+    return (categoryUsage[groupOf(factCategory)] || 0) < capPerCategory;
+  });
+  const candidates = eligible.flatMap((c) => BADGE_POOL[c].map((label) => ({ label, category: c })));
   if (!candidates.length) return null;
   const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + '-badge';
-  return seededShuffle(candidates, key)[0];
+  const chosen = seededShuffle(candidates, key)[0];
+  const factCategory = BADGE_CATEGORY_TO_FACT_CATEGORY[chosen.category];
+  if (factCategory) {
+    const g = groupOf(factCategory);
+    categoryUsage[g] = (categoryUsage[g] || 0) + 1;
+  }
+  return chosen.label;
 }
 
-function buildPrompt(game, facts) {
+function buildPrompt(game, facts, categoryUsage) {
   const margin = Math.abs(game.homeScore - game.awayScore);
   const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
   const loser = game.winner === 'HOME' ? game.awayName : game.winner === 'AWAY' ? game.homeName : null;
@@ -522,7 +584,7 @@ function buildPrompt(game, facts) {
 
   facts.forEach((fact) => { context += fact.text + ' '; });
 
-  const badge = pickBadge(game, wasUpset, margin);
+  const badge = pickBadge(game, wasUpset, margin, categoryUsage, 2);
   if (badge) context += `Spitzname für dieses Spiel: "${badge}". `;
 
   const teaser = (teamName, opp) => {
@@ -569,7 +631,7 @@ export async function generateRecapsForGames(games, existingByKey) {
       // Erwartungswert/Revanche/Waiver-Karma) unnötig Budget für Kategorien wie "Standout" oder
       // "Bank-Reue", die dadurch schneller an ihre Obergrenze stiessen als nötig.
       const facts = pickFactsForGame(game, categoryUsage, '', 2, 2);
-      const prompt = buildPrompt(game, facts);
+      const prompt = buildPrompt(game, facts, categoryUsage);
       const recap = await callClaude(prompt);
       out[key] = { week: game.week, homeName: game.homeName, awayName: game.awayName, recap };
       console.log('Recap generiert:', game.homeName, 'vs', game.awayName);
