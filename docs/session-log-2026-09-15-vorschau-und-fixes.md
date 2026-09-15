@@ -87,9 +87,37 @@ Folge-Wunsch: die Vorschau wird zwar schon dienstags generiert, soll aber – ko
 
 `data/standings.json` enthielt `pointsAgainst` schon seit längerem (Sync-Skript liefert es mit), die Tabelle in `schedule.html` zeigte bisher aber nur `pointsFor` ("Punkte"). Statt einer zusätzlichen vollen Spalte (auf Mobile bei 390px kein Platz mehr – die bestehenden 4 Spalten neben dem Teamnamen sind schon eng) wurde die bestehende Punkte-Spalte zweizeilig gemacht: erzielte Punkte oben (wie bisher, amber/gross), kassierte Punkte + Differenz (`+47.5`/`-30.0` etc.) klein darunter (`.standings-pf-sub`). Diff wird clientseitig berechnet (`pointsFor - pointsAgainst`), keine Backend-/Sync-Änderung nötig. Mit Playwright bei 390px und 1200px geprüft – passt sauber ohne Umbruch.
 
-## Offene, noch nicht umgesetzte Punkte (unverändert seit letzter Session)
+## 7. Neues Stats-Ökosystem: 8 weitere Fakten-Kategorien
+
+Nutzer wollte mehr NFL-artige Statistiken ("für alles gibt's irgendeine Statistik"), auf Vorschlag hin direkt alles umgesetzt (ausser Punkt D, siehe unten). Acht neue `find*Fact()`-Funktionen in `sync-espn.mjs` (direkt vor `findKeyMoments`, Kommentarblock "Weitere Statistik-Kategorien"):
+
+- **`findLongestStreakFact`** – Saison-Serien-Rekord (unabhängig von ESPNs eigener, sich bei jedem Serienende zurücksetzender `streakLength`).
+- **`findMarginTallyFact`** – Häufung knapper (<5pt) bzw. deutlicher (>30pt) Spiele über die Saison.
+- **`findScoringLeaderTallyFact`** – wie oft Wochen-Highscorer/-Lowscorer der ganzen Liga.
+- **`findIronManFact`** – Starter, der bisher jede Woche in der Aufstellung stand.
+- **`findTopWeeklyPerformanceFact`** – "Mount Rushmore": Standout dieser Woche knackt die Top-4-Einzelwochenleistungen der Liga-Geschichte.
+- **`findSeasonMilestoneFact`** – Team knackt eine runde Saison-Punkte-Marke (250er-Schritte).
+- **`findSeasonDraftValueFact`** – saisonlange (statt nur wochenweise) Draft-Value-Bilanz.
+- **`findLeagueActivityFact`** – Team mit den meisten Waiver-/Trade-Bewegungen der Saison.
+
+Dafür `archiveSeasonStats()` erweitert um: Serien-Tracking (`curStreakType/Len`, `longestWinStreak/longestLossStreak`), Margen-Zähler (`closeWins/closeLosses/blowoutWins/blowoutLosses`), Wochen-Highscorer/-Lowscorer-Flags, kumulierte Spieler-Gesamtpunkte + Starter-Wochen (`players[id].totalPoints/starterWeeks`), sowie `records.topWeeklyPerformances` (liga-weite Top-4-Liste, nach jeder Woche neu sortiert/gekappt).
+
+**Bug gefunden und gefixt vor dem Push:** `teamStat()` initialisierte die neuen Felder nur bei komplett NEUEN Team-Einträgen. Für die 10 bereits existierenden Teams (aus früheren Sync-Läufen vor diesem Feature) fehlten die Felder, wodurch z.B. `t.closeWins++` auf `undefined` zu `NaN` geworden wäre – und ab dann für immer `NaN` geblieben wäre. Gefixt durch ein migrationssicheres Merge-Pattern (`{ ...defaults, ...(stats.teams[teamId] || {}) }`), das fehlende Felder bei bestehenden Einträgen nachträgt. Dabei ebenfalls beachtet: `positions: {}` darf NICHT aus einer geteilten äusseren Konstante gespreadet werden, sonst würden alle in einem Lauf neu angelegten Teams dieselbe Objektreferenz teilen – stattdessen wird das Default-Objekt pro Aufruf frisch inline erzeugt.
+
+In `generate-recaps.mjs`: alle 8 Kategorien in `collectFacts()` (Fliesstext-Templates), `BADGE_POOL` (neue Spitznamen: `seasonStreakRecord`, `closeSpecialist`/`blowoutSpecialist`, `scoringLeaderHigh`/`Low`, `ironMan`, `mountRushmore`, `milestone`, `activeManager`), `BADGE_CATEGORY_TO_FACT_CATEGORY` und `pickBadge()` verdrahtet. `CATEGORY_GROUP` um zwei Einträge ergänzt: `longestStreak` teilt sich das Budget mit `streak` (gleiches Thema, nur Saison-Rekord- statt Wochen-Variante), `seasonDraftValue` teilt sich das Budget mit `draftValue`.
+
+Getestet via gemocktem Claude-API-Call (Muster wie beim Redundanz-Fix): einzelnes Spiel mit allen 8 neuen Feldern → korrekt im Prompt gerendert, Cap-Mechanismus wählt wie erwartet nur 2 Fakten aus; 5-Spiele-Woche mit identischen Fakten in jedem Spiel → Cap verteilt korrekt über die Spiele (mit dem erwarteten Fallback-Verhalten bei künstlich niedriger Fakten-Vielfalt, analog zum bereits bekannten Verhalten des bestehenden Systems).
+
+## 8. Punkt D (Rivalitäten & Liga-Historie) – Infrastruktur vorbereitet, wartet auf Nutzer-Daten
+
+ESPNs History-Seite (`fantasy.espn.com/football/league/history?leagueId=686672943`) liess sich nicht automatisiert auslesen (WebFetch bekam nur die statische Seiten-Hülle, die eigentlichen Daten laden per JS nach Login nach). Nutzer hat angeboten, Screenshots aus der App für Saison 2024 & 2025 zu schicken.
+
+Neu angelegt: **`data/league-history.json`** (Platzhalter-Schema: `{ lastUpdated: null, seasons: {}, note: "..." }`) – wird befüllt, sobald die Screenshots da sind. Noch KEINE Fakten-Funktionen dafür geschrieben (macht ohne echte Daten keinen Sinn) – das folgt, sobald Vorsaisons-Standings/Meister bekannt sind (z.B. "Titelverteidiger", "seit Saison 2024 nicht mehr gegen X verloren", Mehrjahres-Head-to-Head).
+
+## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
+- Punkt D (Liga-Historie): wartet auf Screenshots vom Nutzer, dann Fakten-Funktionen darauf aufbauen.
 
 ## Nächster Schritt (Stand Ende dieser Session)
-Woche 2 abwarten und beobachten, ob die Fakten-Varianz (jetzt mit einer Woche Saison-Historie mehr) die Bank-Thema-Häufung weiter reduziert. Ausserdem beobachten, ob die Wochen-Vorschau ab Woche 3 (mit dann 2 Wochen Historie für `formTrend`/`consistency`/etc.) inhaltlich reichhaltiger wird. Nutzer hat zusätzlich Interesse an einem breiteren, NFL-artigen Statistik-Ökosystem geäussert ("für alles gibt's irgendeine Statistik") – Vorschläge dafür wurden präsentiert, Umsetzung noch nicht bestätigt/beauftragt.
+Nach dem Push wurde ein echter `espn-sync.yml`-Lauf getriggert, um die 8 neuen Kategorien + die erweiterte `archiveSeasonStats()` gegen echte Liga-Daten zu verifizieren (Job-Logs auf Fehler prüfen, `data/season-stats.json` danach inhaltlich inspizieren – insbesondere ob die migrationssicheren Defaults für die bereits bestehenden Woche-1-Team-Einträge sauber gegriffen haben, keine NaN-Werte). Ausserdem: Woche 2 abwarten und beobachten, ob die Fakten-Varianz weiter zunimmt.
