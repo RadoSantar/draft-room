@@ -208,3 +208,11 @@ Technisch:
 Mit gemockter API getestet: Prompt-Aufbau, Schlagzeile+Text-Parsing
 und Fakten-Auswahl funktionieren wie erwartet. data/week-previews.json
 startet leer, wird ab dem nächsten Dienstags-Lauf befüllt.
+
+## 2026-09-15 – `cc553c1` Spielplan: aktuelle Woche rutscht nach oben, vergangene Wochen eingeklappt
+
+Ab Mittwoch (Tag nach dem Dienstags-Sync) wird die neue Liga-Woche zur
+"aktuellen" Woche befördert und an den Anfang der Seite verschoben.
+Wochen vor der aktuellen werden automatisch in <details>-Elemente
+eingeklappt (neueste zuerst), damit die Seite bei fortschreitender
+Saison nicht durch 15 Wochen gescrollt werden muss.
