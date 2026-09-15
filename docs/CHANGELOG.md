@@ -166,27 +166,3 @@ Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
 inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
 einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
 unverändert, kein Abschneiden).
-
-## 2026-09-15 – `e5668a8` Recaps: optimalLineupGap/seasonBenchTotal teilen jetzt auch das Bank-Budget
-
-Erster Live-Test mit den 13 neuen Kategorien: die neuen Fakten (Power-
-Rankings-Sprung, knappstes Spiel der Woche, Liga-Bestwert) tauchten wie
-gewünscht auf und ersetzten in einem Fall die Bank-Geschichte komplett -
-aber insgesamt blieb die Bank-Erwähnung bei 4 von 5 Recaps. Ursache:
-der Spitzname "Die Bank wusste es besser" kommt aus der lineupDisaster-
-Kategorie (optimalLineupGap - die GESAMTE Kader-Lücke), nicht aus
-loserBenchRegret/winnerBenchRegret (einzelner Bank/Starter-Tausch) -
-technisch getrennt, liest sich für die Leserschaft aber identisch.
-optimalLineupGap war deshalb nicht Teil des gemeinsamen "benchRegret"-
-Budgets und konnte das Thema ein drittes Mal hochspülen.
-
-Fix: optimalLineupGap und die neue seasonBenchTotal-Kategorie (Saison-
-Summe der liegengelassenen Bank-Punkte, ebenfalls dasselbe Thema)
-teilen sich jetzt dasselbe CATEGORY_GROUP-Budget wie loser-/
-winnerBenchRegret. Mit gemockter API verifiziert: bei allen vier
-Varianten gleichzeitig verfügbar bleibt "irgendeine Bank-Geschichte"
-jetzt zuverlässig bei maximal 2 von 5 Spielen.
-
-data/game-recaps.json und data/week-recaps.json für Woche 1 ein
-letztes Mal geleert für den Regenerations-Lauf. data/season-stats.json
-bleibt unverändert (enthält bereits echte Woche-1-Daten).
