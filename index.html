@@ -284,18 +284,48 @@
     color:var(--amber);
     margin-bottom:8px;
   }
-  .tools-callout ul{list-style:none;display:flex;flex-direction:column;gap:6px;}
-  .tools-callout li{font-size:14px;position:relative;padding-left:18px;}
-  .tools-callout li::before{
-    content:'\2192';
-    position:absolute;
-    left:0;
-    color:var(--amber);
+  .tool-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
+  .tool-card{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:rgba(255,255,255,0.07);
+    border:1px solid rgba(255,255,255,0.16);
+    border-radius:8px;
+    padding:12px 14px;
+    text-decoration:none;
+    color:var(--chalk);
+    transition:background .15s ease, border-color .15s ease, transform .15s ease;
   }
-  .tools-callout a{color:var(--chalk);text-decoration:underline;text-decoration-color:rgba(243,239,228,0.4);}
-  .tools-callout a:hover{text-decoration-color:var(--amber);}
+  .tool-card:hover, .tool-card:focus-visible{background:rgba(255,255,255,0.13);border-color:var(--amber);}
+  .tool-card:active{background:rgba(255,255,255,0.18);transform:scale(0.98);}
+  .tool-card .tool-body{flex:1;min-width:0;}
+  .tool-card .tool-title{
+    display:block;
+    font-family:'Anton', sans-serif;
+    font-size:14px;
+    letter-spacing:.01em;
+    color:var(--chalk);
+    margin-bottom:3px;
+  }
+  .tool-card .tool-desc{display:block;font-size:12.5px;color:var(--chalk);opacity:.72;line-height:1.35;}
+  .tool-card .tool-arrow{
+    flex-shrink:0;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    background:var(--amber);
+    color:var(--turf);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:14px;
+    font-weight:700;
+  }
+  .tools-note{font-size:13px;color:var(--chalk);opacity:.75;margin-top:12px;}
   @media (max-width:640px){
     .toc-grid{grid-template-columns:1fr;}
+    .tool-grid{grid-template-columns:1fr;}
   }
 
   .term-card summary{
@@ -1198,16 +1228,37 @@
       </div>
       <div class="tools-callout">
         <div class="tools-title">Interaktive Tools</div>
-        <ul>
-          <li><a href="#rechner">Punkterechner</a> – Stats eines Spielers eintragen und live die Fantasy-Punkte für QB, RB, WR, TE, K oder DEF sehen.</li>
-          <li><a href="#beliebte-picks">Beliebteste Picks</a> – aktuelle ADP- und Ownership-Ranglisten je Position, live von ESPN geladen.</li>
-          <li><a href="#trades">Trade-Fairness-Kalkulator</a> – Marktwerte beider Trade-Seiten vergleichen und sehen, wie ausgeglichen ein Deal ist.</li>
-          <li><a href="draft-board.html">Draft Board</a> – eigene Draft-Rangliste vorbereiten und am Draft-Tag live durchklicken, wer schon weg ist.</li>
-          <li><a href="schedule.html">Spielplan</a> – der komplette 15-Wochen-Spielplan, nach Team filterbar.</li>
-          <li><a href="power-rankings.html">Power Rankings</a> – Draft-Analyse aller 10 Teams: komplettes Draft Board, Stärken/Schwächen je Position und Ausblick, berechnet nach unserem Scoring.</li>
-          <li><a href="my-team.html">Mein Team</a> – dein aktueller Kader, Stärken/Schwächen im Liga-Vergleich, konkrete Free-Agent- und Trade-Vorschläge sowie deine aktuell beste Startaufstellung.</li>
-          <li>Team-Design – oben im Header per Dropdown das Farbschema deines Lieblings-NFL-Teams für die ganze Seite aktivieren.</li>
-        </ul>
+        <div class="tool-grid">
+          <a class="tool-card" href="#rechner">
+            <span class="tool-body"><span class="tool-title">Punkterechner</span><span class="tool-desc">Stats eintragen, live die Fantasy-Punkte sehen – für QB, RB, WR, TE, K oder DEF.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="tool-card" href="#beliebte-picks">
+            <span class="tool-body"><span class="tool-title">Beliebteste Picks</span><span class="tool-desc">Aktuelle ADP- und Ownership-Ranglisten je Position, live von ESPN.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="tool-card" href="#trades">
+            <span class="tool-body"><span class="tool-title">Trade-Fairness-Kalkulator</span><span class="tool-desc">Marktwerte beider Trade-Seiten vergleichen, sehen wie ausgeglichen ein Deal ist.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="tool-card" href="draft-board.html">
+            <span class="tool-body"><span class="tool-title">Draft Board</span><span class="tool-desc">Eigene Draft-Rangliste vorbereiten, am Draft-Tag live durchklicken.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="tool-card" href="schedule.html">
+            <span class="tool-body"><span class="tool-title">Spielplan</span><span class="tool-desc">Der komplette 15-Wochen-Spielplan, nach Team filterbar.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="tool-card" href="power-rankings.html">
+            <span class="tool-body"><span class="tool-title">Power Rankings</span><span class="tool-desc">Draft-Analyse aller 10 Teams: Stärken/Schwächen je Position und Ausblick.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+          <a class="tool-card" href="my-team.html">
+            <span class="tool-body"><span class="tool-title">Mein Team</span><span class="tool-desc">Dein Kader, Free-Agent- und Trade-Vorschläge, beste Startaufstellung.</span></span>
+            <span class="tool-arrow" aria-hidden="true">→</span>
+          </a>
+        </div>
+        <p class="tools-note">Tipp: Oben im Header lässt sich per Dropdown das Farbschema deines Lieblings-NFL-Teams für die ganze Seite aktivieren.</p>
       </div>
     </section>
 
