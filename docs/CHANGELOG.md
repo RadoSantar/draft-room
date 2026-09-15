@@ -166,34 +166,3 @@ Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
 inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
 einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
 unverändert, kein Abschneiden).
-
-## 2026-09-15 – `4fa4119` Recaps: Spitznamen (Badges) respektieren jetzt auch das Fakten-Budget
-
-Dritter Live-Test: trotz gruppiertem Bank-Budget und reduzierter
-Fakten-Zahl zeigten immer noch 4 von 5 Recaps eine Bank-Geschichte.
-Ursache gefunden: die "Spitzname für dieses Spiel"-Funktion (pickBadge)
-lief komplett unabhängig von der neuen Fakten-Deckelung - sie prüft
-rohe Spiel-Eigenschaften (z.B. game.loserBenchRegret?.wouldHaveWon für
-den Spitznamen "Die Bank wusste es besser"), unabhängig davon, ob die
-Bank-Reue als FAKT überhaupt für dieses Spiel ausgewählt wurde. Ein
-Spiel konnte also den Bank-Spitznamen bekommen, obwohl sein Bank-Fakt
-diese Woche schon gedeckelt war - Claude flicht den Spitznamen dann
-selbstverständlich in die Geschichte ein (wie es der System-Prompt ja
-explizit will), und das Thema taucht doch wieder auf.
-
-Fix: neue BADGE_CATEGORY_TO_FACT_CATEGORY-Zuordnung verknüpft jede
-Fakten-gebundene Badge-Kategorie mit ihrer Fakten-Kategorie (die
-margin-/kontext-basierten wie "blowout"/"nailbiter"/"upset" bleiben
-unberührt). pickBadge bekommt jetzt denselben categoryUsage-Zähler wie
-pickFactsForGame, filtert Kandidaten heraus, deren Thema am Limit ist,
-und zählt einen gewählten Fakten-gebundenen Spitznamen selbst mit hoch
-(zählt also fürs Budget der folgenden Spiele). Anders als bei den
-Fakten gibt es hier KEIN Zurückfallen auf überstrapazierte Kategorien -
-ein Spiel ganz ohne Spitzname ist unauffällig, ein wiederholter
-Bank-Spitznamen wäre aber genau das Problem, das behoben werden soll.
-
-Mit gemockter API verifiziert: Fakten UND Badges zusammen jetzt
-zuverlässig innerhalb der Obergrenze.
-
-data/game-recaps.json und data/week-recaps.json für Woche 1 nochmal
-geleert für den (hoffentlich finalen) Regenerations-Lauf.
