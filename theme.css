@@ -1,5 +1,8 @@
 /* Fantasy Playbook – gemeinsames Team-Theme-System + Theme-Picker + Back-to-Top.
-   Wird von index.html, draft-board.html und schedule.html per <link> eingebunden. */
+   Wird von index.html, draft-board.html und schedule.html per <link> eingebunden.
+   Cache-Busting: alle Seiten binden diese Datei als "theme.css?v=DATUM" ein (siehe <link>-Tags).
+   Bei jeder inhaltlichen Änderung hier das v= in ALLEN Seiten hochzählen (sonst zeigen Browser mit
+   altem Cache die alte Version, siehe Header-Kollaps-Bug vom 2026-09-15) - shared.js genauso. */
 :root{
   --turf:#1E4638;
   --turf-2:#173629;
@@ -405,8 +408,12 @@
 .nav-toggle:hover, .nav-toggle:focus-visible{border-color:var(--amber);}
 @media (max-width:640px){
   .nav-toggle{display:flex;}
-  header.topbar{flex-wrap:wrap;}
-  header.topbar .header-sync-wrap, header.topbar .tool-nav{display:none;flex-basis:100%;}
+  /* :has(.nav-toggle) grenzt das auf die 4 Seiten mit echtem Toggle-Button ein (schedule.html,
+     draft-board.html, my-team.html, power-rankings.html) - index.html hat ihren eigenen Header-Aufbau
+     (Kapitel-Menü) und keinen .nav-toggle, darf also nicht mit "display:none ohne Weg zum Aufklappen"
+     erwischt werden (siehe Bug vom 2026-09-15: Team-Sync-Auswahl auf der Startseite unsichtbar). */
+  header.topbar:has(.nav-toggle){flex-wrap:wrap;}
+  header.topbar:has(.nav-toggle) .header-sync-wrap, header.topbar:has(.nav-toggle) .tool-nav{display:none;flex-basis:100%;}
   header.topbar.nav-open .header-sync-wrap{display:flex;margin-top:2px;}
   header.topbar.nav-open .tool-nav{display:flex;margin-top:10px;}
 }

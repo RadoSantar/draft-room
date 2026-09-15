@@ -1,4 +1,6 @@
-/* Fantasy Playbook – gemeinsame Konstanten/Helfer für alle Seiten (index.html, draft-board.html, schedule.html). */
+/* Fantasy Playbook – gemeinsame Konstanten/Helfer für alle Seiten (index.html, draft-board.html, schedule.html).
+   Cache-Busting: wird überall als "shared.js?v=DATUM" eingebunden - bei Änderungen hier das v= in
+   ALLEN Seiten hochzählen, siehe Hinweis in theme.css. */
 (function(global){
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){
