@@ -150,6 +150,13 @@
   .sched-week-meta{display:flex;align-items:baseline;gap:8px;}
   .sched-week-date{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--ink-soft);}
   .sched-week-type{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;}
+  details.sched-week-collapsed{margin-bottom:16px;}
+  details.sched-week-collapsed > summary{cursor:pointer;list-style:none;}
+  details.sched-week-collapsed > summary::-webkit-details-marker{display:none;}
+  details.sched-week-collapsed > summary:hover .sched-week-num{opacity:.85;}
+  .sched-week-arrow{font-size:13px;color:var(--amber);margin-left:2px;transition:transform .15s ease;flex:0 0 auto;}
+  details.sched-week-collapsed[open] .sched-week-arrow{transform:rotate(90deg);}
+  details.sched-week-collapsed:not([open]) .sched-week-head{margin-bottom:0;}
 
   .sched-games{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);}
   .sched-game-wrap{border-bottom:1px solid rgba(255,255,255,0.08);}
@@ -510,14 +517,53 @@
         '<p class="week-preview-body">' + wp.preview + '</p></details>';
     }
 
+    /* Neue Liga-Woche wird jeweils ab Mittwoch (Tag nach dem ESPN-Sync vom Dienstag) zur
+       "aktuellen" Woche befördert – sie rutscht nach oben, vergangene Wochen werden
+       eingeklappt, damit man bei fortschreitender Saison nicht durch 15 Wochen scrollen muss. */
+    function computeCurrentWeek(){
+      var now = new Date();
+      var weekNums = Object.keys(WEEK_DATES).map(Number).sort(function(a, b){ return a - b; });
+      var current = weekNums[0];
+      weekNums.forEach(function(w){
+        var range = WEEK_DATES[w];
+        var startPart = range.split('–')[0];
+        var dm = startPart.split('.').filter(Boolean);
+        var yearMatch = range.match(/(\d{4})$/);
+        var year = yearMatch ? parseInt(yearMatch[1], 10) : now.getFullYear();
+        var startDate = new Date(year, parseInt(dm[1], 10) - 1, parseInt(dm[0], 10));
+        var revealDate = new Date(startDate);
+        revealDate.setDate(revealDate.getDate() - 1);
+        revealDate.setHours(0, 0, 0, 0);
+        if(now >= revealDate) current = w;
+      });
+      return current;
+    }
+
+    function weekHeadHtml(wk, collapsible){
+      return '<div class="sched-week-head"><span class="sched-week-meta"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-date">' + weekDateRange(wk.w) + '</span></span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span>' + (collapsible ? '<span class="sched-week-arrow">▸</span>' : '') + '</div>';
+    }
+
+    function weekBodyHtml(wk){
+      return weekRecapHtml(wk) +
+        weekPreviewHtml(wk) +
+        '<div class="sched-games">' + wk.g.map(function(g){ return gameHtml(g, wk.w); }).join('') + '</div>';
+    }
+
     function render(){
-      var html = SCHEDULE.map(function(wk){
-        return '<div class="sched-week">' +
-          '<div class="sched-week-head"><span class="sched-week-meta"><span class="sched-week-num">Woche ' + wk.w + '</span><span class="sched-week-date">' + weekDateRange(wk.w) + '</span></span><span class="sched-week-type">' + weekTypeLabel(wk.ty) + '</span></div>' +
-          weekRecapHtml(wk) +
-          weekPreviewHtml(wk) +
-          '<div class="sched-games">' + wk.g.map(function(g){ return gameHtml(g, wk.w); }).join('') + '</div>' +
-        '</div>';
+      var currentWeek = computeCurrentWeek();
+      var current = [], future = [], past = [];
+      SCHEDULE.forEach(function(wk){
+        if(wk.w === currentWeek) current.push(wk);
+        else if(wk.w > currentWeek) future.push(wk);
+        else past.push(wk);
+      });
+      past.sort(function(a, b){ return b.w - a.w; });
+      var ordered = current.concat(future).concat(past);
+      var html = ordered.map(function(wk){
+        if(wk.w < currentWeek){
+          return '<details class="sched-week sched-week-collapsed"><summary>' + weekHeadHtml(wk, true) + '</summary>' + weekBodyHtml(wk) + '</details>';
+        }
+        return '<div class="sched-week">' + weekHeadHtml(wk, false) + weekBodyHtml(wk) + '</div>';
       }).join('');
       weeksEl.innerHTML = html;
       applyFilter();
