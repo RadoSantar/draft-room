@@ -27,7 +27,26 @@
         { "rank": 5, "name": "Saints of Anarchy", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null },
         { "rank": 6, "name": "Run CMC", "wins": 0, "losses": 15, "ties": 0, "pointsFor": null }
       ],
-      "note": "Auch hier: rank = finale Playoff-Platzierung, NICHT nach Bilanz sortiert - Sherlock Mahomes hatte die mit Abstand beste Regular-Season-Bilanz (13-2) landete aber laut Bracket-Ergebnis nur auf Rang 3, während Tackleberry Finn mit nur 6-9 im Championship-Spiel stand (Rang 2). Nutzer hat das selbst explizit angemerkt, bevor Rückfrage nötig war. Immer noch 6 Teams diese Saison (noch nicht auf die aktuellen 10 gewachsen)."
+      "note": "Auch hier: rank = finale Playoff-Platzierung, NICHT nach Bilanz sortiert - Sherlock Mahomes hatte die mit Abstand beste Regular-Season-Bilanz (13-2) landete aber laut Bracket-Ergebnis nur auf Rang 3, während Tackleberry Finn mit nur 6-9 im Championship-Spiel stand (Rang 2). Nutzer hat das selbst explizit angemerkt, bevor Rückfrage nötig war. Immer noch 6 Teams diese Saison (noch nicht auf die aktuellen 10 gewachsen).",
+      "playoffs": {
+        "format": "4 Teams (Seeds 1-4 nach Regular-Season-Bilanz), Woche 16 Halbfinale + Woche 17 Finale/3.-Platz-Spiel im Sieger-Bracket; die übrigen 2 Teams (Seeds 5-6) spielen im Trost-Bracket um Platz 5 (Bye in Woche 16, Spiel in Woche 17). Gleiches Format wie die aktuelle 2026er-Liga (Woche 16+17, siehe schedule.html).",
+        "winnersBracket": {
+          "semifinal": [
+            { "week": 16, "team1": "Sherlock Mahomes", "seed1": 1, "score1": 151.44, "team2": "Tackleberry Finn", "seed2": 4, "score2": 158.70, "winner": "Tackleberry Finn" },
+            { "week": 16, "team1": "Zurich City Ravens", "seed1": 2, "score1": 149.10, "team2": "Hopp Schwiiz", "seed2": 3, "score2": 146.30, "winner": "Zurich City Ravens" }
+          ],
+          "championship": { "week": 17, "team1": "Tackleberry Finn", "seed1": 4, "score1": 153.70, "team2": "Zurich City Ravens", "seed2": 2, "score2": 177.48, "winner": "Zurich City Ravens" },
+          "thirdPlaceGame": { "week": 17, "team1": "Sherlock Mahomes", "seed1": 1, "score1": 144.48, "team2": "Hopp Schwiiz", "seed2": 3, "score2": 98.40, "winner": "Sherlock Mahomes" }
+        },
+        "consolationBracket": {
+          "byeWeek16": [
+            { "team": "Saints of Anarchy", "seed": 1, "score": 154.60 },
+            { "team": "Run CMC", "seed": 2, "score": 54.10 }
+          ],
+          "fifthPlaceGame": { "week": 17, "team1": "Saints of Anarchy", "seed1": 1, "score1": 111.44, "team2": "Run CMC", "seed2": 2, "score2": 49.00, "winner": "Saints of Anarchy" }
+        },
+        "note": "Grösste Überraschung: Seed 1 Sherlock Mahomes (13-2 Bilanz) verlor im Halbfinale gegen Seed 4 Tackleberry Finn (6-9) - deshalb stand ausgerechnet das Team mit der schlechteren Bilanz im Finale, verlor dort aber gegen Zurich City Ravens."
+      }
     }
   },
   "note": "Wird manuell befüllt, sobald weitere Screenshots/History-Daten aus der ESPN-App vorliegen - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, finalStandings: [{ rank, name, wins, losses, ties, pointsFor }] }. WICHTIG: 'rank' ist die finale Platzierung nach Playoff-Ergebnis, nicht die nach Sieganzahl sortierte Regular-Season-Tabelle - beides kann stark auseinanderfallen (Playoffs sind ein K.-o.-Bracket, keine reine Bilanz-Fortsetzung)."
