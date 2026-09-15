@@ -12,7 +12,7 @@ So gehst du mit den mitgelieferten Fakten um, gruppiert nach Wirkung:
 - Grosse Dramatik/Übertreibung: Standout-Leistung, Kollaps/Comeback, Team-Storyline (Imperium/Dynastie/Erster Sieg/makellose Bilanz), Playoff-Kontext im Gewinner-Bracket. Hier darfst du richtig theatralisch werden, bildhafte Vergleiche einbauen ("legte los wie X").
 - Schadenfreude/Sarkasmus: Bank-Reue, Waiver-Wire-Karma, Pechvogel der Woche, Hässlicher Sieg, Erwartungswert-Bilanz, Draft-Reue/Schnäppchen, Playoff-Rennen (eliminierte Teams mit süffisantem Mitleid, Teams unter Druck ernst), Toilet-Bowl-Kontext (Humor dreht sich um: es geht nur darum, NICHT Letzter zu werden).
 - Wiederkehrender Insider-Gag: Spitzname fürs Spiel (natürlich einflechten, kein angeklebtes Label), Saison-Persönlichkeit ("mal wieder", "wie erwartet").
-- Vorsichtig formulieren (Näherung, keine erfundene Präzision): alles auf Basis unserer Zwischenstände (Kollaps/Comeback, Frühstarter/Spätzünder, Zittersieg, Monday-Night-Rettung, Dauerhafter Nervenkrieg) – Dramatik ja, aber keine erfundenen exakten Zeitpunkte oder Spielzüge.
+- Vorsichtig formulieren (Näherung, keine erfundene Präzision): alles auf Basis unserer Zwischenstände (Kollaps/Comeback, Frühstarter/Spätzünder, Zittersieg, Monday-Night-Rettung, Dauerhafter Nervenkrieg) – Dramatik ja, aber keine erfundenen exakten Zeitpunkte oder Spielzüge. Vermeide dabei technische Begriffe wie "Snapshot" oder "Datenpunkt" – das ist ein Football-Recap, kein Analytics-Report, sprich stattdessen von "Zwischenstand", "im Wochenverlauf" oder Ähnlichem.
 - Zum Schluss, falls gegeben: ein Ausblick auf die kommende Woche, JE EIN kurzer Teaser-Satz pro Team, locker als Abschluss hingeworfen statt als separater Absatz.
 
 Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
@@ -175,8 +175,8 @@ function collectFacts(game) {
   if (game.pace) {
     const p = game.pace;
     facts.push(p.type === 'fast'
-      ? `Frühstarter laut unseren Zwischenständen: ${p.team} hatte schon beim allerersten Wochen-Snapshot ${p.earlyScore.toFixed(1)} von am Ende ${p.finalScore.toFixed(1)} Punkten drauf.`
-      : `Spätzünder laut unseren Zwischenständen: ${p.team} stand beim allerersten Wochen-Snapshot noch bei quasi ${p.earlyScore.toFixed(1)} Punkten, kam am Ende aber auf ${p.finalScore.toFixed(1)}.`);
+      ? `Frühstarter laut unseren Zwischenständen: ${p.team} hatte schon früh in der Woche ${p.earlyScore.toFixed(1)} von am Ende ${p.finalScore.toFixed(1)} Punkten drauf.`
+      : `Spätzünder laut unseren Zwischenständen: ${p.team} stand früh in der Woche noch bei quasi ${p.earlyScore.toFixed(1)} Punkten, kam am Ende aber auf ${p.finalScore.toFixed(1)}.`);
   }
 
   if (game.survivedScare) {
@@ -190,7 +190,7 @@ function collectFacts(game) {
   }
 
   if (game.sustainedNailbiter) {
-    facts.push(`Dauerhafter Nervenkrieg laut unseren Zwischenständen: Bei ${game.sustainedNailbiter.streak} Wochen-Snapshots in Folge lagen die Teams innerhalb von 5 Punkten auseinander – nicht nur am Ende knapp, sondern über weite Strecken der Woche.`);
+    facts.push(`Dauerhafter Nervenkrieg laut unseren Zwischenständen: Über weite Strecken der Woche lagen die Teams innerhalb von 5 Punkten auseinander – nicht nur am Ende knapp, sondern die ganze Woche über zum Zerreissen gespannt.`);
   }
 
   if (game.seasonPersonality) {

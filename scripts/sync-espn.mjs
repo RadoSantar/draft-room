@@ -369,11 +369,15 @@ function findWaiverKarmaFact(game, homePerf, awayPerf, transactions) {
 // mehrmals pro Spieltag läuft (siehe .github/workflows/espn-live-snapshot.yml). Ohne diese Snapshots
 // (z.B. weil das Zusatz-Feature nicht aktiv ist) einfach leeres Array – die beiden Fakten bleiben
 // dann schlicht aus, kein Fehler.
+// Ignoriert Snapshots, bei denen dieses Spiel noch bei 0:0 stand – das heisst nicht "Team lag bei 0
+// Punkten zurück", sondern schlicht "das Spiel hatte zu dem Zeitpunkt noch nicht angefangen zu
+// punkten" (z.B. weil der allererste Snapshot der Woche vor dem eigentlichen Spielbeginn lag). Ohne
+// diesen Filter hätte praktisch jedes Team fälschlich eine "startete bei 0 Punkten"-Geschichte.
 function extractDiffTimeline(game, liveSnapshots) {
   const diffs = [];
   (liveSnapshots || []).forEach((s) => {
     const g = s.games.find((gg) => gg.homeId === game.homeId && gg.awayId === game.awayId);
-    if (g) diffs.push(g.homeScore - g.awayScore);
+    if (g && (g.homeScore !== 0 || g.awayScore !== 0)) diffs.push(g.homeScore - g.awayScore);
   });
   diffs.push(game.homeScore - game.awayScore);
   return diffs;
@@ -414,16 +418,22 @@ function findLeadChangesFact(game, liveSnapshots) {
   return { changes };
 }
 
-// Schnellstarter/Spätzünder: Anteil des Endstands, den ein Team schon beim ALLERERSTEN Snapshot der
-// Woche (meist Donnerstagabend) draufhatte – relativ statt absolut gemessen, damit es unabhängig vom
-// genauen Scoring-Niveau dieser Liga funktioniert.
+// Schnellstarter/Spätzünder: Anteil des Endstands, den ein Team schon beim ersten ECHTEN Zwischen-
+// stand der Woche draufhatte (erster Snapshot, bei dem dieses Team schon einen Punktestand > 0 hat –
+// ein 0:0-Snapshot bedeutet nur "Spiel noch nicht losgegangen", kein echter Frühstand) – relativ statt
+// absolut gemessen, damit es unabhängig vom genauen Scoring-Niveau dieser Liga funktioniert.
 function findPaceFact(game, liveSnapshots) {
   if (!liveSnapshots?.length) return null;
-  const first = liveSnapshots[0];
   const check = (teamId, teamName, finalScore) => {
     if (finalScore < 20) return null;
+    const first = liveSnapshots.find((s) => {
+      const g = s.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
+      if (!g) return false;
+      const score = g.homeId === teamId ? g.homeScore : g.awayScore;
+      return score > 0;
+    });
+    if (!first) return null;
     const g = first.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
-    if (!g) return null;
     const earlyScore = g.homeId === teamId ? g.homeScore : g.awayScore;
     const share = earlyScore / finalScore;
     if (share >= 0.35) return { type: 'fast', team: teamName, earlyScore, finalScore };

@@ -166,16 +166,27 @@
   .game-recap{padding:0 14px 10px;}
   .game-recap summary{
     cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
     font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
+    font-size:11.5px;
+    font-weight:600;
     text-transform:uppercase;
     letter-spacing:.04em;
-    color:var(--amber);
-    opacity:.85;
+    color:var(--turf);
+    background:var(--amber);
+    padding:5px 11px;
+    border-radius:20px;
     list-style:none;
+    transition:filter .15s ease;
   }
+  .game-recap summary:hover, .game-recap summary:focus-visible{filter:brightness(1.1);}
+  .game-recap summary:active{filter:brightness(0.92);}
   .game-recap summary::-webkit-details-marker{display:none;}
-  .game-recap summary::before{content:'📰 ';}
+  .game-recap summary::before{content:'📰';}
+  .game-recap summary::after{content:'▸';display:inline-block;transition:transform .15s ease;}
+  .game-recap[open] summary::after{transform:rotate(90deg);}
   .game-recap p{
     font-family:'Source Serif 4', serif;
     font-style:italic;
@@ -441,7 +452,7 @@
         winA = s1 > s2; winB = s2 > s1;
       }
       var recap = isFinal ? findRecap(wk, t1, t2) : null;
-      var recapHtml = recap ? '<details class="game-recap"><summary>Recap</summary><p>' + recap.recap + '</p></details>' : '';
+      var recapHtml = recap ? '<details class="game-recap"><summary>Recap lesen</summary><p>' + recap.recap + '</p></details>' : '';
       return '<div class="sched-game-wrap">' +
         '<div class="sched-game' + (isFinal ? ' is-final' : '') + '" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
           '<span class="sched-team side-a' + (winA ? ' winner' : '') + '"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
