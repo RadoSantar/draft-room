@@ -632,6 +632,333 @@ function findEmpireStorylineFact(game, standingsById) {
   return [home, away].filter(Boolean).sort((a, b) => priority[a.type] - priority[b.type])[0] || null;
 }
 
+// ==== Zusätzliche Fakten-Kategorien (2026-09-15) - drei Gruppen: ====
+// A) Brauchen nur diese Woche (auch in Woche 1 verfügbar)
+// B) Brauchen Saison-Historie (ab Woche 2-3 sinnvoll, in Woche 1 meist null)
+// C) Eigene Ideen abseits der beiden obigen Gruppen
+
+// A1: Power-Ranking-Bewegung seit letzter Woche (bzw. seit "post-draft" in Woche 1) - die Daten
+// liegen schon in power-rankings-history.json, hier nur noch verglichen.
+function findPowerRankingMovementFact(game, powerRankingsHistory, week) {
+  if (!powerRankingsHistory?.snapshots?.length) return null;
+  const currKey = 'week-' + week;
+  const prevKey = week > 1 ? 'week-' + (week - 1) : 'post-draft';
+  const curr = powerRankingsHistory.snapshots.find((s) => s.key === currKey);
+  const prev = powerRankingsHistory.snapshots.find((s) => s.key === prevKey);
+  if (!curr || !prev) return null;
+  const rankById = (snap) => Object.fromEntries(snap.teams.map((t) => [t.id, t.rank]));
+  const currRank = rankById(curr);
+  const prevRank = rankById(prev);
+  const check = (teamId, teamName) => {
+    const c = currRank[teamId], p = prevRank[teamId];
+    if (c == null || p == null || c === p) return null;
+    return { team: teamName, from: p, to: c, direction: c < p ? 'up' : 'down' };
+  };
+  const candidates = [check(game.homeId, game.homeName), check(game.awayId, game.awayName)].filter(Boolean);
+  if (!candidates.length) return null;
+  return candidates.sort((a, b) => Math.abs(b.from - b.to) - Math.abs(a.from - a.to))[0];
+}
+
+// A2: einer der beiden Starter in diesem Spiel war der bestpunktende Spieler seiner Position in der
+// GESAMTEN Liga diese Woche (nicht nur in diesem einen Spiel wie beim bestehenden "standout").
+function findLeagueWidePositionBestFact(game, keyMomentsByTeam) {
+  if (!keyMomentsByTeam) return null;
+  const bestByPos = {};
+  Object.values(keyMomentsByTeam).forEach((perf) => {
+    (perf?.starters || []).forEach((p) => {
+      if (!bestByPos[p.pos] || p.points > bestByPos[p.pos].points) bestByPos[p.pos] = p;
+    });
+  });
+  const participants = [
+    ...(keyMomentsByTeam[game.homeId]?.starters || []).map((p) => ({ ...p, team: game.homeName })),
+    ...(keyMomentsByTeam[game.awayId]?.starters || []).map((p) => ({ ...p, team: game.awayName }))
+  ];
+  const hit = participants.find((p) => bestByPos[p.pos]?.playerId === p.playerId && p.points > 0);
+  if (!hit) return null;
+  return { team: hit.team, name: hit.name, pos: hit.pos, points: hit.points };
+}
+
+// A3: knappstes bzw. deutlichstes Spiel der ganzen Woche (Marge statt Score - Gegenstück zu
+// findSeasonExtremeFact, aber nur diese Woche, nicht saisonweit, und auf Basis der Differenz).
+function findMarginExtremeFact(game, weekGames) {
+  const decided = weekGames.filter((g) => g.winner === 'HOME' || g.winner === 'AWAY');
+  if (decided.length < 2) return null;
+  const entries = decided.map((g) => ({ g, margin: Math.abs(g.homeScore - g.awayScore) }));
+  const closest = entries.reduce((a, b) => (b.margin < a.margin ? b : a));
+  const widest = entries.reduce((a, b) => (b.margin > a.margin ? b : a));
+  if (closest.margin === widest.margin) return null;
+  const isThisGame = (entry) => entry.g.homeId === game.homeId && entry.g.awayId === game.awayId;
+  if (isThisGame(closest)) return { type: 'closest', margin: closest.margin };
+  if (isThisGame(widest)) return { type: 'widest', margin: widest.margin };
+  return null;
+}
+
+// A4: Gegenstück zu findPositionalDominance - eine ganze Positionsgruppe (mit üblicherweise
+// mehreren Startplätzen) hat fast nichts beigetragen.
+function findPositionalFlopFact(game, homePerf, awayPerf) {
+  const MULTI_SLOT_POS = ['RB', 'WR'];
+  const groupTotals = (perf) => {
+    const totals = {};
+    (perf?.starters || []).forEach((p) => { totals[p.pos] = (totals[p.pos] || 0) + p.points; });
+    return totals;
+  };
+  const candidates = [];
+  Object.entries(groupTotals(homePerf)).forEach(([pos, total]) => {
+    if (MULTI_SLOT_POS.includes(pos) && total <= 4) candidates.push({ team: game.homeName, pos, groupTotal: total });
+  });
+  Object.entries(groupTotals(awayPerf)).forEach(([pos, total]) => {
+    if (MULTI_SLOT_POS.includes(pos) && total <= 4) candidates.push({ team: game.awayName, pos, groupTotal: total });
+  });
+  if (!candidates.length) return null;
+  return candidates.sort((a, b) => a.groupTotal - b.groupTotal)[0];
+}
+
+// A5: ein Spieler, der DIESE Woche per Waiver/Free Agent geholt wurde, liefert sofort als Starter -
+// einfacher als findWaiverKarmaFact (das einen alten Besitzer + Gegner-Duell braucht).
+function findWaiverInstantSuccessFact(game, homePerf, awayPerf, transactions) {
+  if (!transactions?.length) return null;
+  const addsByTeam = {};
+  transactions.forEach((t) => {
+    if (t.type === 'FREEAGENT' && t.week === game.week && t.playerId != null && t.teamId != null && t.id?.startsWith('add-')) {
+      (addsByTeam[t.teamId] = addsByTeam[t.teamId] || new Set()).add(t.playerId);
+    }
+  });
+  const check = (teamId, teamName, perf) => {
+    const added = addsByTeam[teamId];
+    if (!added || !perf) return null;
+    const hero = perf.starters.find((p) => added.has(p.playerId) && p.points >= 12);
+    if (!hero) return null;
+    return { team: teamName, name: hero.name, pos: hero.pos, points: hero.points };
+  };
+  return check(game.homeId, game.homeName, homePerf) || check(game.awayId, game.awayName, awayPerf) || null;
+}
+
+// A6: Favorit gewinnt fast exakt mit der vorhergesagten Marge - "genau wie prognostiziert".
+function findChalkFact(game) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+  const winner = game.winner === 'HOME' ? game.homeName : game.awayName;
+  if (favorite !== winner) return null;
+  const projMargin = Math.abs(game.homeProj - game.awayProj);
+  const actualMargin = Math.abs(game.homeScore - game.awayScore);
+  if (projMargin < 5 || Math.abs(projMargin - actualMargin) > 5) return null;
+  return { team: winner, projMargin: Math.round(projMargin), actualMargin: Math.round(actualMargin * 10) / 10 };
+}
+
+// B1: Team-Form über die letzten 3 Wochen durchgehend steigend oder fallend.
+function findFormTrendFact(game, scoreboard, week) {
+  if (week < 3) return null;
+  const scoresFor = (teamId) => {
+    const out = [];
+    scoreboard.forEach((wk) => {
+      if (wk.week > week) return;
+      const g = wk.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
+      if (!g || (g.winner !== 'HOME' && g.winner !== 'AWAY' && g.winner !== 'TIE')) return;
+      out.push({ week: wk.week, score: g.homeId === teamId ? g.homeScore : g.awayScore });
+    });
+    return out.sort((a, b) => a.week - b.week);
+  };
+  const check = (teamId, teamName) => {
+    const scores = scoresFor(teamId);
+    if (scores.length < 3) return null;
+    const last3 = scores.slice(-3).map((s) => s.score);
+    const rising = last3[0] < last3[1] && last3[1] < last3[2];
+    const falling = last3[0] > last3[1] && last3[1] > last3[2];
+    if (!rising && !falling) return null;
+    return { team: teamName, direction: rising ? 'up' : 'down', scores: last3 };
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// B2: eine Positionsgruppe liegt diese Woche UND im Saison-Schnitt des Teams deutlich unter dem
+// Liga-Durchschnitt für diese Position - braucht data/season-stats.json (siehe archiveSeasonStats).
+function findPositionalSlumpFact(game, homePerf, awayPerf, seasonStats) {
+  if (!seasonStats?.teams) return null;
+  const leagueAvgByPos = {};
+  Object.values(seasonStats.teams).forEach((t) => {
+    Object.entries(t.positions || {}).forEach(([pos, s]) => {
+      if (!s.games) return;
+      (leagueAvgByPos[pos] = leagueAvgByPos[pos] || []).push(s.total / s.games);
+    });
+  });
+  const leagueAvg = (pos) => {
+    const arr = leagueAvgByPos[pos];
+    if (!arr?.length) return null;
+    return arr.reduce((a, b) => a + b, 0) / arr.length;
+  };
+  const check = (teamId, teamName, perf) => {
+    const t = seasonStats.teams[teamId];
+    if (!t?.positions || !perf) return null;
+    const thisWeekTotals = {};
+    perf.starters.forEach((p) => { thisWeekTotals[p.pos] = (thisWeekTotals[p.pos] || 0) + p.points; });
+    for (const [pos, total] of Object.entries(thisWeekTotals)) {
+      const s = t.positions[pos];
+      if (!s || s.games < 2) continue;
+      const avg = leagueAvg(pos);
+      if (avg == null || avg <= 0) continue;
+      const teamAvg = s.total / s.games;
+      if (teamAvg < avg * 0.7 && total < avg * 0.7) {
+        return { team: teamName, pos, teamAvg: Math.round(teamAvg * 10) / 10, leagueAvg: Math.round(avg * 10) / 10, games: s.games };
+      }
+    }
+    return null;
+  };
+  return check(game.homeId, game.homeName, homePerf) || check(game.awayId, game.awayName, awayPerf) || null;
+}
+
+// B3: über die Saison kumulierte, auf der Bank liegengelassene Punkte (Fortsetzung von
+// findOptimalLineupGap, aber aufsummiert statt nur diese Woche) - braucht data/season-stats.json.
+function findSeasonBenchTotalFact(game, seasonStats) {
+  if (!seasonStats?.teams) return null;
+  const THRESHOLD = 80;
+  const check = (teamId, teamName) => {
+    const t = seasonStats.teams[teamId];
+    if (!t || t.games < 2 || (t.benchGapTotal || 0) < THRESHOLD) return null;
+    return { team: teamName, total: Math.round(t.benchGapTotal * 10) / 10, games: t.games };
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// B4: ein per Trade geholter Spieler liefert jetzt für sein neues Team - braucht die strukturierten
+// "legs" an TRADE-Transaktionen (siehe main()).
+function findTradeImpactFact(game, homePerf, awayPerf, transactions) {
+  if (!transactions?.length) return null;
+  const trades = transactions.filter((t) => t.type === 'TRADE' && Array.isArray(t.legs));
+  if (!trades.length) return null;
+  const check = (teamId, teamName, perf) => {
+    if (!perf) return null;
+    const allPlayers = [...perf.starters, ...perf.bench];
+    for (const trade of trades) {
+      const leg = trade.legs.find((l) => l.teamId === teamId);
+      if (!leg) continue;
+      const gained = allPlayers.find((p) => leg.gainedIds.includes(p.playerId) && p.points >= 15);
+      if (gained) return { team: teamName, name: gained.name, pos: gained.pos, points: gained.points };
+    }
+    return null;
+  };
+  return check(game.homeId, game.homeName, homePerf) || check(game.awayId, game.awayName, awayPerf) || null;
+}
+
+// B5: Team mit der geringsten Wochen-zu-Wochen-Punkteschwankung der ganzen Liga bisher.
+function findConsistencyFact(game, scoreboard, week) {
+  if (week < 3) return null;
+  const scoresFor = (teamId) => {
+    const out = [];
+    scoreboard.forEach((wk) => {
+      if (wk.week > week) return;
+      const g = wk.games.find((gg) => gg.homeId === teamId || gg.awayId === teamId);
+      if (g) out.push(g.homeId === teamId ? g.homeScore : g.awayScore);
+    });
+    return out;
+  };
+  const stddev = (arr) => {
+    const mean = arr.reduce((a, b) => a + b, 0) / arr.length;
+    return Math.sqrt(arr.reduce((a, b) => a + (b - mean) ** 2, 0) / arr.length);
+  };
+  const allTeamIds = [...new Set(scoreboard.flatMap((wk) => wk.games.flatMap((g) => [g.homeId, g.awayId])))];
+  const stddevById = {};
+  allTeamIds.forEach((id) => {
+    const scores = scoresFor(id);
+    if (scores.length >= 3) stddevById[id] = stddev(scores);
+  });
+  const ids = Object.keys(stddevById);
+  if (ids.length < 3) return null;
+  const minId = ids.reduce((a, b) => (stddevById[b] < stddevById[a] ? b : a));
+  const check = (teamId, teamName) => {
+    if (String(teamId) !== minId) return null;
+    return { team: teamName, stddev: Math.round(stddevById[teamId] * 10) / 10, games: scoresFor(teamId).length };
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// C1: Anzahl Aussenseiter-Siege dieses Teams über die Saison - braucht data/season-stats.json.
+function findUpsetTallyFact(game, seasonStats) {
+  if (!seasonStats?.teams) return null;
+  const check = (teamId, teamName) => {
+    const t = seasonStats.teams[teamId];
+    if (!t || (t.upsetWins || 0) < 2) return null;
+    return { team: teamName, count: t.upsetWins, games: t.games };
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// C2: ein Starter war ganz nah an seiner eigenen bisherigen Saison-Bestleistung dran - braucht
+// data/season-stats.json (players-Teil).
+function findPerfectWeekProximityFact(game, homePerf, awayPerf, seasonStats) {
+  if (!seasonStats?.players) return null;
+  const check = (teamName, perf) => {
+    if (!perf) return null;
+    for (const p of perf.starters) {
+      const best = seasonStats.players[p.playerId];
+      if (!best || best.bestPoints <= 0) continue;
+      const gap = best.bestPoints - p.points;
+      if (gap >= 0 && gap <= 3 && p.points > 0) {
+        return { team: teamName, name: p.name, pos: p.pos, points: p.points, seasonBest: best.bestPoints };
+      }
+    }
+    return null;
+  };
+  return check(game.homeName, homePerf) || check(game.awayName, awayPerf) || null;
+}
+
+// Aktualisiert data/season-stats.json um die gerade abgeschlossene Woche - Grundlage für B2/B3/C1/C2
+// oben. Analog zu archiveLiveSnapshotWeek (weeksArchived-Guard, läuft NACH der Recap-Generierung),
+// aber unabhängig von Live-Snapshots - läuft auf Basis von Endständen/Rostern, die in jeder Woche
+// verfügbar sind.
+async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
+  const stats = await readJsonSafe('season-stats.json', { weeksArchived: [], teams: {}, players: {} });
+  if (stats.weeksArchived.includes(week)) return;
+
+  const teamStat = (teamId) => {
+    if (!stats.teams[teamId]) stats.teams[teamId] = { games: 0, benchGapTotal: 0, upsetWins: 0, positions: {} };
+    return stats.teams[teamId];
+  };
+
+  enrichedGames.forEach((g) => {
+    if (g.winner === 'HOME' || g.winner === 'AWAY') {
+      const favoriteId = g.homeProj >= g.awayProj ? g.homeId : g.awayId;
+      const winnerId = g.winner === 'HOME' ? g.homeId : g.awayId;
+      const wasUpset = favoriteId !== winnerId;
+      [g.homeId, g.awayId].forEach((teamId) => {
+        const t = teamStat(teamId);
+        t.games++;
+        if (teamId === winnerId && wasUpset) t.upsetWins++;
+      });
+    }
+
+    const homeGap = findOptimalLineupGap(keyMomentsByTeam[g.homeId], g.homeName);
+    const awayGap = findOptimalLineupGap(keyMomentsByTeam[g.awayId], g.awayName);
+    if (homeGap) teamStat(g.homeId).benchGapTotal += homeGap.gap;
+    if (awayGap) teamStat(g.awayId).benchGapTotal += awayGap.gap;
+
+    [g.homeId, g.awayId].forEach((teamId) => {
+      const perf = keyMomentsByTeam[teamId];
+      if (!perf) return;
+      const t = teamStat(teamId);
+      const totals = {};
+      perf.starters.forEach((p) => { totals[p.pos] = (totals[p.pos] || 0) + p.points; });
+      Object.entries(totals).forEach(([pos, total]) => {
+        if (!t.positions[pos]) t.positions[pos] = { total: 0, games: 0 };
+        t.positions[pos].total += total;
+        t.positions[pos].games++;
+      });
+    });
+  });
+
+  Object.values(keyMomentsByTeam).forEach((perf) => {
+    if (!perf) return;
+    [...perf.starters, ...perf.bench].forEach((p) => {
+      const existing = stats.players[p.playerId];
+      if (!existing || p.points > existing.bestPoints) {
+        stats.players[p.playerId] = { bestPoints: Math.round(p.points * 10) / 10, bestWeek: week };
+      }
+    });
+  });
+
+  stats.weeksArchived.push(week);
+  await writeJson('season-stats.json', { lastUpdated: nowIso(), teams: stats.teams, players: stats.players, weeksArchived: stats.weeksArchived });
+}
+
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
 // tatsächlich in den Recap einfliessen, entscheidet generate-recaps.mjs per Zufallsauswahl – so
 // liest sich nicht jedes Spiel nach demselben Schema (siehe buildPrompt() dort).
@@ -743,6 +1070,46 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   if (ctx?.draftRoundByPlayerId) {
     const draftValue = findDraftValueFact(game, result, ctx.draftRoundByPlayerId);
     if (draftValue) result.draftValue = draftValue;
+  }
+
+  // ---- Zusätzliche Kategorien (siehe Definitionen oben) ----
+  if (ctx?.powerRankingsHistory) {
+    const powerRankMovement = findPowerRankingMovementFact(game, ctx.powerRankingsHistory, game.week);
+    if (powerRankMovement) result.powerRankMovement = powerRankMovement;
+  }
+  if (ctx?.keyMomentsByTeam) {
+    const leagueBestPosition = findLeagueWidePositionBestFact(game, ctx.keyMomentsByTeam);
+    if (leagueBestPosition) result.leagueBestPosition = leagueBestPosition;
+  }
+  if (ctx?.weekGames) {
+    const marginExtreme = findMarginExtremeFact(game, ctx.weekGames);
+    if (marginExtreme) result.marginExtreme = marginExtreme;
+  }
+  const positionalFlop = findPositionalFlopFact(game, homePerf, awayPerf);
+  if (positionalFlop) result.positionalFlop = positionalFlop;
+  if (ctx?.transactions) {
+    const waiverInstantSuccess = findWaiverInstantSuccessFact(game, homePerf, awayPerf, ctx.transactions);
+    if (waiverInstantSuccess) result.waiverInstantSuccess = waiverInstantSuccess;
+    const tradeImpact = findTradeImpactFact(game, homePerf, awayPerf, ctx.transactions);
+    if (tradeImpact) result.tradeImpact = tradeImpact;
+  }
+  const chalk = findChalkFact(game);
+  if (chalk) result.chalk = chalk;
+  if (ctx?.scoreboard) {
+    const formTrend = findFormTrendFact(game, ctx.scoreboard, game.week);
+    if (formTrend) result.formTrend = formTrend;
+    const consistency = findConsistencyFact(game, ctx.scoreboard, game.week);
+    if (consistency) result.consistency = consistency;
+  }
+  if (ctx?.seasonStats) {
+    const positionalSlump = findPositionalSlumpFact(game, homePerf, awayPerf, ctx.seasonStats);
+    if (positionalSlump) result.positionalSlump = positionalSlump;
+    const seasonBenchTotal = findSeasonBenchTotalFact(game, ctx.seasonStats);
+    if (seasonBenchTotal) result.seasonBenchTotal = seasonBenchTotal;
+    const upsetTally = findUpsetTallyFact(game, ctx.seasonStats);
+    if (upsetTally) result.upsetTally = upsetTally;
+    const perfectWeekProximity = findPerfectWeekProximityFact(game, homePerf, awayPerf, ctx.seasonStats);
+    if (perfectWeekProximity) result.perfectWeekProximity = perfectWeekProximity;
   }
 
   return result;
@@ -948,7 +1315,9 @@ async function main() {
     const liveSnapshotData = await readJsonSafe('live-snapshots.json', { week: null, snapshots: [] });
     const liveSnapshots = liveSnapshotData.week === lastCompletedWeek ? liveSnapshotData.snapshots : null;
     const seasonPersonality = await readJsonSafe('season-personality.json', { weeksArchived: [], teams: {} });
-    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality, draftRoundByPlayerId };
+    const powerRankingsHistory = await readJsonSafe('power-rankings-history.json', { snapshots: [] });
+    const seasonStats = await readJsonSafe('season-stats.json', { weeksArchived: [], teams: {}, players: {} });
+    const ctx = { standingsById, standings, confStandings, prevConfRankById, scoreboard, weekGames, transactions: existingTransactions, liveSnapshots, seasonPersonality, draftRoundByPlayerId, powerRankingsHistory, keyMomentsByTeam, seasonStats };
     const enrichedGames = weekGames.map((g) => {
       const base = {
         ...g,
@@ -976,6 +1345,7 @@ async function main() {
     if (liveSnapshots) {
       await archiveLiveSnapshotWeek(lastCompletedWeek, weekGames, liveSnapshots);
     }
+    await archiveSeasonStats(lastCompletedWeek, enrichedGames, keyMomentsByTeam);
   }
 
   // ---- Transaktionen: Roster-Diff gegen letzten Snapshot (erkennt Trades/Adds/Drops generisch) ----
@@ -1018,6 +1388,12 @@ async function main() {
                 week: currentWeek, date: todayStr, type: 'TRADE',
                 title: `Trade: ${teamNames[tA.id]} ↔ ${teamNames[tB.id]}`,
                 detail: `${teamNames[tA.id]} erhält ${aGets}. ${teamNames[tB.id]} erhält ${bGets}.`,
+                // Strukturiert (zusätzlich zum Fliesstext oben) für findTradeImpactFact(): wer hat
+                // welche Spieler-IDs bekommen/abgegeben, pro Team-Seite des Trades.
+                legs: [
+                  { teamId: tA.id, gainedIds: bToA, lostIds: aToB },
+                  { teamId: tB.id, gainedIds: aToB, lostIds: bToA }
+                ],
                 note: ''
               });
             }
@@ -1034,6 +1410,7 @@ async function main() {
         newTx.push({
           id: 'add-' + t.id + '-' + id + '-' + Date.now(),
           week: currentWeek, date: todayStr, type: 'FREEAGENT',
+          teamId: t.id, playerId: id,
           title: `${teamNames[t.id]} holt ${playerInfo(id).name}`,
           detail: dropped ? `${teamNames[t.id]} holt ${playerInfo(id).name} (${playerInfo(id).pos}, ${playerInfo(id).proTeam}) und wirft dafür ${dropped} ab.` : `${teamNames[t.id]} holt ${playerInfo(id).name} (${playerInfo(id).pos}, ${playerInfo(id).proTeam}) dazu.`,
           note: ''

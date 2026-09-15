@@ -249,6 +249,79 @@ function collectFacts(game) {
     facts.push({ category: 'empireStoryline', text: `Team-Storyline: ${templates[emp.type]}` });
   }
 
+  // ---- Zusätzliche Kategorien (siehe sync-espn.mjs für die Berechnung) ----
+
+  if (game.powerRankMovement) {
+    const m = game.powerRankMovement;
+    facts.push({ category: 'powerRankMovement', text: m.direction === 'up'
+      ? `Power-Rankings: ${m.team} klettert von Platz ${m.from} auf Platz ${m.to}.`
+      : `Power-Rankings: ${m.team} fällt von Platz ${m.from} auf Platz ${m.to} zurück.` });
+  }
+
+  if (game.leagueBestPosition) {
+    const l = game.leagueBestPosition;
+    facts.push({ category: 'leagueBestPosition', text: `Liga-Bestwert: ${l.name} (${l.pos}) von ${l.team} war mit ${l.points.toFixed(1)} Punkten der beste ${l.pos} der gesamten Liga diese Woche.` });
+  }
+
+  if (game.marginExtreme) {
+    const m = game.marginExtreme;
+    facts.push({ category: 'marginExtreme', text: m.type === 'closest'
+      ? `Mit nur ${m.margin.toFixed(1)} Punkten Unterschied war das hier das knappste Spiel der gesamten Woche.`
+      : `Mit ${m.margin.toFixed(1)} Punkten Unterschied war das hier das deutlichste Spiel der gesamten Woche.` });
+  }
+
+  if (game.positionalFlop) {
+    const f = game.positionalFlop;
+    facts.push({ category: 'positionalFlop', text: `Positions-Flop: Die ${f.pos}s von ${f.team} brachten zusammen nur ${f.groupTotal.toFixed(1)} Punkte.` });
+  }
+
+  if (game.waiverInstantSuccess) {
+    const w = game.waiverInstantSuccess;
+    facts.push({ category: 'waiverInstantSuccess', text: `Sofort-Erfolg vom Waiver: ${w.name} (${w.pos}) wurde diese Woche erst von ${w.team} geholt und lieferte direkt ${w.points.toFixed(1)} Punkte als Starter ab.` });
+  }
+
+  if (game.chalk) {
+    const c = game.chalk;
+    facts.push({ category: 'chalk', text: `Chalk: ${c.team} gewinnt fast exakt mit der vorab erwarteten Marge – Punkt für Punkt nach Plan.` });
+  }
+
+  if (game.formTrend) {
+    const f = game.formTrend;
+    facts.push({ category: 'formTrend', text: f.direction === 'up'
+      ? `Formkurve: ${f.team} steigert die Punktzahl seit 3 Wochen in Folge (${f.scores.map((s) => s.toFixed(0)).join(' → ')}).`
+      : `Formkurve: ${f.team} fällt seit 3 Wochen in Folge in der Punktzahl ab (${f.scores.map((s) => s.toFixed(0)).join(' → ')}).` });
+  }
+
+  if (game.positionalSlump) {
+    const s = game.positionalSlump;
+    facts.push({ category: 'positionalSlump', text: `Dauerschwäche: Die ${s.pos}s von ${s.team} liegen im Saison-Schnitt bei nur ${s.teamAvg.toFixed(1)} Punkten pro Woche, der Liga-Schnitt liegt bei ${s.leagueAvg.toFixed(1)}.` });
+  }
+
+  if (game.seasonBenchTotal) {
+    const b = game.seasonBenchTotal;
+    facts.push({ category: 'seasonBenchTotal', text: `Saison-Bank-Bilanz: ${b.team} hat über die bisherige Saison schon insgesamt ${b.total.toFixed(1)} Punkte auf der Bank liegen gelassen.` });
+  }
+
+  if (game.tradeImpact) {
+    const t = game.tradeImpact;
+    facts.push({ category: 'tradeImpact', text: `Trade-Wirkung: ${t.name} (${t.pos}), per Trade zu ${t.team} gewechselt, liefert mit ${t.points.toFixed(1)} Punkten direkt ab.` });
+  }
+
+  if (game.consistency) {
+    const c = game.consistency;
+    facts.push({ category: 'consistency', text: `Konstanz-Award: ${c.team} hat über die bisherige Saison die geringste Wochen-zu-Wochen-Schwankung der ganzen Liga (±${c.stddev.toFixed(1)} Punkte).` });
+  }
+
+  if (game.upsetTally) {
+    const u = game.upsetTally;
+    facts.push({ category: 'upsetTally', text: `Aussenseiter-Bilanz: ${u.team} hat diese Saison schon ${u.count} von ${u.games} Spielen als Aussenseiter gewonnen.` });
+  }
+
+  if (game.perfectWeekProximity) {
+    const p = game.perfectWeekProximity;
+    facts.push({ category: 'perfectWeekProximity', text: `Fast perfekt: ${p.name} (${p.pos}) von ${p.team} war mit ${p.points.toFixed(1)} Punkten ganz nah an der eigenen Saison-Bestleistung von ${p.seasonBest.toFixed(1)} dran.` });
+  }
+
   return facts;
 }
 
@@ -442,6 +515,54 @@ const BADGE_POOL = {
   ],
   empireTurnaround: [
     'Der Aufstieg beginnt', 'Die Wende ist da', 'From Zero to Hero', 'Die Auferstehung'
+  ],
+  powerRankUp: [
+    'Der Aufsteiger der Woche', 'Auf dem Weg nach oben', 'Klettert die Rangliste hoch'
+  ],
+  powerRankDown: [
+    'Der Absteiger der Woche', 'Der Rutsch nach unten', 'Verliert an Boden'
+  ],
+  leagueBestPosition: [
+    'Der Liga-Beste seiner Position', 'Positions-König der Woche', 'Keiner war besser auf dieser Position'
+  ],
+  closestGame: [
+    'Das Fotofinish der Woche', 'Zum Anfassen knapp', 'Der Krimi mit dem knappsten Ausgang'
+  ],
+  widestGame: [
+    'Die deutlichste Klatsche der Woche', 'Ohne jeden Zweifel', 'Der klarste Fall der Woche'
+  ],
+  positionalFlop: [
+    'Die Position, die nicht geliefert hat', 'Kollektives Versagen', 'Der Positions-Blackout'
+  ],
+  waiverInstantSuccess: [
+    'Der Sofort-Treffer vom Waiver', 'Frisch geholt, direkt geliefert', 'Der Waiver-Coup der Woche'
+  ],
+  chalk: [
+    'Genau nach Plan', 'Die Prognose hatte recht', 'Chalk pur'
+  ],
+  formTrendUp: [
+    'Die Formkurve zeigt steil nach oben', 'Im Aufwind', 'Wird von Woche zu Woche stärker'
+  ],
+  formTrendDown: [
+    'Die Formkurve zeigt steil nach unten', 'Im Sinkflug', 'Wird von Woche zu Woche schwächer'
+  ],
+  positionalSlump: [
+    'Die Dauerbaustelle', 'Seit Wochen die gleiche Schwachstelle', 'Der chronische Schwachpunkt'
+  ],
+  seasonBenchTotal: [
+    'Der Bank-Millionär', 'Saisonlanges Verschenken', 'Der Dauer-Fehlgriff auf der Bank'
+  ],
+  tradeImpact: [
+    'Der Trade zahlt sich aus', 'Handelsgewinn', 'Der Deal, der eingeschlagen hat'
+  ],
+  consistency: [
+    'Der Zuverlässigste der Liga', 'Immer verlässlich', 'Der Fels in der Brandung'
+  ],
+  upsetTally: [
+    'Der Aussenseiter-Spezialist', 'Liebt es, zu überraschen', 'Der notorische Überraschungssieger'
+  ],
+  perfectWeekProximity: [
+    'Fast die perfekte Woche', 'Ganz nah dran am eigenen Rekord', 'Knapp am Saisonbestwert vorbei'
   ]
 };
 
@@ -489,7 +610,23 @@ const BADGE_CATEGORY_TO_FACT_CATEGORY = {
   empirePerfect: 'empireStoryline',
   empireDynasty: 'empireStoryline',
   empireCrumbling: 'empireStoryline',
-  empireTurnaround: 'empireStoryline'
+  empireTurnaround: 'empireStoryline',
+  powerRankUp: 'powerRankMovement',
+  powerRankDown: 'powerRankMovement',
+  leagueBestPosition: 'leagueBestPosition',
+  closestGame: 'marginExtreme',
+  widestGame: 'marginExtreme',
+  positionalFlop: 'positionalFlop',
+  waiverInstantSuccess: 'waiverInstantSuccess',
+  chalk: 'chalk',
+  formTrendUp: 'formTrend',
+  formTrendDown: 'formTrend',
+  positionalSlump: 'positionalSlump',
+  seasonBenchTotal: 'seasonBenchTotal',
+  tradeImpact: 'tradeImpact',
+  consistency: 'consistency',
+  upsetTally: 'upsetTally',
+  perfectWeekProximity: 'perfectWeekProximity'
 };
 
 function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
@@ -537,6 +674,22 @@ function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   if (game.empireStoryline?.type === 'empire') categories.push('empireDynasty');
   if (game.empireStoryline?.type === 'empireCrumbling') categories.push('empireCrumbling');
   if (game.empireStoryline?.type === 'turnaround') categories.push('empireTurnaround');
+  if (game.powerRankMovement?.direction === 'up') categories.push('powerRankUp');
+  if (game.powerRankMovement?.direction === 'down') categories.push('powerRankDown');
+  if (game.leagueBestPosition) categories.push('leagueBestPosition');
+  if (game.marginExtreme?.type === 'closest') categories.push('closestGame');
+  if (game.marginExtreme?.type === 'widest') categories.push('widestGame');
+  if (game.positionalFlop) categories.push('positionalFlop');
+  if (game.waiverInstantSuccess) categories.push('waiverInstantSuccess');
+  if (game.chalk) categories.push('chalk');
+  if (game.formTrend?.direction === 'up') categories.push('formTrendUp');
+  if (game.formTrend?.direction === 'down') categories.push('formTrendDown');
+  if (game.positionalSlump) categories.push('positionalSlump');
+  if (game.seasonBenchTotal) categories.push('seasonBenchTotal');
+  if (game.tradeImpact) categories.push('tradeImpact');
+  if (game.consistency) categories.push('consistency');
+  if (game.upsetTally) categories.push('upsetTally');
+  if (game.perfectWeekProximity) categories.push('perfectWeekProximity');
 
   // Fakten-gebundene Kategorien rausfiltern, deren Thema diese Woche schon am Limit ist. Anders als
   // bei den Fakten selbst gibt es hier KEIN Zurückfallen auf die überstrapazierte Kategorie: ein
