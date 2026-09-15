@@ -19,3 +19,10 @@ Ergänzt (ersetzt nicht) die ausführlicheren docs/session-log-*.md-
 Dateien: der Changelog ist die lückenlose, garantiert aktuelle
 Rohliste; die Session-Logs bleiben die verständnis-basierte
 Zusammenfassung, die ich von Hand an sinnvollen Punkten aktualisiere.
+
+## 2026-09-15 – `d10ac3f` Standings: Conference-Ansicht statt Liga-Ansicht als Default
+
+Die Liga-weite Tabelle war der Default-Tab, Conference-Aufteilung nur
+per Klick erreichbar - umgedreht, da die Conference-Einteilung für die
+Liga die relevantere Sicht ist. render Standings() respektiert jetzt
+den aktuell aktiven Tab statt hart die Liga-Ansicht einzublenden.
