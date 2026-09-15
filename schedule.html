@@ -187,10 +187,16 @@
   .game-recap summary::before{content:'📰';}
   .game-recap summary::after{content:'▸';display:inline-block;transition:transform .15s ease;}
   .game-recap[open] summary::after{transform:rotate(90deg);}
-  .week-recap{background:var(--turf);color:var(--chalk);border-radius:10px;padding:14px 16px 16px;margin-bottom:10px;border-left:4px solid var(--amber);}
+  .week-recap{background:var(--turf);color:var(--chalk);border-radius:10px;margin-bottom:10px;border-left:4px solid var(--amber);}
+  .week-recap summary{cursor:pointer;list-style:none;padding:14px 16px;}
+  .week-recap summary::-webkit-details-marker{display:none;}
+  .week-recap summary:hover, .week-recap summary:focus-visible{opacity:.9;}
   .week-recap-tag{font-family:'IBM Plex Mono', monospace;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);display:block;margin-bottom:5px;}
-  .week-recap-headline{font-family:'Anton', sans-serif;font-size:19px;line-height:1.2;text-transform:uppercase;letter-spacing:.01em;margin:0 0 8px;}
-  .week-recap-body{font-size:13.5px;line-height:1.55;color:var(--chalk);opacity:.92;margin:0;}
+  .week-recap-head{display:flex;align-items:flex-start;gap:10px;}
+  .week-recap-headline{font-family:'Anton', sans-serif;font-size:19px;line-height:1.2;text-transform:uppercase;letter-spacing:.01em;margin:0;flex:1;}
+  .week-recap-arrow{flex:0 0 auto;font-size:14px;color:var(--amber);line-height:1.4;transition:transform .15s ease;}
+  .week-recap[open] .week-recap-arrow{transform:rotate(90deg);}
+  .week-recap-body{font-size:13.5px;line-height:1.55;color:var(--chalk);opacity:.92;margin:0;padding:0 16px 16px;}
   .game-recap p{
     font-family:'Source Serif 4', serif;
     font-style:italic;
@@ -471,9 +477,11 @@
     function weekRecapHtml(wk){
       var wr = WEEK_RECAPS_BY_WEEK[wk.w];
       if(!wr) return '';
-      return '<div class="week-recap"><span class="week-recap-tag">🗞️ Gesamt-Recap der Woche</span>' +
-        '<p class="week-recap-headline">' + wr.headline + '</p>' +
-        '<p class="week-recap-body">' + wr.recap + '</p></div>';
+      return '<details class="week-recap"><summary>' +
+          '<span class="week-recap-tag">🗞️ Gesamt-Recap der Woche</span>' +
+          '<span class="week-recap-head"><span class="week-recap-headline">' + wr.headline + '</span><span class="week-recap-arrow">▸</span></span>' +
+        '</summary>' +
+        '<p class="week-recap-body">' + wr.recap + '</p></details>';
     }
 
     function render(){
