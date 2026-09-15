@@ -49,6 +49,11 @@ async function callClaude(userPrompt, systemPrompt = SYSTEM_PROMPT, maxTokens = 
   if (!text) {
     throw new Error(`Claude-Antwort war leer (stop_reason: ${data.stop_reason || '?'})`);
   }
+  if (data.stop_reason === 'max_tokens') {
+    // Nicht leer, aber mittendrin abgeschnitten (z.B. "...als wäre das nic") – das darf nicht
+    // als fertiger Recap gecacht werden, sonst bleibt der Bruchstück-Text für immer stehen.
+    throw new Error(`Claude-Antwort wurde bei max_tokens abgeschnitten (${maxTokens} Tokens reichten nicht)`);
+  }
   return text;
 }
 
@@ -571,7 +576,7 @@ export async function generateWeekRecap(games, existingWeeks) {
   if (existingWeeks[week]) return null;
   try {
     const prompt = buildWeekPrompt(games);
-    const raw = await callClaude(prompt, WEEK_SYSTEM_PROMPT, 1200);
+    const raw = await callClaude(prompt, WEEK_SYSTEM_PROMPT, 2500);
     const parts = raw.split(/\n\s*\n/);
     const headline = (parts.shift() || '').trim();
     const recap = parts.join('\n\n').trim();
