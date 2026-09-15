@@ -17,7 +17,7 @@ So gehst du mit den mitgelieferten Fakten um, gruppiert nach Wirkung:
 
 Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
-async function callClaude(userPrompt) {
+async function callClaude(userPrompt, systemPrompt = SYSTEM_PROMPT, maxTokens = 600) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
     method: 'POST',
     headers: {
@@ -27,8 +27,8 @@ async function callClaude(userPrompt) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 600,
-      system: SYSTEM_PROMPT,
+      max_tokens: maxTokens,
+      system: systemPrompt,
       messages: [{ role: 'user', content: userPrompt }]
     })
   });
@@ -43,6 +43,15 @@ async function callClaude(userPrompt) {
   }
   return text;
 }
+
+const WEEK_SYSTEM_PROMPT = `Du schreibst den WOCHENÜBERBLICK für "Fantasy Playbook", eine private Fantasy-Football-Liga – im Stil einer reisserischen Sport-Boulevard-Zeitung (wie die Titelseite einer Boulevard-Sportredaktion): grosse Schlagzeilen-Sprache, zugespitzt, aber unterhaltsam statt gemein. Du bekommst alle Spiele der Woche mit ihren wichtigsten Fakten – daraus bastelst du EINEN zusammenhängenden Überblick über den gesamten Spieltag, keine Aneinanderreihung von Einzelrecaps.
+
+FORM (exakt einhalten):
+Zeile 1: Eine einzige, knackige Schlagzeile (maximal 8 Wörter, reisserisch, OHNE Anführungszeichen, OHNE Punkt am Ende) – wie eine Boulevard-Titelseite, fasst die auffälligste Geschichte der Woche zusammen.
+Dann eine Leerzeile.
+Danach 4-6 Sätze Fliesstext, der die Woche als Ganzes erzählt: wähle 3-4 der interessantesten Geschichten aus den gelieferten Spielen aus (grösster Aussenseiter-Sieg/Upset, beeindruckendste Einzelleistung, dramatischster Kollaps oder knappste Partie, grösste Bank-Fehlentscheidung, auffälligste Team-Storyline) und verwebe sie zu EINEM Erzählbogen mit echten Übergängen, nicht Spiel-für-Spiel abgehakt. Nenne nicht jedes Spiel der Woche – nur die Highlights.
+
+Stil: frech, schadenfroh, mit Sport-Boulevard-Schlagzeilen-Vokabular ("Drama", "Sensation", "Blamage", "Show"), Spott zielt immer auf Fantasy-Entscheidungen, nie persönlich auf die realen Menschen dahinter. Nutze nur die gelieferten Fakten, erfinde nichts. Vermeide technische Begriffe wie "Snapshot" oder "Datenpunkt" – sprich stattdessen von "Zwischenstand" oder "im Wochenverlauf". Schreib NUR Schlagzeile + Leerzeile + Fliesstext, keine weitere Einleitung, keine zusätzliche Überschrift wie "Wochenüberblick:".`;
 
 // Deterministischer Pseudo-Zufall aus einem String-Seed (kein echter Zufall nötig – soll bei
 // wiederholten Läufen mit denselben Daten dieselbe Auswahl treffen). Liefert eine gemischte Kopie
@@ -509,4 +518,62 @@ export async function generateRecapsForGames(games, existingByKey) {
     }
   }
   return out;
+}
+
+// Baut aus allen Spielen einer Woche einen kompakten Fakten-Digest für den Wochenüberblick:
+// pro Spiel Endstand + Sieger/Aussenseiter-Info + die 2 seedbasiert ausgewählten stärksten Fakten
+// (aus collectFacts, derselben Quelle wie die Einzel-Recaps), damit Claude daraus die spannendsten
+// Geschichten der Woche herauspicken kann statt jedes Spiel einzeln abzuhaken.
+function buildWeekPrompt(games) {
+  const week = games[0].week;
+  let context = `Woche ${week}: Hier sind alle ${games.length} Spiele dieser Woche mit ihren wichtigsten Fakten. Schreibe daraus EINEN Wochenüberblick (nicht pro Spiel einzeln):\n\n`;
+  games.forEach((game, i) => {
+    const margin = Math.abs(game.homeScore - game.awayScore);
+    const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
+    const loser = game.winner === 'HOME' ? game.awayName : game.winner === 'AWAY' ? game.homeName : null;
+    const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+    const wasUpset = winner && loser && winner !== favorite;
+
+    let line = `Spiel ${i + 1}: ${game.homeName} ${game.homeScore.toFixed(1)} : ${game.awayScore.toFixed(1)} ${game.awayName}.`;
+    if (game.winner === 'TIE') {
+      line += ' Unentschieden.';
+    } else {
+      line += ` ${winner} gewinnt mit ${margin.toFixed(1)} Punkten gegen ${loser}.`;
+      line += wasUpset ? ` Aussenseiter-Sieg, ${favorite} galt vor der Saison als stärker.` : '';
+    }
+
+    const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + '-week';
+    const facts = seededShuffle(collectFacts(game), key).slice(0, 2);
+    facts.forEach((f) => { line += ' ' + f; });
+    context += line + '\n';
+  });
+  context += '\nSchreibe jetzt den Wochenüberblick.';
+  return context;
+}
+
+/**
+ * @param {Array} games - alle angereicherten Spiele einer abgeschlossenen Woche.
+ * @param {Object} existingWeeks - bereits vorhandene Wochen-Recaps (week -> Eintrag), um Doppel-Calls zu vermeiden.
+ * @returns {Promise<Object|null>} { week, headline, recap, generatedAt } oder null, wenn nichts Neues generiert wurde.
+ */
+export async function generateWeekRecap(games, existingWeeks) {
+  if (!ANTHROPIC_API_KEY) return null;
+  if (!games.length) return null;
+  const week = games[0].week;
+  if (existingWeeks[week]) return null;
+  try {
+    const prompt = buildWeekPrompt(games);
+    const raw = await callClaude(prompt, WEEK_SYSTEM_PROMPT, 700);
+    const parts = raw.split(/\n\s*\n/);
+    const headline = (parts.shift() || '').trim();
+    const recap = parts.join('\n\n').trim();
+    if (!headline || !recap) {
+      throw new Error('Wochen-Recap-Antwort hatte nicht das erwartete Schlagzeile+Text-Format');
+    }
+    console.log('Wochen-Recap generiert für Woche', week);
+    return { week, headline, recap, generatedAt: new Date().toISOString() };
+  } catch (err) {
+    console.error('Wochen-Recap fehlgeschlagen für Woche', week, ':', err.message);
+    return null;
+  }
 }

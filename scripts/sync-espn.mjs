@@ -5,7 +5,7 @@
 // Schreibt NIE team-content.json (die handgeschriebenen Analysen/Ausblicke) – das bleibt
 // ausschliesslich manuell gepflegt.
 import { POS_MAP, TEAM_ABBR, projectedPoints, findSeasonProjection, buildOptimalLineup } from './scoring.mjs';
-import { generateRecapsForGames } from './generate-recaps.mjs';
+import { generateRecapsForGames, generateWeekRecap } from './generate-recaps.mjs';
 import { SEASON, fetchLeague, readJsonSafe, writeJson, nowIso } from './espn-client.mjs';
 
 // Conference-Zuordnung – deckungsgleich mit TEAM_CONF in power-rankings.html/schedule.html.
@@ -964,6 +964,13 @@ async function main() {
     const newRecaps = await generateRecapsForGames(enrichedGames, existing);
     if (Object.keys(newRecaps).length) {
       await writeJson('game-recaps.json', { lastUpdated: nowIso(), data: { ...existing, ...newRecaps } });
+    }
+
+    const oldWeekRecaps = await readJsonSafe('week-recaps.json', { data: {} });
+    const existingWeekRecaps = oldWeekRecaps.data || {};
+    const newWeekRecap = await generateWeekRecap(enrichedGames, existingWeekRecaps);
+    if (newWeekRecap) {
+      await writeJson('week-recaps.json', { lastUpdated: nowIso(), data: { ...existingWeekRecaps, [newWeekRecap.week]: newWeekRecap } });
     }
 
     if (liveSnapshots) {
