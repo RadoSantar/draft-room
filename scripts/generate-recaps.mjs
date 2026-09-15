@@ -790,7 +790,10 @@ export async function generateRecapsForGames(games, existingByKey) {
       // "Bank-Reue", die dadurch schneller an ihre Obergrenze stiessen als nötig.
       const facts = pickFactsForGame(game, categoryUsage, '', 2, 2);
       const prompt = buildPrompt(game, facts, categoryUsage);
-      const recap = await callClaude(prompt);
+      // 900 statt 600: mit den 13 neuen Fakten-Kategorien sind Prompts im Schnitt länger, was die
+      // Antwort öfter an die alte Grenze stossen liess (siehe callClaude()'s max_tokens-Truncation-
+      // Check) - 2 von 5 Recaps sind deshalb im ersten Live-Lauf mit den neuen Kategorien fehlgeschlagen.
+      const recap = await callClaude(prompt, undefined, 900);
       out[key] = { week: game.week, homeName: game.homeName, awayName: game.awayName, recap };
       console.log('Recap generiert:', game.homeName, 'vs', game.awayName);
     } catch (err) {
