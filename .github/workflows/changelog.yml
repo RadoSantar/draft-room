@@ -1,0 +1,55 @@
+name: Changelog
+
+# Hängt bei jedem inhaltlichen Push auf main automatisch die Commit-Message an
+# docs/CHANGELOG.md an – rein mechanisch (git log), keine KI-Zusammenfassung.
+# Für die ausführlichere, verständnis-basierte Session-Doku siehe
+# docs/session-log-*.md (die wird von Hand/durch Claude gepflegt, nicht hier).
+#
+# paths-ignore verhindert zwei Dinge: dass reine Daten-Syncs (espn-sync-bot,
+# nur data/*.json) den Changelog zumüllen, und dass der Changelog-Commit sich
+# selbst re-triggert (Endlosschleife).
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - 'data/**'
+      - 'docs/CHANGELOG.md'
+
+permissions:
+  contents: write
+
+jobs:
+  changelog:
+    if: github.actor != 'changelog-bot' && github.actor != 'espn-sync-bot'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Changelog-Eintrag anhängen
+        run: |
+          set -e
+          SHA=$(git rev-parse --short HEAD)
+          if grep -q "\`$SHA\`" docs/CHANGELOG.md 2>/dev/null; then
+            echo "Commit $SHA schon im Changelog, nichts zu tun."
+            exit 0
+          fi
+          DATE=$(git log -1 --pretty=format:'%ad' --date=short HEAD)
+          SUBJECT=$(git log -1 --pretty=format:'%s' HEAD)
+          BODY=$(git log -1 --pretty=format:'%b' HEAD | sed '/^Co-Authored-By:/d; /^Claude-Session:/d')
+          {
+            echo ""
+            echo "## $DATE – \`$SHA\` ${SUBJECT}"
+            if [ -n "$(echo "$BODY" | tr -d '[:space:]')" ]; then
+              echo ""
+              echo "$BODY"
+            fi
+          } >> docs/CHANGELOG.md
+
+          git config user.name "changelog-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add docs/CHANGELOG.md
+          git commit -m "Changelog: $SUBJECT"
+          git push
