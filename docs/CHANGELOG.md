@@ -243,3 +243,29 @@ erzielte Punkte oben (wie bisher), kassierte Punkte + Differenz klein
 darunter.
 
 ## 2026-09-15 – `2a82e7b` Session-Log: Standings-Erweiterung (kassierte Punkte/Diff) nachgetragen
+
+## 2026-09-15 – `37c5b55` Neues Stats-Ökosystem: 8 weitere Fakten-Kategorien (Saison-Rekorde, Season-Awards)
+
+Auf Wunsch ("wie in der NFL für alles eine Statistik") acht weitere
+Fakten-Kategorien, aufbauend auf erweiterten data/season-stats.json-Feldern:
+
+- Saison-Serien-Rekord (unabhängig von ESPNs sich zurücksetzender
+  aktueller Serienzählung)
+- Margen-Bilanz (Häufung knapper <5pt bzw. deutlicher >30pt Spiele)
+- Wochen-Highscorer-/Lowscorer-Zähler über die Saison
+- "Iron Man": Starter, der bisher jede Woche in der Aufstellung stand
+- "Mount Rushmore": Top-4-Einzelwochenleistungen der Liga-Geschichte
+- Saison-Punkte-Meilensteine (250er-Schritte)
+- Saisonlange Draft-Value-Bilanz (statt nur wochenweise)
+- Waiver-/Trade-Aktivitäts-Ranking
+
+archiveSeasonStats() erweitert um die nötigen Rohdaten (Serien-Tracking,
+Margen-Zähler, Wochen-Highscorer-Flag, kumulierte Spielerpunkte/
+Starter-Wochen, Liga-weite Top-4-Performances) - migrationssicher für
+bereits bestehende season-stats.json-Einträge aus vorherigen Läufen.
+
+data/league-history.json neu angelegt als Schema-Platzhalter für
+saisonübergreifende Historie (Meister/Standings vergangener Saisons,
+Head-to-Head) - wird befüllt, sobald die Screenshots aus der ESPN-App
+für 2024/2025 vorliegen (ESPNs League-History-Seite braucht Login,
+ist nicht automatisiert abrufbar).
