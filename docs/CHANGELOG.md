@@ -247,3 +247,29 @@ darunter.
 ## 2026-09-15 – `5c9bb75` Session-Log: neues Stats-Ökosystem (8 Kategorien) + Punkt-D-Vorbereitung nachgetragen
 
 ## 2026-09-15 – `f456b41` Session-Log: Saison 2024/2025 Liga-Historie + Stats-Verifikationsstand nachgetragen
+
+## 2026-09-15 – `0f3b801` Punkt D: Fakten-Funktionen für die Liga-Historie (Titelverteidiger, All-Time-Rekorde, Playoff-Geschichte)
+
+Nutzer hat bestätigt, dass 2024 die Gründungssaison war (keine älteren
+Daten zu erwarten) - jetzt drei neue find*Fact()-Funktionen, die
+data/league-history.json konsumieren:
+
+- findDefendingChampionFact: Titelverteidiger-Storyline früh in der
+  neuen Saison (bis Woche 6, danach hat jedes Team sein eigenes Momentum).
+- findAllTimeRecordFact: diese Woche wird ein All-Time-Liga-Rekord
+  (Spieler- oder Team-Wochenpunkte) aus der Hall of Fame geknackt.
+- findPlayoffHistoryFact: die beiden Teams standen sich schon in einem
+  früheren Playoff-Spiel gegenüber - grössere Geschichte als die
+  reguläre Saison-Revanche (findRematchFact).
+
+defendingChampion/playoffHistory sind vorschau-tauglich (brauchen keine
+Spielleistung dieser Woche) und laufen deshalb auch in buildPreviewMoments;
+allTimeRecord braucht den echten Spielstand und ist nur im Recap aktiv.
+
+In generate-recaps.mjs: alle drei in collectFacts()/collectPreviewFacts()
+(Fliesstext), BADGE_POOL (defendingChampion/allTimeRecord/playoffHistory-
+Spitznamen), BADGE_CATEGORY_TO_FACT_CATEGORY und pickBadge() verdrahtet.
+
+Getestet via gemocktem Claude-API-Call: alle drei Kategorien rendern
+korrekt im Recap- und im Vorschau-Prompt, Cap-Mechanismus greift wie
+erwartet.
