@@ -89,19 +89,3 @@ reisserischer im Kopf (Schlagzeile) und cross-game statt pro Spiel.
 
 data/week-recaps.json startet leer, wird beim nächsten Sync-Lauf nach
 Woche 1 befüllt.
-
-## 2026-09-15 – `f6cfcc7` Wochen-Recap: Mitten-Abschnitt-Truncation abgefangen, Budget hochgesetzt
-
-Dritter Fehlschlag: diesmal kein Fehler geloggt, aber der gecachte
-Recap brach mitten im Satz ab ("...als wäre das nic"). Ursache: die
-Antwort wurde bei max_tokens (1200) abgeschnitten, war aber NICHT leer
-(anders als die vorigen beiden Fehlschläge) - die bestehende
-Leer-Check-Logik in callClaude() hat das also durchgelassen und den
-Bruchstück-Text dauerhaft gecacht.
-
-Fix: callClaude() wirft jetzt auch bei stop_reason "max_tokens" einen
-Fehler, selbst wenn Text da ist - eine abgeschnittene Antwort ist nie
-ein gültiger fertiger Recap. Zusätzlich max_tokens für den Wochen-Recap
-von 1200 auf 2500 angehoben, um die Abschneidung beim nächsten Versuch
-gar nicht erst zu provozieren. Den abgeschnittenen Woche-1-Eintrag aus
-data/week-recaps.json entfernt, damit er sauber neu generiert wird.
