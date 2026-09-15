@@ -322,6 +322,56 @@ function collectFacts(game) {
     facts.push({ category: 'perfectWeekProximity', text: `Fast perfekt: ${p.name} (${p.pos}) von ${p.team} war mit ${p.points.toFixed(1)} Punkten ganz nah an der eigenen Saison-Bestleistung von ${p.seasonBest.toFixed(1)} dran.` });
   }
 
+  // ---- Weitere Statistik-Kategorien (siehe sync-espn.mjs, zweite Runde 2026-09-15) ----
+
+  if (game.longestStreak) {
+    const l = game.longestStreak;
+    facts.push({ category: 'longestStreak', text: l.type === 'WIN'
+      ? `Saison-Rekord: ${l.team} steht bei ${l.length} Siegen in Folge – die längste Siegesserie des Teams in dieser Saison.`
+      : `Negativ-Rekord: ${l.team} steckt in ${l.length} Niederlagen in Folge – die längste Pleitenserie des Teams in dieser Saison.` });
+  }
+
+  if (game.marginTally) {
+    const m = game.marginTally;
+    facts.push({ category: 'marginTally', text: m.type === 'close'
+      ? `Nervenkrieg-Bilanz: ${m.team} hat schon ${m.count} von ${m.games} Saisonspielen mit weniger als 5 Punkten Unterschied entschieden.`
+      : `Alles-oder-nichts-Bilanz: ${m.team} hat schon ${m.count} von ${m.games} Saisonspielen mit mehr als 30 Punkten Unterschied entschieden.` });
+  }
+
+  if (game.scoringLeaderTally) {
+    const s = game.scoringLeaderTally;
+    facts.push({ category: 'scoringLeaderTally', text: s.type === 'high'
+      ? `Serientäter oben: ${s.team} war diese Saison schon ${s.count}x Wochen-Highscorer der gesamten Liga.`
+      : `Serientäter unten: ${s.team} war diese Saison schon ${s.count}x Wochen-Lowscorer der gesamten Liga.` });
+  }
+
+  if (game.ironMan) {
+    const i = game.ironMan;
+    facts.push({ category: 'ironMan', text: `Eisenmann der Liga: ${i.name} (${i.pos}) von ${i.team} stand diese Saison bereits alle ${i.weeks} Wochen in der Startaufstellung.` });
+  }
+
+  if (game.topWeeklyPerformance) {
+    const t = game.topWeeklyPerformance;
+    facts.push({ category: 'topWeeklyPerformance', text: `Mount Rushmore: ${t.name} (${t.pos}) von ${t.team} knackt mit ${t.points.toFixed(1)} Punkten die Top-4-Einzelwochenleistungen der gesamten Liga-Geschichte (Platz ${t.rank}).` });
+  }
+
+  if (game.seasonMilestone) {
+    const s = game.seasonMilestone;
+    facts.push({ category: 'seasonMilestone', text: `Meilenstein: ${s.team} knackt diese Woche die ${s.milestone}-Punkte-Marke für die Saison (aktuell ${s.total.toFixed(1)}).` });
+  }
+
+  if (game.seasonDraftValue) {
+    const d = game.seasonDraftValue;
+    facts.push({ category: 'seasonDraftValue', text: d.type === 'bargain'
+      ? `Saison-Schnäppchen: ${d.name} (Runde ${d.round} gedraftet) hat schon ${d.totalPoints.toFixed(1)} Saisonpunkte für ${d.team} abgeliefert.`
+      : `Saison-Draft-Reue: ${d.name} (Runde ${d.round} gedraftet) kommt für ${d.team} nur auf ${d.avg.toFixed(1)} Punkte im Wochenschnitt.` });
+  }
+
+  if (game.leagueActivity) {
+    const a = game.leagueActivity;
+    facts.push({ category: 'leagueActivity', text: `Kader-Dauerbaustelle: ${a.team} hat diese Saison schon ${a.count} Kaderbewegungen (Waiver/Trades) hinter sich – so viele wie kein anderes Team der Liga.` });
+  }
+
   return facts;
 }
 
@@ -343,7 +393,12 @@ const CATEGORY_GROUP = {
   // (Saison-Summe) sind technisch andere Fakten, lesen sich für die Leserschaft aber wie dieselbe
   // "Bank-Missmanagement"-Geschichte wie loser-/winnerBenchRegret - deshalb dasselbe Budget.
   optimalLineupGap: 'benchRegret',
-  seasonBenchTotal: 'benchRegret'
+  seasonBenchTotal: 'benchRegret',
+  // longestStreak ist die Saison-Rekord-Variante derselben "Serie"-Geschichte wie streak - teilt sich
+  // deshalb das Budget, statt in derselben Woche beide Varianten unabhängig auszureizen.
+  longestStreak: 'streak',
+  // seasonDraftValue ist die saisonlange Variante von draftValue (Schnäppchen/Draft-Reue) - gleiches Thema.
+  seasonDraftValue: 'draftValue'
 };
 function groupOf(category) { return CATEGORY_GROUP[category] || category; }
 
@@ -568,6 +623,33 @@ const BADGE_POOL = {
   ],
   perfectWeekProximity: [
     'Fast die perfekte Woche', 'Ganz nah dran am eigenen Rekord', 'Knapp am Saisonbestwert vorbei'
+  ],
+  seasonStreakRecord: [
+    'Der neue Saison-Rekord', 'Die längste Serie der Saison', 'Historisch für dieses Team'
+  ],
+  closeSpecialist: [
+    'Der Krimi-Spezialist', 'Kennt nur den knappen Weg', 'Nervenkrieg als Standardprogramm'
+  ],
+  blowoutSpecialist: [
+    'Der Extremist', 'Kennt nur schwarz oder weiss', 'Alles oder nichts, immer wieder'
+  ],
+  scoringLeaderHigh: [
+    'Der Wochen-Champion-Sammler', 'Kennt die Spitze der Woche genau', 'Serientäter an der Tabellenspitze'
+  ],
+  scoringLeaderLow: [
+    'Der Wochen-Schlusslicht-Sammler', 'Serientäter ganz unten', 'Dauergast im Tabellenkeller der Woche'
+  ],
+  ironMan: [
+    'Der Eisenmann der Liga', 'Nie auf der Bank', 'Zuverlässig wie ein Uhrwerk'
+  ],
+  mountRushmore: [
+    'Mount-Rushmore-reif', 'Unter den besten Vier aller Zeiten', 'Geschichte geschrieben'
+  ],
+  milestone: [
+    'Meilenstein geknackt', 'Die runde Zahl ist da', 'Punkte-Marke durchbrochen'
+  ],
+  activeManager: [
+    'Der Waiver-Wire-Junkie', 'Nie zufrieden mit dem Kader', 'Dauerhaft am Umbauen'
   ]
 };
 
@@ -631,7 +713,16 @@ const BADGE_CATEGORY_TO_FACT_CATEGORY = {
   tradeImpact: 'tradeImpact',
   consistency: 'consistency',
   upsetTally: 'upsetTally',
-  perfectWeekProximity: 'perfectWeekProximity'
+  perfectWeekProximity: 'perfectWeekProximity',
+  seasonStreakRecord: 'longestStreak',
+  closeSpecialist: 'marginTally',
+  blowoutSpecialist: 'marginTally',
+  scoringLeaderHigh: 'scoringLeaderTally',
+  scoringLeaderLow: 'scoringLeaderTally',
+  ironMan: 'ironMan',
+  mountRushmore: 'topWeeklyPerformance',
+  milestone: 'seasonMilestone',
+  activeManager: 'leagueActivity'
 };
 
 function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
@@ -695,6 +786,17 @@ function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   if (game.consistency) categories.push('consistency');
   if (game.upsetTally) categories.push('upsetTally');
   if (game.perfectWeekProximity) categories.push('perfectWeekProximity');
+  if (game.longestStreak) categories.push('seasonStreakRecord');
+  if (game.marginTally?.type === 'close') categories.push('closeSpecialist');
+  if (game.marginTally?.type === 'blowout') categories.push('blowoutSpecialist');
+  if (game.scoringLeaderTally?.type === 'high') categories.push('scoringLeaderHigh');
+  if (game.scoringLeaderTally?.type === 'low') categories.push('scoringLeaderLow');
+  if (game.ironMan) categories.push('ironMan');
+  if (game.topWeeklyPerformance) categories.push('mountRushmore');
+  if (game.seasonMilestone) categories.push('milestone');
+  if (game.seasonDraftValue?.type === 'bargain') categories.push('bargain');
+  if (game.seasonDraftValue?.type === 'bust') categories.push('draftRegret');
+  if (game.leagueActivity) categories.push('activeManager');
 
   // Fakten-gebundene Kategorien rausfiltern, deren Thema diese Woche schon am Limit ist. Anders als
   // bei den Fakten selbst gibt es hier KEIN Zurückfallen auf die überstrapazierte Kategorie: ein

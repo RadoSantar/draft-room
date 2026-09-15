@@ -906,13 +906,37 @@ function findPerfectWeekProximityFact(game, homePerf, awayPerf, seasonStats) {
 // aber unabhängig von Live-Snapshots - läuft auf Basis von Endständen/Rostern, die in jeder Woche
 // verfügbar sind.
 async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
-  const stats = await readJsonSafe('season-stats.json', { weeksArchived: [], teams: {}, players: {} });
+  const stats = await readJsonSafe('season-stats.json', { weeksArchived: [], teams: {}, players: {}, records: { topWeeklyPerformances: [] } });
   if (stats.weeksArchived.includes(week)) return;
+  if (!stats.records) stats.records = { topWeeklyPerformances: [] };
 
+  // Backfillt fehlende Felder auch auf BEREITS existierenden Team-Einträgen (z.B. aus einem Sync-Lauf
+  // vor Einführung dieser Felder) – ohne das würde z.B. "t.closeWins++" auf undefined zu NaN werden
+  // und ab dann für immer NaN bleiben, statt einfach bei 0 anzufangen. "positions" bewusst NICHT aus
+  // einer geteilten Konstante gespreadet, sondern hier frisch pro Aufruf erzeugt – sonst würden alle
+  // brandneuen Teams in diesem Lauf dieselbe positions-Objektreferenz teilen.
   const teamStat = (teamId) => {
-    if (!stats.teams[teamId]) stats.teams[teamId] = { games: 0, benchGapTotal: 0, upsetWins: 0, positions: {} };
+    stats.teams[teamId] = {
+      games: 0, benchGapTotal: 0, upsetWins: 0, positions: {},
+      curStreakType: null, curStreakLen: 0, longestWinStreak: 0, longestLossStreak: 0,
+      closeWins: 0, closeLosses: 0, blowoutWins: 0, blowoutLosses: 0,
+      weeksAsHighScorer: 0, weeksAsLowScorer: 0,
+      ...(stats.teams[teamId] || {})
+    };
     return stats.teams[teamId];
   };
+
+  const teamNameById = {};
+  enrichedGames.forEach((g) => { teamNameById[g.homeId] = g.homeName; teamNameById[g.awayId] = g.awayName; });
+
+  // Wochen-Highscorer/-Lowscorer: reiner Score-Vergleich innerhalb der 5 Spiele dieser Woche.
+  const weekScores = [];
+  enrichedGames.forEach((g) => {
+    weekScores.push({ id: g.homeId, score: g.homeScore });
+    weekScores.push({ id: g.awayId, score: g.awayScore });
+  });
+  const maxWeekScore = weekScores.length ? Math.max(...weekScores.map((s) => s.score)) : null;
+  const minWeekScore = weekScores.length ? Math.min(...weekScores.map((s) => s.score)) : null;
 
   enrichedGames.forEach((g) => {
     if (g.winner === 'HOME' || g.winner === 'AWAY') {
@@ -925,6 +949,35 @@ async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
         if (teamId === winnerId && wasUpset) t.upsetWins++;
       });
     }
+
+    // Serien-Rekord (unabhängig von ESPNs eigener, sich bei jedem Ende zurücksetzender
+    // streakLength) + Margen-Bilanz (knapp <5 / deutlich >30 Punkte), je Team dieses Spiels.
+    const margin = Math.abs(g.homeScore - g.awayScore);
+    [
+      { teamId: g.homeId, result: g.winner === 'TIE' ? 'TIE' : g.winner === 'HOME' ? 'WIN' : 'LOSS' },
+      { teamId: g.awayId, result: g.winner === 'TIE' ? 'TIE' : g.winner === 'AWAY' ? 'WIN' : 'LOSS' }
+    ].forEach(({ teamId, result }) => {
+      const t = teamStat(teamId);
+      if (result === 'WIN') {
+        t.curStreakLen = (t.curStreakType === 'WIN' ? t.curStreakLen : 0) + 1;
+        t.curStreakType = 'WIN';
+        t.longestWinStreak = Math.max(t.longestWinStreak || 0, t.curStreakLen);
+        if (margin < 5) t.closeWins++;
+        if (margin > 30) t.blowoutWins++;
+      } else if (result === 'LOSS') {
+        t.curStreakLen = (t.curStreakType === 'LOSS' ? t.curStreakLen : 0) + 1;
+        t.curStreakType = 'LOSS';
+        t.longestLossStreak = Math.max(t.longestLossStreak || 0, t.curStreakLen);
+        if (margin < 5) t.closeLosses++;
+        if (margin > 30) t.blowoutLosses++;
+      } else {
+        t.curStreakType = null;
+        t.curStreakLen = 0;
+      }
+      const score = teamId === g.homeId ? g.homeScore : g.awayScore;
+      if (maxWeekScore != null && score === maxWeekScore) t.weeksAsHighScorer = (t.weeksAsHighScorer || 0) + 1;
+      if (minWeekScore != null && score === minWeekScore) t.weeksAsLowScorer = (t.weeksAsLowScorer || 0) + 1;
+    });
 
     const homeGap = findOptimalLineupGap(keyMomentsByTeam[g.homeId], g.homeName);
     const awayGap = findOptimalLineupGap(keyMomentsByTeam[g.awayId], g.awayName);
@@ -950,13 +1003,33 @@ async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
     [...perf.starters, ...perf.bench].forEach((p) => {
       const existing = stats.players[p.playerId];
       if (!existing || p.points > existing.bestPoints) {
-        stats.players[p.playerId] = { bestPoints: Math.round(p.points * 10) / 10, bestWeek: week };
+        stats.players[p.playerId] = { ...(existing || {}), bestPoints: Math.round(p.points * 10) / 10, bestWeek: week };
       }
+    });
+    perf.starters.forEach((p) => {
+      const existing = stats.players[p.playerId] || { bestPoints: 0, bestWeek: null };
+      existing.totalPoints = Math.round(((existing.totalPoints || 0) + p.points) * 10) / 10;
+      existing.starterWeeks = (existing.starterWeeks || 0) + 1;
+      stats.players[p.playerId] = existing;
     });
   });
 
+  // "Mount Rushmore": Top-4-Einzelwochenleistungen der gesamten Ligageschichte (nur Starter, nicht
+  // Bank – eine starke Bank-Woche zählt nicht als "Leistung", weil sie nie zum Sieg beitrug).
+  Object.entries(keyMomentsByTeam).forEach(([teamId, perf]) => {
+    if (!perf) return;
+    perf.starters.forEach((p) => {
+      stats.records.topWeeklyPerformances.push({
+        playerId: p.playerId, name: p.name, pos: p.pos, team: teamNameById[teamId] || '?',
+        points: Math.round(p.points * 10) / 10, week
+      });
+    });
+  });
+  stats.records.topWeeklyPerformances.sort((a, b) => b.points - a.points);
+  stats.records.topWeeklyPerformances = stats.records.topWeeklyPerformances.slice(0, 4);
+
   stats.weeksArchived.push(week);
-  await writeJson('season-stats.json', { lastUpdated: nowIso(), teams: stats.teams, players: stats.players, weeksArchived: stats.weeksArchived });
+  await writeJson('season-stats.json', { lastUpdated: nowIso(), teams: stats.teams, players: stats.players, records: stats.records, weeksArchived: stats.weeksArchived });
 }
 
 // Baut für ein Spiel der KOMMENDEN (noch nicht gespielten) Woche einen leichten Vorschau-Fakten-Satz
@@ -987,6 +1060,141 @@ function buildPreviewMoments(game, ctx) {
     if (rematch) result.rematch = rematch;
   }
   return result;
+}
+
+// ==== Weitere Statistik-Kategorien (2026-09-15, zweite Runde) ====
+// Auf Nutzerwunsch: mehr "für alles gibt's eine Statistik"-Fakten, aufbauend auf den erweiterten
+// data/season-stats.json-Feldern (siehe archiveSeasonStats oben – Serien-Rekord, Margen-Bilanz,
+// Wochen-Highscorer-Zähler, Spieler-Gesamtpunkte/Starter-Wochen, Liga-Mount-Rushmore).
+
+// D1: Saison-Serie schlägt (oder egalisiert) den bisherigen Serien-Rekord dieses Teams – anders als
+// der bestehende findStreakFact (der nur die aktuelle Serie nennt, ohne Bezug zum eigenen Rekord).
+function findLongestStreakFact(game, standingsById, seasonStats) {
+  if (!seasonStats?.teams) return null;
+  const check = (teamId, teamName) => {
+    const s = standingsById[teamId];
+    const t = seasonStats.teams[teamId];
+    if (!s || !t) return null;
+    if (s.streakType === 'WIN' && s.streakLength >= 3 && s.streakLength >= (t.longestWinStreak || 0)) {
+      return { team: teamName, length: s.streakLength, type: 'WIN' };
+    }
+    if (s.streakType === 'LOSS' && s.streakLength >= 3 && s.streakLength >= (t.longestLossStreak || 0)) {
+      return { team: teamName, length: s.streakLength, type: 'LOSS' };
+    }
+    return null;
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// D2: Team mit auffälliger Häufung von knappen (<5 Punkte) oder deutlichen (>30 Punkte) Spielen über
+// die Saison – braucht closeWins/closeLosses/blowoutWins/blowoutLosses aus season-stats.json.
+function findMarginTallyFact(game, seasonStats) {
+  if (!seasonStats?.teams) return null;
+  const check = (teamId, teamName) => {
+    const t = seasonStats.teams[teamId];
+    if (!t || t.games < 3) return null;
+    const closeTotal = (t.closeWins || 0) + (t.closeLosses || 0);
+    const blowoutTotal = (t.blowoutWins || 0) + (t.blowoutLosses || 0);
+    if (closeTotal >= 3 && closeTotal >= blowoutTotal) return { team: teamName, type: 'close', count: closeTotal, games: t.games };
+    if (blowoutTotal >= 3 && blowoutTotal > closeTotal) return { team: teamName, type: 'blowout', count: blowoutTotal, games: t.games };
+    return null;
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// D3: Team war diese Saison schon mehrfach Wochen-Highscorer bzw. -Lowscorer der gesamten Liga.
+function findScoringLeaderTallyFact(game, seasonStats) {
+  if (!seasonStats?.teams) return null;
+  const check = (teamId, teamName) => {
+    const t = seasonStats.teams[teamId];
+    if (!t) return null;
+    if ((t.weeksAsHighScorer || 0) >= 2) return { team: teamName, type: 'high', count: t.weeksAsHighScorer };
+    if ((t.weeksAsLowScorer || 0) >= 2) return { team: teamName, type: 'low', count: t.weeksAsLowScorer };
+    return null;
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
+}
+
+// D4: "Iron Man" – ein Starter stand diese Saison schon in JEDER Woche seines Teams in der
+// Startaufstellung (mind. 3 Wochen Stichprobe).
+function findIronManFact(game, homePerf, awayPerf, seasonStats, standingsById) {
+  if (!seasonStats?.players) return null;
+  const check = (teamId, teamName, perf) => {
+    const s = standingsById[teamId];
+    if (!s || !perf) return null;
+    const gamesPlayed = s.wins + s.losses + (s.ties || 0);
+    if (gamesPlayed < 4) return null;
+    const priorGames = gamesPlayed - 1;
+    if (priorGames < 3) return null;
+    const hero = perf.starters.find((p) => seasonStats.players[p.playerId]?.starterWeeks === priorGames);
+    if (!hero) return null;
+    return { team: teamName, name: hero.name, pos: hero.pos, weeks: priorGames + 1 };
+  };
+  return check(game.homeId, game.homeName, homePerf) || check(game.awayId, game.awayName, awayPerf) || null;
+}
+
+// D5: "Mount Rushmore" – die Standout-Leistung dieses Spiels knackt die Top-4-Einzelwochenleistungen
+// der gesamten Liga-Geschichte (siehe stats.records.topWeeklyPerformances, vor dieser Woche).
+function findTopWeeklyPerformanceFact(result, game, seasonStats) {
+  if (!result.standout || !seasonStats?.records?.topWeeklyPerformances?.length) return null;
+  const top = seasonStats.records.topWeeklyPerformances;
+  const rank = top.filter((t) => t.points > result.standout.points).length + 1;
+  if (rank > 4) return null;
+  const team = result.standout.side === 'home' ? game.homeName : game.awayName;
+  return { team, name: result.standout.name, pos: result.standout.pos, points: result.standout.points, rank };
+}
+
+// D6: Team knackt diese Woche eine runde Saison-Gesamtpunkte-Marke (250er-Schritte).
+function findSeasonMilestoneFact(game, standingsById) {
+  const THRESHOLDS = [250, 500, 750, 1000, 1250, 1500, 1750, 2000, 2250, 2500];
+  const check = (teamId, teamName, thisWeekScore) => {
+    const s = standingsById[teamId];
+    if (!s) return null;
+    const prevPF = s.pointsFor - thisWeekScore;
+    const crossed = THRESHOLDS.find((t) => prevPF < t && s.pointsFor >= t);
+    if (crossed == null) return null;
+    return { team: teamName, milestone: crossed, total: s.pointsFor };
+  };
+  return check(game.homeId, game.homeName, game.homeScore) || check(game.awayId, game.awayName, game.awayScore) || null;
+}
+
+// D7: Saisonlange (statt nur diese-Woche) Draft-Value-Bilanz – braucht players[id].totalPoints/
+// starterWeeks aus season-stats.json plus draftRoundByPlayerId. Erst ab Woche 4 aussagekräftig.
+function findSeasonDraftValueFact(game, homePerf, awayPerf, seasonStats, draftRoundByPlayerId, week) {
+  if (!seasonStats?.players || !draftRoundByPlayerId || week < 4) return null;
+  const check = (teamId, teamName, perf) => {
+    if (!perf) return null;
+    for (const p of perf.starters) {
+      const round = draftRoundByPlayerId[p.playerId];
+      const rec = seasonStats.players[p.playerId];
+      if (round == null || !rec?.starterWeeks) continue;
+      if (round >= 10 && rec.totalPoints >= 60) {
+        return { type: 'bargain', team: teamName, name: p.name, round, totalPoints: rec.totalPoints };
+      }
+      if (round <= 3 && rec.starterWeeks >= 3 && (rec.totalPoints / rec.starterWeeks) < 8) {
+        return { type: 'bust', team: teamName, name: p.name, round, totalPoints: rec.totalPoints, avg: rec.totalPoints / rec.starterWeeks };
+      }
+    }
+    return null;
+  };
+  return check(game.homeId, game.homeName, homePerf) || check(game.awayId, game.awayName, awayPerf) || null;
+}
+
+// D8: Team mit der meisten Waiver-/Trade-Aktivität der Liga bisher (Kaderumbau-Storyline).
+function findLeagueActivityFact(game, transactions) {
+  if (!transactions?.length) return null;
+  const countByTeam = {};
+  transactions.forEach((t) => {
+    if (t.type === 'FREEAGENT' && t.teamId != null) countByTeam[t.teamId] = (countByTeam[t.teamId] || 0) + 1;
+    if (t.type === 'TRADE' && Array.isArray(t.legs)) t.legs.forEach((l) => { countByTeam[l.teamId] = (countByTeam[l.teamId] || 0) + 1; });
+  });
+  const maxCount = Math.max(0, ...Object.values(countByTeam));
+  if (maxCount < 4) return null;
+  const check = (teamId, teamName) => {
+    if ((countByTeam[teamId] || 0) !== maxCount) return null;
+    return { team: teamName, count: maxCount };
+  };
+  return check(game.homeId, game.homeName) || check(game.awayId, game.awayName) || null;
 }
 
 // Baut aus den echten Wochendaten einen Pool möglicher Storyline-Fakten für ein Spiel. Welche davon
@@ -1140,6 +1348,32 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
     if (upsetTally) result.upsetTally = upsetTally;
     const perfectWeekProximity = findPerfectWeekProximityFact(game, homePerf, awayPerf, ctx.seasonStats);
     if (perfectWeekProximity) result.perfectWeekProximity = perfectWeekProximity;
+  }
+
+  // ---- Weitere Statistik-Kategorien (siehe Definitionen oben) ----
+  if (ctx?.standingsById && ctx?.seasonStats) {
+    const longestStreak = findLongestStreakFact(game, ctx.standingsById, ctx.seasonStats);
+    if (longestStreak) result.longestStreak = longestStreak;
+    const ironMan = findIronManFact(game, homePerf, awayPerf, ctx.seasonStats, ctx.standingsById);
+    if (ironMan) result.ironMan = ironMan;
+    const seasonMilestone = findSeasonMilestoneFact(game, ctx.standingsById);
+    if (seasonMilestone) result.seasonMilestone = seasonMilestone;
+  }
+  if (ctx?.seasonStats) {
+    const marginTally = findMarginTallyFact(game, ctx.seasonStats);
+    if (marginTally) result.marginTally = marginTally;
+    const scoringLeaderTally = findScoringLeaderTallyFact(game, ctx.seasonStats);
+    if (scoringLeaderTally) result.scoringLeaderTally = scoringLeaderTally;
+    const topWeeklyPerformance = findTopWeeklyPerformanceFact(result, game, ctx.seasonStats);
+    if (topWeeklyPerformance) result.topWeeklyPerformance = topWeeklyPerformance;
+  }
+  if (ctx?.draftRoundByPlayerId) {
+    const seasonDraftValue = findSeasonDraftValueFact(game, homePerf, awayPerf, ctx.seasonStats, ctx.draftRoundByPlayerId, game.week);
+    if (seasonDraftValue) result.seasonDraftValue = seasonDraftValue;
+  }
+  if (ctx?.transactions) {
+    const leagueActivity = findLeagueActivityFact(game, ctx.transactions);
+    if (leagueActivity) result.leagueActivity = leagueActivity;
   }
 
   return result;

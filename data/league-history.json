@@ -1,0 +1,5 @@
+{
+  "lastUpdated": null,
+  "seasons": {},
+  "note": "Wird manuell befüllt, sobald die Screenshots/History-Daten aus der ESPN-App vorliegen (Saison 2024 & 2025) - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, standings: [{ name, wins, losses, ties, pointsFor }] }."
+}
