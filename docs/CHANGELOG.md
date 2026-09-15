@@ -243,3 +243,5 @@ erzielte Punkte oben (wie bisher), kassierte Punkte + Differenz klein
 darunter.
 
 ## 2026-09-15 – `2a82e7b` Session-Log: Standings-Erweiterung (kassierte Punkte/Diff) nachgetragen
+
+## 2026-09-15 – `5c9bb75` Session-Log: neues Stats-Ökosystem (8 Kategorien) + Punkt-D-Vorbereitung nachgetragen
