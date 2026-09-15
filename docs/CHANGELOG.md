@@ -245,3 +245,5 @@ darunter.
 ## 2026-09-15 – `2a82e7b` Session-Log: Standings-Erweiterung (kassierte Punkte/Diff) nachgetragen
 
 ## 2026-09-15 – `5c9bb75` Session-Log: neues Stats-Ökosystem (8 Kategorien) + Punkt-D-Vorbereitung nachgetragen
+
+## 2026-09-15 – `f456b41` Session-Log: Saison 2024/2025 Liga-Historie + Stats-Verifikationsstand nachgetragen
