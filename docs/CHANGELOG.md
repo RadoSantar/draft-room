@@ -216,3 +216,10 @@ Ab Mittwoch (Tag nach dem Dienstags-Sync) wird die neue Liga-Woche zur
 Wochen vor der aktuellen werden automatisch in <details>-Elemente
 eingeklappt (neueste zuerst), damit die Seite bei fortschreitender
 Saison nicht durch 15 Wochen gescrollt werden muss.
+
+## 2026-09-15 – `b274d78` Wochen-Vorschau erst ab Mittwoch sichtbar
+
+Die Vorschau wird zwar schon am Dienstag vom Sync generiert, soll aber
+erst ab Mittwoch (Tag, an dem die Woche zur "aktuellen" wird) auf der
+Seite erscheinen. Nutzt dieselbe Reveal-Datum-Logik wie das
+Nach-oben-Rutschen der aktuellen Woche.
