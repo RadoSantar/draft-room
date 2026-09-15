@@ -614,7 +614,7 @@
     }
 
     function standingsRowsHtml(rows){
-      var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf"><span class="standings-pf-main">Erzielt</span><span class="standings-pf-sub">Kass. / Diff</span></span><span class="standings-streak">Streak</span></div>';
+      var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf"><span class="standings-pf-main">Erzielt</span><span class="standings-pf-sub">PA / Diff</span></span><span class="standings-streak">Streak</span></div>';
       html += rows.map(function(r, i){
         var streakLabel = r.streakLength ? (r.streakType === 'WIN' ? 'W' : 'L') + r.streakLength : '–';
         var diff = r.pointsFor - (r.pointsAgainst || 0);
