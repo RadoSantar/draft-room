@@ -241,3 +241,5 @@ nicht angezeigt. Statt einer weiteren vollen Spalte (auf Mobile kein
 Platz mehr) zeigt die bestehende Punkte-Spalte jetzt zweizeilig:
 erzielte Punkte oben (wie bisher), kassierte Punkte + Differenz klein
 darunter.
+
+## 2026-09-15 – `2a82e7b` Session-Log: Standings-Erweiterung (kassierte Punkte/Diff) nachgetragen
