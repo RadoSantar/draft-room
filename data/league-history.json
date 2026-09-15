@@ -5,16 +5,30 @@
       "champion": "Tackleberry Finn",
       "runnerUp": "Saints of Anarchy",
       "thirdPlace": "Lord of the Rings",
-      "standings": [
-        { "name": "Tackleberry Finn", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
-        { "name": "Saints of Anarchy", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
-        { "name": "Lord of the Rings", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
-        { "name": "Hopp Schwiiz", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
-        { "name": "Zurich City Ravens", "wins": 5, "losses": 10, "ties": 0, "pointsFor": null },
-        { "name": "Sherlock Mahomes", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null }
+      "finalStandings": [
+        { "rank": 1, "name": "Tackleberry Finn", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
+        { "rank": 2, "name": "Saints of Anarchy", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
+        { "rank": 3, "name": "Lord of the Rings", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
+        { "rank": 4, "name": "Hopp Schwiiz", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
+        { "rank": 5, "name": "Zurich City Ravens", "wins": 5, "losses": 10, "ties": 0, "pointsFor": null },
+        { "rank": 6, "name": "Sherlock Mahomes", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null }
       ],
-      "note": "Liga hatte 2024 offenbar nur 6 Teams (gewachsen auf 10 bis 2026). 'Lord of the Rings' existiert im aktuellen (2026er) Kader nicht - ob das derselbe Manager unter neuem Team-Namen ist, ist unbekannt, wird NICHT angenommen. pointsFor aus dem Screenshot nicht ersichtlich, bewusst null gelassen statt geraten."
+      "note": "Liga hatte 2024 offenbar nur 6 Teams (gewachsen auf 10 bis 2026). 'Lord of the Rings' existiert im aktuellen (2026er) Kader nicht - ob das derselbe Manager unter neuem Team-Namen ist, ist unbekannt, wird NICHT angenommen. pointsFor aus dem Screenshot nicht ersichtlich, bewusst null gelassen statt geraten. rank = finale Platzierung laut Playoff-Ergebnis, NICHT nach Sieganzahl sortiert (Lord of the Rings hat trotz gleicher Bilanz wie der Champion nur Rang 3, weil ESPNs Playoff-Bracket-Ergebnis zählt, nicht die Regular-Season-Bilanz)."
+    },
+    "2025": {
+      "champion": "Zurich City Ravens",
+      "runnerUp": "Tackleberry Finn",
+      "thirdPlace": "Sherlock Mahomes",
+      "finalStandings": [
+        { "rank": 1, "name": "Zurich City Ravens", "wins": 11, "losses": 4, "ties": 0, "pointsFor": null },
+        { "rank": 2, "name": "Tackleberry Finn", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null },
+        { "rank": 3, "name": "Sherlock Mahomes", "wins": 13, "losses": 2, "ties": 0, "pointsFor": null },
+        { "rank": 4, "name": "Hopp Schwiiz", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
+        { "rank": 5, "name": "Saints of Anarchy", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null },
+        { "rank": 6, "name": "Run CMC", "wins": 0, "losses": 15, "ties": 0, "pointsFor": null }
+      ],
+      "note": "Auch hier: rank = finale Playoff-Platzierung, NICHT nach Bilanz sortiert - Sherlock Mahomes hatte die mit Abstand beste Regular-Season-Bilanz (13-2) landete aber laut Bracket-Ergebnis nur auf Rang 3, während Tackleberry Finn mit nur 6-9 im Championship-Spiel stand (Rang 2). Nutzer hat das selbst explizit angemerkt, bevor Rückfrage nötig war. Immer noch 6 Teams diese Saison (noch nicht auf die aktuellen 10 gewachsen)."
     }
   },
-  "note": "Wird manuell befüllt, sobald weitere Screenshots/History-Daten aus der ESPN-App vorliegen (v.a. noch Saison 2025) - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, standings: [{ name, wins, losses, ties, pointsFor }] }."
+  "note": "Wird manuell befüllt, sobald weitere Screenshots/History-Daten aus der ESPN-App vorliegen - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, finalStandings: [{ rank, name, wins, losses, ties, pointsFor }] }. WICHTIG: 'rank' ist die finale Platzierung nach Playoff-Ergebnis, nicht die nach Sieganzahl sortierte Regular-Season-Tabelle - beides kann stark auseinanderfallen (Playoffs sind ein K.-o.-Bracket, keine reine Bilanz-Fortsetzung)."
 }
