@@ -84,86 +84,88 @@ function seededShuffle(items, seedStr) {
   return arr;
 }
 
-// Sammelt alle verfügbaren Storyline-Fakten für ein Spiel als fertige Kontext-Sätze. Nicht jedes
-// Spiel hat jeden Fakt (z.B. positionale Dominanz oder eine Serie gibt es nicht immer) – das allein
-// sorgt schon für Abwechslung, zusätzlich wird unten nur eine Zufallsauswahl davon in den Prompt
-// aufgenommen, damit sich nicht jede Woche nach demselben Schema liest.
+// Sammelt alle verfügbaren Storyline-Fakten für ein Spiel, je Fakt mit einer Kategorie getaggt
+// (siehe pickFactsForGame weiter unten: die Kategorie wird über die Woche hinweg gezählt, damit
+// z.B. nicht in 4 von 5 Spielen dieselbe "Bank-Reue"-Geschichte auftaucht). Nicht jedes Spiel hat
+// jeden Fakt (z.B. positionale Dominanz oder eine Serie gibt es nicht immer) – das allein sorgt
+// schon für Abwechslung, die Kategorie-Deckelung sorgt zusätzlich dafür, dass verfügbare, aber
+// schon oft genutzte Fakten anderen Spielen mit weniger Auswahl Platz machen.
 function collectFacts(game) {
   const facts = [];
 
   if (game.standout) {
     const s = game.standout;
     const standoutTeam = s.side === 'home' ? game.homeName : game.awayName;
-    facts.push(`Standout-Leistung des Spiels: ${s.name} (${s.pos}) mit ${s.points.toFixed(1)} Punkten für ${standoutTeam}.`);
+    facts.push({ category: 'standout', text: `Standout-Leistung des Spiels: ${s.name} (${s.pos}) mit ${s.points.toFixed(1)} Punkten für ${standoutTeam}.` });
   }
 
   if (game.loserBenchRegret) {
     const r = game.loserBenchRegret;
     let t = `Bank-Reue: ${r.team} liess ${r.benchPlayer.name} (${r.benchPlayer.pos}, ${r.benchPlayer.points.toFixed(1)} Punkte) auf der Bank sitzen, während Starter ${r.starter.name} (${r.starter.points.toFixed(1)} Punkte) spielte.`;
     t += r.wouldHaveWon ? ' Mit dem Tausch hätte es sogar zum Sieg gereicht!' : ' Auch mit dem Tausch hätte es nicht ganz zum Sieg gereicht, aber es wäre knapper geworden.';
-    facts.push(t);
+    facts.push({ category: 'loserBenchRegret', text: t });
   }
 
   if (game.winnerBenchRegret) {
     const r = game.winnerBenchRegret;
-    facts.push(`Trotz Sieg liess ${r.team} auf der Bank Punkte liegen: ${r.benchPlayer.name} (${r.benchPlayer.pos}, ${r.benchPlayer.points.toFixed(1)} Punkte) sass draussen, während Starter ${r.starter.name} nur ${r.starter.points.toFixed(1)} Punkte brachte – am Ende reichte es trotzdem.`);
+    facts.push({ category: 'winnerBenchRegret', text: `Trotz Sieg liess ${r.team} auf der Bank Punkte liegen: ${r.benchPlayer.name} (${r.benchPlayer.pos}, ${r.benchPlayer.points.toFixed(1)} Punkte) sass draussen, während Starter ${r.starter.name} nur ${r.starter.points.toFixed(1)} Punkte brachte – am Ende reichte es trotzdem.` });
   }
 
   if (game.positionalDominance) {
     const d = game.positionalDominance;
-    facts.push(`Positionale Dominanz: Allein die ${d.pos}s von ${d.team} holten ${d.groupTotal.toFixed(1)} Punkte – mehr als das komplette Team von ${d.opponent} (${d.opponentTotal.toFixed(1)}) zusammen.`);
+    facts.push({ category: 'positionalDominance', text: `Positionale Dominanz: Allein die ${d.pos}s von ${d.team} holten ${d.groupTotal.toFixed(1)} Punkte – mehr als das komplette Team von ${d.opponent} (${d.opponentTotal.toFixed(1)}) zusammen.` });
   }
 
   if (game.streak) {
     const s = game.streak;
-    facts.push(s.streakType === 'WIN'
+    facts.push({ category: 'streak', text: s.streakType === 'WIN'
       ? `${s.team} gewinnt damit das ${s.streakLength}. Spiel in Folge.`
-      : `${s.team} kassiert damit die ${s.streakLength}. Niederlage in Folge.`);
+      : `${s.team} kassiert damit die ${s.streakLength}. Niederlage in Folge.` });
   }
 
   if (game.optimalLineupGap) {
     const g = game.optimalLineupGap;
-    facts.push(`Aufstellungs-Patzer: ${g.team} spielte ${g.actualTotal.toFixed(1)} Punkte, mit der bestmöglichen Aufstellung aus dem kompletten Kader wären ${g.optimalTotal.toFixed(1)} Punkte drin gewesen – ${g.gap.toFixed(1)} Punkte leichtfertig liegen gelassen.`);
+    facts.push({ category: 'optimalLineupGap', text: `Aufstellungs-Patzer: ${g.team} spielte ${g.actualTotal.toFixed(1)} Punkte, mit der bestmöglichen Aufstellung aus dem kompletten Kader wären ${g.optimalTotal.toFixed(1)} Punkte drin gewesen – ${g.gap.toFixed(1)} Punkte leichtfertig liegen gelassen.` });
   }
 
   if (game.confStanding) {
     const c = game.confStanding;
     const record = `${c.wins}-${c.losses}${c.ties ? '-' + c.ties : ''}`;
-    if (c.prevRank != null && c.prevRank !== c.rank) {
-      facts.push(c.rank < c.prevRank
+    facts.push({ category: 'confStanding', text: c.prevRank != null && c.prevRank !== c.rank
+      ? (c.rank < c.prevRank
         ? `${c.team} klettert in der ${c.conf}-Tabelle von Platz ${c.prevRank} auf Platz ${c.rank} (Bilanz ${record}).`
-        : `${c.team} fällt in der ${c.conf}-Tabelle von Platz ${c.prevRank} auf Platz ${c.rank} zurück (Bilanz ${record}).`);
-    } else {
-      facts.push(`${c.team} steht in der ${c.conf}-Tabelle auf Platz ${c.rank} (Bilanz ${record}).`);
-    }
+        : `${c.team} fällt in der ${c.conf}-Tabelle von Platz ${c.prevRank} auf Platz ${c.rank} zurück (Bilanz ${record}).`)
+      : `${c.team} steht in der ${c.conf}-Tabelle auf Platz ${c.rank} (Bilanz ${record}).` });
   }
 
   if (game.seasonExtreme) {
     const e = game.seasonExtreme;
-    facts.push(e.type === 'high'
+    facts.push({ category: 'seasonExtreme', text: e.type === 'high'
       ? `${e.team} erzielt mit ${e.score.toFixed(1)} Punkten die bisher höchste Wochenpunktzahl der gesamten Saison.`
-      : `${e.team} erzielt mit ${e.score.toFixed(1)} Punkten die bisher niedrigste Wochenpunktzahl der gesamten Saison.`);
+      : `${e.team} erzielt mit ${e.score.toFixed(1)} Punkten die bisher niedrigste Wochenpunktzahl der gesamten Saison.` });
   }
 
   if (game.playoffRace) {
     const r = game.playoffRace;
+    let t = null;
     if (r.status === 'eliminated') {
-      facts.push(`Playoff-Rennen: ${r.team} kann selbst mit einer perfekten Restsaison rechnerisch nicht mehr an den letzten Playoff-Platz herankommen – schon draussen.`);
+      t = `Playoff-Rennen: ${r.team} kann selbst mit einer perfekten Restsaison rechnerisch nicht mehr an den letzten Playoff-Platz herankommen – schon draussen.`;
     } else if (r.status === 'chasing') {
-      facts.push(`Playoff-Rennen: ${r.team} liegt ${r.winsBehind} Sieg(e) hinter dem letzten Playoff-Platz zurück, ist aber noch nicht rechnerisch raus.`);
+      t = `Playoff-Rennen: ${r.team} liegt ${r.winsBehind} Sieg(e) hinter dem letzten Playoff-Platz zurück, ist aber noch nicht rechnerisch raus.`;
     } else if (r.status === 'in') {
-      facts.push(`Playoff-Rennen: ${r.team} steht aktuell auf einem Playoff-Platz (Seed ${r.seed})${r.cushion != null ? `, mit ${r.cushion} Sieg(en) Polster auf das erste Team ausserhalb` : ''}.`);
+      t = `Playoff-Rennen: ${r.team} steht aktuell auf einem Playoff-Platz (Seed ${r.seed})${r.cushion != null ? `, mit ${r.cushion} Sieg(en) Polster auf das erste Team ausserhalb` : ''}.`;
     }
+    if (t) facts.push({ category: 'playoffRace', text: t });
   }
 
   if (game.unluckyLoser) {
     const u = game.unluckyLoser;
-    facts.push(`Pechvogel der Woche: ${u.team} verliert trotz ${u.score.toFixed(1)} Punkten – ein Score, mit dem ${u.beatenCount === 1 ? 'ein anderes Spiel' : u.beatenCount + ' andere Spiele'} diese Woche gewonnen worden wäre(n).`);
+    facts.push({ category: 'unluckyLoser', text: `Pechvogel der Woche: ${u.team} verliert trotz ${u.score.toFixed(1)} Punkten – ein Score, mit dem ${u.beatenCount === 1 ? 'ein anderes Spiel' : u.beatenCount + ' andere Spiele'} diese Woche gewonnen worden wäre(n).` });
   }
 
   if (game.uglyWin) {
     const w = game.uglyWin;
-    facts.push(`Hässlicher Sieg: ${w.team} gewinnt mit nur ${w.score.toFixed(1)} Punkten – der niedrigsten Siegerpunktzahl der gesamten Woche.`);
+    facts.push({ category: 'uglyWin', text: `Hässlicher Sieg: ${w.team} gewinnt mit nur ${w.score.toFixed(1)} Punkten – der niedrigsten Siegerpunktzahl der gesamten Woche.` });
   }
 
   if (game.rematch) {
@@ -172,66 +174,66 @@ function collectFacts(game) {
       ? `Revanche: In Woche ${r.week} gab es zwischen diesen beiden Teams schon ein Duell (${r.scoreLine}), damals gewann ${r.winner} – diesmal hat sich das Blatt gewendet.`
       : `Wiederholung: In Woche ${r.week} gab es zwischen diesen beiden Teams schon ein Duell (${r.scoreLine}) – ${r.winner ? r.winner + ' gewinnt erneut' : 'auch das endete ähnlich'}.`;
     if (r.isFinalMeeting) t += ' Damit ist die Saison-Serie zwischen den beiden Teams entschieden, es steht kein weiteres Duell mehr auf dem Programm.';
-    facts.push(t);
+    facts.push({ category: 'rematch', text: t });
   }
 
   if (game.kickerDecisive) {
     const k = game.kickerDecisive;
-    facts.push(`Unwahrscheinlicher Held: ${k.name} (${k.pos}) von ${k.team} steuerte ${k.points.toFixed(1)} Punkte bei – mehr als der Sieg-Vorsprung von ${k.margin.toFixed(1)} Punkten, ohne diese Position hätte es nicht gereicht.`);
+    facts.push({ category: 'kickerDecisive', text: `Unwahrscheinlicher Held: ${k.name} (${k.pos}) von ${k.team} steuerte ${k.points.toFixed(1)} Punkte bei – mehr als der Sieg-Vorsprung von ${k.margin.toFixed(1)} Punkten, ohne diese Position hätte es nicht gereicht.` });
   }
 
   if (game.waiverKarma) {
     const wk = game.waiverKarma;
-    facts.push(`Waiver-Wire-Karma: ${wk.droppingTeam} warf ${wk.player.name} diese Saison schon mal ab – jetzt spielt er für ${wk.karmaTeam} und liefert ausgerechnet gegen die alten Besitzer ${wk.player.points.toFixed(1)} Punkte ab.`);
+    facts.push({ category: 'waiverKarma', text: `Waiver-Wire-Karma: ${wk.droppingTeam} warf ${wk.player.name} diese Saison schon mal ab – jetzt spielt er für ${wk.karmaTeam} und liefert ausgerechnet gegen die alten Besitzer ${wk.player.points.toFixed(1)} Punkte ab.` });
   }
 
   if (game.comeback) {
     const c = game.comeback;
-    facts.push(`Kollaps/Comeback laut unseren Zwischenständen im Wochenverlauf: ${c.collapsedTeam} lag zeitweise mit rund ${c.peakLead.toFixed(1)} Punkten voran, am Ende gewann aber trotzdem ${c.winnerTeam}.`);
+    facts.push({ category: 'comeback', text: `Kollaps/Comeback laut unseren Zwischenständen im Wochenverlauf: ${c.collapsedTeam} lag zeitweise mit rund ${c.peakLead.toFixed(1)} Punkten voran, am Ende gewann aber trotzdem ${c.winnerTeam}.` });
   }
 
   if (game.leadChanges) {
-    facts.push(`Nervenkrieg laut unseren Zwischenständen: Die Führung wechselte im Wochenverlauf mindestens ${game.leadChanges.changes} Mal den Besitzer.`);
+    facts.push({ category: 'leadChanges', text: `Nervenkrieg laut unseren Zwischenständen: Die Führung wechselte im Wochenverlauf mindestens ${game.leadChanges.changes} Mal den Besitzer.` });
   }
 
   if (game.pace) {
     const p = game.pace;
-    facts.push(p.type === 'fast'
+    facts.push({ category: 'pace', text: p.type === 'fast'
       ? `Frühstarter laut unseren Zwischenständen: ${p.team} hatte schon früh in der Woche ${p.earlyScore.toFixed(1)} von am Ende ${p.finalScore.toFixed(1)} Punkten drauf.`
-      : `Spätzünder laut unseren Zwischenständen: ${p.team} stand früh in der Woche noch bei quasi ${p.earlyScore.toFixed(1)} Punkten, kam am Ende aber auf ${p.finalScore.toFixed(1)}.`);
+      : `Spätzünder laut unseren Zwischenständen: ${p.team} stand früh in der Woche noch bei quasi ${p.earlyScore.toFixed(1)} Punkten, kam am Ende aber auf ${p.finalScore.toFixed(1)}.` });
   }
 
   if (game.survivedScare) {
     const s = game.survivedScare;
-    facts.push(`Zittersieg laut unseren Zwischenständen: ${s.team} lag zeitweise mit rund ${s.peakLead.toFixed(1)} Punkten vorne, der Vorsprung schmolz aber auf nur noch ${s.finalMargin.toFixed(1)} zusammen, bevor es am Ende doch noch reichte.`);
+    facts.push({ category: 'survivedScare', text: `Zittersieg laut unseren Zwischenständen: ${s.team} lag zeitweise mit rund ${s.peakLead.toFixed(1)} Punkten vorne, der Vorsprung schmolz aber auf nur noch ${s.finalMargin.toFixed(1)} zusammen, bevor es am Ende doch noch reichte.` });
   }
 
   if (game.mondayRescue) {
     const r = game.mondayRescue;
-    facts.push(`Monday-Night-Rettung laut unseren Zwischenständen: ${r.team} lag vor dem Montagabend noch mit rund ${r.deficitBeforeMonday.toFixed(1)} Punkten zurück, gewann das Spiel aber am Ende doch noch – nur dank der Montagabend-Spieler möglich.`);
+    facts.push({ category: 'mondayRescue', text: `Monday-Night-Rettung laut unseren Zwischenständen: ${r.team} lag vor dem Montagabend noch mit rund ${r.deficitBeforeMonday.toFixed(1)} Punkten zurück, gewann das Spiel aber am Ende doch noch – nur dank der Montagabend-Spieler möglich.` });
   }
 
   if (game.sustainedNailbiter) {
-    facts.push(`Dauerhafter Nervenkrieg laut unseren Zwischenständen: Über weite Strecken der Woche lagen die Teams innerhalb von 5 Punkten auseinander – nicht nur am Ende knapp, sondern die ganze Woche über zum Zerreissen gespannt.`);
+    facts.push({ category: 'sustainedNailbiter', text: `Dauerhafter Nervenkrieg laut unseren Zwischenständen: Über weite Strecken der Woche lagen die Teams innerhalb von 5 Punkten auseinander – nicht nur am Ende knapp, sondern die ganze Woche über zum Zerreissen gespannt.` });
   }
 
   if (game.seasonPersonality) {
     const sp = game.seasonPersonality;
-    facts.push(`Saison-Persönlichkeit: ${sp.team} hat sich diese Saison einen Ruf erarbeitet als ${sp.label} (${sp.count} von ${sp.games} Spielen mit Live-Daten passen zu diesem Muster).`);
+    facts.push({ category: 'seasonPersonality', text: `Saison-Persönlichkeit: ${sp.team} hat sich diese Saison einen Ruf erarbeitet als ${sp.label} (${sp.count} von ${sp.games} Spielen mit Live-Daten passen zu diesem Muster).` });
   }
 
   if (game.expectation) {
     const e = game.expectation;
-    facts.push(e.lucky
+    facts.push({ category: 'expectation', text: e.lucky
       ? `Erwartungswert-Bilanz: ${e.team} steht bei ${e.actualWins} Siegen, aus dem Verhältnis von erzielten zu kassierten Punkten wären aber eigentlich nur ${e.expectedWins.toFixed(1)} "verdient" – die Bilanz schmeichelt.`
-      : `Erwartungswert-Bilanz: ${e.team} steht bei nur ${e.actualWins} Siegen, aus dem Verhältnis von erzielten zu kassierten Punkten wären aber eigentlich ${e.expectedWins.toFixed(1)} "verdient" – die Bilanz lügt hier eindeutig zu Ungunsten des Teams.`);
+      : `Erwartungswert-Bilanz: ${e.team} steht bei nur ${e.actualWins} Siegen, aus dem Verhältnis von erzielten zu kassierten Punkten wären aber eigentlich ${e.expectedWins.toFixed(1)} "verdient" – die Bilanz lügt hier eindeutig zu Ungunsten des Teams.` });
   }
 
   if (game.draftValue) {
     const d = game.draftValue;
-    facts.push(d.type === 'bargain'
+    facts.push({ category: 'draftValue', text: d.type === 'bargain'
       ? `Schnäppchen der Woche: ${d.name} von ${d.team} wurde erst in Runde ${d.round} gedraftet und liefert jetzt ${d.points.toFixed(1)} Punkte als Standout des Spiels ab.`
-      : `Draft-Reue: ${d.name} von ${d.team} wurde bereits in Runde ${d.round} gedraftet, brachte aber nur ${d.points.toFixed(1)} Punkte – während ein Bankspieler ihn deutlich blamierte.`);
+      : `Draft-Reue: ${d.name} von ${d.team} wurde bereits in Runde ${d.round} gedraftet, brachte aber nur ${d.points.toFixed(1)} Punkte – während ein Bankspieler ihn deutlich blamierte.` });
   }
 
   if (game.empireStoryline) {
@@ -244,10 +246,33 @@ function collectFacts(game) {
       empireCrumbling: `${emp.team} (${emp.wins}-${emp.losses}) musste sich trotz starker Saisonbilanz geschlagen geben.`,
       turnaround: `${emp.team} gewinnt trotz insgesamt noch unterdurchschnittlicher ${emp.wins}-${emp.losses}-Bilanz bereits das ${emp.streak}. Spiel in Folge.`
     };
-    facts.push(`Team-Storyline: ${templates[emp.type]}`);
+    facts.push({ category: 'empireStoryline', text: `Team-Storyline: ${templates[emp.type]}` });
   }
 
   return facts;
+}
+
+// Wählt bis zu maxFacts Fakten für ein Spiel aus, bevorzugt Kategorien, die diese Woche noch nicht
+// (oder erst 1x) benutzt wurden. categoryUsage wird über alle Spiele der Woche hinweg mitgeführt und
+// hier hochgezählt – so kann z.B. "Bank-Reue" in höchstens capPerCategory Spielen der Woche als Fakt
+// landen, auch wenn theoretisch mehr Spiele davon betroffen wären. Reicht die Auswahl an unverbrauchten
+// Kategorien für ein Spiel nicht aus (wenige verfügbare Fakten, alles schon ausgereizt), wird mit den
+// meistgenutzten Kategorien aufgefüllt, damit kein Recap komplett ohne Fakten dasteht.
+function pickFactsForGame(game, categoryUsage, seedSuffix, maxFacts, capPerCategory) {
+  const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + seedSuffix;
+  const shuffled = seededShuffle(collectFacts(game), key);
+  const fresh = [];
+  const overused = [];
+  shuffled.forEach((fact) => {
+    ((categoryUsage[fact.category] || 0) < capPerCategory ? fresh : overused).push(fact);
+  });
+  // Reicht "fresh" nicht: mit den am wenigsten überstrapazierten Kategorien auffüllen (stabile
+  // Sortierung erhält dabei die Shuffle-Reihenfolge innerhalb gleich oft genutzter Kategorien),
+  // damit sich der Überlauf über mehrere Kategorien verteilt statt eine einzelne immer weiter zu nutzen.
+  overused.sort((a, b) => (categoryUsage[a.category] || 0) - (categoryUsage[b.category] || 0));
+  const picked = fresh.concat(overused).slice(0, maxFacts);
+  picked.forEach((fact) => { categoryUsage[fact.category] = (categoryUsage[fact.category] || 0) + 1; });
+  return picked;
 }
 
 // Kuratierte "Spitznamen" pro Spiel-Situation – mehrere pro Kategorie für Abwechslung, gedacht als
@@ -458,7 +483,7 @@ function pickBadge(game, wasUpset, margin) {
   return seededShuffle(candidates, key)[0];
 }
 
-function buildPrompt(game) {
+function buildPrompt(game, facts) {
   const margin = Math.abs(game.homeScore - game.awayScore);
   const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
   const loser = game.winner === 'HOME' ? game.awayName : game.winner === 'AWAY' ? game.homeName : null;
@@ -481,9 +506,7 @@ function buildPrompt(game) {
       : `${winner} war schon vor der Saison das stärker aufgestellte Team und bestätigt das hier. `;
   }
 
-  const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-');
-  const picked = seededShuffle(collectFacts(game), key).slice(0, 3);
-  picked.forEach((sentence) => { context += sentence + ' '; });
+  facts.forEach((fact) => { context += fact.text + ' '; });
 
   const badge = pickBadge(game, wasUpset, margin);
   if (badge) context += `Spitzname für dieses Spiel: "${badge}". `;
@@ -518,11 +541,16 @@ export async function generateRecapsForGames(games, existingByKey) {
     return {};
   }
   const out = {};
+  // Über alle Spiele DIESES Laufs hinweg mitgeführt (siehe pickFactsForGame), damit z.B. nicht in
+  // 4 von 5 Spielen dieselbe "Bank-Reue"-Geschichte als Fakt landet und sich die Recaps redundant
+  // lesen - max. 2 Spiele pro Fakten-Kategorie.
+  const categoryUsage = {};
   for (const game of games) {
     const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-');
     if (existingByKey[key]) continue;
     try {
-      const prompt = buildPrompt(game);
+      const facts = pickFactsForGame(game, categoryUsage, '', 3, 2);
+      const prompt = buildPrompt(game, facts);
       const recap = await callClaude(prompt);
       out[key] = { week: game.week, homeName: game.homeName, awayName: game.awayName, recap };
       console.log('Recap generiert:', game.homeName, 'vs', game.awayName);
@@ -534,11 +562,13 @@ export async function generateRecapsForGames(games, existingByKey) {
 }
 
 // Baut aus allen Spielen einer Woche einen kompakten Fakten-Digest für den Wochenüberblick:
-// pro Spiel Endstand + Sieger/Aussenseiter-Info + die 2 seedbasiert ausgewählten stärksten Fakten
-// (aus collectFacts, derselben Quelle wie die Einzel-Recaps), damit Claude daraus die spannendsten
-// Geschichten der Woche herauspicken kann statt jedes Spiel einzeln abzuhaken.
+// pro Spiel Endstand + Sieger/Aussenseiter-Info + die 2 stärksten, noch nicht überstrapazierten
+// Fakten (aus collectFacts, derselben Quelle wie die Einzel-Recaps, mit eigener Kategorie-Deckelung
+// getrennt von den Einzel-Recaps), damit Claude daraus die spannendsten Geschichten der Woche
+// herauspicken kann statt jedes Spiel einzeln abzuhaken.
 function buildWeekPrompt(games) {
   const week = games[0].week;
+  const categoryUsage = {};
   let context = `Woche ${week}: Hier sind alle ${games.length} Spiele dieser Woche mit ihren wichtigsten Fakten. Schreibe daraus EINEN Wochenüberblick (nicht pro Spiel einzeln):\n\n`;
   games.forEach((game, i) => {
     const margin = Math.abs(game.homeScore - game.awayScore);
@@ -555,9 +585,8 @@ function buildWeekPrompt(games) {
       line += wasUpset ? ` Aussenseiter-Sieg, ${favorite} galt vor der Saison als stärker.` : '';
     }
 
-    const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + '-week';
-    const facts = seededShuffle(collectFacts(game), key).slice(0, 2);
-    facts.forEach((f) => { line += ' ' + f; });
+    const facts = pickFactsForGame(game, categoryUsage, '-week', 2, 2);
+    facts.forEach((fact) => { line += ' ' + fact.text; });
     context += line + '\n';
   });
   context += '\nSchreibe jetzt den Wochenüberblick.';
