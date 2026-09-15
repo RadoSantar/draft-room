@@ -259,11 +259,11 @@
   <h2 class="section-head">Standings</h2>
   <div class="calc-status" id="standingsStatus">Lade aktuelle Tabelle…</div>
   <div class="standings-tabs" id="standingsTabs" style="display:none" role="tablist">
-    <button type="button" class="standings-tab is-active" data-view="league">Liga</button>
-    <button type="button" class="standings-tab" data-view="conf">Nach Conference</button>
+    <button type="button" class="standings-tab is-active" data-view="conf">Nach Conference</button>
+    <button type="button" class="standings-tab" data-view="league">Liga</button>
   </div>
   <div class="standings-table" id="standingsTable" style="display:none"></div>
-  <div class="standings-conf-wrap" id="standingsConfWrap" style="display:none">
+  <div class="standings-conf-wrap" id="standingsConfWrap">
     <div class="standings-div-label mono">NFC</div>
     <div class="standings-table" id="standingsTableNFC"></div>
     <div class="standings-div-label mono">AFC</div>
@@ -506,9 +506,11 @@
       fetch('data/standings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         var rows = wrap.data || [];
         tableEl.innerHTML = standingsRowsHtml(rows);
-        tableEl.style.display = '';
+        var isConf = document.querySelector('.standings-tab[data-view="conf"]').classList.contains('is-active');
+        tableEl.style.display = isConf ? 'none' : '';
         nfcEl.innerHTML = standingsRowsHtml(rows.filter(function(r){ return teams[r.name] === 'NFC'; }));
         afcEl.innerHTML = standingsRowsHtml(rows.filter(function(r){ return teams[r.name] === 'AFC'; }));
+        document.getElementById('standingsConfWrap').style.display = isConf ? '' : 'none';
         tabsEl.style.display = '';
         statusEl.textContent = '';
         var d = new Date(wrap.lastUpdated);
