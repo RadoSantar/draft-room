@@ -59,17 +59,3 @@ falscher Kachel-Eintrag.
 Mit Playwright bei 390px (Handy) und 1200px (Desktop) getestet, inkl.
 Klick-Test dass die ganze Kachel (auch der Beschreibungstext, nicht nur
 der Titel) den Link auslöst.
-
-## 2026-09-15 – `5d08ac7` Recaps: max_tokens erhöht, echte Wortabbruch-Truncation entdeckt
-
-Der allererste echte Recap-Lauf (Woche 1, gerade live passiert) hat's
-gezeigt: 4 von 5 Recaps brachen mitten im Wort ab ("wie einen Königst",
-"aber wenigst", "schön anz"). max_tokens:300 war seit dieser Session
-nicht mehr angepasst worden, obwohl der Zielumfang zwischenzeitlich von
-3-5 auf 3-6 Sätze plus Teaser/Spitzname gewachsen ist – die reicheren
-Recaps sprengen das Limit jetzt regelmässig. Auf 600 erhöht.
-
-Die 4 abgeschnittenen Recaps aus data/game-recaps.json entfernt (der
-eine vollständige blieb erhalten), damit der nächste Sync sie mit dem
-neuen Limit sauber neu generiert – generateRecapsForGames() überspringt
-sonst alles, was schon einen Eintrag hat.
