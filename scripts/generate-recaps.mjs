@@ -563,7 +563,12 @@ export async function generateRecapsForGames(games, existingByKey) {
     const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-');
     if (existingByKey[key]) continue;
     try {
-      const facts = pickFactsForGame(game, categoryUsage, '', 3, 2);
+      // maxFacts=2 statt 3: der SYSTEM_PROMPT weist Claude ohnehin an, aus den mitgelieferten
+      // Fakten nur die 1-2 stärksten zu einer Pointe zu verweben - 3 pro Spiel anzubieten kostete
+      // in Wochen mit wenig Fakten-Vielfalt (z.B. Woche 1, ohne Saison-Historie für Serie/
+      // Erwartungswert/Revanche/Waiver-Karma) unnötig Budget für Kategorien wie "Standout" oder
+      // "Bank-Reue", die dadurch schneller an ihre Obergrenze stiessen als nötig.
+      const facts = pickFactsForGame(game, categoryUsage, '', 2, 2);
       const prompt = buildPrompt(game, facts);
       const recap = await callClaude(prompt);
       out[key] = { week: game.week, homeName: game.homeName, awayName: game.awayName, recap };
