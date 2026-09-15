@@ -27,7 +27,7 @@ async function callClaude(userPrompt) {
     },
     body: JSON.stringify({
       model: MODEL,
-      max_tokens: 300,
+      max_tokens: 600,
       system: SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userPrompt }]
     })
