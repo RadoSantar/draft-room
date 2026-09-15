@@ -59,20 +59,3 @@ falscher Kachel-Eintrag.
 Mit Playwright bei 390px (Handy) und 1200px (Desktop) getestet, inkl.
 Klick-Test dass die ganze Kachel (auch der Beschreibungstext, nicht nur
 der Titel) den Link auslöst.
-
-## 2026-09-15 – `4669ba5` Recaps: leere Claude-Antwort jetzt als Fehler statt als leerer Cache-Eintrag
-
-Zweiter echter Befund aus dem Woche-1-Lauf: eines der 4 neu generierten
-Recaps landete als leerer String in game-recaps.json (Buhaaner vs Hopp
-Schwiiz). callClaude() gab bei fehlendem content[0].text bisher einfach
-'' zurück statt zu werfen – generateRecapsForGames() cachte das dann
-als "erledigt", obwohl nichts Sinnvolles generiert wurde, und hätte es
-nie wieder versucht.
-
-Jetzt wirft callClaude() bei leerem Text einen Fehler (inkl.
-stop_reason für die Diagnose), landet im bestehenden catch-Block, und
-wird beim nächsten Sync-Lauf ganz regulär erneut versucht – kein
-Extra-Code nötig, nutzt nur die schon vorhandene Retry-Logik korrekt.
-
-Leeren Eintrag aus data/game-recaps.json entfernt, damit der nächste
-Sync ihn neu generiert.
