@@ -166,3 +166,45 @@ Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
 inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
 einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
 unverändert, kein Abschneiden).
+
+## 2026-09-15 – `e9c8e0c` Neues Feature: Wochen-Vorschau vor dem ersten Spiel des Spieltags
+
+Analog zum bestehenden Wochen-Recap (Gesamt-Rückblick nach dem
+Spieltag), aber nach vorne gerichtet: ein Ausblick im selben Boulevard-
+Stil auf die KOMMENDE, noch nicht gespielte Woche - was steht auf dem
+Spiel, welche Serien/Playoff-Implikationen/Revanchen sind relevant.
+
+Timing: der Sync läuft laut Cron nur dienstags (siehe espn-sync.yml),
+die kommende Woche startet üblicherweise donnerstags - die Vorschau
+für Woche N+1 wird also in genau dem Dienstags-Lauf generiert, der
+auch den Recap für die gerade abgeschlossene Woche N schreibt, und ist
+damit automatisch rechtzeitig vor dem Anpfiff fertig. Läuft unabhängig
+vom Recap-Block, weil sie schon vor Woche 1 sinnvoll ist.
+
+Technisch:
+- scripts/sync-espn.mjs: neue buildPreviewMoments() baut für ein noch
+  nicht gespieltes Spiel einen Fakten-Satz nur aus dem, was schon vor
+  dem Anpfiff feststeht (Bilanz, Serie, Tabellenplatz, Playoff-Kontext,
+  Erwartungswert, frühere Duelle) - wiederverwendet dafür
+  findStreakFact/findConferenceStandingFact/findPlayoffRaceFact/
+  findExpectationFact/findRematchFact, die alle ohnehin nur Team-IDs
+  und Bilanz/Historie brauchen, keine Scores DIESES Spiels. Neuer
+  Block in main() (unabhängig vom lastCompletedWeek>0-Block): findet
+  die kommende Woche über scoreboard.json (das dank ESPNs API schon
+  alle 15 Wochen inkl. noch ungespielter Paarungen enthält), prüft ob
+  sie wirklich noch nicht begonnen hat (alle Spiele UNDECIDED), und
+  schreibt data/week-previews.json fort.
+- scripts/generate-recaps.mjs: neue collectPreviewFacts()/
+  buildWeekPreviewPrompt()/generateWeekPreview() + eigener
+  WEEK_PREVIEW_SYSTEM_PROMPT (Konjunktiv/Futur statt Rückblick, explizit
+  keine erfundenen Ergebnisse). pickFactsForGame() nimmt jetzt einen
+  optionalen factCollector-Parameter, damit Vorschau und Recap dieselbe
+  Kategorie-Deckelung/Zufallsauswahl-Logik teilen können.
+- schedule.html: neuer "🔮 Vorschau auf die Woche"-Block, gleiche
+  einklappbare Kartenoptik wie der Gesamt-Recap-Block, erscheint am
+  Kopf der jeweils kommenden Woche. Mit Playwright bei 390px und
+  1200px getestet (zu/aufgeklappt).
+
+Mit gemockter API getestet: Prompt-Aufbau, Schlagzeile+Text-Parsing
+und Fakten-Auswahl funktionieren wie erwartet. data/week-previews.json
+startet leer, wird ab dem nächsten Dienstags-Lauf befüllt.
