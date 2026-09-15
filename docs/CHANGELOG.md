@@ -59,3 +59,36 @@ falscher Kachel-Eintrag.
 Mit Playwright bei 390px (Handy) und 1200px (Desktop) getestet, inkl.
 Klick-Test dass die ganze Kachel (auch der Beschreibungstext, nicht nur
 der Titel) den Link auslöst.
+
+## 2026-09-15 – `608ffc8` Recaps: falsche "Start bei 0 Punkten"-Erzählung gefixt, Recap-Button sichtbarer
+
+Dritter echter Befund aus dem Woche-1-Lauf: fast jeder Recap erzählte
+eine "Team lag früh bei 0.0 Punkten"-Geschichte. Ursache: der einzige
+Live-Snapshot dieser Woche wurde VOR dem eigentlichen Spielbeginn
+aufgenommen (Workflow kam erst mitten in der Woche dazu) und zeigte
+buchstäblich 0:0 für alle 5 Spiele – kein echter Frühstand, sondern
+schlicht "Spiel hatte noch nicht angefangen". Alle Live-Fakten
+(Frühstarter/Spätzünder, Kollaps/Comeback, Nervenkrieg, Zittersieg,
+Dauerhafter Nervenkrieg) haben das trotzdem als echten Datenpunkt
+gewertet.
+
+Fix: extractDiffTimeline() und findPaceFact() ignorieren jetzt
+Snapshots, in denen ein Spiel noch bei 0:0 steht – das ist kein
+Zwischenstand, sondern "noch nicht losgegangen". Betrifft auch
+data/season-personality.json: dort hatte JEDES Woche-1-Siegerteam
+fälschlich "ledWireToWire" kassiert, weil der 0:0-Fake-Startpunkt nie
+als Rückstand zählte – zurückgesetzt, damit es sauber neu aufgebaut
+wird.
+
+Ausserdem das Wort "Snapshot" (zu technisch, kein Football-Jargon) aus
+den Fakten-Sätzen entfernt (durch "Zwischenstand"/"im Wochenverlauf"
+ersetzt) und dem System-Prompt eine explizite Anweisung gegeben, den
+Begriff zu vermeiden.
+
+Recap-Button auf schedule.html war nur eine kleine unauffällige
+Textzeile ohne jede Button-Optik – jetzt eine klar erkennbare
+Pillen-Form mit Amber-Hintergrund und rotierendem Pfeil-Indikator beim
+Auf-/Zuklappen, Label von "Recap" auf "Recap lesen" präzisiert.
+
+Alle 5 Woche-1-Recaps aus dem Cache entfernt, damit sie mit den Fixes
+sauber neu generiert werden.
