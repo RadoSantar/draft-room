@@ -192,6 +192,9 @@
     <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
     <span class="title">Fantasy Playbook</span>
   </a>
+  <button class="nav-toggle" id="navToggle" aria-label="Menü" aria-expanded="false">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="6" x2="17" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="14" x2="17" y2="14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
   <div class="header-sync-wrap">
     <select class="header-sync-select" id="syncTeamSelect" aria-label="Dein Team für geräteübergreifenden Sync"></select>
     <span class="header-sync-status mono" id="syncStatus"></span>
@@ -267,6 +270,8 @@
 
 <script>
 (function(){
+  window.DraftRoomShared.initHeaderNav();
+
   var themePicker = window.DraftRoomShared.initThemePicker({
     select: document.getElementById('themeSelect'),
     headerLogo: document.getElementById('headerLogo'),

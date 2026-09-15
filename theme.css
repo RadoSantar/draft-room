@@ -385,6 +385,32 @@
   .header-sync-select{max-width:none;flex:1 1 auto;}
 }
 
+/* Header-Menü-Toggle (Handy): Team-Sync-Auswahl und Tool-Nav sind auf schmalen Screens
+   standardmässig eingeklappt (sonst 3-4 Zeilen Header), Klick auf den Button klappt sie auf.
+   Auf breiteren Screens bleibt der Toggle unsichtbar und beide Blöcke immer sichtbar. */
+.nav-toggle{
+  display:none;
+  align-items:center;
+  justify-content:center;
+  width:36px;
+  height:36px;
+  border-radius:8px;
+  border:1px solid rgba(243,239,228,0.3);
+  background:transparent;
+  color:var(--chalk);
+  cursor:pointer;
+  flex:0 0 auto;
+}
+.nav-toggle svg{width:18px;height:18px;}
+.nav-toggle:hover, .nav-toggle:focus-visible{border-color:var(--amber);}
+@media (max-width:640px){
+  .nav-toggle{display:flex;}
+  header.topbar{flex-wrap:wrap;}
+  header.topbar .header-sync-wrap, header.topbar .tool-nav{display:none;flex-basis:100%;}
+  header.topbar.nav-open .header-sync-wrap{display:flex;margin-top:2px;}
+  header.topbar.nav-open .tool-nav{display:flex;margin-top:10px;}
+}
+
 /* Back-to-Top-Button */
 .back-to-top{
   position:fixed;

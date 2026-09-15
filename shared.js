@@ -169,6 +169,20 @@
     };
   }
 
+  /* Verdrahtet den Mobile-Menü-Toggle im Header (id="navToggle"): Team-Sync-Auswahl und Tool-Nav
+     sind auf schmalen Screens per CSS eingeklappt (siehe theme.css), dieser Button schaltet die
+     Klasse "nav-open" auf <header class="topbar"> um. Auf breiteren Screens ist der Button per
+     CSS unsichtbar und die Klasse ohne Effekt. */
+  function initHeaderNav(){
+    var toggle = document.getElementById('navToggle');
+    var header = document.querySelector('header.topbar');
+    if(!toggle || !header) return;
+    toggle.addEventListener('click', function(){
+      var isOpen = header.classList.toggle('nav-open');
+      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    });
+  }
+
   /* ESPN-Stat-IDs für die kona_player_info-Projektion (statSourceId=1, statSplitTypeId=0, Saison 2026 = id "102026").
      Nur die Kern-Kategorien, die aus Saison-Totalen ableitbar sind – siehe Hinweis in projectedPoints(). */
   var STAT = {
@@ -273,6 +287,7 @@
     logoUrl: logoUrl,
     syncHeaderLogo: syncHeaderLogo,
     initThemePicker: initThemePicker,
-    initSyncBar: initSyncBar
+    initSyncBar: initSyncBar,
+    initHeaderNav: initHeaderNav
   };
 })(window);
