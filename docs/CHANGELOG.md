@@ -166,20 +166,3 @@ Alle 5 Seiten mit Playwright bei 390px getestet (alle Kapitel-Namen,
 inkl. der beiden längsten "Draft-Ablauf"/"Draft-Tipps": Header bleibt
 einzeilig, Sync-Auswahl wieder sichtbar) und bei 1200px (Desktop
 unverändert, kein Abschneiden).
-
-## 2026-09-15 – `ffbc00b` Recaps: max_tokens für Einzel-Recaps von 600 auf 900 erhöht
-
-Erster Live-Lauf mit den 13 neuen Fakten-Kategorien: 2 von 5 Recaps
-scheiterten mit "bei max_tokens abgeschnitten" - die zusätzlichen,
-teils längeren Fakten-Sätze (z.B. Positions-Dauerschwäche mit Team-
-und Liga-Schnitt) lassen den Prompt-Kontext im Schnitt wachsen, das
-alte 600-Token-Budget (unverändert seit früh in dieser Session) reicht
-jetzt öfter nicht mehr. Der bestehende Truncation-Check hat die
-abgeschnittenen Antworten korrekt verworfen statt sie als kaputte
-Recaps zu cachen - kein Datenschaden, nur zwei fehlende Recaps für
-diesen Lauf.
-
-Auf 900 angehoben. data/game-recaps.json NICHT komplett geleert, da
-3 der 5 Woche-1-Recaps im letzten Lauf schon sauber mit dem finalen
-Kategorie-Budget durchliefen - nur die 2 fehlenden werden beim nächsten
-Sync-Lauf dank der bestehenden Idempotenz-Prüfung automatisch nachgeholt.
