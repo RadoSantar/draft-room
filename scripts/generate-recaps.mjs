@@ -37,7 +37,15 @@ async function callClaude(userPrompt, systemPrompt = SYSTEM_PROMPT, maxTokens = 
     throw new Error(`Claude-API-Fehler (${res.status}): ${text}`);
   }
   const data = await res.json();
-  const text = (data.content?.[0]?.text || '').trim();
+  // Bei aktiviertem Extended Thinking steht vor dem eigentlichen Text oft ein
+  // "thinking"-Block an content[0] – nur content[0].text zu nehmen liefert dann fälschlich
+  // leeren Text, obwohl die Antwort da ist. Alle "text"-Blöcke zusammenfügen ist robust
+  // dagegen, unabhängig davon, ob/wie viele Nicht-Text-Blöcke davor stehen.
+  const text = (data.content || [])
+    .filter((block) => block.type === 'text')
+    .map((block) => block.text)
+    .join('')
+    .trim();
   if (!text) {
     throw new Error(`Claude-Antwort war leer (stop_reason: ${data.stop_reason || '?'})`);
   }
