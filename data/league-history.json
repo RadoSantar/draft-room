@@ -1,5 +1,20 @@
 {
-  "lastUpdated": null,
-  "seasons": {},
-  "note": "Wird manuell befüllt, sobald die Screenshots/History-Daten aus der ESPN-App vorliegen (Saison 2024 & 2025) - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, standings: [{ name, wins, losses, ties, pointsFor }] }."
+  "lastUpdated": "2026-09-15T00:00:00.000Z",
+  "seasons": {
+    "2024": {
+      "champion": "Tackleberry Finn",
+      "runnerUp": "Saints of Anarchy",
+      "thirdPlace": "Lord of the Rings",
+      "standings": [
+        { "name": "Tackleberry Finn", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
+        { "name": "Saints of Anarchy", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
+        { "name": "Lord of the Rings", "wins": 9, "losses": 6, "ties": 0, "pointsFor": null },
+        { "name": "Hopp Schwiiz", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
+        { "name": "Zurich City Ravens", "wins": 5, "losses": 10, "ties": 0, "pointsFor": null },
+        { "name": "Sherlock Mahomes", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null }
+      ],
+      "note": "Liga hatte 2024 offenbar nur 6 Teams (gewachsen auf 10 bis 2026). 'Lord of the Rings' existiert im aktuellen (2026er) Kader nicht - ob das derselbe Manager unter neuem Team-Namen ist, ist unbekannt, wird NICHT angenommen. pointsFor aus dem Screenshot nicht ersichtlich, bewusst null gelassen statt geraten."
+    }
+  },
+  "note": "Wird manuell befüllt, sobald weitere Screenshots/History-Daten aus der ESPN-App vorliegen (v.a. noch Saison 2025) - nicht automatisch synced, da die ESPN-League-History-Seite Login braucht und nicht per Sync-Skript abrufbar ist. Schema pro Saison: { champion, runnerUp, thirdPlace, standings: [{ name, wins, losses, ties, pointsFor }] }."
 }
