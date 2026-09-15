@@ -98,7 +98,10 @@
   .standings-rank{min-width:22px;color:var(--hash);}
   .standings-name{font-family:'Source Serif 4', serif;font-size:14px;flex:1;}
   .standings-record{min-width:64px;text-align:right;}
-  .standings-pf{min-width:76px;text-align:right;color:var(--amber);}
+  .standings-pf{min-width:76px;text-align:right;color:var(--amber);display:flex;flex-direction:column;align-items:flex-end;line-height:1.3;}
+  .standings-pf-sub{font-size:9.5px;color:var(--chalk);opacity:.6;letter-spacing:.02em;}
+  .standings-row.head .standings-pf{color:var(--hash);}
+  .standings-row.head .standings-pf-sub{opacity:1;}
   .standings-streak{min-width:52px;text-align:right;}
   .standings-streak.win{color:var(--amber);}
 
@@ -611,14 +614,16 @@
     }
 
     function standingsRowsHtml(rows){
-      var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf">Punkte</span><span class="standings-streak">Streak</span></div>';
+      var html = '<div class="standings-row head"><span class="standings-rank">#</span><span class="standings-name">Team</span><span class="standings-record">S-N-U</span><span class="standings-pf"><span class="standings-pf-main">Erzielt</span><span class="standings-pf-sub">Kass. / Diff</span></span><span class="standings-streak">Streak</span></div>';
       html += rows.map(function(r, i){
         var streakLabel = r.streakLength ? (r.streakType === 'WIN' ? 'W' : 'L') + r.streakLength : '–';
+        var diff = r.pointsFor - (r.pointsAgainst || 0);
+        var diffLabel = (diff >= 0 ? '+' : '') + diff.toFixed(1);
         return '<div class="standings-row">' +
           '<span class="standings-rank">' + (i + 1) + '</span>' +
           '<span class="standings-name">' + r.name + '</span>' +
           '<span class="standings-record">' + r.wins + '-' + r.losses + (r.ties ? '-' + r.ties : '') + '</span>' +
-          '<span class="standings-pf">' + r.pointsFor.toFixed(1) + '</span>' +
+          '<span class="standings-pf"><span class="standings-pf-main">' + r.pointsFor.toFixed(1) + '</span><span class="standings-pf-sub">' + (r.pointsAgainst || 0).toFixed(1) + ' / ' + diffLabel + '</span></span>' +
           '<span class="standings-streak' + (r.streakType === 'WIN' ? ' win' : '') + '">' + streakLabel + '</span>' +
         '</div>';
       }).join('');
