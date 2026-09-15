@@ -273,3 +273,5 @@ Spitznamen), BADGE_CATEGORY_TO_FACT_CATEGORY und pickBadge() verdrahtet.
 Getestet via gemocktem Claude-API-Call: alle drei Kategorien rendern
 korrekt im Recap- und im Vorschau-Prompt, Cap-Mechanismus greift wie
 erwartet.
+
+## 2026-09-15 – `d7cca25` Session-Log: Punkt D vollständig abgeschlossen (Playoff-Bracket, Hall of Fame, Fakten-Funktionen) nachgetragen
