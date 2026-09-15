@@ -233,3 +233,11 @@ nicht nachgezogen worden - holt den kompletten Stand seither nach:
 Bank-Thema-Redundanz-Fix, 13 neue Fakten-Kategorien + season-stats.json,
 komplettes Wochen-Vorschau-Feature, Spielplan-Reordering/Einklappen,
 Mittwoch-Gating für die Vorschau.
+
+## 2026-09-15 – `660e2b1` Standings: kassierte Punkte + Punktedifferenz ergänzt
+
+pointsAgainst steckte bereits in data/standings.json, wurde bisher nur
+nicht angezeigt. Statt einer weiteren vollen Spalte (auf Mobile kein
+Platz mehr) zeigt die bestehende Punkte-Spalte jetzt zweizeilig:
+erzielte Punkte oben (wie bisher), kassierte Punkte + Differenz klein
+darunter.
