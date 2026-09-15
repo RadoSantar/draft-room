@@ -89,3 +89,12 @@ reisserischer im Kopf (Schlagzeile) und cross-game statt pro Spiel.
 
 data/week-recaps.json startet leer, wird beim nächsten Sync-Lauf nach
 Woche 1 befüllt.
+
+## 2026-09-15 – `36e4c6f` Gesamt-Recap auf schedule.html jetzt einklappbar
+
+War bisher als reine Text-Karte immer voll ausgeklappt sichtbar -
+gleiche Behandlung wie die Einzel-Spiel-Recaps: <details>/<summary>
+mit Tag + Schlagzeile immer sichtbar (das ist der Hook zum Aufklappen),
+Fliesstext klappt per Klick auf/zu, rotierender Pfeil-Indikator wie
+beim Einzel-Recap-Button. Mit Playwright bei 390px und 1200px getestet,
+inkl. Klick-Test für Auf-/Zuklappen.
