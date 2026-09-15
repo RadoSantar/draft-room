@@ -223,3 +223,13 @@ Die Vorschau wird zwar schon am Dienstag vom Sync generiert, soll aber
 erst ab Mittwoch (Tag, an dem die Woche zur "aktuellen" wird) auf der
 Seite erscheinen. Nutzt dieselbe Reveal-Datum-Logik wie das
 Nach-oben-Rutschen der aktuellen Woche.
+
+## 2026-09-15 – `e4d9ac9` Session-Log: Redundanz-Fix, neue Fakten-Kategorien, Wochen-Vorschau, Spielplan-Aufräumen
+
+Der automatische Changelog (docs/CHANGELOG.md) hatte die Commits schon
+erfasst, aber die ausführliche, von Hand gepflegte Session-Doku
+(docs/session-log-*.md) war seit dem letzten Eintrag vom 2026-09-14
+nicht nachgezogen worden - holt den kompletten Stand seither nach:
+Bank-Thema-Redundanz-Fix, 13 neue Fakten-Kategorien + season-stats.json,
+komplettes Wochen-Vorschau-Feature, Spielplan-Reordering/Einklappen,
+Mittwoch-Gating für die Vorschau.
