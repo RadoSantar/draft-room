@@ -4,6 +4,15 @@ name: ESPN Sync
 # ESPN-Liga, lässt Claude Spiel-Recaps für die zuletzt abgeschlossene Woche
 # schreiben, und committet die aktualisierten data/*.json-Dateien.
 # Rührt NIE data/team-content.json (handgeschriebene Analysen/Ausblicke) an.
+#
+# Der Commit-Schritt fetch+resettet+recommittet bei einem Push-Konflikt (siehe
+# unten) statt zu rebasen: ist zwischen Checkout und Push ein anderer Commit auf
+# main gelandet (z.B. der Changelog-Bot, oder ein manueller Push), würde ein
+# simples "git push" sonst mit "fetch first" fehlschlagen – live so beobachtet,
+# als während eines Sync-Laufs parallel committet wurde. Da data/*.json bei
+# jedem Lauf komplett neu von ESPN generiert wird (keine manuellen Edits),
+# ist "auf dem neuesten main neu committen" einfacher und robuster als ein
+# Rebase, der bei geänderter Basis in Konflikte laufen könnte.
 on:
   schedule:
     # Jeden Dienstag ab 05:00 UTC (= 07:00 Schweizer Sommerzeit), danach alle 2h bis 13:00 UTC.
@@ -40,10 +49,22 @@ jobs:
         run: |
           git config user.name "espn-sync-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/
-          if git diff --cached --quiet; then
-            echo "Keine Änderungen, nichts zu committen."
-          else
+          for delay in 0 2 4 8 16; do
+            if [ "$delay" != "0" ]; then
+              echo "Erneuter Versuch in ${delay}s…"
+              git fetch origin main
+              git reset --soft origin/main
+              sleep "$delay"
+            fi
+            git add data/
+            if git diff --cached --quiet; then
+              echo "Keine Änderungen, nichts zu committen."
+              exit 0
+            fi
             git commit -m "Automatischer ESPN-Sync: Standings, Scoreboard, Transaktionen, Power Rankings"
-            git push
-          fi
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo "Push nach mehreren Versuchen fehlgeschlagen."
+          exit 1

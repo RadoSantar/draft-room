@@ -48,10 +48,22 @@ jobs:
         run: |
           git config user.name "espn-sync-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add data/live-snapshots.json
-          if git diff --cached --quiet; then
-            echo "Keine Änderungen, nichts zu committen."
-          else
+          for delay in 0 2 4 8 16; do
+            if [ "$delay" != "0" ]; then
+              echo "Erneuter Versuch in ${delay}s…"
+              git fetch origin main
+              git reset --soft origin/main
+              sleep "$delay"
+            fi
+            git add data/live-snapshots.json
+            if git diff --cached --quiet; then
+              echo "Keine Änderungen, nichts zu committen."
+              exit 0
+            fi
             git commit -m "Live-Score-Snapshot"
-            git push
-          fi
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo "Push nach mehreren Versuchen fehlgeschlagen."
+          exit 1

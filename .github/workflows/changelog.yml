@@ -29,27 +29,39 @@ jobs:
           fetch-depth: 0
 
       - name: Changelog-Eintrag anhängen
+        env:
+          TRIGGER_SHA: ${{ github.sha }}
         run: |
-          set -e
-          SHA=$(git rev-parse --short HEAD)
-          if grep -q "\`$SHA\`" docs/CHANGELOG.md 2>/dev/null; then
-            echo "Commit $SHA schon im Changelog, nichts zu tun."
-            exit 0
-          fi
-          DATE=$(git log -1 --pretty=format:'%ad' --date=short HEAD)
-          SUBJECT=$(git log -1 --pretty=format:'%s' HEAD)
-          BODY=$(git log -1 --pretty=format:'%b' HEAD | sed '/^Co-Authored-By:/d; /^Claude-Session:/d')
-          {
-            echo ""
-            echo "## $DATE – \`$SHA\` ${SUBJECT}"
-            if [ -n "$(echo "$BODY" | tr -d '[:space:]')" ]; then
-              echo ""
-              echo "$BODY"
-            fi
-          } >> docs/CHANGELOG.md
-
+          SHA=$(git rev-parse --short "$TRIGGER_SHA")
+          DATE=$(git log -1 --pretty=format:'%ad' --date=short "$TRIGGER_SHA")
+          SUBJECT=$(git log -1 --pretty=format:'%s' "$TRIGGER_SHA")
+          BODY=$(git log -1 --pretty=format:'%b' "$TRIGGER_SHA" | sed '/^Co-Authored-By:/d; /^Claude-Session:/d')
           git config user.name "changelog-bot"
           git config user.email "actions@users.noreply.github.com"
-          git add docs/CHANGELOG.md
-          git commit -m "Changelog: $SUBJECT"
-          git push
+          for delay in 0 2 4 8 16; do
+            if [ "$delay" != "0" ]; then
+              echo "Erneuter Versuch in ${delay}s…"
+              sleep "$delay"
+            fi
+            git fetch origin main
+            git reset --hard origin/main
+            if grep -q "\`$SHA\`" docs/CHANGELOG.md 2>/dev/null; then
+              echo "Commit $SHA schon im Changelog, nichts zu tun."
+              exit 0
+            fi
+            {
+              echo ""
+              echo "## $DATE – \`$SHA\` ${SUBJECT}"
+              if [ -n "$(echo "$BODY" | tr -d '[:space:]')" ]; then
+                echo ""
+                echo "$BODY"
+              fi
+            } >> docs/CHANGELOG.md
+            git add docs/CHANGELOG.md
+            git commit -m "Changelog: $SUBJECT"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo "Push nach mehreren Versuchen fehlgeschlagen."
+          exit 1
