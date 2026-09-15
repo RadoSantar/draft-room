@@ -258,20 +258,34 @@ function collectFacts(game) {
 // landen, auch wenn theoretisch mehr Spiele davon betroffen wären. Reicht die Auswahl an unverbrauchten
 // Kategorien für ein Spiel nicht aus (wenige verfügbare Fakten, alles schon ausgereizt), wird mit den
 // meistgenutzten Kategorien aufgefüllt, damit kein Recap komplett ohne Fakten dasteht.
+//
+// Manche Kategorien lesen sich für die Leserschaft wie dieselbe Geschichte, obwohl sie technisch
+// unterschiedliche Felder sind (Bank-Reue beim Verlierer vs. beim Sieger trotz Sieg) - die teilen
+// sich hier deshalb ein gemeinsames Budget, statt beide unabhängig bis zu capPerCategory auszureizen
+// (sonst könnten z.B. 4 von 5 Spielen irgendeine Bank-Geschichte erzählen statt max. 2).
+const CATEGORY_GROUP = {
+  loserBenchRegret: 'benchRegret',
+  winnerBenchRegret: 'benchRegret'
+};
+function groupOf(category) { return CATEGORY_GROUP[category] || category; }
+
 function pickFactsForGame(game, categoryUsage, seedSuffix, maxFacts, capPerCategory) {
   const key = game.week + '-' + [game.homeId, game.awayId].sort().join('-') + seedSuffix;
   const shuffled = seededShuffle(collectFacts(game), key);
   const fresh = [];
   const overused = [];
   shuffled.forEach((fact) => {
-    ((categoryUsage[fact.category] || 0) < capPerCategory ? fresh : overused).push(fact);
+    ((categoryUsage[groupOf(fact.category)] || 0) < capPerCategory ? fresh : overused).push(fact);
   });
   // Reicht "fresh" nicht: mit den am wenigsten überstrapazierten Kategorien auffüllen (stabile
   // Sortierung erhält dabei die Shuffle-Reihenfolge innerhalb gleich oft genutzter Kategorien),
   // damit sich der Überlauf über mehrere Kategorien verteilt statt eine einzelne immer weiter zu nutzen.
-  overused.sort((a, b) => (categoryUsage[a.category] || 0) - (categoryUsage[b.category] || 0));
+  overused.sort((a, b) => (categoryUsage[groupOf(a.category)] || 0) - (categoryUsage[groupOf(b.category)] || 0));
   const picked = fresh.concat(overused).slice(0, maxFacts);
-  picked.forEach((fact) => { categoryUsage[fact.category] = (categoryUsage[fact.category] || 0) + 1; });
+  picked.forEach((fact) => {
+    const g = groupOf(fact.category);
+    categoryUsage[g] = (categoryUsage[g] || 0) + 1;
+  });
   return picked;
 }
 
