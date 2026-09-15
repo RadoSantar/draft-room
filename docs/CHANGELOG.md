@@ -98,3 +98,33 @@ mit Tag + Schlagzeile immer sichtbar (das ist der Hook zum Aufklappen),
 Fliesstext klappt per Klick auf/zu, rotierender Pfeil-Indikator wie
 beim Einzel-Recap-Button. Mit Playwright bei 390px und 1200px getestet,
 inkl. Klick-Test für Auf-/Zuklappen.
+
+## 2026-09-15 – `268a425` Header: Sync-Auswahl + Tool-Nav auf dem Handy hinter Menü-Button eingeklappt
+
+Auf schmalen Screens brauchte der Header bisher 4 Zeilen (Titel, Team-
+Sync-Auswahl, dann die Nav-Pills umgebrochen auf 2 weitere Zeilen) -
+bei sticky Header dauerhaft sichtbarer Platzverlust beim Scrollen
+durch lange Listen (Spielplan, Draft Board etc.). Betrifft draft-
+board.html, my-team.html, power-rankings.html und schedule.html
+(index.html hat mit dem Kapitel-Menü bereits eine eigene kompakte
+Lösung und war nicht betroffen).
+
+Neuer Hamburger-Button (id="navToggle") direkt neben dem Titel: auf
+≤640px sind Sync-Auswahl und Tool-Nav standardmässig eingeklappt
+(header bleibt eine einzige kompakte Zeile), Klick auf den Button
+klappt beides in einem Rutsch auf. Auf breiteren Screens ist der
+Button unsichtbar und beide Blöcke wie bisher immer sichtbar - keine
+Verhaltensänderung am Desktop.
+
+- theme.css: neue .nav-toggle-Styles + Collapse-Regeln für
+  .header-sync-wrap/.tool-nav unter header.topbar.nav-open, zentral
+  für alle Seiten statt pro Seite dupliziert.
+- shared.js: neue initHeaderNav() verdrahtet den Button (Klick
+  schaltet die Klasse "nav-open" auf <header>), exportiert über
+  window.DraftRoomShared wie initThemePicker/initSyncBar.
+- Die 4 betroffenen Seiten: Toggle-Button-Markup ergänzt, initHeaderNav()
+  aufgerufen.
+
+Mit Playwright auf allen 4 Seiten bei 390px (Toggle sichtbar,
+Sync/Nav initial eingeklappt, nach Klick aufgeklappt) und 1200px
+(Toggle unsichtbar, alles wie gehabt sichtbar) getestet.
