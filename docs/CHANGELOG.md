@@ -446,3 +446,21 @@ funktioniert wie erwartet.
 
 Backup-Eintrag für den weakestAtPos-Fix (Commit 7c9dec0), damit bei
 Kontextverlust nichts verloren geht.
+
+## 2026-09-16 – `0babb3a` Mein Team: Verletzt-Status-Badges (Q/D/O/IR) bei Spielernamen
+
+ESPNs injuryStatus-Feld (QUESTIONABLE/DOUBTFUL/OUT/INJURY_RESERVE/SUSPENSION/
+DAY_TO_DAY) wird jetzt in sync-espn.mjs mit durchgereicht (Projektions-Fetch,
+Spieler-Pool, roster.json-Kader-Mapping) und in my-team.html sowohl für
+rostered Spieler (Starter/Bench, Trade-Karten, Drop-Kandidat) als auch für
+Free-Agent-Vorschläge als kompakter Badge neben dem Namen angezeigt. OUT/
+INJURY_RESERVE/SUSPENSION heben sich farblich stärker ab als Q/D. ACTIVE
+und fehlende Werte zeigen bewusst keinen Badge.
+
+Ziel: einen angeschlagenen Starter nicht übersehen bzw. bei FA-/Trade-
+Vorschlägen sofort sehen, ob ein empfohlener Spieler gerade verletzt ist.
+
+Verifiziert per Playwright mit gemocktem Roster (4 unterschiedliche Status-
+Werte auf Starter/Bench verteilt) - alle 4 Badges erscheinen mit korrektem
+Label und korrekter is-out-Einfärbung, Spieler ohne Status zeigen keinen
+Badge.
