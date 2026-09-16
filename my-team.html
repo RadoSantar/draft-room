@@ -162,6 +162,13 @@
   .proj-sub{opacity:.75;font-size:0.85em;}
   .mt-empty{padding:6px 18px 12px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
 
+  /* Deine Saison bisher */
+  .mt-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:14px 0;}
+  .mt-stat-tile{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:12px 14px;}
+  .mt-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);margin-bottom:4px;}
+  .mt-stat-value{font-size:21px;color:var(--turf);}
+  .mt-stat-sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
+
   /* Team-Analyse */
   .mt-analysis-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
   .mt-analysis-table th{
@@ -305,6 +312,10 @@
     <p class="copy" id="mtRosterCopy"></p>
     <div class="mt-roster" id="mtRoster"></div>
 
+    <h2 class="section-head">Deine Saison bisher</h2>
+    <p class="copy" id="mtSeasonStatsCopy"></p>
+    <div id="mtSeasonStats"></div>
+
     <h2 class="section-head">Team-Analyse</h2>
     <p class="copy" id="mtAnalysisCopy"></p>
     <table class="mt-analysis-table" id="mtAnalysisTable"></table>
@@ -388,6 +399,8 @@
   var mainStatusEl = document.getElementById('mainStatus');
   var contentEl = document.getElementById('mtContent');
   var rosterEl = document.getElementById('mtRoster');
+  var seasonStatsCopyEl = document.getElementById('mtSeasonStatsCopy');
+  var seasonStatsEl = document.getElementById('mtSeasonStats');
   var analysisTableEl = document.getElementById('mtAnalysisTable');
   var analysisTextEl = document.getElementById('mtAnalysisText');
   var faStatusEl = document.getElementById('faStatus');
@@ -563,6 +576,44 @@
     rosterEl.innerHTML =
       '<div class="mt-roster-label mono">Starter (' + team.starters.length + '/11)</div>' + starterRows +
       '<div class="mt-roster-label mono">Bench (' + team.bench.length + ')</div>' + benchRows;
+  }
+
+  function statTileHtml(label, value, sub){
+    return '<div class="mt-stat-tile"><div class="mt-stat-label mono">' + label + '</div><div class="mt-stat-value display">' + value + '</div>' +
+      (sub ? '<div class="mt-stat-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  // Fasst die schon in season-stats.json vorhandenen Team-Kennzahlen (aus archiveSeasonStats() in
+  // sync-espn.mjs, bisher nur als Zutat für Recap-Fakten genutzt) zu einer eigenen "so lief deine
+  // Saison bisher"-Übersicht zusammen - Definitionen exakt wie dort: "knapp" = Marge unter 5 Punkten,
+  // "Blowout" = Marge über 30 Punkten, "Überraschungssieg" = Sieg, obwohl laut Projektion Aussenseiter.
+  function renderSeasonStats(teamId){
+    var t = SEASON_STATS.teams && SEASON_STATS.teams[String(teamId)];
+    if(!t || !t.games){
+      seasonStatsCopyEl.textContent = 'Noch keine ausgewerteten Wochen für dieses Team – diese Übersicht füllt sich, sobald der erste Spieltag abgeschlossen ist.';
+      seasonStatsEl.innerHTML = '';
+      return;
+    }
+    seasonStatsCopyEl.textContent = 'Kennzahlen aus den bisher ' + t.games + ' ausgewerteten Woche' + (t.games > 1 ? 'n' : '') + ' dieser Saison.';
+
+    var streakLabel = t.curStreakType === 'WIN' ? (t.curStreakLen + ' Sieg' + (t.curStreakLen > 1 ? 'e' : '') + ' in Folge')
+      : t.curStreakType === 'LOSS' ? (t.curStreakLen + ' Niederlage' + (t.curStreakLen > 1 ? 'n' : '') + ' in Folge')
+      : '–';
+    var bestStreakLabel = (t.longestWinStreak || 0) >= (t.longestLossStreak || 0)
+      ? (t.longestWinStreak ? t.longestWinStreak + ' Siege' : '–')
+      : (t.longestLossStreak + ' Niederlagen');
+
+    var tiles = [
+      statTileHtml('Aktuelle Serie', streakLabel),
+      statTileHtml('Längste Serie', bestStreakLabel, 'diese Saison'),
+      statTileHtml('Knappe Spiele', (t.closeWins || 0) + ' S / ' + (t.closeLosses || 0) + ' N', 'Marge unter 5 Punkten'),
+      statTileHtml('Blowouts', (t.blowoutWins || 0) + ' S / ' + (t.blowoutLosses || 0) + ' N', 'Marge über 30 Punkten'),
+      statTileHtml('Topscorer der Woche', (t.weeksAsHighScorer || 0) + 'x', 'höchste Punktzahl der Liga'),
+      statTileHtml('Flopscorer der Woche', (t.weeksAsLowScorer || 0) + 'x', 'niedrigste Punktzahl der Liga'),
+      statTileHtml('Überraschungssiege', (t.upsetWins || 0) + 'x', 'Sieg als Aussenseiter laut Projektion'),
+      statTileHtml('Bank-Punkte liegen gelassen', fmt(t.benchGapTotal || 0), 'Summe der besten verpassten Starter-Swaps je Woche')
+    ];
+    seasonStatsEl.innerHTML = '<div class="mt-stat-grid">' + tiles.join('') + '</div>';
   }
 
   // Rangiert Positionen nach PROZENTUALER statt absoluter Abweichung vom Liga-Schnitt. Grund:
@@ -880,6 +931,7 @@
 
     var roster = liveOptimizedTeam(rawRoster);
     renderRoster(roster);
+    renderSeasonStats(power.id);
     var myPosTotals = VALUE_MODE === 'live' ? posTotalsForRoster(roster) : (power.posTotals || {});
     var avg = VALUE_MODE === 'live' ? computeLeagueAvgLive() : LEAGUE_AVG;
     var weakPositions = renderAnalysis(myPosTotals, avg);
