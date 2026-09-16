@@ -388,3 +388,31 @@ korrekt auf die Bank verdrängt - im Projektion-Modus bleibt die
 ursprüngliche Aufstellung unverändert.
 
 ## 2026-09-16 – `9d207b8` Session-Log: Aufstellungs-Reoptimierung im Live-Modus nachgetragen
+
+## 2026-09-16 – `e8b196b` Mein Team: Schwächste-Positionen-Ranking auf prozentuale statt absolute Abweichung umgestellt
+
+Nutzer-Beobachtung: Free-Agent-/Trade-Vorschläge zeigten fast nur QBs,
+obwohl bereits 2 im Roster stehen (kein dritter nötig, höchstens ein
+Ersatz) - RB/WR-Bedarf (dort theoretisch bis zu 4 startbar) kam kaum vor.
+
+Root Cause: die "schwächste Position" wurde nach absolutem Punkte-Diff
+zum Liga-Schnitt bestimmt. QB macht in diesem Scoring-System grundsätzlich
+viel mehr Rohpunkte als andere Positionen (Team-Summen ~1000 bei QB vs.
+~300 bei TE/K vs. ~30 bei DST) - jede kleine relative QB-Schwäche erzeugt
+dadurch einen riesigen absoluten Punkte-Rückstand, der die Auswahl fast
+immer dominiert, während ein echtes RB/WR-Loch mit kleinerem absoluten
+aber grösserem relativen Rückstand systematisch unterging.
+
+Fix: renderAnalysis() berechnet jetzt zusätzlich pctDiff (Diff/Liga-Ø)
+und sortiert danach statt nach dem absoluten Diff - sowohl für die
+"Schwächste Position(en)"-Anzeige als auch für targetPositions in
+renderFreeAgents()/buildTradeIdeas() (Auswahl, welche Positionen für
+Free-Agent-/Trade-Vorschläge durchsucht werden). Tabellen-Spalte zeigt
+jetzt Punkte-Diff UND Prozent nebeneinander, damit die Rangierung
+nachvollziehbar bleibt. targetPositions-Anzahl von 2 auf 3 erhöht,
+damit mehr Positionsvielfalt in einer Ansicht sichtbar wird.
+
+Getestet mit vollständig kontrolliertem Mock (QB: -100 Punkte/-10%,
+RB: -60 Punkte/-12%) - Tabelle zeigt beide Prozentwerte korrekt, "Schwächste
+Positionen"-Text listet RB jetzt korrekt VOR QB trotz kleinerem absoluten
+Rückstand, genau das vom Nutzer beschriebene Szenario aufgelöst.
