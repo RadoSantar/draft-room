@@ -386,3 +386,5 @@ ein Bankspieler mit niedriger Projektion aber hohem Live-Boost wird im
 Live-Modus korrekt zum Starter befördert, ein bisheriger Starter dafür
 korrekt auf die Bank verdrängt - im Projektion-Modus bleibt die
 ursprüngliche Aufstellung unverändert.
+
+## 2026-09-16 – `9d207b8` Session-Log: Aufstellungs-Reoptimierung im Live-Modus nachgetragen
