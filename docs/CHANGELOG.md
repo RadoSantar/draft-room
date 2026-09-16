@@ -358,3 +358,31 @@ Getestet: mit gemocktem 1-Wochen-Datensatz aktiviert der Live-Modus
 jetzt sofort korrekt (amber, abweichende Werte ggü. Projektion).
 
 ## 2026-09-16 – `944d731` Session-Log: Toggle-Sichtbarkeit + Schwelle-auf-1-Feedback nachgetragen
+
+## 2026-09-16 – `5ce2c0f` Mein Team: Live-Modus optimiert jetzt auch die Aufstellung selbst, nicht nur die Zahlen
+
+Nutzer-Beobachtung: Toggle auf "Live-Punkteschnitt" änderte nur die
+angezeigten Werte, aber wer Starter/Bank ist blieb unverändert - die
+Aufstellung kam weiterhin unverändert aus roster.json (dort serverseitig
+fest proj-optimal berechnet).
+
+Client-seitiger Nachbau von buildOptimalLineup() aus scoring.mjs
+(identische STARTER_SLOTS-Definition), aber nach playerValue() statt
+starr nach proj sortiert: buildOptimalLineupByValue() + liveOptimizedTeam()
+als Wrapper. Jetzt überall verwendet, wo eine roster.json-Team-Struktur
+konsumiert wird (Roster-Anzeige, Free-Agent-Drop-Kandidat, Trade-Ideen -
+sowohl fürs eigene Team als auch für jedes andere Team in der Schleife),
+damit Aufstellung UND angezeigte Zahlen konsistent demselben Modus folgen.
+
+Im Projektion-Modus liefert das dieselbe Aufstellung wie bisher (da
+playerValue() dort ohnehin auf proj zurückfällt) - reine Verhaltensänderung
+im Live-Modus: ein Bankspieler mit besserem echtem Punkteschnitt kann jetzt
+tatsächlich einen bisherigen Starter verdrängen.
+
+Getestet mit vollständig kontrolliertem Mock-Roster (auch roster.json/
+power-rankings.json gemockt, nicht nur season-stats.json, da echte
+proj-Werte zwischen Testläufen durch laufende Hintergrund-Syncs drifteten):
+ein Bankspieler mit niedriger Projektion aber hohem Live-Boost wird im
+Live-Modus korrekt zum Starter befördert, ein bisheriger Starter dafür
+korrekt auf die Bank verdrängt - im Projektion-Modus bleibt die
+ursprüngliche Aufstellung unverändert.
