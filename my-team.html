@@ -112,6 +112,13 @@
     cursor:pointer;
   }
 
+  /* Bewertungs-Basis-Toggle (Projektion vs. Live-Punkteschnitt) */
+  .mt-mode-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px;}
+  .mt-mode-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
+  .mt-mode-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .mt-mode-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
+  .mt-mode-copy{margin-bottom:16px;}
+
   /* Roster */
   .mt-roster{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin:14px 0;}
   .mt-roster-label{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;padding:12px 18px 4px;}
@@ -120,6 +127,7 @@
   .mt-slot-row .slot-player{font-family:'Source Serif 4', serif;font-size:14.5px;flex:1;}
   .mt-slot-row .slot-player .team{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);}
   .mt-slot-row .slot-proj{font-family:'IBM Plex Mono', monospace;font-size:12.5px;color:var(--chalk);opacity:.8;}
+  .mt-slot-row .slot-proj.is-real{color:var(--amber);opacity:1;}
   .mt-bench-row{display:flex;justify-content:space-between;gap:8px;padding:5px 18px;}
   .mt-bench-row .name{font-family:'Source Serif 4', serif;font-size:14px;}
   .mt-bench-row .name .team{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);}
@@ -233,7 +241,7 @@
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
-    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Sobald ein Spieler mindestens 2 echte Saisonspiele hinter sich hat, wechselt seine Bewertung automatisch von der Vorschau-Projektion auf eine Rest-Saison-Schätzung aus seinem tatsächlichen Punkteschnitt (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – die Vorschau verliert mit echten Ergebnissen an Aussagekraft. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst.</span>
+    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Per Toggle oben wählst du die Bewertungs-Basis: "Live-Punkteschnitt" nutzt für Spieler mit mindestens 2 echten Saisonspielen eine Rest-Saison-Schätzung aus ihrem tatsächlichen Punkteschnitt statt der Vorschau-Projektion (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – Spieler ohne genug echte Daten fallen weiterhin auf die Projektion zurück. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl angezeigt, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst. "Projektion" ignoriert echte Ergebnisse komplett und zeigt durchgehend die Vorschau.</span>
   </div>
 
   <div class="mt-team-picker">
@@ -241,15 +249,22 @@
     <select class="mt-team-select" id="myTeamSelect" aria-label="Team für die Analyse wählen"></select>
   </div>
 
+  <div class="mt-mode-picker">
+    <span class="mono mt-mode-label">Bewertungs-Basis:</span>
+    <button type="button" class="mt-mode-tab" data-mode="proj">Projektion</button>
+    <button type="button" class="mt-mode-tab" data-mode="live">Live-Punkteschnitt</button>
+  </div>
+  <p class="copy mt-mode-copy" id="mtModeCopy"></p>
+
   <div class="calc-status" id="mainStatus">Wähle oben dein Team, um deine Analyse zu sehen.</div>
 
   <div id="mtContent" hidden>
     <h2 class="section-head">Mein Roster</h2>
-    <p class="copy">Deine aktuell beste Startaufstellung und Bench, sortiert nach Saison-Projektion – das ist gleichzeitig die Antwort auf "wen sollte ich starten": ohne wochenspezifische Prognosen ist die Saison-Projektion die beste verfügbare Näherung.</p>
+    <p class="copy" id="mtRosterCopy"></p>
     <div class="mt-roster" id="mtRoster"></div>
 
     <h2 class="section-head">Team-Analyse</h2>
-    <p class="copy">Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der Projektionen aller Spieler auf dem Kader je Position, nicht nur der Starter). Negative Werte = unterdurchschnittlich, hier lohnt sich ein Blick auf Free Agents oder Trades zuerst.</p>
+    <p class="copy" id="mtAnalysisCopy"></p>
     <table class="mt-analysis-table" id="mtAnalysisTable"></table>
     <div id="mtAnalysisText"></div>
 
@@ -259,7 +274,7 @@
     <div id="mtFreeAgents"></div>
 
     <h2 class="section-head">Trade-Ideen</h2>
-    <p class="copy">Konkrete Vorschläge – auch als Paket (z.B. 2-für-1 oder 3-für-2), nicht nur 1-für-1: Bankspieler von dir gegen Bankspieler eines anderen Teams an deiner Schwachposition, möglichst ausgeglichen nach Saison-Projektion, derselbe Massstab wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>.</p>
+    <p class="copy" id="mtTradesCopy"></p>
     <div id="mtTrades"></div>
 
     <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, ADP) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a>. Kader-Daten aktualisieren sich automatisch etwa wöchentlich per GitHub Actions; Free-Agent-Empfehlungen sind live bei jedem Seitenaufruf.</p>
@@ -331,16 +346,24 @@
   var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0;
   var faRequestToken = 0;
 
-  // Sobald für einen Spieler echte Punkte aus dieser Saison vorliegen (mind. MIN_GAMES_FOR_REAL
-  // Auftritte, Start oder Bank - siehe archiveSeasonStats() in sync-espn.mjs), wird die Vorschau-
-  // Projektion durch eine auf dem echten Punkteschnitt basierende Rest-Saison-Schätzung ersetzt:
-  // bereits erzielte Punkte + (Punkteschnitt pro Spiel × geschätzt verbleibende Spiele). Bleibt auf
-  // derselben Grössenordnung wie proj (Saison-Gesamtsumme), damit beide direkt vergleichbar bleiben,
-  // auch wenn in einer Trade-Idee ein Spieler schon "real" bewertet wird und ein anderer noch nicht.
+  // Bewertungs-Basis, vom Nutzer per Toggle wählbar (siehe .mt-mode-picker): "proj" erzwingt für
+  // ALLE Spieler die Vorschau-Projektion, unabhängig davon, ob echte Daten vorliegen. "live" nutzt
+  // für Spieler mit genug echten Auftritten (mind. MIN_GAMES_FOR_REAL, Start oder Bank - siehe
+  // archiveSeasonStats() in sync-espn.mjs) eine auf dem echten Punkteschnitt basierende Rest-Saison-
+  // Schätzung statt der Projektion: bereits erzielte Punkte + (Punkteschnitt pro Spiel × geschätzt
+  // verbleibende Spiele). Bleibt bewusst auf derselben Grössenordnung wie proj (Saison-Gesamtsumme),
+  // damit beide Modi direkt vergleichbar bleiben und Spieler ohne genug echte Daten (Rookies, frisch
+  // geholte Free Agents) im "live"-Modus trotzdem sinnvoll auf proj zurückfallen, statt undefiniert
+  // zu bleiben.
+  var VALUE_MODE_KEY = 'draftroom-value-mode';
   var MIN_GAMES_FOR_REAL = 2;
   var TOTAL_SEASON_WEEKS = 15;
+  var VALUE_MODE = 'live';
+  try { VALUE_MODE = localStorage.getItem(VALUE_MODE_KEY) || 'live'; } catch(e){}
+  if(VALUE_MODE !== 'proj' && VALUE_MODE !== 'live') VALUE_MODE = 'live';
 
   function playerValue(p){
+    if(VALUE_MODE === 'proj') return { value: p.proj || 0, isReal: false };
     var id = p.playerId != null ? p.playerId : p.id;
     var rec = SEASON_STATS && SEASON_STATS.players && SEASON_STATS.players[id];
     if(rec && rec.gamesPlayed >= MIN_GAMES_FOR_REAL && LAST_COMPLETED_WEEK > 0){
@@ -377,12 +400,38 @@
     return avg;
   }
 
+  // Live-Pendant zu power-rankings.json's posTotals (dort fest proj-basiert, weil das die eigenständige
+  // "Kader-Stärke laut Draft"-Kennzahl der Power-Rankings-Seite ist - bewusst NICHT verändert). Hier
+  // stattdessen direkt aus ROSTER berechnet, damit die Positions-Stärke-Analyse auf dieser Seite dem
+  // gewählten VALUE_MODE folgen kann.
+  function posTotalsForRoster(rosterTeam){
+    var totals = {};
+    [].concat(rosterTeam.starters, rosterTeam.bench).forEach(function(p){
+      totals[p.pos] = (totals[p.pos] || 0) + playerValue(p).value;
+    });
+    return totals;
+  }
+
+  function computeLeagueAvgLive(){
+    var sums = {}, counts = {};
+    ROSTER.forEach(function(rt){
+      var totals = posTotalsForRoster(rt);
+      POS_ORDER.forEach(function(pos){
+        sums[pos] = (sums[pos] || 0) + (totals[pos] || 0);
+        counts[pos] = (counts[pos] || 0) + 1;
+      });
+    });
+    var avg = {};
+    POS_ORDER.forEach(function(pos){ avg[pos] = counts[pos] ? sums[pos] / counts[pos] : 0; });
+    return avg;
+  }
+
   function renderRoster(team){
     var starterRows = team.starters.map(function(p){
       return '<div class="mt-slot-row">' +
         '<span class="slot-tag mono">' + p.slot + '</span>' +
         '<span class="slot-player">' + p.name + ' <span class="team mono">' + (p.proTeam || '') + '</span></span>' +
-        '<span class="slot-proj mono">' + fmt(p.proj) + '</span>' +
+        valueHtml(p, 'slot-proj mono') +
       '</div>';
     }).join('');
     var benchRows = team.bench.length ? team.bench.slice().sort(function(a, b){
@@ -399,9 +448,9 @@
       '<div class="mt-roster-label mono">Bench (' + team.bench.length + ')</div>' + benchRows;
   }
 
-  function renderAnalysis(team, avg){
+  function renderAnalysis(myPosTotals, avg){
     var diffs = POS_ORDER.map(function(pos){
-      var mine = (team.posTotals && team.posTotals[pos]) || 0;
+      var mine = myPosTotals[pos] || 0;
       return { pos: pos, mine: mine, avg: avg[pos], diff: mine - avg[pos] };
     });
     var sorted = diffs.slice().sort(function(a, b){ return a.diff - b.diff; });
@@ -628,7 +677,41 @@
     tradesEl.innerHTML = ideas.map(tradeCardHtml).join('');
   }
 
+  var CURRENT_TEAM = '';
+
+  function updateModeCopy(){
+    document.querySelectorAll('.mt-mode-tab').forEach(function(btn){
+      btn.classList.toggle('is-active', btn.dataset.mode === VALUE_MODE);
+    });
+    document.getElementById('mtModeCopy').textContent = VALUE_MODE === 'live'
+      ? 'Roster, Team-Analyse, Free-Agent- und Trade-Vorschläge unten nutzen den tatsächlichen Punkteschnitt dieser Saison, sobald genug echte Spiele vorliegen (amber markiert) – sonst Fallback auf Projektion.'
+      : 'Roster, Team-Analyse, Free-Agent- und Trade-Vorschläge unten nutzen durchgehend die Vorschau-Projektion, unabhängig von bereits gespielten Wochen.';
+    document.getElementById('mtRosterCopy').textContent = VALUE_MODE === 'live'
+      ? 'Deine aktuell beste Startaufstellung und Bench, sortiert nach der gewählten Bewertungs-Basis oben – Spieler mit echten Daten dieser Saison sind amber markiert.'
+      : 'Deine aktuell beste Startaufstellung und Bench, sortiert nach Saison-Projektion – das ist gleichzeitig die Antwort auf "wen sollte ich starten": ohne wochenspezifische Prognosen ist die Saison-Projektion die beste verfügbare Näherung.';
+    document.getElementById('mtAnalysisCopy').textContent = VALUE_MODE === 'live'
+      ? 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der aktuellen Werte aller Spieler auf dem Kader je Position, nicht nur der Starter). Negative Werte = unterdurchschnittlich, hier lohnt sich ein Blick auf Free Agents oder Trades zuerst.'
+      : 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der Projektionen aller Spieler auf dem Kader je Position, nicht nur der Starter). Negative Werte = unterdurchschnittlich, hier lohnt sich ein Blick auf Free Agents oder Trades zuerst.';
+    document.getElementById('mtTradesCopy').innerHTML = 'Konkrete Vorschläge – auch als Paket (z.B. 2-für-1 oder 3-für-2), nicht nur 1-für-1: Bankspieler von dir gegen Bankspieler eines anderen Teams an deiner Schwachposition, möglichst ausgeglichen nach ' +
+      (VALUE_MODE === 'live'
+        ? 'aktuellem Punkteschnitt dieser Saison.'
+        : 'Saison-Projektion (derselbe Massstab wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>).');
+  }
+
+  function setValueMode(mode){
+    if(mode === VALUE_MODE) return;
+    VALUE_MODE = mode;
+    try { localStorage.setItem(VALUE_MODE_KEY, mode); } catch(e){}
+    updateModeCopy();
+    if(CURRENT_TEAM) showTeam(CURRENT_TEAM);
+  }
+
+  document.querySelectorAll('.mt-mode-tab').forEach(function(btn){
+    btn.addEventListener('click', function(){ setValueMode(btn.dataset.mode); });
+  });
+
   function showTeam(teamName){
+    CURRENT_TEAM = teamName;
     var power = POWER.filter(function(t){ return t.name === teamName; })[0];
     var roster = ROSTER.filter(function(t){ return t.name === teamName; })[0];
     if(!power || !roster){
@@ -642,7 +725,9 @@
     contentEl.hidden = false;
 
     renderRoster(roster);
-    var weakPositions = renderAnalysis(power, LEAGUE_AVG);
+    var myPosTotals = VALUE_MODE === 'live' ? posTotalsForRoster(roster) : (power.posTotals || {});
+    var avg = VALUE_MODE === 'live' ? computeLeagueAvgLive() : LEAGUE_AVG;
+    var weakPositions = renderAnalysis(myPosTotals, avg);
     renderFreeAgents(roster, weakPositions);
     renderTrades(power.id, roster, weakPositions);
   }
@@ -652,6 +737,8 @@
       return '<option value="' + name + '">' + name + '</option>';
     }).join('');
 
+    updateModeCopy();
+
     var preselect = (window.DraftRoomSync && window.DraftRoomSync.getName && window.DraftRoomSync.getName()) || '';
     if(preselect && shared.TEAM_NAMES.indexOf(preselect) !== -1){
       teamPickEl.value = preselect;
@@ -660,7 +747,7 @@
 
     teamPickEl.addEventListener('change', function(){
       if(teamPickEl.value) showTeam(teamPickEl.value);
-      else { contentEl.hidden = true; mainStatusEl.textContent = 'Wähle oben dein Team, um deine Analyse zu sehen.'; mainStatusEl.classList.remove('error'); }
+      else { CURRENT_TEAM = ''; contentEl.hidden = true; mainStatusEl.textContent = 'Wähle oben dein Team, um deine Analyse zu sehen.'; mainStatusEl.classList.remove('error'); }
     });
   }
 
