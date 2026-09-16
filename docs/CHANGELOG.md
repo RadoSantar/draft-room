@@ -306,3 +306,25 @@ live automatisch, sobald echte season-stats.json-Daten mit gamesPlayed
 vorliegen (erste echte Daten kommen mit dem Woche-2-Abschluss).
 
 ## 2026-09-16 – `692b9a8` Session-Log: PA-Label + Mein-Team-Echte-Punkte-Feature (neuer Tages-Log 2026-09-16)
+
+## 2026-09-16 – `3dc9e16` Mein Team: Punkteschnitt (Ø) zusätzlich zur Rest-Saison-Schätzung angezeigt; Woche-1-Backfill vorbereitet
+
+Nutzer-Frage: sollte neben der Rest-Saison-Schätzung auch die aktuelle
+reale Form sichtbar sein, damit man selbst einschätzen kann, ob ein
+heisser Lauf hält (statt dass die Schätzung das schon stillschweigend
+verrechnet)? Ja - playerValue() lieferte den Punkteschnitt (ppg) intern
+schon, wurde aber nirgends angezeigt. Jetzt zeigt jede real bewertete
+Stelle (Bank-Liste, Free-Agent-Karten, Drop-Hinweis, Trade-Karten) beide
+Zahlen: die Rest-Saison-Schätzung (treibt weiter die Trade-Fairness-
+Rechnung) UND den rohen "Ø"-Punkteschnitt daneben.
+
+data/season-stats.json auf die leere Ausgangsstruktur zurückgesetzt:
+Woche 1 ist die einzige bisher abgeschlossene Woche, ESPNs Boxscore-API
+liefert vergangene Wochen weiterhin ab - beim nächsten Sync-Lauf wird
+Woche 1 komplett unter dem aktuellen (vollständigen) Code neu berechnet,
+inkl. der erst kürzlich hinzugefügten Felder (totalPoints/gamesPlayed
+pro Spieler, Serien-/Margen-/Highscorer-Tracking pro Team), die unter
+dem alten Code für Woche 1 gefehlt hätten. Da nur eine einzige Woche
+betroffen ist, ist das Zurücksetzen gefahrlos (kein Datenverlust
+möglich) - einfacher und sicherer als ein selektives Nachtragen einzelner
+Felder unter Verdopplungsrisiko.
