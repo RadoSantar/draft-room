@@ -521,3 +521,31 @@ season-stats.json zeigt korrekt den Fallback-Hinweis statt leerer Kacheln.
 ## 2026-09-16 – `cb6965c` Session-Log: Team-Statistik-Sektion nachgetragen
 
 Backup-Eintrag für Commit 931f974.
+
+## 2026-09-16 – `b95ed07` Mein Team: Neue "Diese Woche"-Digest-Sektion oben auf der Seite
+
+Bisher waren die wichtigsten Signale über die ganze Seite verteilt (Team-
+Analyse, Free-Agent-Empfehlungen, Trade-Ideen) - man musste sich durchscrollen,
+um sich ein Gesamtbild zu machen. Neue Sektion "Diese Woche" ganz oben
+bündelt zwei Dinge:
+
+1. Schwächste Position + Top-Free-Agent-Empfehlung dafür in einem Satz
+   (FA-Empfehlung wird asynchron nachgeladen, sobald renderFreeAgents()
+   fertig ist - dieselbe Berechnung, nur zusätzlich oben zusammengefasst).
+2. Live-vs-Projektion-Divergenz-Alarm: unabhängig vom aktuell gewählten
+   Toggle wird IMMER sowohl die proj- als auch die live-optimale Aufstellung
+   berechnet (playerValue()/buildOptimalLineupByValue()/liveOptimizedTeam()
+   dafür um einen optionalen modeOverride-Parameter erweitert, Default bleibt
+   das globale VALUE_MODE - rückwärtskompatibel). Weicht die live-optimale
+   Aufstellung ab (ein Bankspieler mit besserem echtem Punkteschnitt würde
+   einen aktuellen proj-Starter verdrängen), erscheint ein Hinweis - nur
+   wenn man gerade NICHT schon im Live-Modus ist, sonst zeigt die Aufstellung
+   das längst von selbst.
+
+Verifiziert per Playwright: (1) Divergenz-Alarm erscheint korrekt und nennt
+den richtigen Bankspieler/Starter bei einem gezielt konstruierten Szenario
+(Bankspieler mit riesigem Live-Punkteschnitt, Modus auf "proj" erzwungen).
+(2) Schwächste-Position-Hinweis erscheint mit "wird geladen"-Platzhalter,
+wechselt nach FA-Fetch korrekt zu "konnte nicht geladen werden" (da der
+Live-ESPN-Endpoint in dieser Sandbox nicht mockbar ist - dieselbe bekannte
+Einschränkung wie bei den vorherigen FA-Tests dieser Session).
