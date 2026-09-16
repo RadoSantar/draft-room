@@ -34,7 +34,8 @@ async function fetchProjections(ids) {
       pos,
       proTeam: TEAM_ABBR[p.proTeamId] || '',
       adp: (p.ownership && p.ownership.averageDraftPosition) || 999,
-      proj: projectedPoints(pos, stats)
+      proj: projectedPoints(pos, stats),
+      injuryStatus: p.injuryStatus || null
     };
   });
   return out;
@@ -1495,7 +1496,8 @@ async function main() {
         name: p.fullName,
         pos,
         proTeam: TEAM_ABBR[p.proTeamId] || '',
-        adp: (p.ownership && p.ownership.averageDraftPosition) || 999
+        adp: (p.ownership && p.ownership.averageDraftPosition) || 999,
+        injuryStatus: p.injuryStatus || null
       };
       currentRosterIds[t.id].push(p.id);
     });
@@ -1515,7 +1517,7 @@ async function main() {
     if (proj) return proj;
     const pooled = playerPool[id];
     if (pooled) return { ...pooled, proj: null };
-    return { name: 'Unbekannter Spieler #' + id, pos: '?', proTeam: '', adp: 999, proj: null };
+    return { name: 'Unbekannter Spieler #' + id, pos: '?', proTeam: '', adp: 999, proj: null, injuryStatus: null };
   }
 
   // ---- Power Rankings: aktuelle Kader -> optimale Aufstellung -> Rangliste ----
@@ -1527,7 +1529,7 @@ async function main() {
   const teamsComputed = teamData.teams.map((t) => {
     const roster = currentRosterIds[t.id].map((id) => {
       const info = playerInfo(id);
-      return { playerId: id, name: info.name, pos: info.pos, proTeam: info.proTeam, proj: info.proj, adp: info.adp };
+      return { playerId: id, name: info.name, pos: info.pos, proTeam: info.proTeam, proj: info.proj, adp: info.adp, injuryStatus: info.injuryStatus || null };
     });
     const { starters, bench } = buildOptimalLineup(roster);
     rosterByTeam[t.id] = { id: t.id, name: teamNames[t.id], starters, bench };

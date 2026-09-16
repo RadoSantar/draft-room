@@ -191,6 +191,21 @@
 
   .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:66ch;}
 
+  .mt-injury-badge{
+    display:inline-block;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.03em;
+    padding:1px 5px;
+    border-radius:4px;
+    margin-left:5px;
+    background:var(--endzone-soft);
+    color:var(--chalk);
+    vertical-align:middle;
+  }
+  .mt-injury-badge.is-out{background:var(--endzone);}
+
   @media (max-width:640px){
     header.topbar{padding:12px 16px;flex-wrap:wrap;}
     main{padding:24px 16px 80px;}
@@ -242,7 +257,7 @@
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
-    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Per Toggle oben wählst du die Bewertungs-Basis: "Live-Punkteschnitt" nutzt für Spieler mit mindestens einem echten Saisonspiel eine Rest-Saison-Schätzung aus ihrem tatsächlichen Punkteschnitt statt der Vorschau-Projektion (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – Spieler ohne jede echte Daten (z.B. gerade erst geholte Free Agents) fallen weiterhin auf die Projektion zurück. Bei nur 1-2 gespielten Wochen ist der Punkteschnitt naturgemäss noch verrauscht (ein einzelnes starkes oder schwaches Spiel schlägt voll durch) – wird zuverlässiger, je mehr Wochen dazukommen. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl angezeigt, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst. "Projektion" ignoriert echte Ergebnisse komplett und zeigt durchgehend die Vorschau.</span>
+    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Per Toggle oben wählst du die Bewertungs-Basis: "Live-Punkteschnitt" nutzt für Spieler mit mindestens einem echten Saisonspiel eine Rest-Saison-Schätzung aus ihrem tatsächlichen Punkteschnitt statt der Vorschau-Projektion (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – Spieler ohne jede echte Daten (z.B. gerade erst geholte Free Agents) fallen weiterhin auf die Projektion zurück. Bei nur 1-2 gespielten Wochen ist der Punkteschnitt naturgemäss noch verrauscht (ein einzelnes starkes oder schwaches Spiel schlägt voll durch) – wird zuverlässiger, je mehr Wochen dazukommen. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl angezeigt, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst. "Projektion" ignoriert echte Ergebnisse komplett und zeigt durchgehend die Vorschau. Ein <span class="mt-injury-badge" style="margin-left:0;">Q</span>/<span class="mt-injury-badge" style="margin-left:0;">D</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">O</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">IR</span>-Badge neben einem Namen zeigt ESPNs aktuellen Verletzungsstatus (Fraglich/Zweifelhaft/Out/Injured Reserve) – hilft, einen angeschlagenen Starter nicht zu übersehen.</span>
   </div>
 
   <div class="mt-team-picker">
@@ -332,6 +347,15 @@
   var shared = window.DraftRoomShared;
   var POS_ORDER = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
   var POS_LABEL = { QB: 'QB', RB: 'RB', WR: 'WR', TE: 'TE', K: 'K', DST: 'DEF' };
+  // ESPNs injuryStatus-Werte auf kurze Badges gemappt - 'ACTIVE' und unbekannte/fehlende Werte
+  // zeigen bewusst keinen Badge, um keine falschen Warnungen zu erzeugen.
+  var INJURY_LABEL = { QUESTIONABLE: 'Q', DOUBTFUL: 'D', OUT: 'O', INJURY_RESERVE: 'IR', SUSPENSION: 'SUSP', DAY_TO_DAY: 'DTD' };
+  function injuryBadgeHtml(p){
+    var label = p.injuryStatus && INJURY_LABEL[p.injuryStatus];
+    if(!label) return '';
+    var isOut = p.injuryStatus === 'OUT' || p.injuryStatus === 'INJURY_RESERVE' || p.injuryStatus === 'SUSPENSION';
+    return '<span class="mt-injury-badge' + (isOut ? ' is-out' : '') + '" title="' + p.injuryStatus + '">' + label + '</span>';
+  }
 
   var teamPickEl = document.getElementById('myTeamSelect');
   var statusKickerEl = document.getElementById('statusKicker');
@@ -497,7 +521,7 @@
     var starterRows = team.starters.map(function(p){
       return '<div class="mt-slot-row">' +
         '<span class="slot-tag mono">' + p.slot + '</span>' +
-        '<span class="slot-player">' + p.name + ' <span class="team mono">' + (p.proTeam || '') + '</span></span>' +
+        '<span class="slot-player">' + p.name + injuryBadgeHtml(p) + ' <span class="team mono">' + (p.proTeam || '') + '</span></span>' +
         valueHtml(p, 'slot-proj mono') +
       '</div>';
     }).join('');
@@ -505,7 +529,7 @@
       return playerValue(b).value - playerValue(a).value;
     }).map(function(p){
       return '<div class="mt-bench-row">' +
-        '<span class="name">' + p.name + ' <span class="team mono">' + POS_LABEL[p.pos] + ' · ' + (p.proTeam || '') + '</span></span>' +
+        '<span class="name">' + p.name + injuryBadgeHtml(p) + ' <span class="team mono">' + POS_LABEL[p.pos] + ' · ' + (p.proTeam || '') + '</span></span>' +
         valueHtml(p, 'proj mono') +
       '</div>';
     }).join('') : '<div class="mt-empty">Keine Bankspieler.</div>';
@@ -577,7 +601,8 @@
             pos: pos,
             team: shared.TEAM_ABBR[pl.proTeamId] || '',
             adp: (pl.ownership && pl.ownership.averageDraftPosition) || 999,
-            proj: shared.projectedPoints(pos, projStats)
+            proj: shared.projectedPoints(pos, projStats),
+            injuryStatus: pl.injuryStatus || null
           };
         }).filter(function(p){ return !ROSTERED_IDS.has(p.id); })
           .sort(function(a, b){ return playerValue(b).value - playerValue(a).value; })
@@ -627,7 +652,7 @@
           var v = playerValue(p);
           var basis = v.isReal ? ('Ø-Saison ' + fmt(v.value) + ' (Ø' + v.ppg.toFixed(1) + '/Spiel)') : ('Proj. ' + fmt(v.value));
           return '<div class="mt-rec-card">' +
-            '<div class="mt-rec-title">' + p.name + ' <span class="mono" style="color:var(--hash);font-size:12px;">' + p.team + '</span></div>' +
+            '<div class="mt-rec-title">' + p.name + injuryBadgeHtml(p) + ' <span class="mono" style="color:var(--hash);font-size:12px;">' + p.team + '</span></div>' +
             '<div class="mt-rec-proj' + (v.isReal ? ' is-real' : '') + '">' + basis + ' · ADP ' + fmt(p.adp) + '</div>' +
           '</div>';
         }).join('');
@@ -639,8 +664,8 @@
             var wv = playerValue(weakest.player);
             var wvBasis = wv.isReal ? ('Ø-Saison ' + fmt(wv.value) + ', Ø' + wv.ppg.toFixed(1) + '/Spiel') : ('Proj. ' + fmt(wv.value));
             dropHint = weakest.isStarter
-              ? '<p class="copy">Kein Bankspieler auf ' + POS_LABEL[pos] + ' – ein Upgrade würde direkt deinen aktuellen Starter <strong>' + weakest.player.name + '</strong> (' + wvBasis + ') ersetzen.</p>'
-              : '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + weakest.player.name + '</strong> (' + wvBasis + ') – dein schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
+              ? '<p class="copy">Kein Bankspieler auf ' + POS_LABEL[pos] + ' – ein Upgrade würde direkt deinen aktuellen Starter <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') ersetzen.</p>'
+              : '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') – dein schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
           } else dropHint = '';
         }
         return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
@@ -678,7 +703,7 @@
     return players.map(function(p){
       var v = playerValue(p);
       var valueText = fmt(v.value) + (v.isReal ? ' (Ø' + v.ppg.toFixed(1) + ')' : '');
-      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + '</span><span class="mt-trade-player-meta mono' + (v.isReal ? ' is-real' : '') + '">' + POS_LABEL[p.pos] + ' · ' + valueText + '</span></div>';
+      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + injuryBadgeHtml(p) + '</span><span class="mt-trade-player-meta mono' + (v.isReal ? ' is-real' : '') + '">' + POS_LABEL[p.pos] + ' · ' + valueText + '</span></div>';
     }).join('');
   }
 
