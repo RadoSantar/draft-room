@@ -418,3 +418,26 @@ Positionen"-Text listet RB jetzt korrekt VOR QB trotz kleinerem absoluten
 Rückstand, genau das vom Nutzer beschriebene Szenario aufgelöst.
 
 ## 2026-09-16 – `96fdb56` Session-Log: Prozentuale Positions-Ranking-Umstellung nachgetragen
+
+## 2026-09-16 – `7c9dec0` Mein Team: Drop-Kandidat berücksichtigt jetzt die Position des Free-Agent-Vorschlags
+
+Bug: Der "Drop-Kandidat"-Hinweis neben Free-Agent-Vorschlägen wählte bisher
+global den schwächsten Bankspieler über alle Positionen hinweg (weakestBenchDrop),
+unabhängig davon, für welche Position der Free Agent vorgeschlagen wurde.
+Konkreter Fall: Stafford (QB) performt schwach -> ein QB-Free-Agent wird
+vorgeschlagen -> als Drop-Kandidat erschien aber Rico Dowdle (RB), obwohl nur
+1 QB startbar ist und ein RB-Drop für ein QB-Upgrade keinen Sinn ergibt.
+
+Fix: weakestBenchDrop(team) entfernt, durch weakestAtPos(team, pos) ersetzt.
+Sucht zuerst den schwächsten Bankspieler auf genau dieser Position; gibt es
+dort keinen Bankspieler (typ. bei K/DST mit oft nur 1 Rostered-Spieler),
+fällt die Funktion auf den aktuellen Starter dieser Position zurück und
+kennzeichnet ihn als "würde ersetzt" statt fälschlich eine andere Position
+vorzuschlagen. renderFreeAgents ruft weakestAtPos jetzt pro Position einzeln
+innerhalb der Karten-Schleife auf statt einmal global davor.
+
+Verifiziert per direktem Funktionstest (Playwright, window-Hook auf
+weakestAtPos, da der Live-ESPN-FA-Endpoint in dieser Sandbox nicht mockbar
+ist): weakestAtPos(team, 'QB') liefert jetzt korrekt "Backup QB" statt
+"Rico Dowdle"; Fallback auf den Starter bei fehlender Bank-Tiefe (K-Beispiel)
+funktioniert wie erwartet.
