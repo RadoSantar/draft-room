@@ -356,3 +356,5 @@ noch verrauscht ist und sich mit mehr Wochen stabilisiert.
 
 Getestet: mit gemocktem 1-Wochen-Datensatz aktiviert der Live-Modus
 jetzt sofort korrekt (amber, abweichende Werte ggü. Projektion).
+
+## 2026-09-16 – `944d731` Session-Log: Toggle-Sichtbarkeit + Schwelle-auf-1-Feedback nachgetragen
