@@ -416,3 +416,5 @@ Getestet mit vollständig kontrolliertem Mock (QB: -100 Punkte/-10%,
 RB: -60 Punkte/-12%) - Tabelle zeigt beide Prozentwerte korrekt, "Schwächste
 Positionen"-Text listet RB jetzt korrekt VOR QB trotz kleinerem absoluten
 Rückstand, genau das vom Nutzer beschriebene Szenario aufgelöst.
+
+## 2026-09-16 – `96fdb56` Session-Log: Prozentuale Positions-Ranking-Umstellung nachgetragen
