@@ -162,6 +162,21 @@
   .proj-sub{opacity:.75;font-size:0.85em;}
   .mt-empty{padding:6px 18px 12px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
 
+  /* Diese Woche - Digest */
+  .mt-digest-item{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--turf);
+    border-radius:6px;
+    padding:12px 16px;
+    margin-bottom:10px;
+    font-size:14.5px;
+    color:var(--ink-soft);
+  }
+  .mt-digest-item strong{color:var(--ink);}
+  .mt-digest-item.is-alert{border-left-color:var(--amber);}
+  .mt-digest-empty{font-size:14px;color:var(--ink-soft);font-style:italic;}
+
   /* Deine Saison bisher */
   .mt-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:14px 0;}
   .mt-stat-tile{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:12px 14px;}
@@ -308,6 +323,9 @@
   <div class="calc-status" id="mainStatus">Wähle oben dein Team, um deine Analyse zu sehen.</div>
 
   <div id="mtContent" hidden>
+    <h2 class="section-head">Diese Woche</h2>
+    <div id="mtDigest"></div>
+
     <h2 class="section-head">Mein Roster</h2>
     <p class="copy" id="mtRosterCopy"></p>
     <div class="mt-roster" id="mtRoster"></div>
@@ -403,6 +421,7 @@
   var seasonStatsEl = document.getElementById('mtSeasonStats');
   var analysisTableEl = document.getElementById('mtAnalysisTable');
   var analysisTextEl = document.getElementById('mtAnalysisText');
+  var digestEl = document.getElementById('mtDigest');
   var faStatusEl = document.getElementById('faStatus');
   var faEl = document.getElementById('mtFreeAgents');
   var tradesEl = document.getElementById('mtTrades');
@@ -426,8 +445,9 @@
   try { VALUE_MODE = localStorage.getItem(VALUE_MODE_KEY) || 'live'; } catch(e){}
   if(VALUE_MODE !== 'proj' && VALUE_MODE !== 'live') VALUE_MODE = 'live';
 
-  function playerValue(p){
-    if(VALUE_MODE === 'proj') return { value: p.proj || 0, isReal: false };
+  function playerValue(p, modeOverride){
+    var mode = modeOverride || VALUE_MODE;
+    if(mode === 'proj') return { value: p.proj || 0, isReal: false };
     var id = p.playerId != null ? p.playerId : p.id;
     var rec = SEASON_STATS && SEASON_STATS.players && SEASON_STATS.players[id];
     if(rec && rec.gamesPlayed >= MIN_GAMES_FOR_REAL && LAST_COMPLETED_WEEK > 0){
@@ -517,12 +537,12 @@
     return out;
   }
 
-  function buildOptimalLineupByValue(roster){
+  function buildOptimalLineupByValue(roster, modeOverride){
     var pools = {};
     ['QB', 'RB', 'WR', 'TE', 'K', 'DST'].forEach(function(pos){
       pools[pos] = roster.filter(function(p){ return p.pos === pos; })
         .slice()
-        .sort(function(a, b){ return playerValue(b).value - playerValue(a).value; });
+        .sort(function(a, b){ return playerValue(b, modeOverride).value - playerValue(a, modeOverride).value; });
     });
     var starters = [];
     STARTER_SLOTS.forEach(function(slotDef){
@@ -532,7 +552,7 @@
         positions.forEach(function(pos){
           if(pools[pos].length){
             var cand = pools[pos][0];
-            var val = playerValue(cand).value;
+            var val = playerValue(cand, modeOverride).value;
             if(val > bestVal){ best = cand; bestPos = pos; bestVal = val; }
           }
         });
@@ -547,12 +567,13 @@
     return { starters: starters, bench: bench };
   }
 
-  // Liefert das Team mit Starter/Bank neu berechnet nach dem aktuellen VALUE_MODE - überall
-  // verwenden, wo eine roster.json-Team-Struktur konsumiert wird (Roster-Anzeige, Free-Agent-
-  // Drop-Kandidat, Trade-Ideen für sowohl das eigene als auch andere Teams), damit Aufstellung
-  // UND angezeigte Werte konsistent demselben Modus folgen.
-  function liveOptimizedTeam(rosterTeam){
-    var lineup = buildOptimalLineupByValue([].concat(rosterTeam.starters, rosterTeam.bench));
+  // Liefert das Team mit Starter/Bank neu berechnet nach dem aktuellen VALUE_MODE (oder einem
+  // explizit übergebenen Modus, z.B. für den Live-vs-Proj-Divergenz-Check im "Diese Woche"-Digest,
+  // unabhängig vom gerade angezeigten Toggle-Zustand) - überall verwenden, wo eine roster.json-
+  // Team-Struktur konsumiert wird (Roster-Anzeige, Free-Agent-Drop-Kandidat, Trade-Ideen), damit
+  // Aufstellung UND angezeigte Werte konsistent demselben Modus folgen.
+  function liveOptimizedTeam(rosterTeam, modeOverride){
+    var lineup = buildOptimalLineupByValue([].concat(rosterTeam.starters, rosterTeam.bench), modeOverride);
     return { id: rosterTeam.id, name: rosterTeam.name, starters: lineup.starters, bench: lineup.bench };
   }
 
@@ -655,6 +676,44 @@
     return sorted;
   }
 
+  // Bündelt die wichtigsten Signale der Woche an einer Stelle oben auf der Seite, statt dass man
+  // sich durch Roster/Analyse/FA/Trades scrollen muss, um sich ein Bild zu machen:
+  // 1. Schwächste Position + (sobald geladen) die Top-Free-Agent-Empfehlung dafür.
+  // 2. Divergenz-Alarm: unabhängig vom aktuell gewählten Toggle wird IMMER sowohl die proj- als
+  //    auch die live-optimale Aufstellung berechnet (siehe modeOverride bei buildOptimalLineupByValue).
+  //    Weicht die live-optimale Aufstellung von der proj-optimalen ab (ein Bankspieler mit besserem
+  //    echtem Punkteschnitt würde einen aktuellen proj-Starter verdrängen), lohnt sich ein Blick auf
+  //    den Live-Modus - nur relevant, wenn man gerade NICHT schon im Live-Modus ist, sonst zeigt die
+  //    Aufstellung das längst.
+  function renderDigest(rawRoster, weakPositions){
+    var items = [];
+
+    var weakest = weakPositions.filter(function(d){ return d.diff < 0; })[0];
+    if(weakest){
+      items.push('<div class="mt-digest-item" id="mtDigestWeakest"><strong>Schwächste Position: ' + POS_LABEL[weakest.pos] + '</strong> (' + fmtPct(weakest.pctDiff) + ' ggü. Liga-Ø) – <span id="mtDigestFaHint">Free-Agent-Empfehlung wird geladen…</span></div>');
+    }
+
+    var allPlayers = [].concat(rawRoster.starters, rawRoster.bench);
+    var projLineup = buildOptimalLineupByValue(allPlayers, 'proj');
+    var liveLineup = buildOptimalLineupByValue(allPlayers, 'live');
+    var projStarterIds = {};
+    projLineup.starters.forEach(function(p){ projStarterIds[p.playerId] = true; });
+    var liveStarterIds = {};
+    liveLineup.starters.forEach(function(p){ liveStarterIds[p.playerId] = true; });
+    var promoted = liveLineup.starters.filter(function(p){ return !projStarterIds[p.playerId]; });
+    var demoted = projLineup.starters.filter(function(p){ return !liveStarterIds[p.playerId]; });
+    if(promoted.length && VALUE_MODE !== 'live'){
+      items.push('<div class="mt-digest-item is-alert">Bankspieler mit besserer Live-Form: <strong>' + promoted.map(function(p){ return p.name; }).join(', ') + '</strong> würde' + (promoted.length > 1 ? 'n' : '') + ' unter "Live-Punkteschnitt" ' +
+        (demoted.length ? ('<strong>' + demoted.map(function(p){ return p.name; }).join(', ') + '</strong> ') : '') +
+        'als Starter ersetzen – oben auf "Live-Punkteschnitt" umschalten, um das zu übernehmen.</div>');
+    }
+
+    if(!items.length){
+      items.push('<p class="mt-digest-empty">Keine Auffälligkeiten diese Woche – dein Team ist solide über die ganze Bank verteilt.</p>');
+    }
+    digestEl.innerHTML = items.join('');
+  }
+
   function fetchFreeAgents(pos){
     var filter = JSON.stringify({
       players: {
@@ -729,6 +788,13 @@
     Promise.all(targetPositions.map(fetchFreeAgents)).then(function(results){
       if(token !== faRequestToken) return;
       faStatusEl.textContent = '';
+      var digestFaHintEl = document.getElementById('mtDigestFaHint');
+      if(digestFaHintEl){
+        var topList = results[0];
+        digestFaHintEl.textContent = (topList && topList.length)
+          ? ('Top-Empfehlung: ' + topList[0].name + ' (' + POS_LABEL[targetPositions[0]] + ')')
+          : 'aktuell keine passende Free-Agent-Empfehlung verfügbar.';
+      }
       faEl.innerHTML = targetPositions.map(function(pos, i){
         var list = results[i];
         if(!list.length) return '';
@@ -760,6 +826,8 @@
       faStatusEl.innerHTML = 'Free Agents konnten nicht geladen werden. <button type="button" class="mt-retry-btn" id="faRetryBtn">Erneut versuchen</button>';
       faStatusEl.classList.add('error');
       document.getElementById('faRetryBtn').addEventListener('click', function(){ renderFreeAgents(team, weakPositions); });
+      var digestFaHintEl = document.getElementById('mtDigestFaHint');
+      if(digestFaHintEl) digestFaHintEl.textContent = 'Free-Agent-Empfehlung konnte nicht geladen werden.';
     });
   }
 
@@ -935,6 +1003,7 @@
     var myPosTotals = VALUE_MODE === 'live' ? posTotalsForRoster(roster) : (power.posTotals || {});
     var avg = VALUE_MODE === 'live' ? computeLeagueAvgLive() : LEAGUE_AVG;
     var weakPositions = renderAnalysis(myPosTotals, avg);
+    renderDigest(rawRoster, weakPositions);
     renderFreeAgents(roster, weakPositions);
     renderTrades(power.id, roster, weakPositions);
   }
