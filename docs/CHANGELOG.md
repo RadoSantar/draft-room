@@ -469,3 +469,26 @@ Badge.
 
 Neuer Session-Log für das "mach alles"-UX-Paket, Backup-Eintrag für den
 Injury-Badge-Fix (Commit 0babb3a).
+
+## 2026-09-16 – `9401f3d` Mein Team: Skeleton-Ladezustände und Retry-Buttons bei Fehlern
+
+Bisher zeigte die Seite beim Laden der Free-Agent-Empfehlungen nur einen
+Textstatus ohne visuelles Feedback, und ein fehlgeschlagener Fetch (initiale
+Liga-Daten oder Free Agents) endete in einer Sackgasse ohne Möglichkeit,
+es direkt erneut zu versuchen - gerade auf dem Handy/bei wackligem Netz
+spürbar.
+
+Fix:
+- Neue Skeleton-Puls-Platzhalter (.mt-skeleton) während Free-Agent-Fetches
+  laufen, statt leerer Fläche.
+- Retry-Button bei fehlgeschlagenem Free-Agent-Fetch, ruft renderFreeAgents
+  mit denselben Argumenten erneut auf.
+- Initialer Datenload (power-rankings/roster/rostered-ids/season-stats) in
+  loadInitialData() gekapselt, bei Fehler ebenfalls Retry-Button statt
+  Sackgasse.
+
+Verifiziert per Playwright: erster Ladeversuch schlägt gezielt fehl (500),
+Retry-Button erscheint und lädt beim Klick erfolgreich nach; nach
+Team-Auswahl sind kurz Skeleton-Karten sichtbar, danach (da der Live-ESPN-
+Endpoint in dieser Sandbox nicht mockbar ist) schlägt der FA-Fetch fehl und
+zeigt korrekt den Retry-Button.
