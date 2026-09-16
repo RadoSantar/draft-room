@@ -587,9 +587,23 @@
 
   var BENCH_SIZE = 9;
 
-  function weakestBenchDrop(team){
-    if(team.bench.length < BENCH_SIZE) return null; // Bank hat noch freien Platz, kein Drop nötig
-    return team.bench.slice().sort(function(a, b){ return playerValue(a).value - playerValue(b).value; })[0];
+  // Drop-Kandidat MUSS zur selben Position gehören wie der vorgeschlagene Free Agent - sonst käme
+  // z.B. "droppe deinen RB, um einen 3. QB zu holen" heraus, obwohl nur 1 QB startbar ist (Bug-Report:
+  // bei Stafford-Flaute wurde ein QB-Free-Agent vorgeschlagen, als Drop-Kandidat aber Rico Dowdle,
+  // ein Bank-RB, genannt - keinerlei Zusammenhang zur eigentlichen Position). Bevorzugt einen
+  // Bankspieler derselben Position; gibt es keinen (z.B. bei K/DST oft nur 1 Spieler überhaupt
+  // rostered), wird stattdessen der aktuelle STARTER dieser Position als "würde ersetzt" markiert,
+  // statt fälschlich eine andere Position vorzuschlagen.
+  function weakestAtPos(team, pos){
+    var benchAtPos = team.bench.filter(function(p){ return p.pos === pos; });
+    if(benchAtPos.length){
+      return { player: benchAtPos.slice().sort(function(a, b){ return playerValue(a).value - playerValue(b).value; })[0], isStarter: false };
+    }
+    var startersAtPos = team.starters.filter(function(p){ return p.pos === pos; });
+    if(startersAtPos.length){
+      return { player: startersAtPos.slice().sort(function(a, b){ return playerValue(a).value - playerValue(b).value; })[0], isStarter: true };
+    }
+    return null;
   }
 
   function renderFreeAgents(team, weakPositions){
@@ -601,7 +615,6 @@
     faStatusEl.classList.remove('error');
     faEl.innerHTML = '';
 
-    var drop = weakestBenchDrop(team);
     var benchHasRoom = team.bench.length < BENCH_SIZE;
 
     Promise.all(targetPositions.map(fetchFreeAgents)).then(function(results){
@@ -620,12 +633,16 @@
         }).join('');
         var dropHint;
         if(benchHasRoom) dropHint = '<p class="copy">Deine Bank hat noch einen freien Platz (' + team.bench.length + '/' + BENCH_SIZE + ') – du kannst direkt hinzufügen, ohne jemanden droppen zu müssen.</p>';
-        else if(drop){
-          var dv = playerValue(drop);
-          var dropBasis = dv.isReal ? ('Ø-Saison ' + fmt(dv.value) + ', Ø' + dv.ppg.toFixed(1) + '/Spiel') : ('Proj. ' + fmt(dv.value));
-          dropHint = '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', ' + dropBasis + ') – dein schwächster Bankspieler aktuell.</p>';
+        else{
+          var weakest = weakestAtPos(team, pos);
+          if(weakest){
+            var wv = playerValue(weakest.player);
+            var wvBasis = wv.isReal ? ('Ø-Saison ' + fmt(wv.value) + ', Ø' + wv.ppg.toFixed(1) + '/Spiel') : ('Proj. ' + fmt(wv.value));
+            dropHint = weakest.isStarter
+              ? '<p class="copy">Kein Bankspieler auf ' + POS_LABEL[pos] + ' – ein Upgrade würde direkt deinen aktuellen Starter <strong>' + weakest.player.name + '</strong> (' + wvBasis + ') ersetzen.</p>'
+              : '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + weakest.player.name + '</strong> (' + wvBasis + ') – dein schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
+          } else dropHint = '';
         }
-        else dropHint = '';
         return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
       }).join('') || '<p class="copy">Keine passenden Free Agents gefunden.</p>';
     }).catch(function(){
