@@ -496,3 +496,24 @@ zeigt korrekt den Retry-Button.
 ## 2026-09-16 – `5795a4f` Session-Log: Skeleton-Ladezustände und Retry nachgetragen
 
 Backup-Eintrag für Commit 9401f3d.
+
+## 2026-09-16 – `931f974` Mein Team: Neue Sektion "Deine Saison bisher" mit eigener Team-Statistik
+
+sync-espn.mjs sammelt pro Team schon lange viele Kennzahlen (Streaks,
+knappe Spiele/Blowouts, Wochen als Top-/Flopscorer der Liga, verpasste
+Bank-Swaps, Überraschungssiege) in season-stats.json - bisher aber nur
+als Zutat für Recap-Fakten genutzt, nirgends als eigene Übersicht pro
+Team sichtbar.
+
+Neue Sektion zwischen Roster und Team-Analyse fasst diese Werte in einer
+Kachel-Übersicht zusammen: aktuelle Serie, längste Serie der Saison,
+knappe Spiele (Marge < 5 Punkte), Blowouts (Marge > 30 Punkte), Wochen als
+Topscorer/Flopscorer der Liga, Überraschungssiege (Sieg als Aussenseiter
+laut Projektion) und Bank-Punkte, die durch den besten verpassten
+Starter-Swap pro Woche liegen geblieben wären. Teams ohne Daten (noch
+keine Woche ausgewertet) zeigen einen Hinweistext statt einer leeren
+Kachel-Fläche.
+
+Verifiziert per Playwright: Team mit gemockten Saisonwerten zeigt alle 8
+Kacheln mit korrekt berechneten/formatierten Werten; Team ohne Eintrag in
+season-stats.json zeigt korrekt den Fallback-Hinweis statt leerer Kacheln.
