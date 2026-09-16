@@ -343,3 +343,16 @@ in dieser Playwright-Umgebung keinen page.reload() - kein Bug im
 eigentlichen Code, nur beim Testaufbau selbst).
 
 ## 2026-09-16 – `62f4b8f` Session-Log: Bewertungs-Basis-Toggle nachgetragen
+
+## 2026-09-16 – `9e2a1e3` Mein Team: Schwelle für Live-Modus auf 1 Spiel gesenkt
+
+Nutzer bemerkte: Toggle wechselt Texte, aber keine Werte - Ursache war
+keine Bug, sondern MIN_GAMES_FOR_REAL=2 bei aktuell erst 1 abgeschlossener
+Woche (jeder Spieler fällt noch auf proj zurück). Nutzer wollte lieber
+sofort mit den Woche-1-Daten sehen können, auch auf Kosten der höheren
+Streuung eines Einzelspiels - Schwelle auf 1 gesenkt. Disclaimer-Text
+entsprechend angepasst, inkl. Hinweis dass der Schnitt bei 1-2 Wochen
+noch verrauscht ist und sich mit mehr Wochen stabilisiert.
+
+Getestet: mit gemocktem 1-Wochen-Datensatz aktiviert der Live-Modus
+jetzt sofort korrekt (amber, abweichende Werte ggü. Projektion).
