@@ -306,3 +306,5 @@ live automatisch, sobald echte season-stats.json-Daten mit gamesPlayed
 vorliegen (erste echte Daten kommen mit dem Woche-2-Abschluss).
 
 ## 2026-09-16 – `692b9a8` Session-Log: PA-Label + Mein-Team-Echte-Punkte-Feature (neuer Tages-Log 2026-09-16)
+
+## 2026-09-16 – `62a871c` Session-Log: Woche-1-Backfill und Punkteschnitt-Anzeige nachgetragen
