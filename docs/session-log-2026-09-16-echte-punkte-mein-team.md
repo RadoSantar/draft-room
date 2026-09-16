@@ -59,6 +59,14 @@ Erklärtexte unter jeder Sektion (`mtRosterCopy`, `mtAnalysisCopy`, `mtTradesCop
 
 Getestet: Toggle-Klick wechselt Modus, re-rendert alle Sektionen korrekt, `localStorage`-Persistenz über Reload hinweg verifiziert (Toggle-Zustand selbst, unabhängig vom oben beschriebenen Datenmock-Artefakt, funktioniert einwandfrei).
 
+## 5. Nutzer-Feedback: Toggle erst nicht sichtbar, dann "nur Texte ändern sich, keine Werte"
+
+**Erstes Problem:** Nutzer fand den Toggle auf dem Handy zunächst nicht. Per `curl` gegen die Live-URL (`radosantar.github.io/draft-room/my-team.html`) verifiziert: Markup war korrekt deployed und an der richtigen Stelle (direkt nach der Team-Auswahl, vor dem "Wähle oben dein Team"-Hinweis) – kein Code-Bug. Wahrscheinlichste Ursache: Browser-Cache (gleiches Muster wie beim früheren Header-Umbau, `my-team.html` selbst hat kein Cache-Busting wie die CSS/JS-Dateien). Harter Reload empfohlen – hat funktioniert, Nutzer sah den Toggle danach.
+
+**Zweites Problem:** Nach dem Umschalten änderten sich nur die Erklärtexte, aber keine Zahlen. Kein Bug, sondern Daten-Timing: `data/season-stats.json` hatte zu diesem Zeitpunkt für JEDEN Spieler nur `gamesPlayed:1` (nur Woche 1 abgeschlossen, Woche 2 lief noch), `MIN_GAMES_FOR_REAL` stand aber auf 2 – also fiel aktuell jeder Spieler in BEIDEN Modi auf die Projektion zurück, nur der Text (direkt am Modus hängend) unterschied sich. Nutzer per `AskUserQuestion` gefragt, ob die Schwelle bewusst bei 2 (robuster, wartet auf Woche 2) bleiben oder auf 1 gesenkt werden soll (sofort mit Woche-1-Daten sichtbar, aber verrauschter). Nutzer wollte die Schwelle auf 1 senken.
+
+`MIN_GAMES_FOR_REAL` von 2 auf 1 gesenkt, Disclaimer-Text angepasst (inkl. neuem Hinweis: "bei 1-2 gespielten Wochen ist der Punkteschnitt naturgemäss noch verrauscht – wird zuverlässiger, je mehr Wochen dazukommen"). Mit gemocktem 1-Wochen-Datensatz verifiziert: Live-Modus aktiviert sich jetzt sofort korrekt (amber, abweichende Werte).
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
