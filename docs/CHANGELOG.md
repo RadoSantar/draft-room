@@ -277,3 +277,30 @@ erwartet.
 ## 2026-09-15 – `d7cca25` Session-Log: Punkt D vollständig abgeschlossen (Playoff-Bracket, Hall of Fame, Fakten-Funktionen) nachgetragen
 
 ## 2026-09-15 – `90c3b83` Standings: 'Kass.' zu 'PA' geändert (Nutzer-Feedback: unklare Abkürzung)
+
+## 2026-09-16 – `d62b56b` Mein Team: Trade-/Drop-Tipps richten sich ab echten Saisonpunkten nach der Realität statt der Vorschau
+
+Bisher basierten Positions-Stärke... nein, konkret: Bank-Sortierung,
+Drop-Kandidat, Free-Agent-Ranking und Trade-Ideen liefen komplett auf
+Basis der statischen Preseason-Projektion (proj) - auch noch in Woche
+10, obwohl längst echte Ergebnisse vorliegen. Neue playerValue()-
+Funktion in my-team.html: sobald ein Spieler mind. 2 echte Auftritte
+(Start oder Bank) in dieser Saison hat, wird sein Vorschau-proj durch
+eine Rest-Saison-Schätzung ersetzt (bereits erzielte Punkte + Punkte-
+schnitt × geschätzt verbleibende Wochen) - bleibt auf der proj-Skala,
+damit beide direkt vergleichbar sind. Real-basierte Werte sind amber
+markiert (Bank-Liste, Free-Agent-Karten, Trade-Karten), damit sichtbar
+bleibt, welche Zahl worauf beruht.
+
+Dafür in sync-espn.mjs: archiveSeasonStats() trackt totalPoints/
+gamesPlayed jetzt für JEDEN Auftritt (Start UND Bank), nicht mehr nur
+für Starts - sonst hätte ein Spieler, der mal gebenched wurde, künstlich
+niedrige Werte bekommen. findSeasonDraftValueFact() entsprechend auf
+gamesPlayed statt starterWeeks als Durchschnitts-Divisor umgestellt.
+
+Getestet per Playwright mit gemocktem season-stats.json (zwei Spieler
+mit synthetischen echten Punkten, einer über-, einer unterperformt ggü.
+Projektion) - Bank-Sortierung, Drop-Kandidat und Trade-Karten reagieren
+korrekt, amber-Markierung sitzt an den richtigen Stellen. Aktiviert sich
+live automatisch, sobald echte season-stats.json-Daten mit gamesPlayed
+vorliegen (erste echte Daten kommen mit dem Woche-2-Abschluss).
