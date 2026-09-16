@@ -308,3 +308,36 @@ vorliegen (erste echte Daten kommen mit dem Woche-2-Abschluss).
 ## 2026-09-16 – `692b9a8` Session-Log: PA-Label + Mein-Team-Echte-Punkte-Feature (neuer Tages-Log 2026-09-16)
 
 ## 2026-09-16 – `62a871c` Session-Log: Woche-1-Backfill und Punkteschnitt-Anzeige nachgetragen
+
+## 2026-09-16 – `df0b4a8` Mein Team: Bewertungs-Basis als expliziter Toggle statt nur automatisch
+
+Nutzer wollte selbst wählen können, ob Berechnung/Fairness durchgehend
+auf Projektion oder auf dem Live-Punkteschnitt basiert - bisher schaltete
+das nur automatisch pro Spieler um (sobald genug echte Spiele vorliegen).
+
+Neuer Toggle "Projektion" / "Live-Punkteschnitt" oben auf der Seite
+(gleiche Pill-Optik wie die Conference/Liga-Tabs auf schedule.html),
+Wahl persistiert in localStorage (draftroom-value-mode). playerValue()
+respektiert jetzt VALUE_MODE: "proj" erzwingt für ALLE Spieler die
+Projektion (auch wenn echte Daten vorliegen), "live" ist das bisherige
+automatische Verhalten (echte Daten wo vorhanden, sonst Projektions-
+Fallback für Spieler ohne genug Auftritte).
+
+Wirkt jetzt konsistent überall auf der Seite, nicht nur bei Trade/Drop
+wie ursprünglich: Roster-Sortierung (Starter UND Bank), Positions-
+Stärke-Analyse (neue posTotalsForRoster()/computeLeagueAvgLive() als
+Live-Pendant zu power-rankings.json's fest proj-basierten posTotals -
+Power-Rankings-Seite selbst bewusst unverändert gelassen, eigenständige
+"Kader-Stärke laut Draft"-Kennzahl), Free-Agent-Empfehlungen, Trade-
+Ideen. Erklärtexte unter jeder Sektion wechseln automatisch mit dem
+Modus (inkl. Korrektur: der Verweis auf "derselbe Massstab wie im
+Trade-Fairness-Kalkulator" erscheint nur noch im Projektion-Modus, da
+im Live-Modus nicht mehr zutreffend).
+
+Getestet via Playwright mit gemocktem season-stats.json: Toggle-Klick
+wechselt Modus, re-rendert alle Sektionen korrekt (Bank-Sortierung,
+Team-Analyse-Zahlen, Trade-Copy-Text), localStorage-Persistenz über
+Reload hinweg verifiziert. Ein Test-Artefakt unterwegs gefangen und
+korrekt als solches identifiziert (page.route()-Interception überlebt
+in dieser Playwright-Umgebung keinen page.reload() - kein Bug im
+eigentlichen Code, nur beim Testaufbau selbst).
