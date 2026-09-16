@@ -441,3 +441,8 @@ weakestAtPos, da der Live-ESPN-FA-Endpoint in dieser Sandbox nicht mockbar
 ist): weakestAtPos(team, 'QB') liefert jetzt korrekt "Backup QB" statt
 "Rico Dowdle"; Fallback auf den Starter bei fehlender Bank-Tiefe (K-Beispiel)
 funktioniert wie erwartet.
+
+## 2026-09-16 – `bc3739b` Session-Log: Positionsgenauer Drop-Kandidat nachgetragen
+
+Backup-Eintrag für den weakestAtPos-Fix (Commit 7c9dec0), damit bei
+Kontextverlust nichts verloren geht.
