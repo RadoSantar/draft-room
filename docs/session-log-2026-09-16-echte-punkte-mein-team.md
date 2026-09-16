@@ -75,9 +75,22 @@ Fix: client-seitiger Nachbau von `buildOptimalLineup()` (identische `STARTER_SLO
 
 **Test-Erschwernis:** echte `roster.json`-Projektionswerte drifteten zwischen Testläufen (Hintergrund-Sync-Cron lief währenddessen und aktualisierte live von ESPN geladene Projektionen) – dadurch waren reine "echte Daten"-Tests nicht reproduzierbar. Gelöst durch vollständig kontrolliertes Mock-Roster (auch `roster.json`/`power-rankings.json`/`rostered-ids.json` gemockt, nicht nur `season-stats.json`): Bankspieler mit niedriger Projektion aber grossem Live-Boost wird im Live-Modus korrekt zum Starter, ein bisheriger Starter korrekt zur Bank verdrängt; im Projektion-Modus bleibt die ursprüngliche Aufstellung unverändert. Für künftige Tests dieser Seite gemerkt: bei roster-abhängigen Tests immer `roster.json`+`power-rankings.json`+`rostered-ids.json` gemeinsam mocken, nicht nur `season-stats.json`.
 
+## 7. Nutzer-Feedback: Free-Agent-/Trade-Vorschläge zeigten fast nur QBs
+
+Nutzer-Beobachtung mit klarer eigener Diagnose: "da diese vermutlich am meisten Punkte auf der Position machen" – bereits 2 QBs im Roster (kein dritter nötig, höchstens ein Ersatz), aber RB/WR-Bedarf (theoretisch bis zu 4 RB startbar über 2 RB-Slots + 2 Flex) kam kaum vor; bei K/DST reicht dagegen oft schon 1 rostered.
+
+**Root Cause bestätigt:** "schwächste Position" wurde nach ABSOLUTEM Punkte-Diff zum Liga-Schnitt bestimmt. QB macht in diesem Scoring grundsätzlich viel mehr Rohpunkte als andere Positionen (Team-Summen ~1000 bei QB vs. ~300 bei TE/K vs. ~30 bei DST) – jede kleine relative QB-Schwäche erzeugt einen riesigen absoluten Rückstand, der die Auswahl fast immer dominierte, während ein echtes RB/WR-Loch (kleinerer absoluter, aber grösserer relativer Rückstand) systematisch unterging.
+
+**Fix:** `renderAnalysis()` berechnet jetzt zusätzlich `pctDiff = diff/avg` und sortiert danach statt nach absolutem `diff` – sowohl für die "Schwächste Position(en)"-Anzeige als auch für `targetPositions` in `renderFreeAgents()`/`buildTradeIdeas()`. Tabelle zeigt Punkte-Diff UND Prozent nebeneinander (`.delta-pct`, gleiches gedämpfte Sub-Text-Muster wie bei `.standings-pf-sub`/`.proj-sub`). `targetPositions`-Anzahl von 2 auf 3 erhöht für mehr Positionsvielfalt pro Ansicht. Team-Analyse-Erklärtext ergänzt, warum die Prozentzahl (nicht die reine Punktezahl) die Auswahl treibt.
+
+**Bewusst nicht umgesetzt** (Scope-Reduktion): keine explizite "Ziel-Rostertiefe pro Position" (QB=2, RB=4 etc., wie vom Nutzer selbst skizziert) als zusätzliches Kriterium – die prozentuale Umstellung allein löst das geschilderte Problem bereits direkt und ohne zusätzliche Heuristik-Komplexität; falls sich in der Praxis zeigt, dass das nicht reicht (z.B. Position taucht trotz voller Tiefe weiter auf), wäre das der nächste Ausbauschritt.
+
+**Verifiziert** mit vollständig kontrolliertem Mock (QB: -100 Punkte absolut / -10% relativ, RB: -60 Punkte absolut / -12% relativ – kleinerer absoluter, aber grösserer relativer Rückstand): Tabelle zeigt beide Prozentwerte korrekt, "Schwächste Positionen"-Text listet RB jetzt korrekt VOR QB trotz kleinerem absoluten Rückstand – exakt das vom Nutzer beschriebene Szenario aufgelöst.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
+- Falls die prozentuale Umstellung in der Praxis nicht ausreicht: explizite Ziel-Rostertiefe pro Position (QB=2, RB/WR=4, TE=2, K/DST=1) als zusätzliches Kriterium nachrüsten.
 
 ## Nächster Schritt (Stand Ende dieser Session)
 Läuft gerade: `espn-sync.yml`-Run `35089004604` (Woche-1-Backfill) verifizieren – Job-Logs auf Fehler prüfen, danach `data/season-stats.json` inhaltlich inspizieren (insbesondere ob `players[id].totalPoints`/`gamesPlayed`/`starterWeeks` und die neuen Team-Felder wie `longestWinStreak`/`closeWins` für Woche 1 jetzt korrekt befüllt sind, keine NaN-Werte). Danach: Woche 2 abwarten, dann beim nächsten Dienstags-Sync erneut verifizieren, dass alles mit echten Woche-2-Daten fehlerfrei weiterläuft. Sobald `gamesPlayed >= 2` erreicht ist (jetzt schon ab Wochenabschluss 2 möglich dank Backfill, statt erst ab Woche 3), live auf `my-team.html` prüfen, ob die "echten" Werte inkl. Punkteschnitt-Anzeige plausibel aussehen.
