@@ -18,10 +18,22 @@
 
 **Getestet:** Playwright mit gemocktem Roster (4 Spieler mit je einem der 4 Haupt-Status Q/D/O/IR verteilt auf Starter und Bank) – alle 4 Badges erscheinen mit korrektem Label, korrektem Tooltip (voller ESPN-Wert) und korrekter `is-out`-Einfärbung; Spieler ohne `injuryStatus` zeigen keinen Badge.
 
+## 2. Skeleton-Ladezustände und Retry-Buttons bei Fehlern
+
+**Problem:** Die Free-Agent-Sektion zeigte während des Ladens nur Text ("Lade Free Agents…"), keine visuelle Struktur; schlug ein Fetch fehl (initiale Liga-Daten ODER Free Agents), war das eine Sackgasse – kein Weg, es direkt erneut zu versuchen, ohne die ganze Seite neu zu laden. Gerade auf dem Handy/bei wackligem Netz relevant.
+
+**Umgesetzt:**
+- `.mt-skeleton`-Karten (einfache Puls-Animation über `@keyframes`) füllen `#mtFreeAgents` während `renderFreeAgents()` lädt, Anzahl passend zur Zahl der Ziel-Positionen.
+- Bei fehlgeschlagenem FA-Fetch: `faStatusEl` zeigt Fehlertext + `.mt-retry-btn`-Button, der `renderFreeAgents(team, weakPositions)` mit denselben Argumenten erneut aufruft (Closure merkt sich die Argumente automatisch).
+- Initialer Datenload (power-rankings/roster/rostered-ids/season-stats) aus dem anonymen `Promise.all(...)`-Aufruf in eine benannte `loadInitialData()`-Funktion gekapselt, damit sie bei Fehler per Retry-Button erneut aufgerufen werden kann, statt dass der Nutzer die Seite neu laden muss.
+- Gleiches `.mt-retry-btn`-Styling für beide Stellen (roter Rahmen, wie die restliche Fehler-Farbe `--endzone`).
+
+**Getestet:** Playwright mit gezielt fehlschlagendem ersten `power-rankings.json`-Request (500, beim zweiten Versuch erfolgreich) – Retry-Button erscheint, Klick lädt danach korrekt alle Team-Optionen nach. Nach Team-Auswahl sind kurz 2 Skeleton-Karten sichtbar, bevor (erwartungsgemäss, da der Live-ESPN-Endpoint in dieser Sandbox nicht mockbar ist) der FA-Fetch fehlschlägt und korrekt den Retry-Button zeigt.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Injury-Badges: echten Sync-Lauf abwarten und `data/roster.json` auf tatsächlich befüllte `injuryStatus`-Werte prüfen (siehe oben).
 
 ## Nächster Schritt (laufend)
-Weiter mit den nächsten Punkten aus der "mach alles"-Liste: Skeleton-Ladezustände + Retry bei Fehlern, danach eigene Team-Statistik-Karte, "Diese Woche"-Digest, Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
+Weiter mit den nächsten Punkten aus der "mach alles"-Liste: eigene Team-Statistik-Karte, "Diese Woche"-Digest, Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
