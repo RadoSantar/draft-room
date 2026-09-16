@@ -998,19 +998,21 @@ async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
     });
   });
 
+  // totalPoints/gamesPlayed zählen JEDEN Auftritt (Start ODER Bank) - das ist der tatsächliche
+  // Punkteschnitt eines Spielers unabhängig von Aufstellungs-Entscheidungen, Basis für die
+  // "sobald echte Punkte da sind, real statt Projektion"-Bewertung in my-team.html. starterWeeks
+  // bleibt separat nur für echte Starts (u.a. für findIronManFact gebraucht).
   Object.values(keyMomentsByTeam).forEach((perf) => {
     if (!perf) return;
     [...perf.starters, ...perf.bench].forEach((p) => {
-      const existing = stats.players[p.playerId];
-      if (!existing || p.points > existing.bestPoints) {
-        stats.players[p.playerId] = { ...(existing || {}), bestPoints: Math.round(p.points * 10) / 10, bestWeek: week };
-      }
+      const existing = { bestPoints: 0, bestWeek: null, totalPoints: 0, gamesPlayed: 0, starterWeeks: 0, ...(stats.players[p.playerId] || {}) };
+      if (p.points > existing.bestPoints) { existing.bestPoints = Math.round(p.points * 10) / 10; existing.bestWeek = week; }
+      existing.totalPoints = Math.round((existing.totalPoints + p.points) * 10) / 10;
+      existing.gamesPlayed = existing.gamesPlayed + 1;
+      stats.players[p.playerId] = existing;
     });
     perf.starters.forEach((p) => {
-      const existing = stats.players[p.playerId] || { bestPoints: 0, bestWeek: null };
-      existing.totalPoints = Math.round(((existing.totalPoints || 0) + p.points) * 10) / 10;
-      existing.starterWeeks = (existing.starterWeeks || 0) + 1;
-      stats.players[p.playerId] = existing;
+      stats.players[p.playerId].starterWeeks = (stats.players[p.playerId].starterWeeks || 0) + 1;
     });
   });
 
@@ -1173,12 +1175,12 @@ function findSeasonDraftValueFact(game, homePerf, awayPerf, seasonStats, draftRo
     for (const p of perf.starters) {
       const round = draftRoundByPlayerId[p.playerId];
       const rec = seasonStats.players[p.playerId];
-      if (round == null || !rec?.starterWeeks) continue;
+      if (round == null || !rec?.gamesPlayed) continue;
       if (round >= 10 && rec.totalPoints >= 60) {
         return { type: 'bargain', team: teamName, name: p.name, round, totalPoints: rec.totalPoints };
       }
-      if (round <= 3 && rec.starterWeeks >= 3 && (rec.totalPoints / rec.starterWeeks) < 8) {
-        return { type: 'bust', team: teamName, name: p.name, round, totalPoints: rec.totalPoints, avg: rec.totalPoints / rec.starterWeeks };
+      if (round <= 3 && rec.gamesPlayed >= 3 && (rec.totalPoints / rec.gamesPlayed) < 8) {
+        return { type: 'bust', team: teamName, name: p.name, round, totalPoints: rec.totalPoints, avg: rec.totalPoints / rec.gamesPlayed };
       }
     }
     return null;

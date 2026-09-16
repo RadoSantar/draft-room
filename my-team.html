@@ -124,6 +124,7 @@
   .mt-bench-row .name{font-family:'Source Serif 4', serif;font-size:14px;}
   .mt-bench-row .name .team{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);}
   .mt-bench-row .proj{font-family:'IBM Plex Mono', monospace;font-size:12.5px;color:var(--chalk);opacity:.7;}
+  .mt-bench-row .proj.is-real{color:var(--amber);opacity:1;}
   .mt-empty{padding:6px 18px 12px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
 
   /* Team-Analyse */
@@ -157,6 +158,7 @@
   .mt-rec-card .mt-rec-title{font-size:14.5px;font-weight:600;margin-bottom:2px;}
   .mt-rec-card .mt-rec-detail{font-size:13px;color:var(--ink-soft);}
   .mt-rec-card .mt-rec-proj{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--turf);margin-top:4px;}
+  .mt-rec-card .mt-rec-proj.is-real{color:var(--amber);}
 
   .mt-trade-card{
     background:var(--card);
@@ -172,6 +174,7 @@
   .mt-trade-player{display:flex;justify-content:space-between;gap:8px;margin-bottom:2px;}
   .mt-trade-player-name{font-size:14.5px;font-weight:600;}
   .mt-trade-player-meta{font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+  .mt-trade-player-meta.is-real{color:var(--amber);}
   .mt-trade-side-total{font-size:12px;color:var(--hash);margin-top:4px;padding-top:4px;border-top:1px solid var(--card-border);}
   .mt-trade-arrow{font-family:'Anton', sans-serif;font-size:20px;color:var(--amber);flex:0 0 auto;}
   .mt-trade-verdict{margin-top:10px;font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--turf);}
@@ -229,7 +232,7 @@
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
-    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort.</span>
+    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Sobald ein Spieler mindestens 2 echte Saisonspiele hinter sich hat, wechselt seine Bewertung automatisch von der Vorschau-Projektion auf seinen tatsächlichen Punkteschnitt dieser Saison (<span class="mono" style="color:var(--amber);">amber</span> markiert) – die Vorschau verliert mit echten Ergebnissen an Aussagekraft.</span>
   </div>
 
   <div class="mt-team-picker">
@@ -324,15 +327,39 @@
   var faEl = document.getElementById('mtFreeAgents');
   var tradesEl = document.getElementById('mtTrades');
 
-  var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null;
+  var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0;
   var faRequestToken = 0;
+
+  // Sobald für einen Spieler echte Punkte aus dieser Saison vorliegen (mind. MIN_GAMES_FOR_REAL
+  // Auftritte, Start oder Bank - siehe archiveSeasonStats() in sync-espn.mjs), wird die Vorschau-
+  // Projektion durch eine auf dem echten Punkteschnitt basierende Rest-Saison-Schätzung ersetzt:
+  // bereits erzielte Punkte + (Punkteschnitt pro Spiel × geschätzt verbleibende Spiele). Bleibt auf
+  // derselben Grössenordnung wie proj (Saison-Gesamtsumme), damit beide direkt vergleichbar bleiben,
+  // auch wenn in einer Trade-Idee ein Spieler schon "real" bewertet wird und ein anderer noch nicht.
+  var MIN_GAMES_FOR_REAL = 2;
+  var TOTAL_SEASON_WEEKS = 15;
+
+  function playerValue(p){
+    var id = p.playerId != null ? p.playerId : p.id;
+    var rec = SEASON_STATS && SEASON_STATS.players && SEASON_STATS.players[id];
+    if(rec && rec.gamesPlayed >= MIN_GAMES_FOR_REAL && LAST_COMPLETED_WEEK > 0){
+      var ppg = rec.totalPoints / rec.gamesPlayed;
+      var gamesRemaining = Math.max(0, TOTAL_SEASON_WEEKS - LAST_COMPLETED_WEEK);
+      return { value: Math.round((rec.totalPoints + ppg * gamesRemaining) * 10) / 10, isReal: true, ppg: Math.round(ppg * 10) / 10 };
+    }
+    return { value: p.proj || 0, isReal: false };
+  }
+  function valueHtml(p, cssClass){
+    var v = playerValue(p);
+    return '<span class="' + cssClass + (v.isReal ? ' is-real' : '') + '">' + fmt(v.value) + '</span>';
+  }
 
   function fmt(n){ return n === null || n === undefined ? '–' : (Math.round(n * 10) / 10).toFixed(1); }
   function fmtSigned(n){
     var r = Math.round(n * 10) / 10;
     return (r > 0 ? '+' : '') + r.toFixed(1);
   }
-  function tradeValue(proj){ return proj || 0; }
+  function tradeValue(p){ return playerValue(p).value; }
 
   function computeLeagueAvg(power){
     var sums = {}, counts = {};
@@ -357,11 +384,11 @@
       '</div>';
     }).join('');
     var benchRows = team.bench.length ? team.bench.slice().sort(function(a, b){
-      return (b.proj || -999) - (a.proj || -999);
+      return playerValue(b).value - playerValue(a).value;
     }).map(function(p){
       return '<div class="mt-bench-row">' +
         '<span class="name">' + p.name + ' <span class="team mono">' + POS_LABEL[p.pos] + ' · ' + (p.proTeam || '') + '</span></span>' +
-        '<span class="proj mono">' + fmt(p.proj) + '</span>' +
+        valueHtml(p, 'proj mono') +
       '</div>';
     }).join('') : '<div class="mt-empty">Keine Bankspieler.</div>';
 
@@ -426,7 +453,7 @@
             proj: shared.projectedPoints(pos, projStats)
           };
         }).filter(function(p){ return !ROSTERED_IDS.has(p.id); })
-          .sort(function(a, b){ return (b.proj || -999) - (a.proj || -999); })
+          .sort(function(a, b){ return playerValue(b).value - playerValue(a).value; })
           .slice(0, 5);
       });
   }
@@ -435,7 +462,7 @@
 
   function weakestBenchDrop(team){
     if(team.bench.length < BENCH_SIZE) return null; // Bank hat noch freien Platz, kein Drop nötig
-    return team.bench.slice().sort(function(a, b){ return (a.proj || -999) - (b.proj || -999); })[0];
+    return team.bench.slice().sort(function(a, b){ return playerValue(a).value - playerValue(b).value; })[0];
   }
 
   function renderFreeAgents(team, weakPositions){
@@ -457,14 +484,18 @@
         var list = results[i];
         if(!list.length) return '';
         var cards = list.map(function(p){
+          var v = playerValue(p);
           return '<div class="mt-rec-card">' +
             '<div class="mt-rec-title">' + p.name + ' <span class="mono" style="color:var(--hash);font-size:12px;">' + p.team + '</span></div>' +
-            '<div class="mt-rec-proj">Proj. ' + fmt(p.proj) + ' · ADP ' + fmt(p.adp) + '</div>' +
+            '<div class="mt-rec-proj' + (v.isReal ? ' is-real' : '') + '">' + (v.isReal ? 'Ø-Saison ' : 'Proj. ') + fmt(v.value) + ' · ADP ' + fmt(p.adp) + '</div>' +
           '</div>';
         }).join('');
         var dropHint;
         if(benchHasRoom) dropHint = '<p class="copy">Deine Bank hat noch einen freien Platz (' + team.bench.length + '/' + BENCH_SIZE + ') – du kannst direkt hinzufügen, ohne jemanden droppen zu müssen.</p>';
-        else if(drop) dropHint = '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', Proj. ' + fmt(drop.proj) + ') – dein schwächster Bankspieler aktuell.</p>';
+        else if(drop){
+          var dv = playerValue(drop);
+          dropHint = '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', ' + (dv.isReal ? 'Ø-Saison ' : 'Proj. ') + fmt(dv.value) + ') – dein schwächster Bankspieler aktuell.</p>';
+        }
         else dropHint = '';
         return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
       }).join('') || '<p class="copy">Keine passenden Free Agents gefunden.</p>';
@@ -479,7 +510,7 @@
   var TRADE_SHAPES = [[1, 1], [2, 1], [3, 1], [3, 2], [2, 3]];
 
   function packageValue(players){
-    return players.reduce(function(sum, p){ return sum + tradeValue(p.proj); }, 0);
+    return players.reduce(function(sum, p){ return sum + tradeValue(p); }, 0);
   }
 
   function combinations(arr, k){
@@ -499,7 +530,8 @@
 
   function tradeSidePlayersHtml(players){
     return players.map(function(p){
-      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + '</span><span class="mt-trade-player-meta mono">' + POS_LABEL[p.pos] + ' · ' + fmt(p.proj) + '</span></div>';
+      var v = playerValue(p);
+      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + '</span><span class="mt-trade-player-meta mono' + (v.isReal ? ' is-real' : '') + '">' + POS_LABEL[p.pos] + ' · ' + fmt(v.value) + '</span></div>';
     }).join('');
   }
 
@@ -539,7 +571,7 @@
 
   function bestIdeaForShape(myRoster, otherTeam, pos, giveCount, getCount){
     var candidates = otherTeam.bench.filter(function(p){ return p.pos === pos; })
-      .sort(function(a, b){ return (b.proj || -999) - (a.proj || -999); });
+      .sort(function(a, b){ return playerValue(b).value - playerValue(a).value; });
     if(candidates.length < getCount) return null;
     var getPackage = candidates.slice(0, getCount);
     var targetValue = packageValue(getPackage);
@@ -630,11 +662,14 @@
   Promise.all([
     fetch('data/power-rankings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
     fetch('data/roster.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
-    fetch('data/rostered-ids.json', { cache: 'no-store' }).then(function(r){ return r.json(); })
+    fetch('data/rostered-ids.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
+    fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { players: {}, weeksArchived: [] }; })
   ]).then(function(results){
     POWER = results[0].data;
     ROSTER = results[1].data;
     ROSTERED_IDS = new Set(results[2].ids.map(String));
+    SEASON_STATS = results[3];
+    LAST_COMPLETED_WEEK = (SEASON_STATS.weeksArchived && SEASON_STATS.weeksArchived.length) ? Math.max.apply(null, SEASON_STATS.weeksArchived) : 0;
     LEAGUE_AVG = computeLeagueAvg(POWER);
     statusKickerEl.textContent = 'Stand ' + new Date(results[0].lastUpdated).toLocaleDateString('de-CH');
     populateTeamSelect();
