@@ -517,3 +517,7 @@ Kachel-Fläche.
 Verifiziert per Playwright: Team mit gemockten Saisonwerten zeigt alle 8
 Kacheln mit korrekt berechneten/formatierten Werten; Team ohne Eintrag in
 season-stats.json zeigt korrekt den Fallback-Hinweis statt leerer Kacheln.
+
+## 2026-09-16 – `cb6965c` Session-Log: Team-Statistik-Sektion nachgetragen
+
+Backup-Eintrag für Commit 931f974.
