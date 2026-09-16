@@ -304,3 +304,5 @@ Projektion) - Bank-Sortierung, Drop-Kandidat und Trade-Karten reagieren
 korrekt, amber-Markierung sitzt an den richtigen Stellen. Aktiviert sich
 live automatisch, sobald echte season-stats.json-Daten mit gamesPlayed
 vorliegen (erste echte Daten kommen mit dem Woche-2-Abschluss).
+
+## 2026-09-16 – `692b9a8` Session-Log: PA-Label + Mein-Team-Echte-Punkte-Feature (neuer Tages-Log 2026-09-16)
