@@ -426,6 +426,68 @@
     return avg;
   }
 
+  // Client-seitiger Nachbau von buildOptimalLineup() aus scripts/scoring.mjs (dieselben
+  // STARTER_SLOTS), aber nach playerValue() statt starr nach proj sortiert - damit die
+  // Aufstellung selbst (wer Starter/Bank ist) dem gewählten VALUE_MODE folgt, nicht nur die
+  // angezeigten Zahlen. Bei proj-Modus liefert das dieselbe Aufstellung wie roster.json
+  // (dort serverseitig ebenfalls proj-optimal berechnet), bei live-Modus kann ein Bankspieler
+  // mit besserem echten Punkteschnitt einen bisherigen Starter verdrängen.
+  var STARTER_SLOTS = [
+    ['QB', ['QB'], 1],
+    ['RB', ['RB'], 2],
+    ['WR', ['WR'], 2],
+    ['FLEX', ['RB', 'WR'], 2],
+    ['TE', ['TE'], 2],
+    ['K', ['K'], 1],
+    ['DEF', ['DST'], 1]
+  ];
+
+  function withSlot(p, slot){
+    var out = {};
+    for(var k in p){ out[k] = p[k]; }
+    out.slot = slot;
+    return out;
+  }
+
+  function buildOptimalLineupByValue(roster){
+    var pools = {};
+    ['QB', 'RB', 'WR', 'TE', 'K', 'DST'].forEach(function(pos){
+      pools[pos] = roster.filter(function(p){ return p.pos === pos; })
+        .slice()
+        .sort(function(a, b){ return playerValue(b).value - playerValue(a).value; });
+    });
+    var starters = [];
+    STARTER_SLOTS.forEach(function(slotDef){
+      var label = slotDef[0], positions = slotDef[1], count = slotDef[2];
+      for(var i = 0; i < count; i++){
+        var best = null, bestPos = null, bestVal = -Infinity;
+        positions.forEach(function(pos){
+          if(pools[pos].length){
+            var cand = pools[pos][0];
+            var val = playerValue(cand).value;
+            if(val > bestVal){ best = cand; bestPos = pos; bestVal = val; }
+          }
+        });
+        if(best){
+          pools[bestPos].shift();
+          starters.push(withSlot(best, label));
+        }
+      }
+    });
+    var bench = [];
+    Object.keys(pools).forEach(function(pos){ bench = bench.concat(pools[pos]); });
+    return { starters: starters, bench: bench };
+  }
+
+  // Liefert das Team mit Starter/Bank neu berechnet nach dem aktuellen VALUE_MODE - überall
+  // verwenden, wo eine roster.json-Team-Struktur konsumiert wird (Roster-Anzeige, Free-Agent-
+  // Drop-Kandidat, Trade-Ideen für sowohl das eigene als auch andere Teams), damit Aufstellung
+  // UND angezeigte Werte konsistent demselben Modus folgen.
+  function liveOptimizedTeam(rosterTeam){
+    var lineup = buildOptimalLineupByValue([].concat(rosterTeam.starters, rosterTeam.bench));
+    return { id: rosterTeam.id, name: rosterTeam.name, starters: lineup.starters, bench: lineup.bench };
+  }
+
   function renderRoster(team){
     var starterRows = team.starters.map(function(p){
       return '<div class="mt-slot-row">' +
@@ -644,8 +706,9 @@
     if(!targetPositions.length) targetPositions = [weakPositions[0].pos];
 
     var ideas = [];
-    ROSTER.forEach(function(other){
-      if(other.id === myTeamId) return;
+    ROSTER.forEach(function(rawOther){
+      if(rawOther.id === myTeamId) return;
+      var other = liveOptimizedTeam(rawOther);
       targetPositions.forEach(function(pos){
         TRADE_SHAPES.forEach(function(shape){
           var idea = bestIdeaForShape(myRoster, other, pos, shape[0], shape[1]);
@@ -687,7 +750,7 @@
       ? 'Roster, Team-Analyse, Free-Agent- und Trade-Vorschläge unten nutzen den tatsächlichen Punkteschnitt dieser Saison, sobald genug echte Spiele vorliegen (amber markiert) – sonst Fallback auf Projektion.'
       : 'Roster, Team-Analyse, Free-Agent- und Trade-Vorschläge unten nutzen durchgehend die Vorschau-Projektion, unabhängig von bereits gespielten Wochen.';
     document.getElementById('mtRosterCopy').textContent = VALUE_MODE === 'live'
-      ? 'Deine aktuell beste Startaufstellung und Bench, sortiert nach der gewählten Bewertungs-Basis oben – Spieler mit echten Daten dieser Saison sind amber markiert.'
+      ? 'Deine aktuell beste Startaufstellung und Bench, neu berechnet nach dem Live-Punkteschnitt – ein Bankspieler mit besserer echter Form kann hier einen bisherigen Starter verdrängen. Spieler mit echten Daten dieser Saison sind amber markiert.'
       : 'Deine aktuell beste Startaufstellung und Bench, sortiert nach Saison-Projektion – das ist gleichzeitig die Antwort auf "wen sollte ich starten": ohne wochenspezifische Prognosen ist die Saison-Projektion die beste verfügbare Näherung.';
     document.getElementById('mtAnalysisCopy').textContent = VALUE_MODE === 'live'
       ? 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der aktuellen Werte aller Spieler auf dem Kader je Position, nicht nur der Starter). Negative Werte = unterdurchschnittlich, hier lohnt sich ein Blick auf Free Agents oder Trades zuerst.'
@@ -713,8 +776,8 @@
   function showTeam(teamName){
     CURRENT_TEAM = teamName;
     var power = POWER.filter(function(t){ return t.name === teamName; })[0];
-    var roster = ROSTER.filter(function(t){ return t.name === teamName; })[0];
-    if(!power || !roster){
+    var rawRoster = ROSTER.filter(function(t){ return t.name === teamName; })[0];
+    if(!power || !rawRoster){
       mainStatusEl.textContent = 'Für dieses Team liegen noch keine Kader-Daten vor.';
       mainStatusEl.classList.add('error');
       contentEl.hidden = true;
@@ -724,6 +787,7 @@
     mainStatusEl.classList.remove('error');
     contentEl.hidden = false;
 
+    var roster = liveOptimizedTeam(rawRoster);
     renderRoster(roster);
     var myPosTotals = VALUE_MODE === 'live' ? posTotalsForRoster(roster) : (power.posTotals || {});
     var avg = VALUE_MODE === 'live' ? computeLeagueAvgLive() : LEAGUE_AVG;
