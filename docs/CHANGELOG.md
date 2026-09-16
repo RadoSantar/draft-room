@@ -492,3 +492,7 @@ Retry-Button erscheint und lädt beim Klick erfolgreich nach; nach
 Team-Auswahl sind kurz Skeleton-Karten sichtbar, danach (da der Live-ESPN-
 Endpoint in dieser Sandbox nicht mockbar ist) schlägt der FA-Fetch fehl und
 zeigt korrekt den Retry-Button.
+
+## 2026-09-16 – `5795a4f` Session-Log: Skeleton-Ladezustände und Retry nachgetragen
+
+Backup-Eintrag für Commit 9401f3d.
