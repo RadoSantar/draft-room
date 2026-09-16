@@ -241,7 +241,7 @@
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
-    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Per Toggle oben wählst du die Bewertungs-Basis: "Live-Punkteschnitt" nutzt für Spieler mit mindestens 2 echten Saisonspielen eine Rest-Saison-Schätzung aus ihrem tatsächlichen Punkteschnitt statt der Vorschau-Projektion (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – Spieler ohne genug echte Daten fallen weiterhin auf die Projektion zurück. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl angezeigt, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst. "Projektion" ignoriert echte Ergebnisse komplett und zeigt durchgehend die Vorschau.</span>
+    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Per Toggle oben wählst du die Bewertungs-Basis: "Live-Punkteschnitt" nutzt für Spieler mit mindestens einem echten Saisonspiel eine Rest-Saison-Schätzung aus ihrem tatsächlichen Punkteschnitt statt der Vorschau-Projektion (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – Spieler ohne jede echte Daten (z.B. gerade erst geholte Free Agents) fallen weiterhin auf die Projektion zurück. Bei nur 1-2 gespielten Wochen ist der Punkteschnitt naturgemäss noch verrauscht (ein einzelnes starkes oder schwaches Spiel schlägt voll durch) – wird zuverlässiger, je mehr Wochen dazukommen. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl angezeigt, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst. "Projektion" ignoriert echte Ergebnisse komplett und zeigt durchgehend die Vorschau.</span>
   </div>
 
   <div class="mt-team-picker">
@@ -356,7 +356,7 @@
   // geholte Free Agents) im "live"-Modus trotzdem sinnvoll auf proj zurückfallen, statt undefiniert
   // zu bleiben.
   var VALUE_MODE_KEY = 'draftroom-value-mode';
-  var MIN_GAMES_FOR_REAL = 2;
+  var MIN_GAMES_FOR_REAL = 1;
   var TOTAL_SEASON_WEEKS = 15;
   var VALUE_MODE = 'live';
   try { VALUE_MODE = localStorage.getItem(VALUE_MODE_KEY) || 'live'; } catch(e){}
