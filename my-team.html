@@ -153,6 +153,7 @@
   .mt-analysis-table td:first-child{text-align:left;font-family:'Source Serif 4', serif;}
   .mt-analysis-table td.delta.pos{color:var(--turf);font-weight:600;}
   .mt-analysis-table td.delta.neg{color:var(--endzone-soft);font-weight:600;}
+  .delta-pct{font-weight:400;opacity:.75;font-size:0.85em;}
 
   /* Empfehlungs-Karten (Free Agents / Trades) */
   .mt-rec-group{margin:18px 0;}
@@ -384,6 +385,10 @@
     var r = Math.round(n * 10) / 10;
     return (r > 0 ? '+' : '') + r.toFixed(1);
   }
+  function fmtPct(n){
+    var r = Math.round(n * 1000) / 10;
+    return (r > 0 ? '+' : '') + r.toFixed(1) + '%';
+  }
   function tradeValue(p){ return playerValue(p).value; }
 
   function computeLeagueAvg(power){
@@ -510,31 +515,40 @@
       '<div class="mt-roster-label mono">Bench (' + team.bench.length + ')</div>' + benchRows;
   }
 
+  // Rangiert Positionen nach PROZENTUALER statt absoluter Abweichung vom Liga-Schnitt. Grund:
+  // in diesem Scoring-System macht QB grundsätzlich viel mehr Rohpunkte als z.B. RB/TE/K/DST
+  // (Team-Summen typischerweise ~1000 bei QB vs. ~300 bei TE/K vs. ~30 bei DST) - ein absoluter
+  // Punkte-Diff würde QB deshalb fast immer als "schwächste Position" ausweisen, selbst wenn dort
+  // längst 2 solide Quarterbacks stehen, während ein echtes RB/WR-Loch (kleinere absolute Zahlen,
+  // aber grösserer relativer Rückstand) systematisch untergeht. Prozentual vergleicht Positionen
+  // unabhängig von ihrer Scoring-Skala fair miteinander.
   function renderAnalysis(myPosTotals, avg){
     var diffs = POS_ORDER.map(function(pos){
       var mine = myPosTotals[pos] || 0;
-      return { pos: pos, mine: mine, avg: avg[pos], diff: mine - avg[pos] };
+      var avgVal = avg[pos] || 0;
+      var diff = mine - avgVal;
+      return { pos: pos, mine: mine, avg: avgVal, diff: diff, pctDiff: avgVal > 0 ? diff / avgVal : 0 };
     });
-    var sorted = diffs.slice().sort(function(a, b){ return a.diff - b.diff; });
+    var sorted = diffs.slice().sort(function(a, b){ return a.pctDiff - b.pctDiff; });
 
     var rows = diffs.map(function(d){
       var cls = d.diff > 0 ? 'pos' : (d.diff < 0 ? 'neg' : '');
-      return '<tr><td>' + POS_LABEL[d.pos] + '</td><td>' + fmt(d.mine) + '</td><td>' + fmt(d.avg) + '</td><td class="delta ' + cls + '">' + fmtSigned(d.diff) + '</td></tr>';
+      return '<tr><td>' + POS_LABEL[d.pos] + '</td><td>' + fmt(d.mine) + '</td><td>' + fmt(d.avg) + '</td><td class="delta ' + cls + '">' + fmtSigned(d.diff) + ' <span class="delta-pct mono">(' + fmtPct(d.pctDiff) + ')</span></td></tr>';
     }).join('');
     analysisTableEl.innerHTML = '<thead><tr><th>Position</th><th>Team</th><th>Liga-Ø</th><th>Diff.</th></tr></thead><tbody>' + rows + '</tbody>';
 
-    var weakest = sorted.filter(function(d){ return d.diff < 0; }).slice(0, 2);
+    var weakest = sorted.filter(function(d){ return d.diff < 0; }).slice(0, 3);
     var strongest = sorted.filter(function(d){ return d.diff > 0; }).slice(-1);
     var text = '';
     if(weakest.length){
       text += '<p class="copy"><strong>Schwächste Position' + (weakest.length > 1 ? 'en' : '') + ':</strong> ' +
-        weakest.map(function(d){ return POS_LABEL[d.pos] + ' (' + fmtSigned(d.diff) + ' ggü. Liga-Ø)'; }).join(', ') +
+        weakest.map(function(d){ return POS_LABEL[d.pos] + ' (' + fmtPct(d.pctDiff) + ' ggü. Liga-Ø)'; }).join(', ') +
         ' – hier lohnt sich zuerst ein Blick auf die Free-Agent- und Trade-Vorschläge unten.</p>';
     } else {
       text += '<p class="copy">Keine Position liegt unter dem Liga-Schnitt – solide über die ganze Bank verteilt.</p>';
     }
     if(strongest.length && strongest[0].diff > 0){
-      text += '<p class="copy"><strong>Stärkste Position:</strong> ' + POS_LABEL[strongest[0].pos] + ' (' + fmtSigned(strongest[0].diff) + ') – möglicher Ansatzpunkt, um im Trade Überschuss abzugeben.</p>';
+      text += '<p class="copy"><strong>Stärkste Position:</strong> ' + POS_LABEL[strongest[0].pos] + ' (' + fmtPct(strongest[0].pctDiff) + ') – möglicher Ansatzpunkt, um im Trade Überschuss abzugeben.</p>';
     }
     analysisTextEl.innerHTML = text;
     return sorted;
@@ -580,7 +594,7 @@
 
   function renderFreeAgents(team, weakPositions){
     var token = ++faRequestToken;
-    var targetPositions = weakPositions.filter(function(d){ return d.diff < 0; }).slice(0, 2).map(function(d){ return d.pos; });
+    var targetPositions = weakPositions.filter(function(d){ return d.diff < 0; }).slice(0, 3).map(function(d){ return d.pos; });
     if(!targetPositions.length) targetPositions = [weakPositions[0].pos];
 
     faStatusEl.textContent = 'Lade Free Agents…';
@@ -702,7 +716,7 @@
   }
 
   function buildTradeIdeas(myTeamId, myRoster, weakPositions){
-    var targetPositions = weakPositions.filter(function(d){ return d.diff < 0; }).slice(0, 2).map(function(d){ return d.pos; });
+    var targetPositions = weakPositions.filter(function(d){ return d.diff < 0; }).slice(0, 3).map(function(d){ return d.pos; });
     if(!targetPositions.length) targetPositions = [weakPositions[0].pos];
 
     var ideas = [];
@@ -753,8 +767,8 @@
       ? 'Deine aktuell beste Startaufstellung und Bench, neu berechnet nach dem Live-Punkteschnitt – ein Bankspieler mit besserer echter Form kann hier einen bisherigen Starter verdrängen. Spieler mit echten Daten dieser Saison sind amber markiert.'
       : 'Deine aktuell beste Startaufstellung und Bench, sortiert nach Saison-Projektion – das ist gleichzeitig die Antwort auf "wen sollte ich starten": ohne wochenspezifische Prognosen ist die Saison-Projektion die beste verfügbare Näherung.';
     document.getElementById('mtAnalysisCopy').textContent = VALUE_MODE === 'live'
-      ? 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der aktuellen Werte aller Spieler auf dem Kader je Position, nicht nur der Starter). Negative Werte = unterdurchschnittlich, hier lohnt sich ein Blick auf Free Agents oder Trades zuerst.'
-      : 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der Projektionen aller Spieler auf dem Kader je Position, nicht nur der Starter). Negative Werte = unterdurchschnittlich, hier lohnt sich ein Blick auf Free Agents oder Trades zuerst.';
+      ? 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der aktuellen Werte aller Spieler auf dem Kader je Position, nicht nur der Starter). Die Prozentzahl in Klammern entscheidet, welche Positionen unten als Free-Agent-/Trade-Vorschläge auftauchen (nicht die reine Punktezahl) – sonst würde QB als grundsätzlich punktereichste Position fast immer dominieren, selbst wenn dort längst genug Tiefe da ist.'
+      : 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der Projektionen aller Spieler auf dem Kader je Position, nicht nur der Starter). Die Prozentzahl in Klammern entscheidet, welche Positionen unten als Free-Agent-/Trade-Vorschläge auftauchen (nicht die reine Punktezahl) – sonst würde QB als grundsätzlich punktereichste Position fast immer dominieren, selbst wenn dort längst genug Tiefe da ist.';
     document.getElementById('mtTradesCopy').innerHTML = 'Konkrete Vorschläge – auch als Paket (z.B. 2-für-1 oder 3-für-2), nicht nur 1-für-1: Bankspieler von dir gegen Bankspieler eines anderen Teams an deiner Schwachposition, möglichst ausgeglichen nach ' +
       (VALUE_MODE === 'live'
         ? 'aktuellem Punkteschnitt dieser Saison.'
