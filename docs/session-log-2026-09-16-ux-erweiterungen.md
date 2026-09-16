@@ -30,10 +30,20 @@
 
 **Getestet:** Playwright mit gezielt fehlschlagendem ersten `power-rankings.json`-Request (500, beim zweiten Versuch erfolgreich) – Retry-Button erscheint, Klick lädt danach korrekt alle Team-Optionen nach. Nach Team-Auswahl sind kurz 2 Skeleton-Karten sichtbar, bevor (erwartungsgemäss, da der Live-ESPN-Endpoint in dieser Sandbox nicht mockbar ist) der FA-Fetch fehlschlägt und korrekt den Retry-Button zeigt.
 
+## 3. Neue Sektion "Deine Saison bisher"
+
+**Idee:** `season-stats.json` sammelt pro Team schon seit dem "echte Punkte"-Ausbau (siehe Vorgänger-Session-Log) viele Kennzahlen – Streaks, knappe Spiele/Blowouts, Wochen als Top-/Flopscorer der Liga, verpasste Bank-Swaps, Überraschungssiege – bisher aber nur intern als Zutat für Recap-Fakten (`findStreakFact`, `findCloseGamesFact` etc. in `sync-espn.mjs`) genutzt, nirgends als eigene Übersicht pro Team sichtbar.
+
+**Umgesetzt:** Neue Sektion "Deine Saison bisher" zwischen Roster und Team-Analyse. `renderSeasonStats(teamId)` liest `SEASON_STATS.teams[String(teamId)]` (Keys sind String-Team-IDs) und baut eine Kachel-Übersicht (`.mt-stat-grid`/`.mt-stat-tile`, neues CSS im selben Stil wie die restliche Seite): aktuelle Serie, längste Serie, knappe Spiele (Marge < 5 Punkte, exakt wie in `sync-espn.mjs` definiert), Blowouts (Marge > 30 Punkte), Wochen als Topscorer/Flopscorer der Liga, Überraschungssiege (Sieg als Aussenseiter laut Projektion), Bank-Punkte liegen gelassen (Summe des jeweils besten verpassten gleichpositionellen Starter-Swaps pro Woche, aus `benchRegret()`).
+
+Team ohne Eintrag (`t.games === 0` bzw. gar kein Eintrag, z.B. brandneues Team) zeigt statt leerer Kacheln einen Hinweistext.
+
+**Getestet:** Playwright mit gemocktem `season-stats.json` (3 Wochen, alle 8 Felder befüllt) – alle Kacheln zeigen korrekte Werte und Formatierung (Pluralisierung bei "Siege"/"Niederlagen", korrekte S/N-Kurzform bei knapp/Blowout). Zweites Team ohne Eintrag in `season-stats.teams` zeigt korrekt den Fallback-Hinweis statt 0 Kacheln mit Nullen.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Injury-Badges: echten Sync-Lauf abwarten und `data/roster.json` auf tatsächlich befüllte `injuryStatus`-Werte prüfen (siehe oben).
 
 ## Nächster Schritt (laufend)
-Weiter mit den nächsten Punkten aus der "mach alles"-Liste: eigene Team-Statistik-Karte, "Diese Woche"-Digest, Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
+Weiter mit den nächsten Punkten aus der "mach alles"-Liste: "Diese Woche"-Digest, Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
