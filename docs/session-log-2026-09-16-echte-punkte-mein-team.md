@@ -87,10 +87,24 @@ Nutzer-Beobachtung mit klarer eigener Diagnose: "da diese vermutlich am meisten 
 
 **Verifiziert** mit vollständig kontrolliertem Mock (QB: -100 Punkte absolut / -10% relativ, RB: -60 Punkte absolut / -12% relativ – kleinerer absoluter, aber grösserer relativer Rückstand): Tabelle zeigt beide Prozentwerte korrekt, "Schwächste Positionen"-Text listet RB jetzt korrekt VOR QB trotz kleinerem absoluten Rückstand – exakt das vom Nutzer beschriebene Szenario aufgelöst.
 
+## 8. Nutzer-Feedback: Drop-Kandidat passt nicht zur vorgeschlagenen Free-Agent-Position
+
+Nutzer-Beispiel: "bei Saints of Anarchy hat Matthew Stafford nicht performt, deshalb wird als Free Agent ein QB vorgeschlagen – das verstehe ich – aber als möglicher Drop-Kandidat dann Rico Dowdle zu empfehlen macht keinen Sinn, ich kann nur einen QB als Starter aufstellen, was will ich also mit 3 [QBs] im Team, dafür ein RB weniger?"
+
+**Root Cause:** `weakestBenchDrop(team)` wurde EINMAL global (über alle Positionen hinweg der schwächste Bankspieler) berechnet und für JEDE Positions-Gruppe im Free-Agent-Block wiederverwendet – dadurch konnte bei einem QB-Vorschlag ein völlig unabhängiger RB als Drop-Kandidat erscheinen, obwohl davon höchstens 1 QB überhaupt startbar ist.
+
+**Fix:** `weakestBenchDrop(team)` entfernt, durch `weakestAtPos(team, pos)` ersetzt – sucht zuerst einen Bankspieler exakt an der übergebenen Position; gibt es dort keinen (typischerweise K/DST mit oft nur 1 rostered Spieler), fällt die Funktion auf den aktuellen STARTER dieser Position zurück (`isStarter:true`) statt fälschlich eine andere Position zu zeigen. `renderFreeAgents()` ruft `weakestAtPos(team, pos)` jetzt pro Position einzeln INNERHALB der Karten-Schleife auf statt einmal global davor – das war exakt der Bug.
+
+Zwei Text-Varianten je nach Fall: "Möglicher Drop-Kandidat dafür: X – dein schwächster Bankspieler auf [POS]" bzw. bei fehlender Bank-Tiefe "Kein Bankspieler auf [POS] – ein Upgrade würde direkt deinen aktuellen Starter X ersetzen".
+
+**Test-Erschwernis:** ein voller End-to-End-Test scheiterte, weil der Live-ESPN-Free-Agent-Endpoint in dieser Sandbox grundsätzlich nicht mockbar ist (`page.route()` greift nicht, `ERR_CERT_AUTHORITY_INVALID`) – bereits früher in dieser Session dokumentierte Umgebungs-Einschränkung. Workaround: `weakestAtPos` temporär über `window.__test_weakestAtPos` direkt exponiert, per `page.evaluate()` isoliert aufgerufen (Live-Endpoint dabei komplett umgangen), danach den Debug-Hook wieder entfernt, bevor committet wurde.
+
+**Verifiziert:** mit kontrolliertem Mock-Roster (Bank enthält sowohl "Backup QB" als auch "Rico Dowdle" RB) liefert `weakestAtPos(team, 'QB')` jetzt korrekt "Backup QB" statt "Rico Dowdle"; simulierter Fall ohne Bank-K fällt korrekt auf den K-Starter zurück (`isStarter:true`).
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Falls die prozentuale Umstellung in der Praxis nicht ausreicht: explizite Ziel-Rostertiefe pro Position (QB=2, RB/WR=4, TE=2, K/DST=1) als zusätzliches Kriterium nachrüsten.
 
 ## Nächster Schritt (Stand Ende dieser Session)
-Läuft gerade: `espn-sync.yml`-Run `35089004604` (Woche-1-Backfill) verifizieren – Job-Logs auf Fehler prüfen, danach `data/season-stats.json` inhaltlich inspizieren (insbesondere ob `players[id].totalPoints`/`gamesPlayed`/`starterWeeks` und die neuen Team-Felder wie `longestWinStreak`/`closeWins` für Woche 1 jetzt korrekt befüllt sind, keine NaN-Werte). Danach: Woche 2 abwarten, dann beim nächsten Dienstags-Sync erneut verifizieren, dass alles mit echten Woche-2-Daten fehlerfrei weiterläuft. Sobald `gamesPlayed >= 2` erreicht ist (jetzt schon ab Wochenabschluss 2 möglich dank Backfill, statt erst ab Woche 3), live auf `my-team.html` prüfen, ob die "echten" Werte inkl. Punkteschnitt-Anzeige plausibel aussehen.
+Woche 2 abwarten, dann beim nächsten Dienstags-Sync verifizieren, dass alles mit echten Woche-2-Daten fehlerfrei weiterläuft (inkl. `gamesPlayed:2` für jeden Spieler). Live auf `my-team.html` prüfen, ob die "echten" Werte inkl. Punkteschnitt-Anzeige und die jetzt positionsgenauen Drop-Kandidaten in der Praxis plausibel aussehen – insbesondere den vom Nutzer geschilderten Saints-of-Anarchy/Stafford-Fall live nachvollziehen, sobald Woche 2 echte Daten liefert.
