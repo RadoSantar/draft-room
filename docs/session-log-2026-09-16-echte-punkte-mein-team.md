@@ -67,6 +67,14 @@ Getestet: Toggle-Klick wechselt Modus, re-rendert alle Sektionen korrekt, `local
 
 `MIN_GAMES_FOR_REAL` von 2 auf 1 gesenkt, Disclaimer-Text angepasst (inkl. neuem Hinweis: "bei 1-2 gespielten Wochen ist der Punkteschnitt naturgemäss noch verrauscht – wird zuverlässiger, je mehr Wochen dazukommen"). Mit gemocktem 1-Wochen-Datensatz verifiziert: Live-Modus aktiviert sich jetzt sofort korrekt (amber, abweichende Werte).
 
+## 6. Nutzer-Feedback: Live-Modus ändert Werte, aber nicht die Aufstellung selbst
+
+Echter Bug, kein Missverständnis diesmal: die Starter/Bank-ZUORDNUNG kam weiterhin unverändert aus `roster.json`, wo `buildOptimalLineup()` serverseitig fest nach `proj` rechnet (`scripts/scoring.mjs`) – der Toggle hatte bisher nur die ANGEZEIGTEN Zahlen umgeschaltet, nicht die Frage "wer sollte überhaupt starten".
+
+Fix: client-seitiger Nachbau von `buildOptimalLineup()` (identische `STARTER_SLOTS`-Definition aus `scoring.mjs` kopiert), aber `playerValue()` statt starr `proj` als Sortierkriterium – `buildOptimalLineupByValue()` + `liveOptimizedTeam()`-Wrapper. Jetzt überall eingesetzt, wo eine `roster.json`-Team-Struktur verarbeitet wird: `renderRoster` (eigenes Team), `renderFreeAgents`/`weakestBenchDrop` (Drop-Kandidat), `buildTradeIdeas` (sowohl `myRoster` als auch JEDES andere Team in der Schleife – sonst hätte ein Trade-Vorschlag einen Spieler als "Bankspieler des anderen Teams" angeboten, der dort im Live-Modus eigentlich längst Starter wäre). Im Projektion-Modus identisch zum bisherigen Verhalten (da `playerValue()` dort ohnehin auf `proj` zurückfällt), im Live-Modus kann jetzt ein Bankspieler mit besserer echter Form tatsächlich einen Starter verdrängen.
+
+**Test-Erschwernis:** echte `roster.json`-Projektionswerte drifteten zwischen Testläufen (Hintergrund-Sync-Cron lief währenddessen und aktualisierte live von ESPN geladene Projektionen) – dadurch waren reine "echte Daten"-Tests nicht reproduzierbar. Gelöst durch vollständig kontrolliertes Mock-Roster (auch `roster.json`/`power-rankings.json`/`rostered-ids.json` gemockt, nicht nur `season-stats.json`): Bankspieler mit niedriger Projektion aber grossem Live-Boost wird im Live-Modus korrekt zum Starter, ein bisheriger Starter korrekt zur Bank verdrängt; im Projektion-Modus bleibt die ursprüngliche Aufstellung unverändert. Für künftige Tests dieser Seite gemerkt: bei roster-abhängigen Tests immer `roster.json`+`power-rankings.json`+`rostered-ids.json` gemeinsam mocken, nicht nur `season-stats.json`.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
