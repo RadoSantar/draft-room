@@ -464,3 +464,8 @@ Verifiziert per Playwright mit gemocktem Roster (4 unterschiedliche Status-
 Werte auf Starter/Bench verteilt) - alle 4 Badges erscheinen mit korrektem
 Label und korrekter is-out-Einfärbung, Spieler ohne Status zeigen keinen
 Badge.
+
+## 2026-09-16 – `c9015ff` Session-Log: UX-Erweiterungen gestartet, Injury-Badges nachgetragen
+
+Neuer Session-Log für das "mach alles"-UX-Paket, Backup-Eintrag für den
+Injury-Badge-Fix (Commit 0babb3a).
