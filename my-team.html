@@ -125,6 +125,7 @@
   .mt-bench-row .name .team{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);}
   .mt-bench-row .proj{font-family:'IBM Plex Mono', monospace;font-size:12.5px;color:var(--chalk);opacity:.7;}
   .mt-bench-row .proj.is-real{color:var(--amber);opacity:1;}
+  .proj-sub{opacity:.75;font-size:0.85em;}
   .mt-empty{padding:6px 18px 12px;font-size:13px;color:var(--chalk);opacity:.6;font-style:italic;}
 
   /* Team-Analyse */
@@ -232,7 +233,7 @@
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
-    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Sobald ein Spieler mindestens 2 echte Saisonspiele hinter sich hat, wechselt seine Bewertung automatisch von der Vorschau-Projektion auf seinen tatsächlichen Punkteschnitt dieser Saison (<span class="mono" style="color:var(--amber);">amber</span> markiert) – die Vorschau verliert mit echten Ergebnissen an Aussagekraft.</span>
+    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Sobald ein Spieler mindestens 2 echte Saisonspiele hinter sich hat, wechselt seine Bewertung automatisch von der Vorschau-Projektion auf eine Rest-Saison-Schätzung aus seinem tatsächlichen Punkteschnitt (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – die Vorschau verliert mit echten Ergebnissen an Aussagekraft. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst.</span>
   </div>
 
   <div class="mt-team-picker">
@@ -351,7 +352,8 @@
   }
   function valueHtml(p, cssClass){
     var v = playerValue(p);
-    return '<span class="' + cssClass + (v.isReal ? ' is-real' : '') + '">' + fmt(v.value) + '</span>';
+    var sub = v.isReal ? '<span class="proj-sub mono"> · Ø' + v.ppg.toFixed(1) + '</span>' : '';
+    return '<span class="' + cssClass + (v.isReal ? ' is-real' : '') + '">' + fmt(v.value) + sub + '</span>';
   }
 
   function fmt(n){ return n === null || n === undefined ? '–' : (Math.round(n * 10) / 10).toFixed(1); }
@@ -485,16 +487,18 @@
         if(!list.length) return '';
         var cards = list.map(function(p){
           var v = playerValue(p);
+          var basis = v.isReal ? ('Ø-Saison ' + fmt(v.value) + ' (Ø' + v.ppg.toFixed(1) + '/Spiel)') : ('Proj. ' + fmt(v.value));
           return '<div class="mt-rec-card">' +
             '<div class="mt-rec-title">' + p.name + ' <span class="mono" style="color:var(--hash);font-size:12px;">' + p.team + '</span></div>' +
-            '<div class="mt-rec-proj' + (v.isReal ? ' is-real' : '') + '">' + (v.isReal ? 'Ø-Saison ' : 'Proj. ') + fmt(v.value) + ' · ADP ' + fmt(p.adp) + '</div>' +
+            '<div class="mt-rec-proj' + (v.isReal ? ' is-real' : '') + '">' + basis + ' · ADP ' + fmt(p.adp) + '</div>' +
           '</div>';
         }).join('');
         var dropHint;
         if(benchHasRoom) dropHint = '<p class="copy">Deine Bank hat noch einen freien Platz (' + team.bench.length + '/' + BENCH_SIZE + ') – du kannst direkt hinzufügen, ohne jemanden droppen zu müssen.</p>';
         else if(drop){
           var dv = playerValue(drop);
-          dropHint = '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', ' + (dv.isReal ? 'Ø-Saison ' : 'Proj. ') + fmt(dv.value) + ') – dein schwächster Bankspieler aktuell.</p>';
+          var dropBasis = dv.isReal ? ('Ø-Saison ' + fmt(dv.value) + ', Ø' + dv.ppg.toFixed(1) + '/Spiel') : ('Proj. ' + fmt(dv.value));
+          dropHint = '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + drop.name + '</strong> (' + POS_LABEL[drop.pos] + ', ' + dropBasis + ') – dein schwächster Bankspieler aktuell.</p>';
         }
         else dropHint = '';
         return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
@@ -531,7 +535,8 @@
   function tradeSidePlayersHtml(players){
     return players.map(function(p){
       var v = playerValue(p);
-      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + '</span><span class="mt-trade-player-meta mono' + (v.isReal ? ' is-real' : '') + '">' + POS_LABEL[p.pos] + ' · ' + fmt(v.value) + '</span></div>';
+      var valueText = fmt(v.value) + (v.isReal ? ' (Ø' + v.ppg.toFixed(1) + ')' : '');
+      return '<div class="mt-trade-player"><span class="mt-trade-player-name">' + p.name + '</span><span class="mt-trade-player-meta mono' + (v.isReal ? ' is-real' : '') + '">' + POS_LABEL[p.pos] + ' · ' + valueText + '</span></div>';
     }).join('');
   }
 
