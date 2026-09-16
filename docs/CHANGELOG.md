@@ -341,3 +341,5 @@ Reload hinweg verifiziert. Ein Test-Artefakt unterwegs gefangen und
 korrekt als solches identifiziert (page.route()-Interception überlebt
 in dieser Playwright-Umgebung keinen page.reload() - kein Bug im
 eigentlichen Code, nur beim Testaufbau selbst).
+
+## 2026-09-16 – `62f4b8f` Session-Log: Bewertungs-Basis-Toggle nachgetragen
