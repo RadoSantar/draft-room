@@ -73,6 +73,23 @@ Für gedroppte Spieler (die evtl. weder gedraftet noch aktuell rostered sind, z.
 
 **Getestet:** Reine Logik zuerst mit einem eigenständigen Node-Skript gegen synthetische 10-Team-Daten durchgerechnet (Konferenzsieger-Vorrang trotz weniger Siegen, Tiebreaker-Fälle, Elimination ab Woche 13 mit nur noch 2 Restspielen) – Ergebnisse manuell nachvollzogen, alle korrekt. Danach Playwright gegen `my-team.html`: (A) Woche 5 zeigt korrekt den "zu früh"-Hinweis ohne Liste. (B) Woche 13 mit 6 Teams über alle 3 Status-Ausprägungen zeigt korrekte Sortierung, korrekten Tiebreaker-Copy-Text und korrekte `is-mine`-Hervorhebung.
 
+## 7. Neue Sektion "Track-Record vergangener Tipps" (letzter Punkt der "mach alles"-Liste)
+
+**Idee:** Verlauf, ob frühere Trade-/Drop-Tipps sich im Nachhinein gelohnt hätten.
+
+**Architektur-Problem zuerst gelöst:** FA-/Trade-Vorschläge werden auf `my-team.html` komplett clientseitig und live berechnet – es gab bisher NIRGENDS eine Persistenz für "das haben wir mal vorgeschlagen". Ausserdem führt `season-stats.json` nur KUMULIERTE Saison-Summen (keine Wochen-Auflösung), was eine naive "Punkte seit Woche X"-Abfrage unmöglich macht. Gelöst durch dieselbe Snapshot-Diff-Technik wie bei `waiver-trends.json` (Punkt 5): bei der Empfehlung wird ein Baseline-Snapshot (aktuelle kumulierte Werte von Spieler und Team-Position) gespeichert, die spätere Bewertung bildet einfach die Differenz zum dann aktuellen Stand – funktioniert mit dem bestehenden Datenmodell, ohne es umzubauen.
+
+**Umgesetzt (sync-espn.mjs):**
+- Neue `fetchTopFreeAgent(pos, rosteredIdSet)`-Funktion – serverseitiger Nachbau von `fetchFreeAgents()` aus `my-team.html`, über denselben öffentlichen, cookie-losen `DEFAULTS_URL`-Endpoint (kein neues Auth-Risiko, exakt dasselbe Muster wie das bereits bestehende `fetchProjections()`).
+- Bei jedem Lauf mit neu abgeschlossener Woche: pro Team die schwächste Position (proj-basiert, gleiche Definition wie überall sonst) + `fetchTopFreeAgent()` dafür ermitteln, zusammen mit Baseline-Snapshot aus `season-stats.json` in `data/suggestion-history.json` anhängen (idempotent pro Team+Woche, kein Duplikat bei mehrfachen Dienstags-Läufen).
+- Mindestens 2 Wochen später (`GRADE_AFTER_WEEKS`) wird jeder unbewertete Eintrag automatisch bewertet: Punkteschnitt-Differenz seit Baseline für Spieler UND Team-Position, Verdict "besser"/"schlechter"/"etwa gleich" bei >10% Abweichung. Kein Grading, wenn der Spieler seither noch gar nicht gespielt hat (z.B. Bye Week oder nie geholt) – verschiebt sich automatisch auf den nächsten Lauf, statt eine Bewertung mit 0 Spielen zu erzwingen.
+
+**Umgesetzt (my-team.html):** neue Sektion am Ende der Seite, zeigt alle vergangenen Tipps des gewählten Teams (neueste zuerst) mit farbigem Verdict-Badge oder "wird bewertet"-Platzhalter.
+
+**Getestet:** Grading-Mathematik separat mit einem eigenständigen Node-Skript gegen 4 synthetische Szenarien durchgerechnet (zu früh nach Baseline → bleibt unbewertet; Spieler klar besser als Team-Position → "besser"; Spieler seither ohne neue Auftritte → bleibt unbewertet statt Fehlbewertung mit 0 Spielen; Spieler schlechter → "schlechter") – alle 4 korrekt. Playwright-Test mit gemockter 2-Team-Historie: Anzeige filtert korrekt nur Einträge des gewählten Teams, sortiert neueste zuerst, zeigt korrekte Verdict-Klassen/-Texte je nach Grading-Status.
+
+**Bekannte Grenze (bewusst in Kauf genommen):** `teamPosPpgSince` ist der Punkteschnitt PRO SPIELER-AUFTRITT an dieser Position übers ganze Team (Summe aller Starter+Bank-Punkte an der Position, geteilt durch Anzahl Auftritte) – ein plausibler Proxy für "Positions-Stärke", aber nicht exakt "der eine Spieler, der ersetzt worden wäre". Für die Kernfrage "hätte sich der Tipp gelohnt" reicht das als Näherung.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
@@ -80,6 +97,7 @@ Für gedroppte Spieler (die evtl. weder gedraftet noch aktuell rostered sind, z.
 - Bye-Week-Hinweis im Digest: bräuchte entweder einen neuen ESPN-`proTeamSchedules`-Fetch serverseitig (nächster Sync-Lauf mit echten Credentials nötig, um das zu verifizieren) oder eine von Hand gepflegte Bye-Week-Tabelle – bewusst nicht aus dem Gedächtnis geraten (Fehlerrisiko bei echten Terminen), siehe Punkt 4 oben.
 - Trending im Waiver Wire: echten Sync-Lauf zweimal abwarten (für einen ersten echten `since`-Diff) und `data/waiver-trends.json` danach inhaltlich verifizieren.
 - Playoff-Chancen: echten Sync-Lauf abwarten und `data/playoff-picture.json` mit den echten Liga-Daten inhaltlich verifizieren (aktuell erst Woche 1-2 gespielt, Sektion zeigt bis Woche 8 ohnehin nur den "zu früh"-Hinweis).
+- Track-Record vergangener Tipps: braucht mindestens 3 abgeschlossene Wochen (1 Woche für den ersten Eintrag + 2 Wochen `GRADE_AFTER_WEEKS`), bevor der erste echte, bewertete Eintrag erscheinen kann – bis dahin `data/suggestion-history.json` regelmässig nach echten Einträgen prüfen, insbesondere ob `fetchTopFreeAgent()` gegen die echte ESPN-API wie erwartet funktioniert (in dieser Sandbox nicht testbar, da `ESPN_S2`/`ESPN_SWID` nur als GitHub-Actions-Secret existieren).
 
-## Nächster Schritt (laufend)
-Weiter mit dem letzten Punkt aus der "mach alles"-Liste: Track-Record vergangener Tipps.
+## Nächster Schritt (Stand Ende dieser Session)
+Alle 7 Punkte der "mach alles"-UX-Liste sind umgesetzt und live (Commits siehe oben, jeweils mit Changelog-Bot-Merge dazwischen). Nächster sinnvoller Schritt: die nächsten paar Dienstags-Sync-Läufe beobachten und verifizieren, dass alle neuen serverseitigen Berechnungen (Injury-Status, Trending-Diff, Playoff-Picture, Track-Record-Aufzeichnung+Grading) fehlerfrei mit echten Liga-Daten durchlaufen – keiner davon konnte in dieser Sandbox gegen die echte private ESPN-API getestet werden (nur die reine Berechnungslogik isoliert, plus alles Clientseitige per Playwright mit gemockten Daten). Bei Auffälligkeiten in den Sync-Logs (GitHub Actions) nachbessern.
