@@ -617,3 +617,37 @@ korrekte optische Hervorhebung des eigenen Teams.
 ## 2026-09-17 – `ea30056` Session-Log: Playoff-Chancen nachgetragen
 
 Backup-Eintrag für Commit 0136531.
+
+## 2026-09-17 – `923dcf1` Mein Team: Neue Sektion "Track-Record vergangener Tipps"
+
+sync-espn.mjs erfasst jetzt bei jedem Lauf mit neu abgeschlossener Woche pro
+Team die aktuell schwächste Position (proj-basiert, wie auf my-team.html)
+und den dazu besten verfügbaren Free Agent (neue fetchTopFreeAgent()-Funktion,
+serverseitiger Nachbau von my-team.html's fetchFreeAgents() über denselben
+öffentlichen, cookie-losen DEFAULTS_URL-Endpoint) - zusammen mit einem
+Baseline-Snapshot aus season-stats.json (Punkte/Spiele des Spielers sowie
+der Team-Position zu diesem Zeitpunkt) in data/suggestion-history.json
+gespeichert.
+
+Mindestens 2 Wochen später wird jeder noch unbewertete Eintrag automatisch
+bewertet: Punkteschnitt des vorgeschlagenen Spielers SEIT der Empfehlung
+(Differenz zum Baseline-Snapshot) vs. Punkteschnitt, den das Team an dieser
+Position im selben Zeitraum tatsächlich gemacht hat (ebenfalls per Differenz
+- season-stats.json führt nur kumulierte Saison-Summen, keine Wochen-
+Auflösung, daher dieselbe Snapshot-Diff-Technik wie bei waiver-trends.json).
+Verdict "besser"/"schlechter"/"etwa gleich" je nach prozentualer Abweichung
+(>10% Schwelle in beide Richtungen). Kein neues Ergebnis, wenn der Spieler
+seither noch gar nicht gespielt hat (z.B. Bye Week) - Grading verschiebt
+sich automatisch auf den nächsten Lauf.
+
+my-team.html: neue Sektion "Track-Record vergangener Tipps" am Ende,
+zeigt für das gewählte Team alle vergangenen Tipps (neueste zuerst) mit
+Verdict-Badge oder "wird bewertet"-Platzhalter für noch offene Einträge.
+
+Verifiziert: Grading-Logik separat mit synthetischen Daten in Node
+durchgerechnet (zu früh -> bleibt unbewertet; Spieler klar besser ->
+"besser"; Spieler hat noch nicht gespielt -> bleibt unbewertet; Spieler
+schlechter -> "schlechter" - alle 4 Fälle korrekt). Playwright-Test mit
+gemockter Tipp-Historie über 2 Teams: Anzeige filtert korrekt nur die
+Einträge des gewählten Teams, sortiert neueste zuerst, zeigt korrekte
+Verdict-Klassen/Texte für bewertete und unbewertete Einträge.
