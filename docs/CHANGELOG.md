@@ -549,3 +549,8 @@ den richtigen Bankspieler/Starter bei einem gezielt konstruierten Szenario
 wechselt nach FA-Fetch korrekt zu "konnte nicht geladen werden" (da der
 Live-ESPN-Endpoint in dieser Sandbox nicht mockbar ist - dieselbe bekannte
 Einschränkung wie bei den vorherigen FA-Tests dieser Session).
+
+## 2026-09-17 – `d415cd7` Session-Log: "Diese Woche"-Digest nachgetragen
+
+Backup-Eintrag für Commit b95ed07, inkl. Begründung, warum der
+Bye-Week-Teil der ursprünglichen Digest-Idee bewusst zurückgestellt wurde.
