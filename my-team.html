@@ -237,6 +237,16 @@
   .mt-trade-arrow{font-family:'Anton', sans-serif;font-size:20px;color:var(--amber);flex:0 0 auto;}
   .mt-trade-verdict{margin-top:10px;font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--turf);}
 
+  /* Trending im Waiver Wire */
+  .mt-trend-cols{display:flex;gap:20px;flex-wrap:wrap;margin:14px 0;}
+  .mt-trend-col{flex:1;min-width:220px;}
+  .mt-trend-col-label{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;}
+  .mt-trend-col-label.added{color:var(--turf);}
+  .mt-trend-col-label.dropped{color:var(--endzone);}
+  .mt-trend-row{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid var(--card-border);font-size:14px;}
+  .mt-trend-row:last-child{border-bottom:none;}
+  .mt-trend-row .mt-trend-meta{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--hash);white-space:nowrap;}
+
   .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:66ch;}
 
   .mt-injury-badge{
@@ -344,6 +354,10 @@
     <div class="calc-status" id="faStatus">Lade Free Agents…</div>
     <div id="mtFreeAgents"></div>
 
+    <h2 class="section-head">Trending im Waiver Wire</h2>
+    <p class="copy" id="mtTrendingCopy"></p>
+    <div id="mtTrending"></div>
+
     <h2 class="section-head">Trade-Ideen</h2>
     <p class="copy" id="mtTradesCopy"></p>
     <div id="mtTrades"></div>
@@ -424,6 +438,8 @@
   var digestEl = document.getElementById('mtDigest');
   var faStatusEl = document.getElementById('faStatus');
   var faEl = document.getElementById('mtFreeAgents');
+  var trendingCopyEl = document.getElementById('mtTrendingCopy');
+  var trendingEl = document.getElementById('mtTrending');
   var tradesEl = document.getElementById('mtTrades');
 
   var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0;
@@ -983,6 +999,30 @@
     btn.addEventListener('click', function(){ setValueMode(btn.dataset.mode); });
   });
 
+  // Liga-weite Free-Agent-Bewegungen seit dem letzten Sync-Lauf (waiver-trends.json, siehe
+  // sync-espn.mjs) - unabhängig vom gewählten Team, deshalb nur einmal beim initialen Laden gefüllt,
+  // nicht bei jedem Team-Wechsel neu berechnet.
+  function renderTrending(data){
+    if(!data.lastUpdated){
+      trendingCopyEl.textContent = 'Noch keine zwei Sync-Läufe zum Vergleichen vorhanden - diese Übersicht füllt sich ab dem nächsten Lauf.';
+      trendingEl.innerHTML = '';
+      return;
+    }
+    var sinceText = data.since ? new Date(data.since).toLocaleDateString('de-CH') : 'dem ersten Snapshot';
+    trendingCopyEl.textContent = 'Wer seit ' + sinceText + ' liga-weit geholt bzw. gedroppt wurde (unabhängig vom gewählten Team).';
+
+    function colHtml(label, cls, list){
+      var rows = list.length ? list.slice(0, 8).map(function(p){
+        return '<div class="mt-trend-row"><span>' + p.name + '</span><span class="mt-trend-meta mono">' + POS_LABEL[p.pos] + ' · ' + (p.proTeam || '') + ' · ADP ' + fmt(p.adp) + '</span></div>';
+      }).join('') : '<div class="mt-empty" style="color:var(--ink-soft);padding:6px 0;">Keine.</div>';
+      return '<div class="mt-trend-col"><div class="mt-trend-col-label mono ' + cls + '">' + label + '</div>' + rows + '</div>';
+    }
+    trendingEl.innerHTML = '<div class="mt-trend-cols">' +
+      colHtml('Neu geholt', 'added', data.added || []) +
+      colHtml('Neu gedroppt', 'dropped', data.dropped || []) +
+    '</div>';
+  }
+
   function showTeam(teamName){
     CURRENT_TEAM = teamName;
     var power = POWER.filter(function(t){ return t.name === teamName; })[0];
@@ -1035,7 +1075,8 @@
       fetch('data/power-rankings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
       fetch('data/roster.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
       fetch('data/rostered-ids.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
-      fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { players: {}, weeksArchived: [] }; })
+      fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { players: {}, weeksArchived: [] }; }),
+      fetch('data/waiver-trends.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { added: [], dropped: [] }; })
     ]).then(function(results){
       POWER = results[0].data;
       ROSTER = results[1].data;
@@ -1044,6 +1085,7 @@
       LAST_COMPLETED_WEEK = (SEASON_STATS.weeksArchived && SEASON_STATS.weeksArchived.length) ? Math.max.apply(null, SEASON_STATS.weeksArchived) : 0;
       LEAGUE_AVG = computeLeagueAvg(POWER);
       statusKickerEl.textContent = 'Stand ' + new Date(results[0].lastUpdated).toLocaleDateString('de-CH');
+      renderTrending(results[4]);
       populateTeamSelect();
     }).catch(function(err){
       statusKickerEl.textContent = 'Fehler beim Laden der Daten';

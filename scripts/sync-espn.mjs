@@ -1503,12 +1503,21 @@ async function main() {
     });
   });
 
+  // Vorheriger Rostered-Ids-Snapshot (VOR dem Überschreiben weiter unten gelesen) - Basis für die
+  // "Trending Free Agents"-Diffs (siehe waiver-trends.json weiter unten). Erster Lauf ohne Vorgänger-
+  // Datei liefert einfach eine leere Liste zurück (readJsonSafe-Fallback), dann bleiben added/dropped
+  // leer statt fälschlich den kompletten aktuellen Kader als "neu geholt" zu melden.
+  const prevRosteredSnapshot = await readJsonSafe('rostered-ids.json', { ids: [] });
+  const prevRosteredIds = prevRosteredSnapshot.ids || [];
+
   // ---- Draft-Picks für die "board"-Historie ----
   const picks = draftData.draftDetail?.picks || [];
   const draftRoundByPlayerId = Object.fromEntries(picks.map((p) => [p.playerId, p.roundId]));
   const draftedIds = [...new Set(picks.map((p) => p.playerId))];
   const missingIds = draftedIds.filter((id) => !playerPool[id]);
-  const allNeededIds = [...new Set([...draftedIds, ...Object.values(currentRosterIds).flat()])];
+  // prevRosteredIds mit rein, damit auch ein seit letztem Snapshot gedroppter (und seither nicht neu
+  // gerosterter) Spieler über playerInfo() auflösbar bleibt, statt als "Unbekannter Spieler" zu enden.
+  const allNeededIds = [...new Set([...draftedIds, ...Object.values(currentRosterIds).flat(), ...prevRosteredIds])];
   const idsNeedingProjection = allNeededIds; // projections come from the same bulk fetch, always fresh
   const projections = await fetchProjections(idsNeedingProjection);
 
@@ -1570,6 +1579,29 @@ async function main() {
   // ---- Alle aktuell irgendwo rostered player-IDs (liga-öffentlich) für Free-Agent-Filterung ----
   const rosteredIds = [...new Set(Object.values(currentRosterIds).flat())];
   await writeJson('rostered-ids.json', { lastUpdated: nowIso(), ids: rosteredIds });
+
+  // ---- Trending Free Agents: Diff ggü. dem VORHERIGEN Snapshot (siehe prevRosteredIds oben, vor
+  // dem Überschreiben gelesen) - "hinzugefügt" = seither von irgendeinem Team geholt, "gedroppt" =
+  // war rostered, ist es jetzt bei niemandem mehr. Da espn-sync.yml nur dienstags läuft (5x im
+  // 2h-Abstand), deckt der Diff zwischen dem letzten Lauf eines Dienstags und dem ersten des
+  // nächsten praktisch eine volle Woche ab - die Kopie zeigt bewusst den echten Zeitstempel statt
+  // pauschal "diese Woche" zu behaupten, für den Fall eines dichteren Laufplans in Zukunft. Ohne
+  // vorherigen Snapshot (erster Lauf überhaupt) bleiben beide Listen leer statt den ganzen aktuellen
+  // Kader fälschlich als "neu geholt" zu melden.
+  const prevRosteredSet = new Set(prevRosteredIds);
+  const currentRosteredSet = new Set(rosteredIds);
+  const addedIds = prevRosteredSnapshot.lastUpdated ? rosteredIds.filter((id) => !prevRosteredSet.has(id)) : [];
+  const droppedIds = prevRosteredSnapshot.lastUpdated ? prevRosteredIds.filter((id) => !currentRosteredSet.has(id)) : [];
+  const toTrendEntry = (id) => {
+    const info = playerInfo(id);
+    return { id, name: info.name, pos: info.pos, proTeam: info.proTeam, adp: info.adp };
+  };
+  await writeJson('waiver-trends.json', {
+    lastUpdated: nowIso(),
+    since: prevRosteredSnapshot.lastUpdated || null,
+    added: addedIds.map(toTrendEntry).sort((a, b) => a.adp - b.adp),
+    dropped: droppedIds.map(toTrendEntry).sort((a, b) => a.adp - b.adp)
+  });
 
   // ---- Standings ----
   const standings = teamData.teams.map((t) => {
