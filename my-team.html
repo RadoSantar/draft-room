@@ -945,7 +945,7 @@
   }
 
   // [Anzahl Spieler von dir, Anzahl Spieler vom anderen Team] – auch Paket-Trades, nicht nur 1-für-1
-  var TRADE_SHAPES = [[1, 1], [2, 1], [3, 1], [3, 2], [2, 3]];
+  var TRADE_SHAPES = [[1, 1], [2, 1], [3, 1], [1, 2], [1, 3], [3, 2], [2, 3]];
 
   function packageValue(players){
     return players.reduce(function(sum, p){ return sum + tradeValue(p); }, 0);
