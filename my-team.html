@@ -341,11 +341,11 @@
 
   <div class="kicker" id="statusKicker">Wird geladen…</div>
   <h1>Mein Team</h1>
-  <p class="copy">Dein aktueller Kader, ein Stärken/Schwächen-Vergleich mit der Liga, konkrete Free-Agent- und Trade-Ideen für deine schwächsten Positionen sowie deine aktuell beste Startaufstellung – automatisch berechnet nach unserem Liga-Scoring. Gedacht als Starthilfe, vor allem wenn du neu bist und nicht genau weisst, wo du ansetzen sollst.</p>
+  <p class="copy">Dein Kader, Stärken/Schwächen im Liga-Vergleich, und automatische Free-Agent-/Trade-Ideen für deine schwächsten Positionen.</p>
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
-    <span>Alle Vorschläge sind eine automatische Näherung auf Basis von Saison-Projektionen und ESPNs Average Draft Position (ADP) als Marktwert – keine Garantie, dass ein Trade-Partner tatsächlich interessiert ist. Nutz die Ideen als Ausgangspunkt für ein Angebot, nicht als letztes Wort. Wochenspezifische Matchup-Analysen ("diese Woche eher Spieler A als B") sind aus denselben Gründen wie beim Punkterechner nicht möglich – siehe dort. Per Toggle oben wählst du die Bewertungs-Basis: "Live-Punkteschnitt" nutzt für Spieler mit mindestens einem echten Saisonspiel eine Rest-Saison-Schätzung aus ihrem tatsächlichen Punkteschnitt statt der Vorschau-Projektion (<span class="mono" style="color:var(--amber);">amber</span> markiert, mit dem rohen Punkteschnitt "Ø" daneben) – Spieler ohne jede echte Daten (z.B. gerade erst geholte Free Agents) fallen weiterhin auf die Projektion zurück. Bei nur 1-2 gespielten Wochen ist der Punkteschnitt naturgemäss noch verrauscht (ein einzelnes starkes oder schwaches Spiel schlägt voll durch) – wird zuverlässiger, je mehr Wochen dazukommen. Der Punkteschnitt zeigt die aktuelle Form pur, ohne Annahme über die Zukunft – bewusst getrennt von der Rest-Saison-Zahl angezeigt, falls du selbst einschätzen willst, ob ein heisser Lauf hält oder ein Verletzungsrisiko einpreisen willst. "Projektion" ignoriert echte Ergebnisse komplett und zeigt durchgehend die Vorschau. Ein <span class="mt-injury-badge" style="margin-left:0;">Q</span>/<span class="mt-injury-badge" style="margin-left:0;">D</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">O</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">IR</span>-Badge neben einem Namen zeigt ESPNs aktuellen Verletzungsstatus (Fraglich/Zweifelhaft/Out/Injured Reserve) – hilft, einen angeschlagenen Starter nicht zu übersehen.</span>
+    <span>Automatische Näherung auf Basis von Projektion/ADP – kein Ersatz für eigene Einschätzung oder Trade-Interesse des Gegenübers. Toggle oben: Projektion oder Live-Punkteschnitt (<span class="mono" style="color:var(--amber);">amber</span> = echte Saisondaten, "Ø" = Punkteschnitt). Badges wie <span class="mt-injury-badge" style="margin-left:0;">Q</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">O</span> zeigen ESPNs Verletzungsstatus.</span>
   </div>
 
   <div class="mt-team-picker">
@@ -400,7 +400,7 @@
     <p class="copy" id="mtTrackRecordCopy"></p>
     <div id="mtTrackRecord"></div>
 
-    <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, ADP) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a>. Kader-Daten aktualisieren sich automatisch etwa wöchentlich per GitHub Actions; Free-Agent-Empfehlungen sind live bei jedem Seitenaufruf.</p>
+    <p class="note-text">Datenquelle: ESPN Fantasy API, verarbeitet nach unserem <a href="index.html#rechner">Liga-Scoring</a>. Kader aktualisiert sich wöchentlich, Free Agents live bei jedem Aufruf.</p>
   </div>
 </main>
 
@@ -669,11 +669,11 @@
   function renderSeasonStats(teamId){
     var t = SEASON_STATS.teams && SEASON_STATS.teams[String(teamId)];
     if(!t || !t.games){
-      seasonStatsCopyEl.textContent = 'Noch keine ausgewerteten Wochen für dieses Team – diese Übersicht füllt sich, sobald der erste Spieltag abgeschlossen ist.';
+      seasonStatsCopyEl.textContent = 'Noch keine Daten – füllt sich nach dem ersten Spieltag.';
       seasonStatsEl.innerHTML = '';
       return;
     }
-    seasonStatsCopyEl.textContent = 'Kennzahlen aus den bisher ' + t.games + ' ausgewerteten Woche' + (t.games > 1 ? 'n' : '') + ' dieser Saison.';
+    seasonStatsCopyEl.textContent = 'Kennzahlen aus ' + t.games + ' ausgewerteten Woche' + (t.games > 1 ? 'n' : '') + '.';
 
     var streakLabel = t.curStreakType === 'WIN' ? (t.curStreakLen + ' Sieg' + (t.curStreakLen > 1 ? 'e' : '') + ' in Folge')
       : t.curStreakType === 'LOSS' ? (t.curStreakLen + ' Niederlage' + (t.curStreakLen > 1 ? 'n' : '') + ' in Folge')
@@ -710,7 +710,7 @@
     }
     var throughWeek = PLAYOFF_PICTURE.throughWeek || 0;
     if(throughWeek < 8){
-      playoffCopyEl.textContent = 'Noch zu früh in der Saison für eine sinnvolle Playoff-Einschätzung – das Rennen um die 4 Playoff-Plätze wird erst ab Woche 8 ausgewertet (aktueller Stand: nach Woche ' + throughWeek + ').';
+      playoffCopyEl.textContent = 'Playoff-Einschätzung startet ab Woche 8 (aktuell: Woche ' + throughWeek + ').';
       playoffEl.innerHTML = '';
       return;
     }
@@ -719,20 +719,20 @@
     var headline = '';
     if(mine){
       if(mine.status === 'in'){
-        headline = 'Aktuell auf Playoff-Platz ' + mine.seed + ' von 4' + (
+        headline = 'Platz ' + mine.seed + ' von 4' + (
           mine.cushion == null ? '.' : (mine.cushion >= 0
-            ? (' – ' + mine.cushion + ' Sieg' + (mine.cushion === 1 ? '' : 'e') + ' Vorsprung auf den ersten Verfolger ausserhalb der Plätze.')
-            : (' – nur dank Conference-Spitzenplatz, ' + Math.abs(mine.cushion) + ' Sieg' + (Math.abs(mine.cushion) === 1 ? '' : 'e') + ' weniger als der letzte Wildcard-Platz.'))
+            ? (' – ' + mine.cushion + ' Sieg' + (mine.cushion === 1 ? '' : 'e') + ' Vorsprung.')
+            : (' – nur dank Conference-Spitzenplatz (' + Math.abs(mine.cushion) + ' weniger als Platz 4).'))
         );
       } else if(mine.status === 'chasing'){
         headline = mine.winsBehind === 0
-          ? 'Aktuell knapp ausserhalb der Playoff-Plätze – gleich viele Siege wie Platz 4, aber schlechterer Tiebreaker (Punkte).'
-          : ('Aktuell ' + mine.winsBehind + ' Sieg' + (mine.winsBehind === 1 ? '' : 'e') + ' hinter Playoff-Platz 4 – noch nicht raus, aber Aufholbedarf.');
+          ? 'Knapp draussen – gleich viele Siege wie Platz 4, aber schlechterer Tiebreaker.'
+          : (mine.winsBehind + ' Sieg' + (mine.winsBehind === 1 ? '' : 'e') + ' hinter Platz 4.');
       } else {
-        headline = 'Rechnerisch keine Playoff-Chance mehr diese Saison – selbst mit ausschliesslich Siegen aus den verbleibenden Spielen würde es nicht mehr für Platz 4 reichen.';
+        headline = 'Rechnerisch keine Playoff-Chance mehr diese Saison.';
       }
     }
-    playoffCopyEl.textContent = (headline ? headline + ' ' : '') + '(Stand nach Woche ' + throughWeek + '.)';
+    playoffCopyEl.textContent = (headline ? headline + ' ' : '') + '(Stand Woche ' + throughWeek + '.)';
 
     var statusRank = { in: 0, chasing: 1, eliminated: 2 };
     var sorted = PLAYOFF_PICTURE.teams.slice().sort(function(a, b){
@@ -816,13 +816,13 @@
     var promoted = liveLineup.starters.filter(function(p){ return !projStarterIds[p.playerId]; });
     var demoted = projLineup.starters.filter(function(p){ return !liveStarterIds[p.playerId]; });
     if(promoted.length && VALUE_MODE !== 'live'){
-      items.push('<div class="mt-digest-item is-alert">Bankspieler mit besserer Live-Form: <strong>' + promoted.map(function(p){ return p.name; }).join(', ') + '</strong> würde' + (promoted.length > 1 ? 'n' : '') + ' unter "Live-Punkteschnitt" ' +
+      items.push('<div class="mt-digest-item is-alert">Bessere Live-Form auf der Bank: <strong>' + promoted.map(function(p){ return p.name; }).join(', ') + '</strong> schlägt' + (promoted.length > 1 ? '' : '') + ' ' +
         (demoted.length ? ('<strong>' + demoted.map(function(p){ return p.name; }).join(', ') + '</strong> ') : '') +
-        'als Starter ersetzen – oben auf "Live-Punkteschnitt" umschalten, um das zu übernehmen.</div>');
+        '– Toggle oben auf "Live-Punkteschnitt" umschalten.</div>');
     }
 
     if(!items.length){
-      items.push('<p class="mt-digest-empty">Keine Auffälligkeiten diese Woche – dein Team ist solide über die ganze Bank verteilt.</p>');
+      items.push('<p class="mt-digest-empty">Keine Auffälligkeiten diese Woche.</p>');
     }
     digestEl.innerHTML = items.join('');
   }
@@ -920,15 +920,15 @@
           '</div>';
         }).join('');
         var dropHint;
-        if(benchHasRoom) dropHint = '<p class="copy">Deine Bank hat noch einen freien Platz (' + team.bench.length + '/' + BENCH_SIZE + ') – du kannst direkt hinzufügen, ohne jemanden droppen zu müssen.</p>';
+        if(benchHasRoom) dropHint = '<p class="copy">Bank hat noch Platz (' + team.bench.length + '/' + BENCH_SIZE + ') – kein Drop nötig.</p>';
         else{
           var weakest = weakestAtPos(team, pos);
           if(weakest){
             var wv = playerValue(weakest.player);
             var wvBasis = wv.isReal ? ('Ø-Saison ' + fmt(wv.value) + ', Ø' + wv.ppg.toFixed(1) + '/Spiel') : ('Proj. ' + fmt(wv.value));
             dropHint = weakest.isStarter
-              ? '<p class="copy">Kein Bankspieler auf ' + POS_LABEL[pos] + ' – ein Upgrade würde direkt deinen aktuellen Starter <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') ersetzen.</p>'
-              : '<p class="copy">Möglicher Drop-Kandidat dafür: <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') – dein schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
+              ? '<p class="copy">Kein Bankspieler auf ' + POS_LABEL[pos] + ' – Upgrade würde direkt Starter <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') ersetzen.</p>'
+              : '<p class="copy">Drop-Kandidat: <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') – schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
           } else dropHint = '';
         }
         return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
@@ -1070,7 +1070,7 @@
   // zeigen einen "wird bewertet"-Platzhalter statt eines Urteils.
   function renderTrackRecord(teamId){
     if(!SUGGESTION_HISTORY || !SUGGESTION_HISTORY.entries || !SUGGESTION_HISTORY.entries.length){
-      trackRecordCopyEl.textContent = 'Noch keine Tipp-Historie vorhanden – ab dem nächsten Sync-Lauf nach einer abgeschlossenen Woche beginnt der Track-Record.';
+      trackRecordCopyEl.textContent = 'Noch keine Tipp-Historie – startet nach der nächsten abgeschlossenen Woche.';
       trackRecordEl.innerHTML = '';
       return;
     }
@@ -1080,7 +1080,7 @@
       trackRecordEl.innerHTML = '';
       return;
     }
-    trackRecordCopyEl.textContent = 'Frühere Free-Agent-Tipps für dieses Team und, sobald genug Zeit vergangen ist, ob sich der Tipp im Nachhinein gelohnt hätte (Punkteschnitt des Spielers seit der Empfehlung vs. was euer Team an der Position im selben Zeitraum tatsächlich gemacht hat).';
+    trackRecordCopyEl.textContent = 'Frühere Free-Agent-Tipps – und, sobald bewertbar, ob sie sich gelohnt hätten.';
     trackRecordEl.innerHTML = mine.map(function(e){
       var verdictHtml;
       if(e.graded && e.result){
@@ -1090,8 +1090,8 @@
         verdictHtml = '<span class="mt-track-verdict pending">wird bewertet</span>';
       }
       var detail = e.graded && e.result
-        ? ('Ø' + e.result.playerPpgSince.toFixed(1) + '/Spiel seit Empfehlung vs. Ø' + e.result.teamPosPpgSince.toFixed(1) + '/Spiel eures Teams auf ' + POS_LABEL[e.pos] + ' im selben Zeitraum.')
-        : ('Empfohlen in Woche ' + e.week + ' – Bewertung folgt, sobald genug neue Spiele vorliegen.');
+        ? ('Ø' + e.result.playerPpgSince.toFixed(1) + ' vs. Ø' + e.result.teamPosPpgSince.toFixed(1) + ' Punkte/Spiel (euer Team auf ' + POS_LABEL[e.pos] + ').')
+        : ('Bewertung folgt, sobald genug neue Spiele vorliegen.');
       return '<div class="mt-track-row">' +
         '<div class="mt-track-head"><span><strong>' + e.player.name + '</strong> (' + POS_LABEL[e.pos] + ') – Woche ' + e.week + '</span>' + verdictHtml + '</div>' +
         '<div class="mt-track-detail">' + detail + '</div>' +
@@ -1106,18 +1106,18 @@
       btn.classList.toggle('is-active', btn.dataset.mode === VALUE_MODE);
     });
     document.getElementById('mtModeCopy').textContent = VALUE_MODE === 'live'
-      ? 'Roster, Team-Analyse, Free-Agent- und Trade-Vorschläge unten nutzen den tatsächlichen Punkteschnitt dieser Saison, sobald genug echte Spiele vorliegen (amber markiert) – sonst Fallback auf Projektion.'
-      : 'Roster, Team-Analyse, Free-Agent- und Trade-Vorschläge unten nutzen durchgehend die Vorschau-Projektion, unabhängig von bereits gespielten Wochen.';
+      ? 'Nutzt echten Punkteschnitt, sobald verfügbar (amber) – sonst Fallback auf Projektion.'
+      : 'Nutzt durchgehend die Vorschau-Projektion, unabhängig von gespielten Wochen.';
     document.getElementById('mtRosterCopy').textContent = VALUE_MODE === 'live'
-      ? 'Deine aktuell beste Startaufstellung und Bench, neu berechnet nach dem Live-Punkteschnitt – ein Bankspieler mit besserer echter Form kann hier einen bisherigen Starter verdrängen. Spieler mit echten Daten dieser Saison sind amber markiert.'
-      : 'Deine aktuell beste Startaufstellung und Bench, sortiert nach Saison-Projektion – das ist gleichzeitig die Antwort auf "wen sollte ich starten": ohne wochenspezifische Prognosen ist die Saison-Projektion die beste verfügbare Näherung.';
+      ? 'Beste Aufstellung nach Live-Punkteschnitt – ein Bankspieler in besserer Form kann so einen Starter verdrängen.'
+      : 'Beste Aufstellung nach Saison-Projektion.';
     document.getElementById('mtAnalysisCopy').textContent = VALUE_MODE === 'live'
-      ? 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der aktuellen Werte aller Spieler auf dem Kader je Position, nicht nur der Starter). Die Prozentzahl in Klammern entscheidet, welche Positionen unten als Free-Agent-/Trade-Vorschläge auftauchen (nicht die reine Punktezahl) – sonst würde QB als grundsätzlich punktereichste Position fast immer dominieren, selbst wenn dort längst genug Tiefe da ist.'
-      : 'Deine Positions-Stärke im Vergleich zum Liga-Schnitt (Summe der Projektionen aller Spieler auf dem Kader je Position, nicht nur der Starter). Die Prozentzahl in Klammern entscheidet, welche Positionen unten als Free-Agent-/Trade-Vorschläge auftauchen (nicht die reine Punktezahl) – sonst würde QB als grundsätzlich punktereichste Position fast immer dominieren, selbst wenn dort längst genug Tiefe da ist.';
-    document.getElementById('mtTradesCopy').innerHTML = 'Konkrete Vorschläge – auch als Paket (z.B. 2-für-1 oder 3-für-2), nicht nur 1-für-1: Bankspieler von dir gegen Bankspieler eines anderen Teams an deiner Schwachposition, möglichst ausgeglichen nach ' +
+      ? 'Positions-Stärke im Liga-Vergleich (ganzer Kader, nicht nur Starter). Die Prozentzahl unten entscheidet, welche Positionen als Vorschläge auftauchen.'
+      : 'Positions-Stärke im Liga-Vergleich nach Projektion (ganzer Kader, nicht nur Starter). Die Prozentzahl unten entscheidet, welche Positionen als Vorschläge auftauchen.';
+    document.getElementById('mtTradesCopy').innerHTML = 'Bankspieler-Tausch (auch als Paket, z.B. 2-für-1) an deiner Schwachposition, ausgeglichen nach ' +
       (VALUE_MODE === 'live'
-        ? 'aktuellem Punkteschnitt dieser Saison.'
-        : 'Saison-Projektion (derselbe Massstab wie im <a href="index.html#trades">Trade-Fairness-Kalkulator</a>).');
+        ? 'aktuellem Punkteschnitt.'
+        : 'Projektion (siehe <a href="index.html#trades">Trade-Fairness-Kalkulator</a>).');
   }
 
   function setValueMode(mode){
@@ -1137,12 +1137,12 @@
   // nicht bei jedem Team-Wechsel neu berechnet.
   function renderTrending(data){
     if(!data.lastUpdated){
-      trendingCopyEl.textContent = 'Noch keine zwei Sync-Läufe zum Vergleichen vorhanden - diese Übersicht füllt sich ab dem nächsten Lauf.';
+      trendingCopyEl.textContent = 'Noch keine Vergleichsdaten – ab dem nächsten Sync-Lauf verfügbar.';
       trendingEl.innerHTML = '';
       return;
     }
     var sinceText = data.since ? new Date(data.since).toLocaleDateString('de-CH') : 'dem ersten Snapshot';
-    trendingCopyEl.textContent = 'Wer seit ' + sinceText + ' liga-weit geholt bzw. gedroppt wurde (unabhängig vom gewählten Team).';
+    trendingCopyEl.textContent = 'Liga-weit seit ' + sinceText + ' (unabhängig vom Team).';
 
     function colHtml(label, cls, list){
       var rows = list.length ? list.slice(0, 8).map(function(p){
