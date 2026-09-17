@@ -651,3 +651,10 @@ schlechter -> "schlechter" - alle 4 Fälle korrekt). Playwright-Test mit
 gemockter Tipp-Historie über 2 Teams: Anzeige filtert korrekt nur die
 Einträge des gewählten Teams, sortiert neueste zuerst, zeigt korrekte
 Verdict-Klassen/Texte für bewertete und unbewertete Einträge.
+
+## 2026-09-17 – `a9b6a0d` Session-Log: Track-Record vergangener Tipps nachgetragen, UX-Paket abgeschlossen
+
+Backup-Eintrag für Commit 923dcf1 - letzter Punkt der "mach alles"-UX-Liste
+aus diesem Arbeitspaket. Alle 7 Punkte (Injury-Badges, Skeleton/Retry,
+Team-Statistik-Karte, Diese-Woche-Digest, Trending Free Agents,
+Playoff-Chancen, Track-Record) sind jetzt umgesetzt und live.
