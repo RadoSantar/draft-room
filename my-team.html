@@ -249,6 +249,24 @@
   .mt-trade-arrow{font-family:'Anton', sans-serif;font-size:20px;color:var(--amber);flex:0 0 auto;}
   .mt-trade-verdict{margin-top:10px;font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--turf);}
 
+  /* Track-Record vergangener Tipps */
+  .mt-track-row{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:8px;
+    padding:12px 16px;
+    margin-bottom:8px;
+    font-size:14px;
+  }
+  .mt-track-row .mt-track-head{display:flex;justify-content:space-between;gap:10px;align-items:baseline;flex-wrap:wrap;}
+  .mt-track-row .mt-track-meta{font-family:'IBM Plex Mono', monospace;font-size:11px;color:var(--hash);text-transform:uppercase;letter-spacing:.04em;}
+  .mt-track-verdict{font-family:'IBM Plex Mono', monospace;font-size:12px;font-weight:600;padding:2px 8px;border-radius:20px;}
+  .mt-track-verdict.besser{background:var(--turf);color:var(--chalk);}
+  .mt-track-verdict.schlechter{background:var(--endzone);color:var(--chalk);}
+  .mt-track-verdict.gleich{background:var(--card-border);color:var(--ink-soft);}
+  .mt-track-verdict.pending{background:transparent;border:1px solid var(--card-border);color:var(--ink-soft);}
+  .mt-track-detail{font-size:13px;color:var(--ink-soft);margin-top:4px;}
+
   /* Trending im Waiver Wire */
   .mt-trend-cols{display:flex;gap:20px;flex-wrap:wrap;margin:14px 0;}
   .mt-trend-col{flex:1;min-width:220px;}
@@ -378,6 +396,10 @@
     <p class="copy" id="mtTradesCopy"></p>
     <div id="mtTrades"></div>
 
+    <h2 class="section-head">Track-Record vergangener Tipps</h2>
+    <p class="copy" id="mtTrackRecordCopy"></p>
+    <div id="mtTrackRecord"></div>
+
     <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, ADP) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a>. Kader-Daten aktualisieren sich automatisch etwa wöchentlich per GitHub Actions; Free-Agent-Empfehlungen sind live bei jedem Seitenaufruf.</p>
   </div>
 </main>
@@ -459,8 +481,10 @@
   var trendingCopyEl = document.getElementById('mtTrendingCopy');
   var trendingEl = document.getElementById('mtTrending');
   var tradesEl = document.getElementById('mtTrades');
+  var trackRecordCopyEl = document.getElementById('mtTrackRecordCopy');
+  var trackRecordEl = document.getElementById('mtTrackRecord');
 
-  var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0, PLAYOFF_PICTURE = null;
+  var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0, PLAYOFF_PICTURE = null, SUGGESTION_HISTORY = null;
   var faRequestToken = 0;
 
   // Bewertungs-Basis, vom Nutzer per Toggle wählbar (siehe .mt-mode-picker): "proj" erzwingt für
@@ -1039,6 +1063,42 @@
     tradesEl.innerHTML = ideas.map(tradeCardHtml).join('');
   }
 
+  // Zeigt vergangene Free-Agent-Tipps für das gewählte Team und, sobald genug Zeit vergangen ist
+  // (siehe GRADE_AFTER_WEEKS in sync-espn.mjs), ob sich der Tipp im Nachhinein gelohnt hätte -
+  // Punkteschnitt des vorgeschlagenen Spielers seit der Empfehlung vs. Punkteschnitt, den das Team
+  // an dieser Position im selben Zeitraum tatsächlich gemacht hat. Neue, noch unbewertete Einträge
+  // zeigen einen "wird bewertet"-Platzhalter statt eines Urteils.
+  function renderTrackRecord(teamId){
+    if(!SUGGESTION_HISTORY || !SUGGESTION_HISTORY.entries || !SUGGESTION_HISTORY.entries.length){
+      trackRecordCopyEl.textContent = 'Noch keine Tipp-Historie vorhanden – ab dem nächsten Sync-Lauf nach einer abgeschlossenen Woche beginnt der Track-Record.';
+      trackRecordEl.innerHTML = '';
+      return;
+    }
+    var mine = SUGGESTION_HISTORY.entries.filter(function(e){ return e.teamId === teamId; }).sort(function(a, b){ return b.week - a.week; });
+    if(!mine.length){
+      trackRecordCopyEl.textContent = 'Noch keine Tipp-Historie für dieses Team.';
+      trackRecordEl.innerHTML = '';
+      return;
+    }
+    trackRecordCopyEl.textContent = 'Frühere Free-Agent-Tipps für dieses Team und, sobald genug Zeit vergangen ist, ob sich der Tipp im Nachhinein gelohnt hätte (Punkteschnitt des Spielers seit der Empfehlung vs. was euer Team an der Position im selben Zeitraum tatsächlich gemacht hat).';
+    trackRecordEl.innerHTML = mine.map(function(e){
+      var verdictHtml;
+      if(e.graded && e.result){
+        var vClass = e.result.verdict === 'besser' ? 'besser' : (e.result.verdict === 'schlechter' ? 'schlechter' : 'gleich');
+        verdictHtml = '<span class="mt-track-verdict ' + vClass + '">' + e.result.verdict + '</span>';
+      } else {
+        verdictHtml = '<span class="mt-track-verdict pending">wird bewertet</span>';
+      }
+      var detail = e.graded && e.result
+        ? ('Ø' + e.result.playerPpgSince.toFixed(1) + '/Spiel seit Empfehlung vs. Ø' + e.result.teamPosPpgSince.toFixed(1) + '/Spiel eures Teams auf ' + POS_LABEL[e.pos] + ' im selben Zeitraum.')
+        : ('Empfohlen in Woche ' + e.week + ' – Bewertung folgt, sobald genug neue Spiele vorliegen.');
+      return '<div class="mt-track-row">' +
+        '<div class="mt-track-head"><span><strong>' + e.player.name + '</strong> (' + POS_LABEL[e.pos] + ') – Woche ' + e.week + '</span>' + verdictHtml + '</div>' +
+        '<div class="mt-track-detail">' + detail + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
   var CURRENT_TEAM = '';
 
   function updateModeCopy(){
@@ -1120,6 +1180,7 @@
     renderDigest(rawRoster, weakPositions);
     renderFreeAgents(roster, weakPositions);
     renderTrades(power.id, roster, weakPositions);
+    renderTrackRecord(power.id);
   }
 
   function populateTeamSelect(){
@@ -1151,7 +1212,8 @@
       fetch('data/rostered-ids.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
       fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { players: {}, weeksArchived: [] }; }),
       fetch('data/waiver-trends.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { added: [], dropped: [] }; }),
-      fetch('data/playoff-picture.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { teams: [] }; })
+      fetch('data/playoff-picture.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { teams: [] }; }),
+      fetch('data/suggestion-history.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { entries: [] }; })
     ]).then(function(results){
       POWER = results[0].data;
       ROSTER = results[1].data;
@@ -1160,6 +1222,7 @@
       LAST_COMPLETED_WEEK = (SEASON_STATS.weeksArchived && SEASON_STATS.weeksArchived.length) ? Math.max.apply(null, SEASON_STATS.weeksArchived) : 0;
       LEAGUE_AVG = computeLeagueAvg(POWER);
       PLAYOFF_PICTURE = results[5];
+      SUGGESTION_HISTORY = results[6];
       statusKickerEl.textContent = 'Stand ' + new Date(results[0].lastUpdated).toLocaleDateString('de-CH');
       renderTrending(results[4]);
       populateTeamSelect();

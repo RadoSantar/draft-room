@@ -18,6 +18,41 @@ const TEAM_CONF = {
 
 const DEFAULTS_URL = `https://lm-api-reads.fantasy.espn.com/apis/v3/games/ffl/seasons/${SEASON}/segments/0/leaguedefaults/3?view=kona_player_info`;
 
+// ESPN-Lineup-Slot-IDs je Position, für die Free-Agent-Filterung - identisch zu shared.SLOT_IDS in
+// shared.js (dort für dieselbe Abfrage clientseitig auf my-team.html verwendet). DEFAULTS_URL ist
+// ein öffentlicher Endpoint ohne Liga-Cookie (siehe fetchProjections direkt darunter), funktioniert
+// also serverseitig genauso wie clientseitig.
+const SLOT_IDS = { QB: 0, RB: 2, WR: 4, TE: 6, K: 17, DST: 16 };
+
+// Bester verfügbarer (nicht rostered) Free Agent an einer Position, sortiert nach ADP - server-
+// seitiger Nachbau von fetchFreeAgents() in my-team.html, nur für Track-Record-Zwecke (siehe
+// recordAndGradeSuggestions() weiter unten): welcher Spieler wäre als Erstes vorgeschlagen worden.
+async function fetchTopFreeAgent(pos, rosteredIdSet) {
+  const filter = JSON.stringify({
+    players: {
+      filterSlotIds: { value: [SLOT_IDS[pos]] },
+      filterStatsForSourceIds: { value: [1] },
+      filterStatsForSplitTypeIds: { value: [0] },
+      sortDraftRanks: { sortPriority: 1, sortAsc: true, value: 'PPR' },
+      limit: 30,
+      offset: 0
+    }
+  });
+  const res = await fetch(DEFAULTS_URL, { headers: { 'x-fantasy-filter': filter } });
+  if (!res.ok) throw new Error(`Free-Agent-Fetch fehlgeschlagen (${res.status})`);
+  const data = await res.json();
+  const candidates = (data.players || []).map((pe) => pe.player).filter((p) => !rosteredIdSet.has(p.id));
+  if (!candidates.length) return null;
+  const p = candidates[0];
+  return {
+    id: p.id,
+    name: p.fullName,
+    pos,
+    proTeam: TEAM_ABBR[p.proTeamId] || '',
+    adp: (p.ownership && p.ownership.averageDraftPosition) || 999
+  };
+}
+
 async function fetchProjections(ids) {
   if (!ids.length) return {};
   const filter = JSON.stringify({ players: { filterIds: { value: ids } } });
@@ -1773,6 +1808,90 @@ async function main() {
       await archiveLiveSnapshotWeek(lastCompletedWeek, weekGames, liveSnapshots);
     }
     await archiveSeasonStats(lastCompletedWeek, enrichedGames, keyMomentsByTeam);
+
+    // ---- Track-Record vergangener Free-Agent-Tipps ("hätte sich gelohnt?") ----
+    // Zwei Schritte pro Lauf: (1) für jedes Team die aktuell schwächste Position + den dazu besten
+    // verfügbaren Free Agent server-seitig ermitteln (derselbe proj-/ADP-basierte Ansatz wie
+    // my-team.html Standard-Modus) und mit einem BASELINE-Snapshot aus dem GERADE aktualisierten
+    // season-stats.json speichern - noch nicht bewertet. (2) alte, noch unbewertete Einträge, die
+    // mindestens 2 Wochen zurückliegen, jetzt bewerten: Punkteschnitt des vorgeschlagenen Spielers
+    // SEIT der Empfehlung (Differenz zum Baseline-Snapshot) vs. Punkteschnitt, den das Team an dieser
+    // Position im selben Zeitraum tatsächlich gemacht hat (ebenfalls per Differenz - dieselbe
+    // Snapshot-Diff-Technik wie bei waiver-trends.json oben, weil season-stats.json nur kumulierte
+    // Saison-Summen führt, keine Wochen-Auflösung). Bewusst nur die schwächste Position (nicht
+    // top-3 wie auf my-team.html), damit ein Team pro Woche höchstens einen Tipp im Track-Record hat.
+    const freshSeasonStats = await readJsonSafe('season-stats.json', { weeksArchived: [], teams: {}, players: {} });
+    const suggestionHistory = await readJsonSafe('suggestion-history.json', { entries: [] });
+    const POS_LIST = ['QB', 'RB', 'WR', 'TE', 'K', 'DST'];
+    const leagueAvgPosTotals = {};
+    POS_LIST.forEach((pos) => {
+      const sum = teamsComputed.reduce((acc, t) => acc + (t.posTotals[pos] || 0), 0);
+      leagueAvgPosTotals[pos] = sum / teamsComputed.length;
+    });
+    const rosteredIdSet = new Set(rosteredIds);
+    const existingKeys = new Set(suggestionHistory.entries.map((e) => e.teamId + '-' + e.week));
+    for (const t of teamsComputed) {
+      const key = t.id + '-' + lastCompletedWeek;
+      if (existingKeys.has(key)) continue; // schon für diese Team+Woche-Kombination erfasst
+      let weakestPos = null;
+      let weakestPctDiff = 0;
+      POS_LIST.forEach((pos) => {
+        const avg = leagueAvgPosTotals[pos];
+        if (!avg) return;
+        const diff = (t.posTotals[pos] || 0) - avg;
+        const pctDiff = diff / avg;
+        if (diff < 0 && pctDiff < weakestPctDiff) { weakestPctDiff = pctDiff; weakestPos = pos; }
+      });
+      if (!weakestPos) continue; // keine Position unter Liga-Schnitt - kein sinnvoller Tipp
+      let suggested;
+      try {
+        suggested = await fetchTopFreeAgent(weakestPos, rosteredIdSet);
+      } catch (e) {
+        console.error(`Track-Record: Free-Agent-Fetch für ${t.name}/${weakestPos} fehlgeschlagen, übersprungen:`, e.message);
+        continue;
+      }
+      if (!suggested) continue;
+      const playerRec = freshSeasonStats.players?.[suggested.id];
+      const teamPosRec = freshSeasonStats.teams?.[t.id]?.positions?.[weakestPos];
+      suggestionHistory.entries.push({
+        week: lastCompletedWeek,
+        date: new Date().toLocaleDateString('de-CH'),
+        teamId: t.id,
+        teamName: t.name,
+        pos: weakestPos,
+        player: suggested,
+        baseline: {
+          playerTotalPoints: playerRec?.totalPoints || 0,
+          playerGamesPlayed: playerRec?.gamesPlayed || 0,
+          teamPosTotal: teamPosRec?.total || 0,
+          teamPosGames: teamPosRec?.games || 0
+        },
+        graded: false,
+        gradedAt: null,
+        result: null
+      });
+    }
+
+    const GRADE_AFTER_WEEKS = 2;
+    suggestionHistory.entries.forEach((entry) => {
+      if (entry.graded || (lastCompletedWeek - entry.week) < GRADE_AFTER_WEEKS) return;
+      const playerRec = freshSeasonStats.players?.[entry.player.id];
+      const teamPosRec = freshSeasonStats.teams?.[entry.teamId]?.positions?.[entry.pos];
+      const playerGamesSince = (playerRec?.gamesPlayed || 0) - entry.baseline.playerGamesPlayed;
+      const teamPosGamesSince = (teamPosRec?.games || 0) - entry.baseline.teamPosGames;
+      if (playerGamesSince < 1 || teamPosGamesSince < 1) return; // noch keine neuen Auftritte seither, nächstes Mal erneut versuchen
+      const playerPointsSince = (playerRec?.totalPoints || 0) - entry.baseline.playerTotalPoints;
+      const teamPosPointsSince = (teamPosRec?.total || 0) - entry.baseline.teamPosTotal;
+      const playerPpgSince = Math.round((playerPointsSince / playerGamesSince) * 10) / 10;
+      const teamPosPpgSince = Math.round((teamPosPointsSince / teamPosGamesSince) * 10) / 10;
+      const diffPct = teamPosPpgSince > 0 ? (playerPpgSince - teamPosPpgSince) / teamPosPpgSince : 0;
+      const verdict = diffPct > 0.1 ? 'besser' : (diffPct < -0.1 ? 'schlechter' : 'etwa gleich');
+      entry.graded = true;
+      entry.gradedAt = nowIso();
+      entry.result = { playerPpgSince, teamPosPpgSince, verdict };
+    });
+
+    await writeJson('suggestion-history.json', { lastUpdated: nowIso(), entries: suggestionHistory.entries });
   }
 
   // ---- Wochen-Vorschau (Claude schreibt einen Ausblick auf die KOMMENDE Woche, im selben
