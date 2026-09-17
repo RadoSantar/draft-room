@@ -184,6 +184,18 @@
   .mt-stat-value{font-size:21px;color:var(--turf);}
   .mt-stat-sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
 
+  /* Playoff-Chancen */
+  .mt-playoff-list{margin:14px 0;}
+  .mt-playoff-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--card-border);font-size:14px;}
+  .mt-playoff-row:last-child{border-bottom:none;}
+  .mt-playoff-row.is-mine{background:var(--card);border-radius:6px;font-weight:600;}
+  .mt-playoff-tag{min-width:26px;text-align:center;font-family:'IBM Plex Mono', monospace;font-size:12px;font-weight:600;}
+  .mt-playoff-tag.in{color:var(--turf);}
+  .mt-playoff-tag.chasing{color:var(--amber);}
+  .mt-playoff-tag.eliminated{color:var(--endzone);}
+  .mt-playoff-name{flex:1;}
+  .mt-playoff-record{color:var(--hash);font-family:'IBM Plex Mono', monospace;font-size:12.5px;}
+
   /* Team-Analyse */
   .mt-analysis-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
   .mt-analysis-table th{
@@ -344,6 +356,10 @@
     <p class="copy" id="mtSeasonStatsCopy"></p>
     <div id="mtSeasonStats"></div>
 
+    <h2 class="section-head">Playoff-Chancen</h2>
+    <p class="copy" id="mtPlayoffCopy"></p>
+    <div id="mtPlayoff"></div>
+
     <h2 class="section-head">Team-Analyse</h2>
     <p class="copy" id="mtAnalysisCopy"></p>
     <table class="mt-analysis-table" id="mtAnalysisTable"></table>
@@ -433,6 +449,8 @@
   var rosterEl = document.getElementById('mtRoster');
   var seasonStatsCopyEl = document.getElementById('mtSeasonStatsCopy');
   var seasonStatsEl = document.getElementById('mtSeasonStats');
+  var playoffCopyEl = document.getElementById('mtPlayoffCopy');
+  var playoffEl = document.getElementById('mtPlayoff');
   var analysisTableEl = document.getElementById('mtAnalysisTable');
   var analysisTextEl = document.getElementById('mtAnalysisText');
   var digestEl = document.getElementById('mtDigest');
@@ -442,7 +460,7 @@
   var trendingEl = document.getElementById('mtTrending');
   var tradesEl = document.getElementById('mtTrades');
 
-  var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0;
+  var POWER = null, ROSTER = null, ROSTERED_IDS = null, LEAGUE_AVG = null, SEASON_STATS = null, LAST_COMPLETED_WEEK = 0, PLAYOFF_PICTURE = null;
   var faRequestToken = 0;
 
   // Bewertungs-Basis, vom Nutzer per Toggle wählbar (siehe .mt-mode-picker): "proj" erzwingt für
@@ -651,6 +669,61 @@
       statTileHtml('Bank-Punkte liegen gelassen', fmt(t.benchGapTotal || 0), 'Summe der besten verpassten Starter-Swaps je Woche')
     ];
     seasonStatsEl.innerHTML = '<div class="mt-stat-grid">' + tiles.join('') + '</div>';
+  }
+
+  // Playoff-Bracket dieser Liga: die 2 Conference-Sieger (Seed 1/2) plus die 2 besten Non-Conference-
+  // Sieger nach Bilanz (Seed 3/4, Punkte als Tiebreak) - exakt dieselbe Logik wie computePlayoffPicture()
+  // in sync-espn.mjs, hier serverseitig für ALLE Teams auf einmal vorberechnet (data/playoff-picture.json).
+  // "eliminated" = auch mit ausschliesslich Siegen aus den verbleibenden Spielen nicht mehr genug für
+  // Platz 4 - eine bewusst simple Näherung ohne echte Tiebreaker-Simulation. Vor Woche 8 (siehe
+  // findPlayoffRaceFact()-Konvention an anderer Stelle in sync-espn.mjs) ist die Aussage noch zu
+  // verrauscht, deshalb dieselbe Schwelle hier für die Anzeige übernommen statt eine eigene zu erfinden.
+  function renderPlayoffPicture(teamId){
+    if(!PLAYOFF_PICTURE || !PLAYOFF_PICTURE.teams || !PLAYOFF_PICTURE.teams.length){
+      playoffCopyEl.textContent = 'Noch keine Playoff-Daten verfügbar.';
+      playoffEl.innerHTML = '';
+      return;
+    }
+    var throughWeek = PLAYOFF_PICTURE.throughWeek || 0;
+    if(throughWeek < 8){
+      playoffCopyEl.textContent = 'Noch zu früh in der Saison für eine sinnvolle Playoff-Einschätzung – das Rennen um die 4 Playoff-Plätze wird erst ab Woche 8 ausgewertet (aktueller Stand: nach Woche ' + throughWeek + ').';
+      playoffEl.innerHTML = '';
+      return;
+    }
+
+    var mine = PLAYOFF_PICTURE.teams.filter(function(t){ return t.id === teamId; })[0];
+    var headline = '';
+    if(mine){
+      if(mine.status === 'in'){
+        headline = 'Aktuell auf Playoff-Platz ' + mine.seed + ' von 4' + (
+          mine.cushion == null ? '.' : (mine.cushion >= 0
+            ? (' – ' + mine.cushion + ' Sieg' + (mine.cushion === 1 ? '' : 'e') + ' Vorsprung auf den ersten Verfolger ausserhalb der Plätze.')
+            : (' – nur dank Conference-Spitzenplatz, ' + Math.abs(mine.cushion) + ' Sieg' + (Math.abs(mine.cushion) === 1 ? '' : 'e') + ' weniger als der letzte Wildcard-Platz.'))
+        );
+      } else if(mine.status === 'chasing'){
+        headline = mine.winsBehind === 0
+          ? 'Aktuell knapp ausserhalb der Playoff-Plätze – gleich viele Siege wie Platz 4, aber schlechterer Tiebreaker (Punkte).'
+          : ('Aktuell ' + mine.winsBehind + ' Sieg' + (mine.winsBehind === 1 ? '' : 'e') + ' hinter Playoff-Platz 4 – noch nicht raus, aber Aufholbedarf.');
+      } else {
+        headline = 'Rechnerisch keine Playoff-Chance mehr diese Saison – selbst mit ausschliesslich Siegen aus den verbleibenden Spielen würde es nicht mehr für Platz 4 reichen.';
+      }
+    }
+    playoffCopyEl.textContent = (headline ? headline + ' ' : '') + '(Stand nach Woche ' + throughWeek + '.)';
+
+    var statusRank = { in: 0, chasing: 1, eliminated: 2 };
+    var sorted = PLAYOFF_PICTURE.teams.slice().sort(function(a, b){
+      if(statusRank[a.status] !== statusRank[b.status]) return statusRank[a.status] - statusRank[b.status];
+      if(a.status === 'in') return (a.seed || 0) - (b.seed || 0);
+      return b.wins - a.wins;
+    });
+    playoffEl.innerHTML = '<div class="mt-playoff-list">' + sorted.map(function(t){
+      var tag = t.status === 'in' ? ('#' + t.seed) : (t.status === 'chasing' ? '–' : '✕');
+      return '<div class="mt-playoff-row' + (t.id === teamId ? ' is-mine' : '') + '">' +
+        '<span class="mt-playoff-tag ' + t.status + '">' + tag + '</span>' +
+        '<span class="mt-playoff-name">' + t.name + '</span>' +
+        '<span class="mt-playoff-record">' + t.wins + '-' + t.losses + (t.ties ? ('-' + t.ties) : '') + '</span>' +
+      '</div>';
+    }).join('') + '</div>';
   }
 
   // Rangiert Positionen nach PROZENTUALER statt absoluter Abweichung vom Liga-Schnitt. Grund:
@@ -1040,6 +1113,7 @@
     var roster = liveOptimizedTeam(rawRoster);
     renderRoster(roster);
     renderSeasonStats(power.id);
+    renderPlayoffPicture(power.id);
     var myPosTotals = VALUE_MODE === 'live' ? posTotalsForRoster(roster) : (power.posTotals || {});
     var avg = VALUE_MODE === 'live' ? computeLeagueAvgLive() : LEAGUE_AVG;
     var weakPositions = renderAnalysis(myPosTotals, avg);
@@ -1076,7 +1150,8 @@
       fetch('data/roster.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
       fetch('data/rostered-ids.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
       fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { players: {}, weeksArchived: [] }; }),
-      fetch('data/waiver-trends.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { added: [], dropped: [] }; })
+      fetch('data/waiver-trends.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { added: [], dropped: [] }; }),
+      fetch('data/playoff-picture.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { teams: [] }; })
     ]).then(function(results){
       POWER = results[0].data;
       ROSTER = results[1].data;
@@ -1084,6 +1159,7 @@
       SEASON_STATS = results[3];
       LAST_COMPLETED_WEEK = (SEASON_STATS.weeksArchived && SEASON_STATS.weeksArchived.length) ? Math.max.apply(null, SEASON_STATS.weeksArchived) : 0;
       LEAGUE_AVG = computeLeagueAvg(POWER);
+      PLAYOFF_PICTURE = results[5];
       statusKickerEl.textContent = 'Stand ' + new Date(results[0].lastUpdated).toLocaleDateString('de-CH');
       renderTrending(results[4]);
       populateTeamSelect();

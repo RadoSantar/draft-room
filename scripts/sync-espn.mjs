@@ -1665,6 +1665,39 @@ async function main() {
     if (wk.games.length && wk.games.every((g) => g.winner !== 'UNDECIDED')) lastCompletedWeek = wk.week;
     else break;
   }
+
+  // ---- Playoff-Szenario je Team (für my-team.html "Playoff-Chancen") ----
+  // Nutzt dieselbe Bracket-Logik wie findPlayoffRaceFact() (Conference-Sieger als Seed 1/2, beste
+  // Non-Conference-Sieger als Wildcard-Seeds 3/4, siehe computePlayoffPicture() weiter oben), aber
+  // für ALLE Teams auf einmal statt nur die 2 Teams eines einzelnen Spiels. Restspiele = 15
+  // (reguläre Saisonlänge dieser Liga, siehe TOTAL_SEASON_WEEKS in my-team.html) minus zuletzt
+  // komplett gewertete Woche. "eliminated" = selbst mit ausschliesslich Siegen aus allen
+  // verbleibenden Spielen käme das Team nicht mehr an den aktuellen 4. Seed heran - eine bewusst
+  // simple Näherung ohne echte Restspielplan-Simulation (kein Playoff-Tiebreaker über Punkte
+  // simuliert), aber als "rechnerisch chancenlos"-Aussage korrekt.
+  const REGULAR_SEASON_WEEKS = 15;
+  const remainingGames = Math.max(0, REGULAR_SEASON_WEEKS - lastCompletedWeek);
+  const { playoffTeams, outside, cutoffWins } = computePlayoffPicture(standings, confStandings);
+  const playoffPictureTeams = standings.map((s) => {
+    const seeded = playoffTeams.find((t) => t.id === s.id);
+    if (seeded) {
+      const firstOut = outside[0];
+      const cushion = firstOut ? seeded.wins - firstOut.wins : null;
+      return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'in', seed: seeded.seed, cushion, winsBehind: null };
+    }
+    const maxPossibleWins = s.wins + remainingGames;
+    if (maxPossibleWins < cutoffWins) {
+      return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'eliminated', seed: null, cushion: null, winsBehind: null };
+    }
+    return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'chasing', seed: null, cushion: null, winsBehind: cutoffWins - s.wins };
+  });
+  await writeJson('playoff-picture.json', {
+    lastUpdated: nowIso(),
+    throughWeek: lastCompletedWeek,
+    cutoffWins,
+    teams: playoffPictureTeams
+  });
+
   if (lastCompletedWeek > 0) {
     const history = await readJsonSafe('power-rankings-history.json', { snapshots: [] });
     const key = 'week-' + lastCompletedWeek;
