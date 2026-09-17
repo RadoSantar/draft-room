@@ -554,3 +554,31 @@ Einschränkung wie bei den vorherigen FA-Tests dieser Session).
 
 Backup-Eintrag für Commit b95ed07, inkl. Begründung, warum der
 Bye-Week-Teil der ursprünglichen Digest-Idee bewusst zurückgestellt wurde.
+
+## 2026-09-17 – `f727393` Mein Team: Neue Sektion "Trending im Waiver Wire"
+
+sync-espn.mjs liest jetzt vor dem Überschreiben von rostered-ids.json den
+vorherigen Snapshot, diffed ihn gegen den aktuellen Kader-Stand und schreibt
+das Ergebnis nach data/waiver-trends.json: welche Spieler seither liga-weit
+neu geholt bzw. gedroppt wurden. Da espn-sync.yml nur dienstags läuft (5x
+im 2h-Abstand), deckt der Diff zwischen dem letzten Dienstags-Lauf und dem
+ersten des nächsten praktisch eine volle Woche ab - die Seite zeigt bewusst
+den echten "seit"-Zeitstempel statt pauschal "diese Woche" zu behaupten.
+
+Für gedroppte Spieler (die evtl. weder gedraftet noch aktuell rostered
+sind) wurde allNeededIds um den vorherigen Snapshot erweitert, damit
+playerInfo() sie weiterhin über den bestehenden Projektions-Bulk-Fetch
+auflösen kann, statt als "Unbekannter Spieler" zu enden. Erster Lauf ohne
+Vorgänger-Datei liefert bewusst leere added/dropped-Listen statt den
+kompletten aktuellen Kader fälschlich als "neu geholt" zu melden.
+
+my-team.html: neue Sektion zwischen Free-Agent-Empfehlungen und Trade-Ideen,
+zweispaltig (Neu geholt / Neu gedroppt, je bis 8 Einträge, nach ADP
+sortiert). Liga-weit und team-unabhängig, deshalb nur einmal beim initialen
+Laden gefüllt statt bei jedem Team-Wechsel neu berechnet. Initiale
+data/waiver-trends.json mit leerem Platzhalter-Stand angelegt (erster
+echter Diff erst ab dem übernächsten Sync-Lauf verfügbar).
+
+Verifiziert per Playwright: gemockte Trends-Daten zeigen beide Spalten
+korrekt sortiert mit Name/Position/Team/ADP; leerer Anfangszustand
+(lastUpdated: null) zeigt korrekt den Hinweistext statt leerer Spalten.
