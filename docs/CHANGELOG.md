@@ -679,3 +679,17 @@ und deutlich kürzer, keine Funktion beschädigt.
 ## 2026-09-17 – `b814cd1` Session-Log: Texte gekürzt (neuer Tag)
 
 Backup-Eintrag für Commit af468be.
+
+## 2026-09-17 – `7d88c5d` Mein Team: Trade-Ideen jetzt auch in umgekehrter Richtung (1-für-2, 1-für-3)
+
+TRADE_SHAPES enthielt bisher nur [1,1], [2,1], [3,1], [3,2], [2,3] - also nie
+den Fall, dass DU wenige, dafür wertvollere Spieler gibst und dafür MEHRERE
+vom anderen Team bekommst. bestIdeaForShape()/combinations() unterstützten
+das schon immer symmetrisch, es fehlten nur die Shapes [1,2] und [1,3] in
+der Liste.
+
+Verifiziert per Playwright mit gezielt konstruiertem Szenario (mein Bank-RB
+im Wert von 150 passt exakt zu den zwei Bank-RBs des anderen Teams im Wert
+von 80+70=150): die Dedup-Logik (fairster Shape pro Team+Position gewinnt)
+wählt jetzt korrekt den 1-für-2-Vorschlag statt eines der bisherigen
+Shapes, Verdict "Sehr ausgeglichen".
