@@ -675,3 +675,7 @@ Seitenende. Funktionalität/Bedeutung unverändert, nur Wortzahl reduziert.
 
 Verifiziert per Playwright: alle Copy-Felder rendern weiterhin korrekt
 und deutlich kürzer, keine Funktion beschädigt.
+
+## 2026-09-17 – `b814cd1` Session-Log: Texte gekürzt (neuer Tag)
+
+Backup-Eintrag für Commit af468be.
