@@ -586,3 +586,30 @@ korrekt sortiert mit Name/Position/Team/ADP; leerer Anfangszustand
 ## 2026-09-17 – `9516f91` Session-Log: Trending im Waiver Wire nachgetragen
 
 Backup-Eintrag für Commit f727393.
+
+## 2026-09-17 – `0136531` Mein Team: Neue Sektion "Playoff-Chancen"
+
+sync-espn.mjs berechnet jetzt bei jedem Lauf eine vollständige Playoff-
+Hochrechnung für ALLE Teams auf einmal (data/playoff-picture.json), nach
+derselben Bracket-Logik wie computePlayoffPicture() (bereits vorhanden für
+Recap-Storylines): die 2 Conference-Sieger als Seed 1/2, die 2 besten
+Non-Conference-Sieger nach Bilanz als Wildcard-Seeds 3/4 (Punkte als
+Tiebreak). Pro Team wird der Status "in" (mit Seed und Vorsprung/Rückstand
+zum ersten Verfolger), "chasing" (Rückstand in Siegen zu Platz 4) oder
+"eliminated" (auch mit ausschliesslich Siegen aus den verbleibenden Spielen
+nicht mehr genug) berechnet - "eliminated" exakt dieselbe simple
+Näherungslogik wie im bestehenden findPlayoffRaceFact() für Recaps
+(Restspiele = 15 minus zuletzt komplett gewertete Woche).
+
+my-team.html: neue Sektion "Playoff-Chancen" zwischen "Deine Saison bisher"
+und "Team-Analyse". Zeigt für das gewählte Team eine passende Kurzeinschätzung
+plus eine sortierte Liste aller Teams mit Status-Tag, das eigene Team optisch
+hervorgehoben. Vor Woche 8 (dieselbe Schwelle wie findPlayoffRaceFact() in
+sync-espn.mjs, hier übernommen statt neu erfunden) erscheint statt der Liste
+ein Hinweis, dass es noch zu früh für eine sinnvolle Einschätzung ist.
+
+Verifiziert per Playwright: (A) Woche 5 zeigt korrekt den "zu früh"-Hinweis
+ohne Liste. (B) Woche 13 mit 6 Teams in allen 3 Status-Ausprägungen (in
+Seed 1-4, chasing mit 0 Siegen Rückstand als Tiebreaker-Fall, eliminated)
+zeigt korrekte Sortierung, korrekten Copy-Text für den Tiebreaker-Fall und
+korrekte optische Hervorhebung des eigenen Teams.
