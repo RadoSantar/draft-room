@@ -40,10 +40,22 @@ Team ohne Eintrag (`t.games === 0` bzw. gar kein Eintrag, z.B. brandneues Team) 
 
 **Getestet:** Playwright mit gemocktem `season-stats.json` (3 Wochen, alle 8 Felder befüllt) – alle Kacheln zeigen korrekte Werte und Formatierung (Pluralisierung bei "Siege"/"Niederlagen", korrekte S/N-Kurzform bei knapp/Blowout). Zweites Team ohne Eintrag in `season-stats.teams` zeigt korrekt den Fallback-Hinweis statt 0 Kacheln mit Nullen.
 
+## 4. "Diese Woche"-Digest-Sektion
+
+**Idee (ursprünglicher Vorschlag):** kompakter Block oben, der 3 Dinge bündelt: Schwächste Position + Top-FA, "Sitting a stud"-Alarm (Bankspieler outperformt Starter), Bye-Week-Hinweis nächste Woche.
+
+**Umgesetzt (2 von 3, 1 bewusst verworfen):**
+1. **Schwächste Position + Top-FA:** `renderDigest()` zeigt sofort die schwächste Position (aus `weakPositions`, gleiche Berechnung wie die bestehende Team-Analyse), der Free-Agent-Teil folgt asynchron ("wird geladen…" → Top-Empfehlung, sobald `renderFreeAgents()`s Fetch durch ist – dieselbe Berechnung, keine Doppel-Anfrage).
+2. **Live-vs-Proj-Divergenz-Alarm (umgedeutete "Sitting a stud"-Idee):** Die ursprüngliche Idee ("Bankspieler hat letzte Woche mehr Punkte gemacht als Starter") liess sich nicht 1:1 umsetzen, weil diese Seite nirgends PRO-WOCHE-Punkte einzelner Spieler persistiert (nur `SEASON_STATS.players[id].totalPoints`/`gamesPlayed` kumuliert über die ganze Saison) UND weil `roster.json`s Starter/Bank ohnehin nie die tatsächliche ESPN-Aufstellung ist, sondern immer schon unsere eigene proj-optimale Berechnung (`buildOptimalLineup()` in `scoring.mjs`) – es gibt also gar keine "echte" Aufstellung, von der man abweichen könnte. Stattdessen umgedeutet zu: unabhängig vom aktuell gewählten Toggle wird IMMER sowohl die proj- als auch die live-optimale Aufstellung berechnet (dafür `playerValue()`/`buildOptimalLineupByValue()`/`liveOptimizedTeam()` um einen optionalen `modeOverride`-Parameter erweitert, ansonsten weiter Default auf das globale `VALUE_MODE`). Weichen beide voneinander ab, erscheint ein Alarm ("Bankspieler X würde unter Live-Punkteschnitt Starter Y ersetzen") – nur wenn man gerade NICHT schon im Live-Modus ist (sonst zeigt die Aufstellung das ohnehin schon).
+3. **Bye-Week-Hinweis: bewusst NICHT umgesetzt.** Dieses Projekt trackt aktuell nirgends NFL-Bye-Weeks pro Team. Eine Implementierung hätte entweder einen neuen ESPN-Endpoint-Fetch (`proTeamSchedules` o.ä.) serverseitig in `sync-espn.mjs` gebraucht (konnte ich in dieser Sandbox nicht verifizieren, da `ESPN_S2`/`ESPN_SWID` bewusst nur als GitHub-Actions-Secret existieren) oder eine von Hand eingetragene Bye-Week-Tabelle für die echte NFL-Saison 2026 – Letzteres hätte ich aus dem Gedächtnis raten müssen, was bei echten, folgenreichen Terminen (falscher Bye-Week-Hinweis könnte einen Nutzer dazu bringen, fälschlich einen Spieler zu benchen oder eben nicht) ein zu hohes Fehlerrisiko ist. Zurückgestellt, siehe "Offene Punkte" unten.
+
+**Getestet:** Playwright, 2 Szenarien. (1) Bankspieler mit künstlich riesigem Live-Punkteschnitt (`SEASON_STATS.players['13'].totalPoints=100` bei `gamesPlayed=1`, `weeksArchived=[1]`), Modus per `localStorage` auf `'proj'` erzwungen – Divergenz-Alarm erscheint korrekt, nennt sowohl den promovierten Bankspieler als auch den verdrängten Starter, `is-alert`-Klasse gesetzt. (2) 2-Team-Liga-Mock mit klar unterschiedlichem `posTotals` – "Schwächste Position"-Text erscheint sofort mit "wird geladen…"-Platzhalter, wechselt nach dem (erwartungsgemäss fehlschlagenden, da Live-ESPN-Endpoint in dieser Sandbox nicht mockbar) FA-Fetch korrekt zu "konnte nicht geladen werden".
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Injury-Badges: echten Sync-Lauf abwarten und `data/roster.json` auf tatsächlich befüllte `injuryStatus`-Werte prüfen (siehe oben).
+- Bye-Week-Hinweis im Digest: bräuchte entweder einen neuen ESPN-`proTeamSchedules`-Fetch serverseitig (nächster Sync-Lauf mit echten Credentials nötig, um das zu verifizieren) oder eine von Hand gepflegte Bye-Week-Tabelle – bewusst nicht aus dem Gedächtnis geraten (Fehlerrisiko bei echten Terminen), siehe Punkt 4 oben.
 
 ## Nächster Schritt (laufend)
-Weiter mit den nächsten Punkten aus der "mach alles"-Liste: "Diese Woche"-Digest, Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
+Weiter mit den nächsten Punkten aus der "mach alles"-Liste: Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
