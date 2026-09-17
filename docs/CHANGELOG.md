@@ -693,3 +693,7 @@ im Wert von 150 passt exakt zu den zwei Bank-RBs des anderen Teams im Wert
 von 80+70=150): die Dedup-Logik (fairster Shape pro Team+Position gewinnt)
 wählt jetzt korrekt den 1-für-2-Vorschlag statt eines der bisherigen
 Shapes, Verdict "Sehr ausgeglichen".
+
+## 2026-09-17 – `af8c2d0` Session-Log: Trade-Shapes in umgekehrter Richtung nachgetragen
+
+Backup-Eintrag für Commit 7d88c5d.
