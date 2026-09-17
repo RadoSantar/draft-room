@@ -51,11 +51,24 @@ Team ohne Eintrag (`t.games === 0` bzw. gar kein Eintrag, z.B. brandneues Team) 
 
 **Getestet:** Playwright, 2 Szenarien. (1) Bankspieler mit künstlich riesigem Live-Punkteschnitt (`SEASON_STATS.players['13'].totalPoints=100` bei `gamesPlayed=1`, `weeksArchived=[1]`), Modus per `localStorage` auf `'proj'` erzwungen – Divergenz-Alarm erscheint korrekt, nennt sowohl den promovierten Bankspieler als auch den verdrängten Starter, `is-alert`-Klasse gesetzt. (2) 2-Team-Liga-Mock mit klar unterschiedlichem `posTotals` – "Schwächste Position"-Text erscheint sofort mit "wird geladen…"-Platzhalter, wechselt nach dem (erwartungsgemäss fehlschlagenden, da Live-ESPN-Endpoint in dieser Sandbox nicht mockbar) FA-Fetch korrekt zu "konnte nicht geladen werden".
 
+## 5. Neue Sektion "Trending im Waiver Wire"
+
+**Idee:** `rostered-ids.json` wird schon regelmässig synct – daraus liesse sich Woche-zu-Woche ableiten, welche Free Agents league-weit am stärksten zu-/abgehen.
+
+**Umgesetzt:** `sync-espn.mjs` liest jetzt VOR dem Überschreiben von `rostered-ids.json` den vorherigen Snapshot (`prevRosteredSnapshot`/`prevRosteredIds`), diffed ihn gegen den aktuellen Kader-Stand (`rosteredIds`) und schreibt das Ergebnis nach `data/waiver-trends.json`: `{lastUpdated, since, added: [...], dropped: [...]}`. `espn-sync.yml` läuft nur dienstags (5x im 2h-Abstand), der Diff zwischen dem letzten Dienstags-Lauf und dem ersten des nächsten deckt also praktisch eine volle Woche ab – die Seite zeigt bewusst den echten `since`-Zeitstempel statt pauschal "diese Woche" zu behaupten (robuster, falls der Zeitplan mal dichter wird).
+
+Für gedroppte Spieler (die evtl. weder gedraftet noch aktuell rostered sind, z.B. ein früher Free-Agent-Pickup, der wieder gecuttet wurde) wurde `allNeededIds` um `prevRosteredIds` erweitert, damit `playerInfo()` sie weiterhin über den bestehenden Projektions-Bulk-Fetch auflösen kann statt als "Unbekannter Spieler" zu enden. Erster Lauf ohne Vorgänger-Datei (`prevRosteredSnapshot.lastUpdated` fehlt) liefert bewusst leere `added`/`dropped`-Listen, statt den kompletten aktuellen Kader fälschlich als "neu geholt" zu melden.
+
+`my-team.html`: neue Sektion zwischen Free-Agent-Empfehlungen und Trade-Ideen, zweispaltig ("Neu geholt" / "Neu gedroppt", je bis 8 Einträge nach ADP sortiert – bewusst nicht "Meistgeholt" genannt, da pro Spieler nur ein Add/Drop-Event existiert, keine Häufigkeit über mehrere Teams). Liga-weit und team-unabhängig, deshalb nur einmal beim initialen Laden gefüllt (`renderTrending()`), nicht bei jedem Team-Wechsel neu berechnet. Initiale `data/waiver-trends.json` mit leerem Platzhalter-Stand (`lastUpdated: null`) angelegt – erster echter Diff erst ab dem übernächsten Sync-Lauf verfügbar.
+
+**Getestet:** Playwright mit gemockten Trends-Daten – beide Spalten zeigen korrekt sortierte Einträge mit Name/Position/Team/ADP. Leerer Anfangszustand (`lastUpdated: null`) zeigt korrekt den Hinweistext ("Noch keine zwei Sync-Läufe zum Vergleichen vorhanden") statt leerer Spalten.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Injury-Badges: echten Sync-Lauf abwarten und `data/roster.json` auf tatsächlich befüllte `injuryStatus`-Werte prüfen (siehe oben).
 - Bye-Week-Hinweis im Digest: bräuchte entweder einen neuen ESPN-`proTeamSchedules`-Fetch serverseitig (nächster Sync-Lauf mit echten Credentials nötig, um das zu verifizieren) oder eine von Hand gepflegte Bye-Week-Tabelle – bewusst nicht aus dem Gedächtnis geraten (Fehlerrisiko bei echten Terminen), siehe Punkt 4 oben.
+- Trending im Waiver Wire: echten Sync-Lauf zweimal abwarten (für einen ersten echten `since`-Diff) und `data/waiver-trends.json` danach inhaltlich verifizieren.
 
 ## Nächster Schritt (laufend)
-Weiter mit den nächsten Punkten aus der "mach alles"-Liste: Trending Free Agents, Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
+Weiter mit den nächsten Punkten aus der "mach alles"-Liste: Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
