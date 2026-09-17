@@ -613,3 +613,7 @@ ohne Liste. (B) Woche 13 mit 6 Teams in allen 3 Status-Ausprägungen (in
 Seed 1-4, chasing mit 0 Siegen Rückstand als Tiebreaker-Fall, eliminated)
 zeigt korrekte Sortierung, korrekten Copy-Text für den Tiebreaker-Fall und
 korrekte optische Hervorhebung des eigenen Teams.
+
+## 2026-09-17 – `ea30056` Session-Log: Playoff-Chancen nachgetragen
+
+Backup-Eintrag für Commit 0136531.
