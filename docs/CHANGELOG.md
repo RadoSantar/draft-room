@@ -658,3 +658,20 @@ Backup-Eintrag für Commit 923dcf1 - letzter Punkt der "mach alles"-UX-Liste
 aus diesem Arbeitspaket. Alle 7 Punkte (Injury-Badges, Skeleton/Retry,
 Team-Statistik-Karte, Diese-Woche-Digest, Trending Free Agents,
 Playoff-Chancen, Track-Record) sind jetzt umgesetzt und live.
+
+## 2026-09-17 – `af468be` Mein Team: Texte durchgehend gekürzt gegen zu langes Scrollen
+
+Nutzer-Feedback: die Hinweis-Kachel oben war ein Textblock mit ~180 Wörtern
+- man musste zu lange scrollen, um zum eigentlichen Inhalt zu kommen.
+
+Hinweis-Kachel von 8 auf 3 kurze Sätze gekürzt (Näherungs-Disclaimer,
+Toggle-Erklärung, Badge-Erklärung - Rest gestrichen, war Nice-to-have-Nuance
+ohne Kerninformation). Zusätzlich alle anderen Erklärtexte auf der Seite
+durchgesehen und wo sinnvoll gekürzt, ohne Bedeutung zu verlieren: Intro-
+Absatz, Modus-Copy (Roster/Analyse/Trades), Saison-Statistik-Copy,
+Playoff-Copy (inkl. aller 3 Status-Varianten), Trending-Copy, Track-Record-
+Copy, FA-Drop-Hinweise, Digest-Divergenz-Alarm, Datenquelle-Hinweis am
+Seitenende. Funktionalität/Bedeutung unverändert, nur Wortzahl reduziert.
+
+Verifiziert per Playwright: alle Copy-Felder rendern weiterhin korrekt
+und deutlich kürzer, keine Funktion beschädigt.
