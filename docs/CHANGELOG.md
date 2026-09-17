@@ -582,3 +582,7 @@ echter Diff erst ab dem übernächsten Sync-Lauf verfügbar).
 Verifiziert per Playwright: gemockte Trends-Daten zeigen beide Spalten
 korrekt sortiert mit Name/Position/Team/ADP; leerer Anfangszustand
 (lastUpdated: null) zeigt korrekt den Hinweistext statt leerer Spalten.
+
+## 2026-09-17 – `9516f91` Session-Log: Trending im Waiver Wire nachgetragen
+
+Backup-Eintrag für Commit f727393.
