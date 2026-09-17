@@ -63,12 +63,23 @@ Für gedroppte Spieler (die evtl. weder gedraftet noch aktuell rostered sind, z.
 
 **Getestet:** Playwright mit gemockten Trends-Daten – beide Spalten zeigen korrekt sortierte Einträge mit Name/Position/Team/ADP. Leerer Anfangszustand (`lastUpdated: null`) zeigt korrekt den Hinweistext ("Noch keine zwei Sync-Läufe zum Vergleichen vorhanden") statt leerer Spalten.
 
+## 6. Neue Sektion "Playoff-Chancen"
+
+**Idee:** einfache Hochrechnung, was ein Team noch für die Playoffs braucht.
+
+**Umgesetzt:** `sync-espn.mjs` hatte bereits `computePlayoffPicture(standings, confStandings)` (2 Conference-Sieger als Seed 1/2, beste 2 Non-Conference-Sieger als Wildcard-Seeds 3/4, Punkte als Tiebreak) sowie die Elimination-Logik in `findPlayoffRaceFact()` – bisher aber nur zur Erzeugung einzelner Recap-Sätze für JE EIN Spiel genutzt, nie als vollständige Übersicht. Neu: direkt nach der Standings-/Conference-Berechnung wird für ALLE Teams auf einmal derselbe Status berechnet (`in` mit Seed + Cushion zum ersten Verfolger, `chasing` mit Sieges-Rückstand zu Platz 4, oder `eliminated` – exakt dieselbe "selbst mit nur Siegen aus den Restspielen nicht mehr genug"-Näherung wie im bestehenden Code, Restspiele = 15 minus zuletzt komplett gewertete Woche) und nach `data/playoff-picture.json` geschrieben.
+
+`my-team.html`: neue Sektion zwischen "Deine Saison bisher" und "Team-Analyse". Zeigt eine Kurzeinschätzung fürs gewählte Team (3 Textvarianten je nach Status, inkl. Tiebreaker-Sonderfall "gleich viele Siege wie Platz 4, aber schlechterer Tiebreaker") plus eine nach Status/Seed/Siegen sortierte Liste aller Teams, das eigene optisch hervorgehoben (`.is-mine`). Vor Woche 8 erscheint statt der Liste ein "noch zu früh"-Hinweis – dieselbe Schwelle wie die bereits bestehende `findPlayoffRaceFact()`-Konvention in `sync-espn.mjs` (dort schon so gewählt, weil die Aussage davor zu verrauscht wäre), hier bewusst übernommen statt eine eigene Schwelle zu erfinden.
+
+**Getestet:** Reine Logik zuerst mit einem eigenständigen Node-Skript gegen synthetische 10-Team-Daten durchgerechnet (Konferenzsieger-Vorrang trotz weniger Siegen, Tiebreaker-Fälle, Elimination ab Woche 13 mit nur noch 2 Restspielen) – Ergebnisse manuell nachvollzogen, alle korrekt. Danach Playwright gegen `my-team.html`: (A) Woche 5 zeigt korrekt den "zu früh"-Hinweis ohne Liste. (B) Woche 13 mit 6 Teams über alle 3 Status-Ausprägungen zeigt korrekte Sortierung, korrekten Tiebreaker-Copy-Text und korrekte `is-mine`-Hervorhebung.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Injury-Badges: echten Sync-Lauf abwarten und `data/roster.json` auf tatsächlich befüllte `injuryStatus`-Werte prüfen (siehe oben).
 - Bye-Week-Hinweis im Digest: bräuchte entweder einen neuen ESPN-`proTeamSchedules`-Fetch serverseitig (nächster Sync-Lauf mit echten Credentials nötig, um das zu verifizieren) oder eine von Hand gepflegte Bye-Week-Tabelle – bewusst nicht aus dem Gedächtnis geraten (Fehlerrisiko bei echten Terminen), siehe Punkt 4 oben.
 - Trending im Waiver Wire: echten Sync-Lauf zweimal abwarten (für einen ersten echten `since`-Diff) und `data/waiver-trends.json` danach inhaltlich verifizieren.
+- Playoff-Chancen: echten Sync-Lauf abwarten und `data/playoff-picture.json` mit den echten Liga-Daten inhaltlich verifizieren (aktuell erst Woche 1-2 gespielt, Sektion zeigt bis Woche 8 ohnehin nur den "zu früh"-Hinweis).
 
 ## Nächster Schritt (laufend)
-Weiter mit den nächsten Punkten aus der "mach alles"-Liste: Playoff-Szenario, Track-Record vergangener Tipps – jeweils einzeln committen und hier nachtragen.
+Weiter mit dem letzten Punkt aus der "mach alles"-Liste: Track-Record vergangener Tipps.
