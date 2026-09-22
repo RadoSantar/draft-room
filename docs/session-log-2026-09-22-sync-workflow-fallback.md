@@ -62,5 +62,22 @@ Damit jetzt drei sich ergänzende Schichten: Cron-Minute-Offset (`:07`, reduzier
 - Bye-Week-Hinweis im Digest (siehe früherer Session-Log): weiterhin zurückgestellt.
 - Hall of Fame: wenn die aktuelle Saison (2026) am Ende abgeschlossen ist, muss `data/league-history.json` von Hand um den 2026er-Eintrag ergänzt werden (gleiches manuelles Muster wie 2024/2025) – die Seite zeigt bis dahin die laufende Saison weiterhin live/vorläufig an.
 
+## 6. Hall of Fame erweitert: Ewige Tabelle, Saison-Highlights, Rivalitäten
+
+**Nutzer-Frage:** "welche coolen daten können wir noch in die hall of fame aufnehmen?" – Antwort mit 3 Gruppen (sofort möglich / kumuliert ableitbar / braucht neue Daten) vorgeschlagen. **Nutzer-Antwort:** "ok finde alles gut ausser Trade-Aktivität über die Jahre".
+
+**Umgesetzt (alles ausser Trade-Aktivität):**
+- `scripts/sync-espn.mjs`: `board`-Einträge in `power-rankings.json` bekommen ein `id`-Feld (Spieler-ID) – fehlte bisher, nötig für eine zuverlässige Verknüpfung mit `season-stats.json`s `players[id]` (Namensabgleich wäre fehleranfällig). Rein additiv.
+- **Ewige Tabelle**: Karriere-Bilanz jedes Teams über alle Saisons (2024/2025 aus `league-history.json` + laufende Saison live aus `standings.json`), sortiert nach Titeln dann Sieg-Quote. ⭐-Badge für Gründungsmitglieder. Punkte bewusst NICHT aufsummiert, da 2024/2025 `pointsFor=null` haben (schon in der bestehenden `league-history.json`-note dokumentiert – eine Teilsumme wäre irreführend gewesen). Callout "Immer nah dran" fürs Team mit den meisten Playoff-Teilnahmen ohne Titel.
+- **Diese Saison im Rampenlicht**: 8 live berechnete Kennzahlen der laufenden Saison – längste Sieges-/Niederlagenserie, grösster Blowout/knappster Sieg (aus `scoreboard.json`-Einzelspielen), meiste Überraschungssiege, "Bank-König", bester Draft-Value-Pick und grösster Draft-Flop (Draft-Runde vs. tatsächliche Punkte, via das neue `board[].id`). Bewusst als "diese Saison"-Highlights gerahmt statt "aller Zeiten" – 2024/2025 haben diese granularen Daten nicht, Tracking läuft erst seit dieser Session.
+- **Rivalitäten**: Team-Paare mit zwei Begegnungen diese Saison ("Doppel-Duelle"), beide Ergebnisse. Nur laufende Saison – alte Spielpläne sind nicht gespeichert, nur Endstände.
+
+**Bewusst weggelassen:** Trade-Aktivität über die Jahre (Nutzer-Wunsch).
+
+**Getestet:** Playwright mit gemockten Daten über alle drei neuen Sektionen – Ewige Tabelle sortiert korrekt (Titel zuerst, dann Sieg-Quote), Gründungs-Badge korrekt nur bei 2024er-Teams, "Immer nah dran" wählt richtig. Alle 8 Highlights zeigen plausible Mock-Werte. Rivalitäten erkennt beide konstruierten Doppel-Duelle mit korrekter Spiel-für-Spiel-Aufschlüsselung. Mobile-Screenshot (420px) geprüft.
+
+## Offene, noch nicht umgesetzte Punkte (Ergänzung)
+- Hall of Fame: sobald mehr Saisons mit dem neuen granularen Tracking vorliegen (ab Saisonende 2026), werden "Diese Saison im Rampenlicht" und "Rivalitäten" zu echten Mehrjahres-Vergleichen ausbaubar – aktuell bewusst auf die laufende Saison beschränkt.
+
 ## Nächster Schritt
 Nächsten Dienstag beobachten: greift die verschobene Cron-Minute (`:07`)? Falls ein Lauf trotzdem fehlschlägt, greift der neue `fast-retry`-Job? Springt der `daily-check` nur ein, wenn wirklich nötig? (Run-Historie von `espn-sync-watchdog.yml` prüfen.) Ausserdem: `data/suggestion-history.json` weiter beobachten – die ersten Einträge sind jetzt da, Grading (min. 2 Wochen später) greift frühestens ab Woche 4.
