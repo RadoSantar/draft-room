@@ -44,6 +44,18 @@
 
 **Getestet:** Playwright verifiziert, dass Allzeit-Rekorde korrekt zwischen historischem und Live-Wert wählen (Live gewinnt nur bei tatsächlich höherem Wert), Season-Karten in korrekter Reihenfolge erscheinen, Playoff-Details nur bei Jahren mit vorhandenen Bracket-Daten. Mobile-Screenshot (420px) zur visuellen Kontrolle geprüft.
 
+## 5. Sanity-Check + sofortiger Retry nach jedem fehlgeschlagenen Lauf
+
+**Nutzer-Wunsch:** "ja aber ich denke nach jedem workflow ein check ob er überhaupt lief reduziert die wartezeit unf fann auch ein sanity check am ende würde sich definitiv auch lohnen" (Antwort auf meine Rückfrage, ob die einmal-täglich-Prüfung schon reicht).
+
+**Umgesetzt, zwei Teile:**
+1. **Inhaltlicher Sanity-Check** (`runSanityChecks()` in `sync-espn.mjs`, ganz am Schluss von `main()` nach allen Schreibvorgängen): prüft grobe Plausibilität – erwartete Team-Zahl (10) in `standings.json`/`power-rankings.json`/`roster.json`, jedes Team hat einen Kader mit Startern, `scoreboard.json` hat Wochen. Wirft bei einer Verletzung, wodurch das bestehende `main().catch()` den Prozess mit Exit-Code 1 beendet. Grund: bisher hätte eine ESPN-API-Störung, die eine teilweise/leere Antwort OHNE Exception liefert, stillschweigend kaputte Daten committet – der Job wäre grün geblieben, obwohl inhaltlich nichts Brauchbares passiert ist. Verifiziert gegen die aktuellen echten `data/*.json`-Dateien (alle Checks bestehen: 10 Teams überall, alle Kader haben Starter, 15 Scoreboard-Wochen).
+2. **Sofortiger Retry statt Tages-Check**: neuer `fast-retry`-Job in `espn-sync-watchdog.yml`, per `workflow_run`-Trigger – feuert innerhalb von Sekunden nach JEDEM `espn-sync.yml`-Lauf (nicht erst beim Tages-Check um 14:23 UTC). Bei `conclusion != 'success'` (z.B. durch den neuen Sanity-Check ausgelöst) wird sofort ein Retry angestossen. Bewusst nur für `github.event.workflow_run.event == 'schedule'` (nicht `workflow_dispatch`) – sonst würde ein fehlschlagender Retry sich selbst erneut triggern (Endlosschleife). Der bestehende Tages-Check (jetzt `daily-check`-Job, unverändert) bleibt als zweites, unabhängiges Netz für den anderen Fehlerfall: dass GAR KEIN Lauf feuert (dafür gibt's kein `workflow_run`-Event zum Reagieren – das war ja das ursprüngliche Problem von heute Morgen).
+
+Damit jetzt drei sich ergänzende Schichten: Cron-Minute-Offset (`:07`, reduziert Skip-Risiko), sofortiger `workflow_run`-Retry (reagiert in Sekunden statt Stunden auf einen fehlgeschlagenen, aber tatsächlich gefeuerten Lauf), Tages-Check (fängt den Fall ab, dass gar nichts feuert).
+
+**Nicht live end-to-end getestet** (kann GitHub's Cron-Scheduler nicht gezielt zum Überspringen bringen, um das zu erzwingen) – Logik durch sorgfältiges Lesen verifiziert, `runSanityChecks()` zusätzlich gegen echte aktuelle Daten geprüft.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
@@ -51,4 +63,4 @@
 - Hall of Fame: wenn die aktuelle Saison (2026) am Ende abgeschlossen ist, muss `data/league-history.json` von Hand um den 2026er-Eintrag ergänzt werden (gleiches manuelles Muster wie 2024/2025) – die Seite zeigt bis dahin die laufende Saison weiterhin live/vorläufig an.
 
 ## Nächster Schritt
-Nächsten Dienstag beobachten, ob die verschobene Cron-Minute (`:07`) das Problem behebt bzw. ob der Watchdog je einspringen muss (Log/Run-Historie von `espn-sync-watchdog.yml` prüfen). Ausserdem: `data/suggestion-history.json` weiter beobachten – die ersten Einträge sind jetzt da, Grading (min. 2 Wochen später) greift frühestens ab Woche 4.
+Nächsten Dienstag beobachten: greift die verschobene Cron-Minute (`:07`)? Falls ein Lauf trotzdem fehlschlägt, greift der neue `fast-retry`-Job? Springt der `daily-check` nur ein, wenn wirklich nötig? (Run-Historie von `espn-sync-watchdog.yml` prüfen.) Ausserdem: `data/suggestion-history.json` weiter beobachten – die ersten Einträge sind jetzt da, Grading (min. 2 Wochen später) greift frühestens ab Woche 4.
