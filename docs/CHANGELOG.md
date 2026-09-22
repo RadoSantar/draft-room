@@ -769,3 +769,8 @@ Team-Saison 2025 weiterhin vorne liegt). Season-Karten erscheinen in
 korrekter Reihenfolge (2026 live, 2025, 2024), Playoff-Details nur bei
 Jahren mit vorhandenen Bracket-Daten. Mobile-Screenshot (420px) zur
 visuellen Kontrolle geprüft.
+
+## 2026-09-22 – `599c75f` Session-Log: Wochenüberblick-Fix und Hall-of-Fame-Seite nachgetragen
+
+Backup-Einträge für Commit 630dd7c (Wochenüberblick deckt jetzt alle
+Spiele ab) und 07b9c41 (neue Hall-of-Fame-Seite).
