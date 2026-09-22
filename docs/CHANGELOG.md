@@ -874,3 +874,7 @@ komplett leeren Historie).
 Verifiziert per Playwright: zeigt korrekt "Amtierender Meister · Saison
 2025 – Zurich City Ravens – 11-4" bei gemockten Daten mit 2024+2025.
 Mobile-Screenshot (420px) bestätigt die gewünschte Grösse/Prominenz.
+
+## 2026-09-22 – `3a0e07b` Session-Log: Champion-Hero-Kachel nachgetragen
+
+Backup-Eintrag für Commit d7e2b42.
