@@ -807,3 +807,49 @@ Sanity-Check am Ende des Sync-Skripts lohnt sich zusätzlich.
 ## 2026-09-22 – `9e2c2f3` Session-Log: Sanity-Check und Fast-Retry nachgetragen
 
 Backup-Eintrag für Commit 0cf6bf1.
+
+## 2026-09-22 – `bd43df9` Hall of Fame: Ewige Tabelle, Saison-Highlights, Rivalitäten
+
+Nutzer wollte alle vorgeschlagenen Kategorien ausser "Trade-Aktivität über
+die Jahre" umgesetzt haben:
+
+1. scripts/sync-espn.mjs: board-Einträge in power-rankings.json bekommen
+   jetzt ein id-Feld (Spieler-ID) - bisher nur r/rp/ov/pos/name/team/proj/
+   adp, fehlte für eine zuverlässige Verknüpfung mit season-stats.json's
+   players[id] (Namensabgleich wäre fehleranfällig gewesen). Rein additiv,
+   bricht keine bestehenden Konsumenten (power-rankings.html/draft-board.html
+   lesen nur die schon vorhandenen Felder aus).
+
+2. hall-of-fame.html, drei neue Sektionen zwischen Allzeit-Rekorden und
+   Pro Jahr:
+
+   - "Ewige Tabelle": Karriere-Bilanz jedes Teams über alle Saisons
+     (2024/2025 aus league-history.json + laufende Saison live aus
+     standings.json), sortiert nach Titeln dann Sieg-Quote. ⭐-Badge für
+     Gründungsmitglieder (dabei seit leagueFounded). Punkte bewusst NICHT
+     aufsummiert (2024/2025 haben pointsFor=null, siehe bestehende note in
+     league-history.json - eine Teilsumme wäre irreführend). Callout
+     "Immer nah dran" für das Team mit den meisten Playoff-Teilnahmen ohne
+     Titel.
+   - "Diese Saison im Rampenlicht": 8 live berechnete Kennzahlen der
+     laufenden Saison - längste Sieges-/Niederlagenserie, grösster
+     Blowout/knappster Sieg (aus scoreboard.json-Einzelspielen, präziser
+     als die reinen Zähler in season-stats.json), meiste Überraschungssiege,
+     "Bank-König" (meiste liegen gelassene Bankpunkte), bester Draft-Value-
+     Pick und grösster Draft-Flop (Runde vs. tatsächliche Punkte/Punkteschnitt,
+     via das neue board[].id mit season-stats.json's players verknüpft).
+     Bewusst als "diese Saison"-Highlights gerahmt, nicht als "aller
+     Zeiten" - 2024/2025 haben diese granularen Daten nicht, werden erst ab
+     jetzt getrackt.
+   - "Rivalitäten": Team-Paare, die sich diese Saison schon zweimal
+     gegenüberstanden (Doppel-Duelle im Spielplan), mit beiden
+     Spielergebnissen. Nur für die laufende Saison - alte Spielpläne sind
+     nicht gespeichert, nur Endstände.
+
+Verifiziert per Playwright mit gemockten Daten über alle drei Sektionen:
+Ewige Tabelle sortiert korrekt (Titel zuerst, dann Sieg-Quote), Gründungs-
+Badge korrekt nur bei 2024er-Teams, "Immer nah dran"-Callout wählt korrekt
+das Team mit den meisten titel-losen Playoff-Teilnahmen. Alle 8 Saison-
+Highlights zeigen plausible Werte aus den Mock-Daten. Rivalitäten erkennt
+korrekt beide konstruierten Doppel-Duelle mit richtiger Spiel-für-Spiel-
+Aufschlüsselung. Mobile-Screenshot (420px) zur visuellen Kontrolle geprüft.
