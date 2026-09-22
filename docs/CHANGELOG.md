@@ -853,3 +853,7 @@ das Team mit den meisten titel-losen Playoff-Teilnahmen. Alle 8 Saison-
 Highlights zeigen plausible Werte aus den Mock-Daten. Rivalitäten erkennt
 korrekt beide konstruierten Doppel-Duelle mit richtiger Spiel-für-Spiel-
 Aufschlüsselung. Mobile-Screenshot (420px) zur visuellen Kontrolle geprüft.
+
+## 2026-09-22 – `f1e48d2` Session-Log: Hall-of-Fame-Erweiterung nachgetragen
+
+Backup-Eintrag für Commit bd43df9.
