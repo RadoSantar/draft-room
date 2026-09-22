@@ -803,3 +803,7 @@ Sanity-Check am Ende des Sync-Skripts lohnt sich zusätzlich.
    Der bestehende Tages-Check (jetzt daily-check-Job) bleibt unverändert
    als zweites Netz für den anderen Fehlerfall: dass GAR KEIN Lauf feuert
    (dafür gibt's kein workflow_run-Event zum Reagieren).
+
+## 2026-09-22 – `9e2c2f3` Session-Log: Sanity-Check und Fast-Retry nachgetragen
+
+Backup-Eintrag für Commit 0cf6bf1.
