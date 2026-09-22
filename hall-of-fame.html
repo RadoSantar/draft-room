@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hall of Fame – Fantasy Playbook</title>
+<meta name="description" content="Meister, Allzeit-Rekorde und die Geschichte der Liga – pro Jahr und über alle Saisons hinweg.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 34'%3E%3Cellipse cx='12' cy='17' rx='8.5' ry='16' fill='%237A4A2B' stroke='%234E2E19' stroke-width='1'/%3E%3Cline x1='12' y1='7' x2='12' y2='27' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='12' x2='15' y2='12' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='17' x2='15' y2='17' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='22' x2='15' y2='22' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1E4638">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fantasy Playbook">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=20260915">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
+<script src="shared.js?v=20260915"></script>
+<script data-goatcounter="https://radosantar.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    line-height:1.65;
+  }
+  h1,h2,h3,.display{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+    text-wrap:balance;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+
+  header.topbar{
+    background:var(--turf);
+    color:var(--chalk);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    border-bottom:3px solid var(--amber);
+  }
+  .title-group{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  header.topbar .title{font-family:'Anton', sans-serif;font-size:20px;letter-spacing:0.04em;color:var(--chalk);}
+  .tool-nav{display:flex;gap:10px;flex-wrap:wrap;}
+  .tool-nav a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    text-decoration:none;
+    color:var(--chalk);
+    opacity:.85;
+    border:1px solid rgba(243,239,228,0.3);
+    border-radius:20px;
+    padding:6px 12px;
+  }
+  .tool-nav a:hover{opacity:1;border-color:var(--amber);}
+
+  main{max-width:860px;margin:0 auto;padding:32px 24px 96px;}
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--hash);
+    margin-bottom:6px;
+  }
+  h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
+  h2.section-head{font-size:22px;margin:36px 0 4px;}
+  h3.sub-head{font-size:16px;margin:18px 0 6px;color:var(--turf);}
+  p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
+  .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
+  .calc-status.error{color:var(--endzone);}
+
+  /* Allzeit-Rekorde */
+  .hof-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:14px 0;}
+  .hof-stat-tile{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px 16px;}
+  .hof-stat-label{font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);margin-bottom:6px;}
+  .hof-stat-value{font-size:19px;color:var(--turf);}
+  .hof-stat-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;}
+  .hof-live-tag{color:var(--amber);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;}
+
+  /* Pro Jahr */
+  .hof-season-card{background:var(--turf);color:var(--chalk);border-radius:10px;padding:18px 20px;margin:14px 0;}
+  .hof-season-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
+  .hof-season-year{font-family:'Anton', sans-serif;font-size:24px;letter-spacing:.02em;}
+  .hof-live-badge{font-family:'IBM Plex Mono', monospace;font-size:10.5px;background:var(--amber);color:var(--turf);padding:2px 9px;border-radius:20px;}
+  .hof-podium{font-size:14.5px;margin:8px 0 14px;}
+  .hof-podium strong{color:var(--amber);}
+  .hof-standings-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(243,239,228,0.15);font-size:14px;}
+  .hof-standings-row:last-child{border-bottom:none;}
+  .hof-standings-rank{font-family:'IBM Plex Mono', monospace;font-size:12px;min-width:20px;color:var(--amber);}
+  .hof-standings-name{flex:1;}
+  .hof-standings-record{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--hash);}
+  .hof-year-records{margin-top:14px;font-size:13px;}
+  .hof-year-records div{margin-bottom:4px;}
+  .hof-playoff-details{margin-top:12px;font-size:13px;}
+  .hof-playoff-details summary{cursor:pointer;font-family:'IBM Plex Mono', monospace;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--amber);}
+  .hof-playoff-line{margin:6px 0 0 2px;color:rgba(243,239,228,0.85);}
+  .hof-note{font-size:12.5px;color:rgba(243,239,228,0.6);margin-top:10px;font-style:italic;}
+
+  @media (max-width:640px){
+    header.topbar{padding:12px 16px;flex-wrap:wrap;}
+    main{padding:24px 16px 80px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="title-group" href="index.html">
+    <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
+    <span class="title">Fantasy Playbook</span>
+  </a>
+  <button class="nav-toggle" id="navToggle" aria-label="Menü" aria-expanded="false">
+    <svg viewBox="0 0 20 20" aria-hidden="true"><line x1="3" y1="6" x2="17" y2="6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><line x1="3" y1="14" x2="17" y2="14" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+  </button>
+  <div class="header-sync-wrap">
+    <select class="header-sync-select" id="syncTeamSelect" aria-label="Dein Team für geräteübergreifenden Sync"></select>
+    <span class="header-sync-status mono" id="syncStatus"></span>
+  </div>
+  <div class="tool-nav">
+    <a href="index.html#draft-tipps">← Übersicht</a>
+    <a href="schedule.html">Spielplan</a>
+    <a href="power-rankings.html">Power Rankings</a>
+    <a href="my-team.html">Mein Team</a>
+  </div>
+</header>
+
+<main>
+  <div class="theme-picker" role="group" aria-label="Team-Design wählen">
+    <span class="theme-picker-label mono">Design</span>
+    <div class="theme-select-wrap">
+      <svg class="theme-preview-ball" id="themePreviewBall" viewBox="0 0 24 34" width="20" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <ellipse cx="12" cy="17" rx="8.5" ry="16" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
+        <line x1="12" y1="7" x2="12" y2="27" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="9" y1="12" x2="15" y2="12" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="9" y1="17" x2="15" y2="17" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+        <line x1="9" y1="22" x2="15" y2="22" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+      </svg>
+      <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
+      <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
+    </div>
+  </div>
+
+  <div class="kicker" id="statusKicker">Wird geladen…</div>
+  <h1>Hall of Fame</h1>
+  <p class="copy">Meister, Rekorde und die Geschichte der Liga – pro Jahr und über alle Saisons hinweg.</p>
+
+  <div class="calc-status" id="mainStatus"></div>
+
+  <div id="hofContent" hidden>
+    <h2 class="section-head">Allzeit-Rekorde</h2>
+    <p class="copy">Die besten Leistungen über alle Saisons hinweg – Werte der laufenden Saison sind <span class="hof-live-tag">live</span> markiert und können noch fallen.</p>
+    <div id="hofAllTime"></div>
+
+    <h2 class="section-head">Pro Jahr</h2>
+    <div id="hofSeasons"></div>
+  </div>
+</main>
+
+<button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M12 19V5M5 12l7-7 7 7" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/>
+  </svg>
+</button>
+
+<script>
+(function(){
+  window.DraftRoomShared.initHeaderNav();
+
+  var themePicker = window.DraftRoomShared.initThemePicker({
+    select: document.getElementById('themeSelect'),
+    headerLogo: document.getElementById('headerLogo'),
+    previewBall: document.getElementById('themePreviewBall'),
+    previewLogo: document.getElementById('themePreviewLogo')
+  });
+
+  window.__draftRoomSync = window.DraftRoomShared.initSyncBar({
+    nameInput: document.getElementById('syncTeamSelect'),
+    statusEl: document.getElementById('syncStatus'),
+    onPull: function(row){
+      if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
+    }
+  });
+
+  document.getElementById('themeSelect').addEventListener('change', function(e){
+    if(window.__draftRoomSync) window.__draftRoomSync.push({ theme: e.target.value });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  var backToTop = document.getElementById('backToTop');
+  function update(){
+    backToTop.classList.toggle('is-hidden', window.scrollY < window.innerHeight * 0.6);
+  }
+  window.addEventListener('scroll', update, { passive: true });
+  update();
+  backToTop.addEventListener('click', function(){
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  });
+})();
+</script>
+
+<script>
+(function(){
+  // Die aktuell laufende Saison steht noch nicht in league-history.json (die wird erst am
+  // Saisonende von Hand aus ESPNs eigener Hall-of-Fame-Ansicht nachgetragen, siehe dortige note).
+  // Bis dahin wird ihr Stand hier LIVE aus den ohnehin schon vorhandenen data/*.json-Dateien
+  // berechnet (Tabellenstand, beste Team-/Spieler-Woche) und deutlich als "live" markiert, damit
+  // klar ist, dass diese Werte sich noch ändern können - im Gegensatz zu den abgeschlossenen,
+  // fixen Vorjahres-Einträgen aus league-history.json.
+  var CURRENT_SEASON_YEAR = 2026;
+
+  var mainStatusEl = document.getElementById('mainStatus');
+  var contentEl = document.getElementById('hofContent');
+  var allTimeEl = document.getElementById('hofAllTime');
+  var seasonsEl = document.getElementById('hofSeasons');
+  var statusKickerEl = document.getElementById('statusKicker');
+
+  function fmt(n){ return n === null || n === undefined ? '–' : (Math.round(n * 10) / 10).toFixed(1); }
+
+  function statTileHtml(label, value, sub){
+    return '<div class="hof-stat-tile"><div class="hof-stat-label mono">' + label + '</div><div class="hof-stat-value display">' + value + '</div>' +
+      (sub ? '<div class="hof-stat-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  // Berechnet aus scoreboard.json/standings.json/season-stats.json den bisherigen Stand der
+  // laufenden Saison - dieselben drei Kategorien wie league-history.json's hallOfFame pro
+  // Vorjahr, nur live statt fix. Nur entschiedene Spiele zählen (winner !== 'UNDECIDED'), damit
+  // kein laufendes Spiel fälschlich als Rekord auftaucht.
+  function computeCurrentSeasonSummary(scoreboard, standings, seasonStats){
+    var bestTeamSeason = null;
+    (standings || []).forEach(function(s){
+      if(!bestTeamSeason || s.pointsFor > bestTeamSeason.points) bestTeamSeason = { team: s.name, points: s.pointsFor };
+    });
+
+    var bestTeamWeek = null;
+    (scoreboard || []).forEach(function(wk){
+      (wk.games || []).forEach(function(g){
+        if(g.winner === 'UNDECIDED') return;
+        if(!bestTeamWeek || g.homeScore > bestTeamWeek.points) bestTeamWeek = { team: g.homeName, week: wk.week, points: g.homeScore };
+        if(g.awayScore > bestTeamWeek.points) bestTeamWeek = { team: g.awayName, week: wk.week, points: g.awayScore };
+      });
+    });
+
+    var topPlayer = seasonStats && seasonStats.records && seasonStats.records.topWeeklyPerformances && seasonStats.records.topWeeklyPerformances[0];
+    var bestPlayerWeek = topPlayer ? { player: topPlayer.name, pos: topPlayer.pos, team: topPlayer.team, week: topPlayer.week, points: topPlayer.points } : null;
+
+    return { year: CURRENT_SEASON_YEAR, bestTeamSeason: bestTeamSeason, bestTeamWeek: bestTeamWeek, bestPlayerWeek: bestPlayerWeek };
+  }
+
+  // Kombiniert die fixen Vorjahres-Rekorde aus league-history.json.hallOfFame mit dem Live-Stand
+  // der laufenden Saison und ermittelt pro Kategorie den aktuellen Allzeit-Spitzenwert.
+  function computeAllTime(leagueHistory, liveSummary){
+    var hof = (leagueHistory && leagueHistory.hallOfFame) || {};
+
+    var titleCounts = {};
+    (hof.champions || []).forEach(function(c){ titleCounts[c.team] = (titleCounts[c.team] || 0) + 1; });
+    var titlesList = Object.keys(titleCounts).map(function(t){ return { team: t, count: titleCounts[t] }; })
+      .sort(function(a, b){ return b.count - a.count; });
+
+    var seasonCandidates = (hof.mostTeamPointsSeason || []).map(function(r){ return { year: r.year, team: r.team, points: r.points, live: false }; });
+    var teamWeekCandidates = (hof.mostTeamPointsWeek || []).map(function(r){ return { year: r.year, team: r.team, week: r.week, points: r.points, live: false }; });
+    var playerWeekCandidates = (hof.mostPlayerPointsWeek || []).map(function(r){ return { year: r.year, player: r.player, pos: r.pos, proTeam: r.proTeam, team: r.team, week: r.week, points: r.points, live: false }; });
+
+    if(liveSummary){
+      if(liveSummary.bestTeamSeason) seasonCandidates.push({ year: liveSummary.year, team: liveSummary.bestTeamSeason.team, points: liveSummary.bestTeamSeason.points, live: true });
+      if(liveSummary.bestTeamWeek) teamWeekCandidates.push({ year: liveSummary.year, team: liveSummary.bestTeamWeek.team, week: liveSummary.bestTeamWeek.week, points: liveSummary.bestTeamWeek.points, live: true });
+      if(liveSummary.bestPlayerWeek) playerWeekCandidates.push({ year: liveSummary.year, player: liveSummary.bestPlayerWeek.player, pos: liveSummary.bestPlayerWeek.pos, team: liveSummary.bestPlayerWeek.team, week: liveSummary.bestPlayerWeek.week, points: liveSummary.bestPlayerWeek.points, live: true });
+    }
+
+    seasonCandidates.sort(function(a, b){ return b.points - a.points; });
+    teamWeekCandidates.sort(function(a, b){ return b.points - a.points; });
+    playerWeekCandidates.sort(function(a, b){ return b.points - a.points; });
+
+    return {
+      titlesList: titlesList,
+      bestSeason: seasonCandidates[0] || null,
+      bestTeamWeek: teamWeekCandidates[0] || null,
+      bestPlayerWeek: playerWeekCandidates[0] || null
+    };
+  }
+
+  function renderAllTime(allTime){
+    var tiles = [];
+
+    if(allTime.titlesList.length){
+      var top = allTime.titlesList[0];
+      var tied = allTime.titlesList.filter(function(t){ return t.count === top.count; }).map(function(t){ return t.team; });
+      tiles.push(statTileHtml('Meiste Titel', top.count + 'x', tied.join(', ')));
+    } else {
+      tiles.push(statTileHtml('Meiste Titel', '–', 'noch keine abgeschlossene Saison'));
+    }
+
+    function recordTile(label, rec, valueText, subText){
+      if(!rec) return statTileHtml(label, '–');
+      var liveTag = rec.live ? ' <span class="hof-live-tag">live</span>' : '';
+      return statTileHtml(label, valueText, subText + ' (' + rec.year + ')' + liveTag);
+    }
+
+    tiles.push(recordTile('Beste Team-Saison', allTime.bestSeason, allTime.bestSeason ? fmt(allTime.bestSeason.points) : '–', allTime.bestSeason ? allTime.bestSeason.team : ''));
+    tiles.push(recordTile('Beste Team-Woche', allTime.bestTeamWeek, allTime.bestTeamWeek ? fmt(allTime.bestTeamWeek.points) : '–', allTime.bestTeamWeek ? (allTime.bestTeamWeek.team + ', Wo. ' + allTime.bestTeamWeek.week) : ''));
+    tiles.push(recordTile('Beste Spieler-Woche', allTime.bestPlayerWeek, allTime.bestPlayerWeek ? fmt(allTime.bestPlayerWeek.points) : '–', allTime.bestPlayerWeek ? (allTime.bestPlayerWeek.player + (allTime.bestPlayerWeek.pos ? ' (' + allTime.bestPlayerWeek.pos + ')' : '') + ', ' + allTime.bestPlayerWeek.team + ', Wo. ' + allTime.bestPlayerWeek.week) : ''));
+
+    allTimeEl.innerHTML = '<div class="hof-stat-grid">' + tiles.join('') + '</div>';
+  }
+
+  function standingsRowsHtml(list, getRank, getName, getRecord){
+    return list.map(function(item, i){
+      return '<div class="hof-standings-row"><span class="hof-standings-rank mono">' + getRank(item, i) + '</span>' +
+        '<span class="hof-standings-name">' + getName(item) + '</span>' +
+        '<span class="hof-standings-record">' + getRecord(item) + '</span></div>';
+    }).join('');
+  }
+
+  function matchLineHtml(prefix, m){
+    if(!m) return '';
+    return '<div class="hof-playoff-line">' + prefix + ': ' + m.team1 + ' (Seed ' + m.seed1 + ') ' + fmt(m.score1) + ' – ' + fmt(m.score2) + ' ' + m.team2 + ' (Seed ' + m.seed2 + ') → <strong>' + m.winner + '</strong></div>';
+  }
+
+  function playoffDetailsHtml(playoffs){
+    if(!playoffs) return '';
+    var lines = [];
+    var wb = playoffs.winnersBracket;
+    if(wb){
+      (wb.semifinal || []).forEach(function(m){ lines.push(matchLineHtml('Halbfinale Wo. ' + m.week, m)); });
+      lines.push(matchLineHtml('Finale Wo. ' + (wb.championship ? wb.championship.week : ''), wb.championship));
+      lines.push(matchLineHtml('Spiel um Platz 3 Wo. ' + (wb.thirdPlaceGame ? wb.thirdPlaceGame.week : ''), wb.thirdPlaceGame));
+    }
+    var cb = playoffs.consolationBracket;
+    if(cb && cb.fifthPlaceGame) lines.push(matchLineHtml('Spiel um Platz 5 Wo. ' + cb.fifthPlaceGame.week, cb.fifthPlaceGame));
+    if(!lines.length) return '';
+    return '<details class="hof-playoff-details"><summary>Playoff-Ergebnisse</summary>' + lines.join('') + '</details>';
+  }
+
+  function seasonCardHtml(year, season, hofRecordsForYear, isLive, liveStandings){
+    var yearLabel = '<span class="hof-season-year display">' + year + '</span>' + (isLive ? ' <span class="hof-live-badge mono">läuft</span>' : '');
+    var podium;
+    if(isLive){
+      podium = '<div class="hof-podium">Zwischenstand – noch kein Meister, Saison läuft.</div>';
+    } else {
+      podium = '<div class="hof-podium">🏆 <strong>' + season.champion + '</strong> · 🥈 ' + season.runnerUp + (season.thirdPlace ? (' · 🥉 ' + season.thirdPlace) : '') + '</div>';
+    }
+
+    var standingsHtml;
+    if(isLive){
+      standingsHtml = standingsRowsHtml(liveStandings, function(s, i){ return i + 1; }, function(s){ return s.name; }, function(s){ return s.wins + '-' + s.losses + (s.ties ? ('-' + s.ties) : '') + ' · ' + fmt(s.pointsFor); });
+    } else {
+      standingsHtml = standingsRowsHtml(season.finalStandings || [], function(s){ return s.rank; }, function(s){ return s.name; }, function(s){ return s.wins + '-' + s.losses + (s.ties ? ('-' + s.ties) : '') + (s.pointsFor != null ? (' · ' + fmt(s.pointsFor)) : ''); });
+    }
+
+    var recordsHtml = '';
+    if(hofRecordsForYear){
+      var r = hofRecordsForYear;
+      var parts = [];
+      if(r.mostTeamPointsSeason) parts.push('<div>Beste Team-Saison: <strong>' + r.mostTeamPointsSeason.team + '</strong> (' + fmt(r.mostTeamPointsSeason.points) + ')</div>');
+      if(r.mostTeamPointsWeek) parts.push('<div>Beste Team-Woche: <strong>' + r.mostTeamPointsWeek.team + '</strong> (' + fmt(r.mostTeamPointsWeek.points) + ', Wo. ' + r.mostTeamPointsWeek.week + ')</div>');
+      if(r.mostPlayerPointsWeek) parts.push('<div>Beste Spieler-Woche: <strong>' + r.mostPlayerPointsWeek.player + '</strong> (' + fmt(r.mostPlayerPointsWeek.points) + ', ' + r.mostPlayerPointsWeek.team + ', Wo. ' + r.mostPlayerPointsWeek.week + ')</div>');
+      if(parts.length) recordsHtml = '<div class="hof-year-records">' + parts.join('') + '</div>';
+    } else if(isLive){
+      recordsHtml = '<div class="hof-year-records"><div>Bisher beste Team-Woche/Spieler-Woche siehe Allzeit-Rekorde oben (live markiert).</div></div>';
+    }
+
+    var playoffHtml = isLive ? '' : playoffDetailsHtml(season.playoffs);
+    var noteHtml = (!isLive && season.note) ? '<div class="hof-note">' + season.note + '</div>' : '';
+
+    return '<div class="hof-season-card"><div class="hof-season-head">' + yearLabel + '</div>' + podium + standingsHtml + recordsHtml + playoffHtml + noteHtml + '</div>';
+  }
+
+  function renderSeasons(leagueHistory, standings, liveSummary){
+    var years = Object.keys((leagueHistory && leagueHistory.seasons) || {}).map(Number).sort(function(a, b){ return b - a; });
+    var hofByYear = {};
+    ['mostTeamPointsSeason', 'mostTeamPointsWeek', 'mostPlayerPointsWeek'].forEach(function(key){
+      ((leagueHistory && leagueHistory.hallOfFame && leagueHistory.hallOfFame[key]) || []).forEach(function(r){
+        hofByYear[r.year] = hofByYear[r.year] || {};
+        hofByYear[r.year][key] = r;
+      });
+    });
+
+    var html = seasonCardHtml(CURRENT_SEASON_YEAR, null, null, true, standings || []);
+    years.forEach(function(y){
+      html += seasonCardHtml(y, leagueHistory.seasons[y], hofByYear[y], false, null);
+    });
+    seasonsEl.innerHTML = html;
+  }
+
+  Promise.all([
+    fetch('data/league-history.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { seasons: {}, hallOfFame: {} }; }),
+    fetch('data/scoreboard.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { data: [] }; }),
+    fetch('data/standings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { data: [] }; }),
+    fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { records: { topWeeklyPerformances: [] } }; })
+  ]).then(function(results){
+    var leagueHistory = results[0];
+    var scoreboard = results[1].data || [];
+    var standings = results[2].data || [];
+    var seasonStats = results[3];
+
+    var liveSummary = computeCurrentSeasonSummary(scoreboard, standings, seasonStats);
+    var allTime = computeAllTime(leagueHistory, liveSummary);
+
+    renderAllTime(allTime);
+    renderSeasons(leagueHistory, standings, liveSummary);
+
+    statusKickerEl.textContent = 'Vorjahre von Hand aus ESPN gepflegt · laufende Saison live berechnet';
+    contentEl.hidden = false;
+  }).catch(function(err){
+    statusKickerEl.textContent = 'Fehler beim Laden der Daten';
+    mainStatusEl.textContent = 'Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
+    mainStatusEl.classList.add('error');
+    console.error(err);
+  });
+})();
+</script>
+
+</body>
+</html>
