@@ -79,5 +79,13 @@ Damit jetzt drei sich ergänzende Schichten: Cron-Minute-Offset (`:07`, reduzier
 ## Offene, noch nicht umgesetzte Punkte (Ergänzung)
 - Hall of Fame: sobald mehr Saisons mit dem neuen granularen Tracking vorliegen (ab Saisonende 2026), werden "Diese Saison im Rampenlicht" und "Rivalitäten" zu echten Mehrjahres-Vergleichen ausbaubar – aktuell bewusst auf die laufende Saison beschränkt.
 
+## 7. Champion-Hero-Kachel ganz oben
+
+**Nutzer-Wunsch:** "ok zu oberst in der hall of fame als eigene kachel schön gross soll der aktuelle champion stehen".
+
+**Umgesetzt:** neue `.hof-champion-hero`-Kachel direkt unter dem Intro-Text, ausserhalb des bis zum Laden versteckten `#hofContent`-Bereichs (erscheint dadurch beim Rendern sofort, nicht erst nach dem Rest). `renderChampionHero()` findet die zuletzt ABGESCHLOSSENE Saison (höchstes Jahr in `league-history.json.seasons` – 2026 hat noch keinen Eintrag dort, also auch noch keinen Meister) und zeigt Team, Jahr und Endbilanz gross mit Pokal-Emoji, Farbverlauf-Hintergrund, Amber-Rahmen.
+
+**Getestet:** Playwright zeigt korrekt "Amtierender Meister · Saison 2025 – Zurich City Ravens – 11-4" bei gemockten 2024+2025-Daten. Mobile-Screenshot (420px) bestätigt gewünschte Grösse/Prominenz.
+
 ## Nächster Schritt
 Nächsten Dienstag beobachten: greift die verschobene Cron-Minute (`:07`)? Falls ein Lauf trotzdem fehlschlägt, greift der neue `fast-retry`-Job? Springt der `daily-check` nur ein, wenn wirklich nötig? (Run-Historie von `espn-sync-watchdog.yml` prüfen.) Ausserdem: `data/suggestion-history.json` weiter beobachten – die ersten Einträge sind jetzt da, Grading (min. 2 Wochen später) greift frühestens ab Woche 4.
