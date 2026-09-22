@@ -728,3 +728,44 @@ Track-Record-Empfehlungen).
 ## 2026-09-22 – `c1159d4` Session-Log: Sync-Workflow-Diagnose und Watchdog-Fallback (neuer Tag)
 
 Backup-Eintrag für Commit a73779b.
+
+## 2026-09-22 – `07b9c41` Neue Seite: Hall of Fame (pro Jahr + Allzeit-Rekorde)
+
+Nutzer-Wunsch: "ausserdem brauchen wir noch eine hall of fame eine pro jahr
+der liga und eine gesammt wir haben dazu ja schon einige daten können wir
+das noch ergänzen?"
+
+Die Daten waren tatsächlich schon lange da: data/league-history.json führt
+seit der Liga-Historie-Session pro Vorjahr (2024/2025) Meister, Endstand
+und ein hallOfFame-Objekt (beste Team-Saison/-Woche, beste Spieler-Woche) -
+wurde bisher aber NIRGENDS angezeigt, nur intern für Recap-Fakten in
+sync-espn.mjs genutzt (findDefendingChampionFact, findAllTimeRecordFact
+etc.). league-history.json's eigene note hatte das "Gesamt" (All-Time)
+schon vorausgesehen: "beste Team-Saison aller Zeiten ... aus den beiden
+Jahreswerten oben ableitbar, aber bewusst nicht zusammengefasst
+gespeichert" - genau das jetzt clientseitig nachgeholt.
+
+Neue Seite hall-of-fame.html:
+- "Allzeit-Rekorde": Meiste Titel, beste Team-Saison, beste Team-Woche,
+  beste Spieler-Woche - kombiniert die fixen Vorjahres-Werte aus
+  league-history.json.hallOfFame MIT dem live aus scoreboard.json/
+  standings.json/season-stats.json berechneten Stand der laufenden Saison
+  (2026 ist noch nicht in league-history.json, die wird erst am Saisonende
+  von Hand nachgetragen - siehe deren eigene note). Laufende-Saison-Werte
+  sind deutlich "live" markiert, da sie noch fallen können.
+- "Pro Jahr": eine Karte pro abgeschlossener Saison (neueste zuerst) mit
+  Podium, Endtabelle und den jahresspezifischen Rekorden, plus eine
+  "läuft"-Karte für die aktuelle Saison ganz oben (Zwischenstand statt
+  Meister). Playoff-Ergebnisse (falls vorhanden, z.B. 2025) in einem
+  aufklappbaren Detail-Block, um die Seite nicht unnötig zu verlängern.
+
+Nav-Link auf allen 5 bestehenden Seiten ergänzt (Header-tool-nav bzw.
+index.html's Mobile-Menü + Tool-Karten-Grid).
+
+Verifiziert per Playwright: Allzeit-Rekorde wählen korrekt zwischen
+historischem und Live-Wert (Live gewinnt nur, wenn tatsächlich höher -
+im Test z.B. bei Team-Woche/Spieler-Woche, während die historische
+Team-Saison 2025 weiterhin vorne liegt). Season-Karten erscheinen in
+korrekter Reihenfolge (2026 live, 2025, 2024), Playoff-Details nur bei
+Jahren mit vorhandenen Bracket-Daten. Mobile-Screenshot (420px) zur
+visuellen Kontrolle geprüft.
