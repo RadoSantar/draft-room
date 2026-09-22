@@ -92,6 +92,43 @@
   .hof-stat-sub{font-size:12px;color:var(--ink-soft);margin-top:4px;}
   .hof-live-tag{color:var(--amber);font-weight:600;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;}
 
+  /* Ewige Tabelle */
+  .hof-career-table{width:100%;border-collapse:collapse;margin:14px 0;font-size:14px;}
+  .hof-career-table th{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--hash);
+    text-align:right;
+    padding:5px 8px;
+    border-bottom:1px solid var(--card-border);
+  }
+  .hof-career-table th:first-child{text-align:left;}
+  .hof-career-table td{padding:7px 8px;text-align:right;border-bottom:1px solid var(--card-border);}
+  .hof-career-table td:first-child{text-align:left;font-family:'Source Serif 4', serif;}
+  .hof-badge{font-size:11px;margin-left:4px;}
+  .hof-callout{background:var(--card);border:1px solid var(--card-border);border-left:4px solid var(--amber);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:14px;color:var(--ink-soft);}
+  .hof-callout strong{color:var(--ink);}
+
+  /* Saison-Highlights */
+  .hof-highlight-card{
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:8px;
+    padding:12px 16px;
+    margin-bottom:8px;
+  }
+  .hof-highlight-label{font-family:'IBM Plex Mono', monospace;font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--turf);margin-bottom:4px;}
+  .hof-highlight-body{font-size:14.5px;}
+  .hof-highlight-body strong{color:var(--ink);}
+
+  /* Rivalitäten */
+  .hof-rivalry-card{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:14px;}
+  .hof-rivalry-teams{font-family:'IBM Plex Mono', monospace;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--turf);margin-bottom:6px;}
+  .hof-rivalry-game{display:flex;justify-content:space-between;gap:8px;padding:3px 0;}
+  .hof-rivalry-game .week{color:var(--hash);font-family:'IBM Plex Mono', monospace;font-size:11.5px;}
+
   /* Pro Jahr */
   .hof-season-card{background:var(--turf);color:var(--chalk);border-radius:10px;padding:18px 20px;margin:14px 0;}
   .hof-season-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
@@ -166,6 +203,19 @@
     <p class="copy">Die besten Leistungen über alle Saisons hinweg – Werte der laufenden Saison sind <span class="hof-live-tag">live</span> markiert und können noch fallen.</p>
     <div id="hofAllTime"></div>
 
+    <h2 class="section-head">Ewige Tabelle</h2>
+    <p class="copy">Karriere-Bilanz jedes Teams über alle Saisons hinweg (inkl. laufender Saison). ⭐ markiert ein Gründungsmitglied (dabei seit 2024). Punkte fehlen für 2024/2025, da ESPNs Hall of Fame diese nicht pro Team auflistet – bewusst nicht geraten.</p>
+    <div id="hofCallouts"></div>
+    <div id="hofCareerTable"></div>
+
+    <h2 class="section-head">Diese Saison im Rampenlicht</h2>
+    <p class="copy">Highlights der laufenden Saison – kann sich bis Saisonende noch ändern.</p>
+    <div id="hofHighlights"></div>
+
+    <h2 class="section-head">Rivalitäten</h2>
+    <p class="copy">Teams, die sich diese Saison schon zweimal gegenüberstanden (Doppel-Duelle im Spielplan). Nur für die laufende Saison – ältere Spielpläne sind nicht gespeichert.</p>
+    <div id="hofRivalries"></div>
+
     <h2 class="section-head">Pro Jahr</h2>
     <div id="hofSeasons"></div>
   </div>
@@ -229,6 +279,10 @@
   var mainStatusEl = document.getElementById('mainStatus');
   var contentEl = document.getElementById('hofContent');
   var allTimeEl = document.getElementById('hofAllTime');
+  var calloutsEl = document.getElementById('hofCallouts');
+  var careerTableEl = document.getElementById('hofCareerTable');
+  var highlightsEl = document.getElementById('hofHighlights');
+  var rivalriesEl = document.getElementById('hofRivalries');
   var seasonsEl = document.getElementById('hofSeasons');
   var statusKickerEl = document.getElementById('statusKicker');
 
@@ -399,21 +453,199 @@
     seasonsEl.innerHTML = html;
   }
 
+  // Ewige Tabelle: Karriere-Bilanz je Team über alle Saisons (league-history.json's finalStandings
+  // pro Vorjahr + der live berechnete Stand der laufenden Saison). Punkte werden bewusst NICHT
+  // aufsummiert - 2024/2025 haben pointsFor=null (ESPNs Hall of Fame listet das nicht pro Team,
+  // wurde bewusst nicht geraten, siehe league-history.json's eigene note), eine Teilsumme wäre
+  // irreführend. "playoffs"/"seasons" zählen nur ABGESCHLOSSENE Jahre (rank <= 4 = Playoff-Teilnahme,
+  // siehe playoffs.format: "4 Teams (Seeds 1-4)") - die laufende Saison fliesst nur in die
+  // Sieg/Niederlage-Bilanz ein, noch nicht in Playoff-Zählung, da ihr Ausgang noch offen ist.
+  function computeCareerTable(leagueHistory, standings){
+    var years = Object.keys((leagueHistory && leagueHistory.seasons) || {});
+    var byTeam = {};
+    function ensure(name){
+      if(!byTeam[name]) byTeam[name] = { name: name, wins: 0, losses: 0, ties: 0, seasons: 0, playoffs: 0, titles: 0, founding: false };
+      return byTeam[name];
+    }
+    var foundedYear = leagueHistory && leagueHistory.leagueFounded;
+    years.forEach(function(y){
+      var season = leagueHistory.seasons[y];
+      (season.finalStandings || []).forEach(function(s){
+        var t = ensure(s.name);
+        t.wins += s.wins; t.losses += s.losses; t.ties += (s.ties || 0);
+        t.seasons += 1;
+        if(s.rank <= 4) t.playoffs += 1;
+        if(Number(y) === foundedYear) t.founding = true;
+      });
+    });
+    ((leagueHistory && leagueHistory.hallOfFame && leagueHistory.hallOfFame.champions) || []).forEach(function(c){
+      ensure(c.team).titles += 1;
+    });
+    (standings || []).forEach(function(s){
+      var t = ensure(s.name);
+      t.wins += s.wins; t.losses += s.losses; t.ties += (s.ties || 0);
+    });
+    return Object.keys(byTeam).map(function(k){ return byTeam[k]; }).sort(function(a, b){
+      if(b.titles !== a.titles) return b.titles - a.titles;
+      var aTotal = a.wins + a.losses + a.ties, bTotal = b.wins + b.losses + b.ties;
+      var aPct = aTotal ? a.wins / aTotal : 0, bPct = bTotal ? b.wins / bTotal : 0;
+      return bPct - aPct;
+    });
+  }
+
+  function renderCareerTable(career){
+    var rows = career.map(function(t){
+      var record = t.wins + '-' + t.losses + (t.ties ? ('-' + t.ties) : '');
+      var badge = t.founding ? ' <span class="hof-badge" title="Gründungsmitglied seit ' + (leagueHistoryRef && leagueHistoryRef.leagueFounded) + '">⭐</span>' : '';
+      return '<tr><td>' + t.name + badge + '</td><td>' + (t.titles || '–') + '</td><td>' + (t.playoffs || '–') + '/' + t.seasons + '</td><td>' + record + '</td></tr>';
+    }).join('');
+    careerTableEl.innerHTML = '<table class="hof-career-table"><thead><tr><th>Team</th><th>Titel</th><th>Playoffs</th><th>Bilanz</th></tr></thead><tbody>' + rows + '</tbody></table>';
+
+    var bestNoTitle = career.filter(function(t){ return t.playoffs > 0 && !t.titles; })
+      .sort(function(a, b){ return b.playoffs - a.playoffs; })[0];
+    calloutsEl.innerHTML = bestNoTitle
+      ? '<div class="hof-callout">🥲 Immer nah dran: <strong>' + bestNoTitle.name + '</strong> mit ' + bestNoTitle.playoffs + ' Playoff-Teilnahme' + (bestNoTitle.playoffs > 1 ? 'n' : '') + ', aber noch ohne Titel.</div>'
+      : '';
+  }
+
+  // Saison-Highlights: alles live aus season-stats.json (Team-Zählungen), scoreboard.json (grösster
+  // Blowout/knappster Sieg - Einzelspiel-Margen sind dort präziser als die reinen Zähler in
+  // season-stats.json) und power-rankings.json's board (Draft-Runde je Spieler, für Value-Pick/Flop).
+  function computeSeasonHighlights(seasonStats, scoreboard, power){
+    var teams = (seasonStats && seasonStats.teams) || {};
+    var teamNameById = {};
+    (power || []).forEach(function(t){ teamNameById[t.id] = t.name; });
+
+    function topByField(field){
+      var best = null;
+      Object.keys(teams).forEach(function(id){
+        var v = teams[id][field] || 0;
+        if(v > 0 && (!best || v > best.value)) best = { team: teamNameById[id] || ('Team ' + id), value: v };
+      });
+      return best;
+    }
+
+    var biggestBlowout = null, closestGame = null;
+    (scoreboard || []).forEach(function(wk){
+      (wk.games || []).forEach(function(g){
+        if(g.winner !== 'HOME' && g.winner !== 'AWAY') return;
+        var margin = Math.abs(g.homeScore - g.awayScore);
+        var entry = {
+          winner: g.winner === 'HOME' ? g.homeName : g.awayName,
+          loser: g.winner === 'HOME' ? g.awayName : g.homeName,
+          winnerScore: g.winner === 'HOME' ? g.homeScore : g.awayScore,
+          loserScore: g.winner === 'HOME' ? g.awayScore : g.homeScore,
+          margin: margin, week: wk.week
+        };
+        if(!biggestBlowout || margin > biggestBlowout.margin) biggestBlowout = entry;
+        if(!closestGame || margin < closestGame.margin) closestGame = entry;
+      });
+    });
+
+    var players = (seasonStats && seasonStats.players) || {};
+    var bestValue = null, biggestFlop = null;
+    (power || []).forEach(function(t){
+      (t.board || []).forEach(function(p){
+        if(p.id == null) return;
+        var rec = players[p.id];
+        if(!rec || !rec.gamesPlayed) return;
+        var ppg = rec.totalPoints / rec.gamesPlayed;
+        if(p.r >= 8 && (!bestValue || rec.totalPoints > bestValue.totalPoints)){
+          bestValue = { name: p.name, pos: p.pos, team: t.name, round: p.r, totalPoints: rec.totalPoints };
+        }
+        if(p.r <= 3 && rec.gamesPlayed >= 2 && (!biggestFlop || ppg < biggestFlop.ppg)){
+          biggestFlop = { name: p.name, pos: p.pos, team: t.name, round: p.r, ppg: ppg };
+        }
+      });
+    });
+
+    return {
+      longestWinStreak: topByField('longestWinStreak'),
+      longestLossStreak: topByField('longestLossStreak'),
+      upsetWins: topByField('upsetWins'),
+      benchGapTotal: topByField('benchGapTotal'),
+      biggestBlowout: biggestBlowout,
+      closestGame: closestGame,
+      bestValue: bestValue,
+      biggestFlop: biggestFlop
+    };
+  }
+
+  function highlightCardHtml(label, bodyHtml){
+    return '<div class="hof-highlight-card"><div class="hof-highlight-label mono">' + label + '</div><div class="hof-highlight-body">' + bodyHtml + '</div></div>';
+  }
+
+  function renderHighlights(h){
+    var cards = [];
+    if(h.longestWinStreak) cards.push(highlightCardHtml('Längste Siegesserie', '<strong>' + h.longestWinStreak.team + '</strong> mit ' + h.longestWinStreak.value + ' Siegen in Folge.'));
+    if(h.longestLossStreak) cards.push(highlightCardHtml('Längste Niederlagenserie', '<strong>' + h.longestLossStreak.team + '</strong> mit ' + h.longestLossStreak.value + ' Niederlagen in Folge.'));
+    if(h.biggestBlowout) cards.push(highlightCardHtml('Grösster Blowout', '<strong>' + h.biggestBlowout.winner + '</strong> ' + fmt(h.biggestBlowout.winnerScore) + ' – ' + fmt(h.biggestBlowout.loserScore) + ' ' + h.biggestBlowout.loser + ' (Wo. ' + h.biggestBlowout.week + ', +' + fmt(h.biggestBlowout.margin) + ')'));
+    if(h.closestGame) cards.push(highlightCardHtml('Knappster Sieg', '<strong>' + h.closestGame.winner + '</strong> ' + fmt(h.closestGame.winnerScore) + ' – ' + fmt(h.closestGame.loserScore) + ' ' + h.closestGame.loser + ' (Wo. ' + h.closestGame.week + ', nur +' + fmt(h.closestGame.margin) + ')'));
+    if(h.upsetWins) cards.push(highlightCardHtml('Meiste Überraschungssiege', '<strong>' + h.upsetWins.team + '</strong> mit ' + h.upsetWins.value + ' Sieg' + (h.upsetWins.value > 1 ? 'en' : '') + ' als Aussenseiter laut Projektion.'));
+    if(h.benchGapTotal) cards.push(highlightCardHtml('Bank-König (unrühmlich)', '<strong>' + h.benchGapTotal.team + '</strong> liess bisher ' + fmt(h.benchGapTotal.value) + ' Punkte auf der Bank liegen.'));
+    if(h.bestValue) cards.push(highlightCardHtml('Bester Draft-Value-Pick', '<strong>' + h.bestValue.name + '</strong> (' + h.bestValue.pos + ', ' + h.bestValue.team + ') – Runde ' + h.bestValue.round + ', bisher ' + fmt(h.bestValue.totalPoints) + ' Punkte.'));
+    if(h.biggestFlop) cards.push(highlightCardHtml('Grösster Draft-Flop', '<strong>' + h.biggestFlop.name + '</strong> (' + h.biggestFlop.pos + ', ' + h.biggestFlop.team + ') – Runde ' + h.biggestFlop.round + ', nur Ø' + fmt(h.biggestFlop.ppg) + '/Spiel.'));
+    highlightsEl.innerHTML = cards.length ? cards.join('') : '<p class="copy">Noch nicht genug Daten für Saison-Highlights.</p>';
+  }
+
+  // Rivalitäten: Team-Paare, die im Spielplan der laufenden Saison zweimal (oder öfter)
+  // aufeinandertreffen ("Doppel-Duelle", siehe Hinweis auf schedule.html) - nur für diese Saison,
+  // da ältere Spielpläne (2024/2025) nicht gespeichert sind, nur die Endstände.
+  function computeRivalries(scoreboard){
+    var pairs = {};
+    (scoreboard || []).forEach(function(wk){
+      (wk.games || []).forEach(function(g){
+        if(g.winner !== 'HOME' && g.winner !== 'AWAY' && g.winner !== 'TIE') return;
+        var key = [g.homeName, g.awayName].sort().join('|');
+        (pairs[key] = pairs[key] || []).push({
+          week: wk.week,
+          winner: g.winner === 'HOME' ? g.homeName : (g.winner === 'AWAY' ? g.awayName : null),
+          loser: g.winner === 'HOME' ? g.awayName : (g.winner === 'AWAY' ? g.homeName : null),
+          homeName: g.homeName, awayName: g.awayName, homeScore: g.homeScore, awayScore: g.awayScore
+        });
+      });
+    });
+    return Object.keys(pairs).filter(function(k){ return pairs[k].length >= 2; }).map(function(k){
+      return { teams: k.split('|'), games: pairs[k] };
+    });
+  }
+
+  function renderRivalries(rivalries){
+    if(!rivalries.length){
+      rivalriesEl.innerHTML = '<p class="copy">Noch keine Doppel-Duelle diese Saison.</p>';
+      return;
+    }
+    rivalriesEl.innerHTML = rivalries.map(function(r){
+      var games = r.games.map(function(g){
+        return '<div class="hof-rivalry-game"><span class="week mono">Wo. ' + g.week + '</span><span>' + g.homeName + ' ' + fmt(g.homeScore) + ' – ' + fmt(g.awayScore) + ' ' + g.awayName + (g.winner ? (' → <strong>' + g.winner + '</strong>') : ' (Unentschieden)') + '</span></div>';
+      }).join('');
+      return '<div class="hof-rivalry-card"><div class="hof-rivalry-teams">' + r.teams.join(' vs. ') + '</div>' + games + '</div>';
+    }).join('');
+  }
+
+  var leagueHistoryRef = null;
+
   Promise.all([
     fetch('data/league-history.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { seasons: {}, hallOfFame: {} }; }),
     fetch('data/scoreboard.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { data: [] }; }),
     fetch('data/standings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { data: [] }; }),
-    fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { records: { topWeeklyPerformances: [] } }; })
+    fetch('data/season-stats.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { records: { topWeeklyPerformances: [] } }; }),
+    fetch('data/power-rankings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).catch(function(){ return { data: [] }; })
   ]).then(function(results){
     var leagueHistory = results[0];
     var scoreboard = results[1].data || [];
     var standings = results[2].data || [];
     var seasonStats = results[3];
+    var power = results[4].data || [];
+    leagueHistoryRef = leagueHistory;
 
     var liveSummary = computeCurrentSeasonSummary(scoreboard, standings, seasonStats);
     var allTime = computeAllTime(leagueHistory, liveSummary);
 
     renderAllTime(allTime);
+    renderCareerTable(computeCareerTable(leagueHistory, standings));
+    renderHighlights(computeSeasonHighlights(seasonStats, scoreboard, power));
+    renderRivalries(computeRivalries(scoreboard));
     renderSeasons(leagueHistory, standings, liveSummary);
 
     statusKickerEl.textContent = 'Vorjahre von Hand aus ESPN gepflegt · laufende Saison live berechnet';

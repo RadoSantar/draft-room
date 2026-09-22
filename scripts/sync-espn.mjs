@@ -1633,7 +1633,7 @@ async function main() {
       .sort((a, b) => a.overallPickNumber - b.overallPickNumber)
       .map((p) => {
         const info = playerInfo(p.playerId);
-        return { r: p.roundId, rp: p.roundPickNumber, ov: p.overallPickNumber, pos: info.pos, name: info.name, team: info.proTeam, proj: info.proj, adp: info.adp };
+        return { id: p.playerId, r: p.roundId, rp: p.roundPickNumber, ov: p.overallPickNumber, pos: info.pos, name: info.name, team: info.proTeam, proj: info.proj, adp: info.adp };
       });
 
     return {
