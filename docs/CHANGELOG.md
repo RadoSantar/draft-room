@@ -857,3 +857,20 @@ Aufschlüsselung. Mobile-Screenshot (420px) zur visuellen Kontrolle geprüft.
 ## 2026-09-22 – `f1e48d2` Session-Log: Hall-of-Fame-Erweiterung nachgetragen
 
 Backup-Eintrag für Commit bd43df9.
+
+## 2026-09-22 – `d7e2b42` Hall of Fame: grosse Champion-Kachel ganz oben
+
+Nutzer-Wunsch: "zu oberst in der hall of fame als eigene kachel schön
+gross soll der aktuelle champion stehen".
+
+Neue Hero-Kachel direkt unter dem Intro-Text, ausserhalb des sonst bis
+zum Laden versteckten Content-Bereichs (erscheint also sofort). Zeigt
+den Champion der zuletzt ABGESCHLOSSENEN Saison (höchstes Jahr in
+league-history.json.seasons - die laufende Saison 2026 hat noch keinen
+Meister) gross mit Pokal-Emoji, Jahr und Endbilanz. Zeigt nichts, falls
+noch keine Saison abgeschlossen ist (defensiv für den Fall einer
+komplett leeren Historie).
+
+Verifiziert per Playwright: zeigt korrekt "Amtierender Meister · Saison
+2025 – Zurich City Ravens – 11-4" bei gemockten Daten mit 2024+2025.
+Mobile-Screenshot (420px) bestätigt die gewünschte Grösse/Prominenz.
