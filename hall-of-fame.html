@@ -84,6 +84,20 @@
   .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
   .calc-status.error{color:var(--endzone);}
 
+  /* Amtierender Meister - grosse Hero-Kachel ganz oben */
+  .hof-champion-hero{
+    background:linear-gradient(135deg, var(--turf), #123a2e);
+    color:var(--chalk);
+    border-radius:14px;
+    border:2px solid var(--amber);
+    padding:26px 28px;
+    margin:20px 0 8px;
+    text-align:center;
+  }
+  .hof-champion-kicker{font-size:11.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--amber);margin-bottom:8px;}
+  .hof-champion-name{font-size:clamp(28px,6vw,44px);line-height:1.1;color:var(--chalk);}
+  .hof-champion-record{font-size:14px;color:rgba(243,239,228,0.75);margin-top:8px;}
+
   /* Allzeit-Rekorde */
   .hof-stat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:10px;margin:14px 0;}
   .hof-stat-tile{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:14px 16px;}
@@ -196,6 +210,8 @@
   <h1>Hall of Fame</h1>
   <p class="copy">Meister, Rekorde und die Geschichte der Liga – pro Jahr und über alle Saisons hinweg.</p>
 
+  <div id="hofChampionHero"></div>
+
   <div class="calc-status" id="mainStatus"></div>
 
   <div id="hofContent" hidden>
@@ -278,6 +294,7 @@
 
   var mainStatusEl = document.getElementById('mainStatus');
   var contentEl = document.getElementById('hofContent');
+  var championHeroEl = document.getElementById('hofChampionHero');
   var allTimeEl = document.getElementById('hofAllTime');
   var calloutsEl = document.getElementById('hofCallouts');
   var careerTableEl = document.getElementById('hofCareerTable');
@@ -291,6 +308,25 @@
   function statTileHtml(label, value, sub){
     return '<div class="hof-stat-tile"><div class="hof-stat-label mono">' + label + '</div><div class="hof-stat-value display">' + value + '</div>' +
       (sub ? '<div class="hof-stat-sub">' + sub + '</div>' : '') + '</div>';
+  }
+
+  // Grosse Hero-Kachel ganz oben: der amtierende Meister, d.h. der Champion der zuletzt
+  // ABGESCHLOSSENEN Saison (höchstes Jahr in league-history.json.seasons - die laufende Saison 2026
+  // steht dort noch nicht drin, hat also auch noch keinen Meister). Zeigt nichts, solange keine
+  // einzige Saison abgeschlossen ist (z.B. bei einem frischen Fork ohne Historie).
+  function renderChampionHero(leagueHistory){
+    var years = Object.keys((leagueHistory && leagueHistory.seasons) || {}).map(Number);
+    if(!years.length){ championHeroEl.innerHTML = ''; return; }
+    var latestYear = Math.max.apply(null, years);
+    var season = leagueHistory.seasons[latestYear];
+    if(!season || !season.champion){ championHeroEl.innerHTML = ''; return; }
+    var standing = (season.finalStandings || []).filter(function(s){ return s.name === season.champion; })[0];
+    var record = standing ? (standing.wins + '-' + standing.losses + (standing.ties ? ('-' + standing.ties) : '')) : '';
+    championHeroEl.innerHTML = '<div class="hof-champion-hero">' +
+      '<div class="hof-champion-kicker mono">Amtierender Meister · Saison ' + latestYear + '</div>' +
+      '<div class="hof-champion-name display">🏆 ' + season.champion + '</div>' +
+      (record ? ('<div class="hof-champion-record mono">' + record + '</div>') : '') +
+    '</div>';
   }
 
   // Berechnet aus scoreboard.json/standings.json/season-stats.json den bisherigen Stand der
@@ -642,6 +678,7 @@
     var liveSummary = computeCurrentSeasonSummary(scoreboard, standings, seasonStats);
     var allTime = computeAllTime(leagueHistory, liveSummary);
 
+    renderChampionHero(leagueHistory);
     renderAllTime(allTime);
     renderCareerTable(computeCareerTable(leagueHistory, standings));
     renderHighlights(computeSeasonHighlights(seasonStats, scoreboard, power));
