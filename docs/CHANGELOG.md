@@ -697,3 +697,30 @@ Shapes, Verdict "Sehr ausgeglichen".
 ## 2026-09-17 – `af8c2d0` Session-Log: Trade-Shapes in umgekehrter Richtung nachgetragen
 
 Backup-Eintrag für Commit 7d88c5d.
+
+## 2026-09-22 – `a73779b` Workflows: Cron-Minute von :00 verschoben + Watchdog gegen komplett übersprungene Sync-Tage
+
+Heute (22.9.) feuerte weder der 05:00- noch der 07:00-UTC-Trigger von
+espn-sync.yml, obwohl der Workflow aktiv und korrekt konfiguriert war -
+laut GitHub selbst ist die volle Stunde die Zeit mit der höchsten Last für
+Scheduled-Workflows, wo Läufe eher übersprungen als nur verzögert werden.
+
+1. espn-sync.yml: alle 5 Cron-Zeiten von :00 auf :07 verschoben (reduziert
+   das Kollisionsrisiko, behebt es aber nicht vollständig - GitHub gibt für
+   Scheduled-Runs keine Garantie).
+
+2. Neuer Workflow espn-sync-watchdog.yml als echtes Netz: läuft 1x pro
+   Dienstag um 14:23 UTC (nach dem letzten regulären Versuch um 13:07 UTC,
+   bewusst auf einer weiteren Minute abseits von :00), prüft über die
+   GitHub-API ob heute schon ein erfolgreicher espn-sync-Lauf war (egal ob
+   scheduled oder manuell) und stösst sonst per workflow_dispatch einen
+   nach. Mehrere Trigger-Zeiten allein reichen als Netz nicht, wenn
+   ausgerechnet alle an einem Tag übersprungen werden - der Watchdog prüft
+   das Ergebnis statt einfach nur öfter zu versuchen.
+
+Manueller Sync-Lauf von eben (08:03-08:05 UTC) bereits erfolgreich
+durchgelaufen und verifiziert nebenbei die neue serverseitige Logik aus
+der letzten Session gegen echte Liga-Daten: playoff-picture.json,
+waiver-trends.json und suggestion-history.json enthalten jetzt echte
+Woche-2-Einträge (u.a. Kyler Murray/Cairo Santos/Jaguars D/ST als erste
+Track-Record-Empfehlungen).
