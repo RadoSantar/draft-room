@@ -1,19 +1,30 @@
 name: ESPN Sync Watchdog
 
-# Fallback für den Fall, dass ALLE regulären espn-sync.yml-Trigger an einem Dienstag ausfallen -
-# GitHub kann Scheduled-Runs bei hoher Last komplett überspringen statt nur zu verzögern (live
-# beobachtet am 22.9.2026: weder der 05:00- noch der 07:00-UTC-Trigger von espn-sync.yml feuerte,
-# obwohl der Workflow aktiv und korrekt konfiguriert war). Mehrere Trigger-Zeiten allein reichen als
-# Netz nicht, wenn ausgerechnet alle an einem Tag übersprungen werden.
+# Zwei unabhängige Netze gegen fehlgeschlagene/ausgefallene espn-sync-Läufe - reagieren auf
+# unterschiedliche Fehlerbilder, deshalb zwei Jobs statt einem:
 #
-# Läuft selbst nur 1x pro Dienstag, NACH dem letzten regulären Versuch (13:07 UTC) und bewusst auf
-# einer Minute abseits von :00, um nicht demselben Kollisionsrisiko zu unterliegen. Prüft über die
-# GitHub-API, ob heute schon ein erfolgreicher espn-sync-Lauf war - wenn nicht, stösst er per
-# workflow_dispatch einen nach. Idempotent: sollte espn-sync.yml doch schon gelaufen sein (auch als
-# vom Nutzer manuell angestossener workflow_dispatch), passiert nichts.
+# 1. fast-retry (workflow_run-Trigger): reagiert INNERHALB von Sekunden, sobald ein espn-sync.yml-
+#    Lauf fertig ist. Ist der Lauf fehlgeschlagen (z.B. wegen des Sanity-Checks am Ende von
+#    sync-espn.mjs, der stillschweigend kaputte/leere Daten abfängt), wird sofort ein Retry
+#    angestossen - statt bis zum nächsten reguären 2h-Slot oder gar bis zum Tages-Check unten zu
+#    warten. Reagiert bewusst NUR auf scheduled Läufe (github.event.workflow_run.event == 'schedule'),
+#    nicht auf workflow_dispatch - sonst würde ein fehlschlagender Retry sich selbst erneut triggern
+#    (Endlosschleife). Ein einzelner zusätzlicher Retry-Versuch pro fehlgeschlagenem Lauf reicht als
+#    Netz; schlägt der auch fehl, greift der nächste reguläre 2h-Slot oder der Tages-Check.
+#
+# 2. daily-check (eigener Zeitplan): fängt das andere Fehlerbild ab, bei dem GAR KEIN Lauf feuert
+#    (GitHub kann Scheduled-Runs bei hoher Last komplett überspringen statt nur zu verzögern - live
+#    beobachtet am 22.9.2026, weder der 05:00- noch der 07:00-UTC-Trigger feuerte). Dafür gibt es
+#    kein workflow_run-Event zum Reagieren, deshalb die eigene, zeitbasierte Prüfung: läuft 1x pro
+#    Dienstag um 14:23 UTC (nach dem letzten regulären Versuch um 13:07 UTC, bewusst auf einer
+#    Minute abseits von :00), prüft ob heute überhaupt schon ein erfolgreicher Lauf war, und stösst
+#    sonst einen nach.
 on:
   schedule:
     - cron: '23 14 * * 2'
+  workflow_run:
+    workflows: ["ESPN Sync"]
+    types: [completed]
   workflow_dispatch: {}
 
 permissions:
@@ -21,7 +32,19 @@ permissions:
   actions: write
 
 jobs:
-  check-and-trigger:
+  fast-retry:
+    if: github.event_name == 'workflow_run' && github.event.workflow_run.event == 'schedule' && github.event.workflow_run.conclusion != 'success'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fehlgeschlagenen Sync-Lauf sofort erneut anstossen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Geplanter ESPN-Sync-Lauf ${{ github.event.workflow_run.id }} war '${{ github.event.workflow_run.conclusion }}' - stosse sofort einen Retry an."
+          gh workflow run espn-sync.yml --ref main
+
+  daily-check:
+    if: github.event_name != 'workflow_run'
     runs-on: ubuntu-latest
     steps:
       - name: Prüfen ob heute schon ein erfolgreicher ESPN-Sync-Lauf war

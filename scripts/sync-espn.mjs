@@ -1510,6 +1510,52 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   return result;
 }
 
+// ---- Sanity-Check ----
+// Verhindert, dass eine ESPN-API-Störung (z.B. eine teilweise/leere Antwort, die aber ohne
+// Exception durchläuft) stillschweigend kaputte oder leere Daten committet. Läuft ganz am Schluss
+// von main(), NACHDEM alle data/*.json-Dateien geschrieben wurden - prüft nur grobe Plausibilität
+// (erwartete Team-Zahl, jedes Team hat einen Kader), keine tiefe inhaltliche Validierung. Wirft bei
+// einer Verletzung, wodurch main().catch() weiter unten den Prozess mit Exit-Code 1 beendet - das
+// markiert den GitHub-Actions-Job als fehlgeschlagen (rot), was wiederum espn-sync-watchdog.yml
+// (workflow_run-Trigger) sofort einen Retry anstossen lässt, statt bis zum nächsten 2h-Slot oder dem
+// Tages-Watchdog um 14:23 UTC zu warten. Bei einem echten Fehlschlag committet der nachfolgende
+// GitHub-Actions-Schritt gar nichts (er läuft nach einem fehlgeschlagenen Schritt nicht mehr) - die
+// in diesem Lauf bereits geschriebenen Dateien bleiben einfach unbenutzt im Runner-Workspace liegen.
+const EXPECTED_TEAM_COUNT = 10;
+
+async function runSanityChecks() {
+  const problems = [];
+
+  const standings = await readJsonSafe('standings.json', null);
+  if (!standings || (standings.data || []).length !== EXPECTED_TEAM_COUNT) {
+    problems.push(`standings.json hat ${standings?.data?.length ?? 0} statt ${EXPECTED_TEAM_COUNT} Teams`);
+  }
+
+  const power = await readJsonSafe('power-rankings.json', null);
+  if (!power || (power.data || []).length !== EXPECTED_TEAM_COUNT) {
+    problems.push(`power-rankings.json hat ${power?.data?.length ?? 0} statt ${EXPECTED_TEAM_COUNT} Teams`);
+  }
+
+  const roster = await readJsonSafe('roster.json', null);
+  const rosterTeams = roster?.data || [];
+  if (rosterTeams.length !== EXPECTED_TEAM_COUNT) {
+    problems.push(`roster.json hat ${rosterTeams.length} statt ${EXPECTED_TEAM_COUNT} Teams`);
+  }
+  rosterTeams.forEach((t) => {
+    if (!t.starters?.length) problems.push(`${t.name || t.id}: keine Starter im Kader`);
+  });
+
+  const scoreboard = await readJsonSafe('scoreboard.json', null);
+  if (!scoreboard || !(scoreboard.data || []).length) {
+    problems.push('scoreboard.json hat keine Wochen');
+  }
+
+  if (problems.length) {
+    throw new Error('Sanity-Check fehlgeschlagen:\n- ' + problems.join('\n- '));
+  }
+  console.log('Sanity-Check OK: alle Kern-Dateien plausibel.');
+}
+
 async function main() {
   console.log('Lade Liga-Daten von ESPN…');
   const teamData = await fetchLeague(['mTeam', 'mRoster', 'mStandings']);
@@ -2022,6 +2068,7 @@ async function main() {
   Object.keys(currentRosterIds).forEach((tid) => { newSnapshot[tid] = currentRosterIds[tid]; });
   await writeJson('roster-snapshot.json', newSnapshot);
 
+  await runSanityChecks();
   console.log('Sync abgeschlossen.');
 }
 
