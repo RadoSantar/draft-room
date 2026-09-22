@@ -23,10 +23,32 @@
 
 **Nebenbei verifiziert:** der manuelle Sync-Lauf von heute früh hat nebenbei die neue serverseitige Logik aus der letzten Session (Playoff-Picture, Waiver-Trends, Track-Record-Aufzeichnung) zum ersten Mal gegen die echte private ESPN-API laufen lassen – alle drei `data/*.json`-Dateien enthalten jetzt echte Woche-2-Einträge (z.B. Kyler Murray/Cairo Santos/Jaguars D/ST als erste Track-Record-Empfehlungen, echte Playoff-Seeds für alle 10 Teams). Kein Fehler in den Logs, alles lief sauber durch.
 
+## 3. Wochenüberblick fehlte ein Spiel
+
+**Nutzer-Feedback:** "im spieltags recap wird das spiel von saints of anarchy vs apukalypse now gar nicht erwähnt alle anderen aber schon"
+
+**Root Cause:** kein Bug – `WEEK_SYSTEM_PROMPT` in `generate-recaps.mjs` wies Claude explizit an, nur "3-4 der interessantesten Geschichten" auszuwählen und "nicht jedes Spiel" zu nennen. Bei 5 Spielen/Woche (10-Team-Liga) blieb dadurch fast immer eins aussen vor. `buildWeekPrompt()` lieferte bereits alle 5 Spiele inkl. Fakten an Claude – die Auswahl passierte rein in der Textgenerierung.
+
+**Fix (nach Rückfrage, 3 Optionen zur Wahl gestellt):** Nutzer wählte den Mittelweg. Ziel von "3-4" auf "4-5" Geschichten angehoben, Fliesstext von 4-6 auf 5-7 Sätze erweitert, Formulierung von "Nenne nicht jedes Spiel – nur die Highlights" zu "bei wenigen Spielen pro Woche deckt das oft schon alle ab – nur bei wirklich unspektakulären Partien darfst du eine weglassen" entschärft. `data/week-recaps.json`s Woche-2-Eintrag gelöscht und per manuellem Workflow-Trigger sofort neu generiert (statt bis nächsten Dienstag zu warten) – der neue Text deckt jetzt tatsächlich alle 5 Spiele ab, inkl. Apukalypse Now vs. Saints of Anarchy (Jonathan Taylor, 29 Punkte).
+
+## 4. Neue Seite: Hall of Fame (pro Jahr + Allzeit-Rekorde)
+
+**Nutzer-Wunsch:** "ausserdem brauchen wir noch eine hall of fame eine pro jahr der liga und eine gesammt wir haben dazu ja schon einige daten können wir das noch ergänzen?"
+
+**Befund:** Die Daten waren tatsächlich schon lange da – `data/league-history.json` führt seit der Liga-Historie-Arbeit (frühere Session) pro Vorjahr (2024/2025) Meister, Endstand und ein `hallOfFame`-Objekt (beste Team-Saison/-Woche, beste Spieler-Woche), wurde aber nirgends angezeigt, nur intern für Recap-Fakten genutzt. Die Datei hatte das "Gesamt" (All-Time) in ihrer eigenen `note` schon vorausgesehen, aber bewusst nicht berechnet gespeichert, "um nicht zu interpretieren/geraten, falls doch noch ältere Daten auftauchen".
+
+**Umgesetzt:** neue Seite `hall-of-fame.html`:
+- **Allzeit-Rekorde**: Meiste Titel, beste Team-Saison, beste Team-Woche, beste Spieler-Woche – kombiniert die fixen Vorjahres-Werte aus `league-history.json.hallOfFame` MIT dem live aus `scoreboard.json`/`standings.json`/`season-stats.json` berechneten Stand der laufenden Saison (2026 steht noch nicht in `league-history.json`, wird erst am Saisonende von Hand nachgetragen). Laufende-Saison-Werte sind deutlich "live" markiert.
+- **Pro Jahr**: eine Karte pro abgeschlossener Saison (neueste zuerst) mit Podium, Endtabelle, Jahres-Rekorden; plus eine "läuft"-Karte für die aktuelle Saison ganz oben. Playoff-Ergebnisse (falls vorhanden) in einem aufklappbaren Detail-Block, um die Seite kurz zu halten (nach der "kürzen"-Rückmeldung vom 17.9. bewusst nicht alles offen ausgebreitet).
+- Nav-Link auf allen 5 bestehenden Seiten ergänzt.
+
+**Getestet:** Playwright verifiziert, dass Allzeit-Rekorde korrekt zwischen historischem und Live-Wert wählen (Live gewinnt nur bei tatsächlich höherem Wert), Season-Karten in korrekter Reihenfolge erscheinen, Playoff-Details nur bei Jahren mit vorhandenen Bracket-Daten. Mobile-Screenshot (420px) zur visuellen Kontrolle geprüft.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Bye-Week-Hinweis im Digest (siehe früherer Session-Log): weiterhin zurückgestellt.
+- Hall of Fame: wenn die aktuelle Saison (2026) am Ende abgeschlossen ist, muss `data/league-history.json` von Hand um den 2026er-Eintrag ergänzt werden (gleiches manuelles Muster wie 2024/2025) – die Seite zeigt bis dahin die laufende Saison weiterhin live/vorläufig an.
 
 ## Nächster Schritt
 Nächsten Dienstag beobachten, ob die verschobene Cron-Minute (`:07`) das Problem behebt bzw. ob der Watchdog je einspringen muss (Log/Run-Historie von `espn-sync-watchdog.yml` prüfen). Ausserdem: `data/suggestion-history.json` weiter beobachten – die ersten Einträge sind jetzt da, Grading (min. 2 Wochen später) greift frühestens ab Woche 4.
