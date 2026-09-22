@@ -774,3 +774,32 @@ visuellen Kontrolle geprüft.
 
 Backup-Einträge für Commit 630dd7c (Wochenüberblick deckt jetzt alle
 Spiele ab) und 07b9c41 (neue Hall-of-Fame-Seite).
+
+## 2026-09-22 – `0cf6bf1` Sync: Sanity-Check am Ende + sofortiger Retry nach jedem fehlgeschlagenen Lauf
+
+Nutzer-Wunsch: ein Check nach jedem einzelnen Sync-Lauf (nicht nur einmal
+täglich) reduziert die Wartezeit bis zur Reaktion, UND ein inhaltlicher
+Sanity-Check am Ende des Sync-Skripts lohnt sich zusätzlich.
+
+1. scripts/sync-espn.mjs: neue runSanityChecks(), ganz am Schluss von
+   main() aufgerufen, NACHDEM alle data/*.json-Dateien geschrieben wurden.
+   Prüft grobe Plausibilität (erwartete Team-Zahl 10 in standings/power-
+   rankings/roster, jedes Team hat einen Kader mit Startern, scoreboard hat
+   Wochen) und wirft bei einer Verletzung - dadurch beendet main().catch()
+   weiter unten den Prozess mit Exit-Code 1. Bisher hätte eine ESPN-API-
+   Störung, die eine teilweise/leere Antwort ohne Exception liefert,
+   stillschweigend kaputte Daten committet (Job wäre grün geblieben).
+   Verifiziert: aktuelle echte data/*.json-Dateien erfüllen alle Checks
+   (10 Teams überall, alle Kader haben Starter, 15 Scoreboard-Wochen).
+
+2. .github/workflows/espn-sync-watchdog.yml: neuer fast-retry-Job, per
+   workflow_run-Trigger (feuert innerhalb von Sekunden nach JEDEM
+   espn-sync.yml-Lauf, nicht erst beim Tages-Check um 14:23 UTC). Bei einem
+   fehlgeschlagenen Lauf (conclusion != 'success', z.B. durch den neuen
+   Sanity-Check ausgelöst) wird sofort ein Retry angestossen. Reagiert
+   bewusst NUR auf scheduled Läufe (github.event.workflow_run.event ==
+   'schedule'), nicht auf workflow_dispatch - sonst würde ein
+   fehlschlagender Retry sich selbst erneut triggern (Endlosschleife).
+   Der bestehende Tages-Check (jetzt daily-check-Job) bleibt unverändert
+   als zweites Netz für den anderen Fehlerfall: dass GAR KEIN Lauf feuert
+   (dafür gibt's kein workflow_run-Event zum Reagieren).
