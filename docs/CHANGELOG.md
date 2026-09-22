@@ -728,3 +728,29 @@ Track-Record-Empfehlungen).
 ## 2026-09-22 – `c1159d4` Session-Log: Sync-Workflow-Diagnose und Watchdog-Fallback (neuer Tag)
 
 Backup-Eintrag für Commit a73779b.
+
+## 2026-09-22 – `630dd7c` Recaps: Wochenüberblick deckt jetzt in der Regel alle Spiele ab
+
+Nutzer-Feedback: das Spiel Saints of Anarchy vs. Apukalypse Now fehlte im
+Wochenüberblick für Woche 2, alle anderen 4 Spiele wurden erwähnt.
+
+Root Cause: kein Bug, sondern Absicht - der System-Prompt wies Claude
+explizit an, nur "3-4 der interessantesten Geschichten" der Woche
+auszuwählen und "nicht jedes Spiel" zu nennen. Bei 5 Spielen pro Woche
+(10-Team-Liga) blieb dadurch fast immer eins aussen vor. buildWeekPrompt()
+selbst liefert bereits alle Spiele inkl. Fakten an Claude - die Auswahl
+passierte rein in der Textgenerierung.
+
+Fix (nach Rückfrage beim Nutzer, welche von 3 Optionen): Ziel von "3-4"
+auf "4-5" Geschichten angehoben, Fliesstext-Länge von 4-6 auf 5-7 Sätze
+erweitert, und die Formulierung von "Nenne nicht jedes Spiel - nur die
+Highlights" zu "bei wenigen Spielen pro Woche deckt das oft schon alle
+ab - nur bei wirklich unspektakulären Partien darfst du eine weglassen"
+entschärft. Deckt bei 5 Spielen/Woche jetzt in der Regel alle ab, ohne es
+starr zu erzwingen (bewusster Kompromiss statt Pflicht-Ticker).
+
+data/week-recaps.json: Woche-2-Eintrag gelöscht, damit der nächste
+Sync-Lauf ihn unter dem neuen Prompt neu generiert (Woche 1 unverändert,
+deckte zufällig schon alle 5 Spiele ab). Einzel-Spiel-Recaps (game-recaps.json)
+sind von diesem Fix nicht betroffen - das Spiel Saints/Apukalypse hatte dort
+bereits einen eigenen, vollständigen Recap.
