@@ -1,0 +1,47 @@
+name: ESPN Sync Watchdog
+
+# Fallback für den Fall, dass ALLE regulären espn-sync.yml-Trigger an einem Dienstag ausfallen -
+# GitHub kann Scheduled-Runs bei hoher Last komplett überspringen statt nur zu verzögern (live
+# beobachtet am 22.9.2026: weder der 05:00- noch der 07:00-UTC-Trigger von espn-sync.yml feuerte,
+# obwohl der Workflow aktiv und korrekt konfiguriert war). Mehrere Trigger-Zeiten allein reichen als
+# Netz nicht, wenn ausgerechnet alle an einem Tag übersprungen werden.
+#
+# Läuft selbst nur 1x pro Dienstag, NACH dem letzten regulären Versuch (13:07 UTC) und bewusst auf
+# einer Minute abseits von :00, um nicht demselben Kollisionsrisiko zu unterliegen. Prüft über die
+# GitHub-API, ob heute schon ein erfolgreicher espn-sync-Lauf war - wenn nicht, stösst er per
+# workflow_dispatch einen nach. Idempotent: sollte espn-sync.yml doch schon gelaufen sein (auch als
+# vom Nutzer manuell angestossener workflow_dispatch), passiert nichts.
+on:
+  schedule:
+    - cron: '23 14 * * 2'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  check-and-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Prüfen ob heute schon ein erfolgreicher ESPN-Sync-Lauf war
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TODAY=$(date -u +%Y-%m-%d)
+          LATEST=$(gh api "repos/${{ github.repository }}/actions/workflows/espn-sync.yml/runs?status=success&branch=main&per_page=1" --jq '.workflow_runs[0].created_at // empty')
+          echo "Letzter erfolgreicher Lauf: ${LATEST:-keiner gefunden}"
+          if [[ "$LATEST" == "$TODAY"* ]]; then
+            echo "already_ran=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "already_ran=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Fallback-Lauf anstossen
+        if: steps.check.outputs.already_ran == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Kein erfolgreicher Sync heute gefunden - stosse Fallback-Lauf an."
+          gh workflow run espn-sync.yml --ref main
