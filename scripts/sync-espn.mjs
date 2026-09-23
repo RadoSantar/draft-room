@@ -1658,6 +1658,24 @@ async function fetchAllTransactions(throughWeek) {
   return all;
 }
 
+// Manuell bestätigte Korrekturen für Trades, deren TRADE_PROPOSAL bei ESPN nicht abrufbar ist (siehe
+// Kommentar im TRADE_UPHOLD-Zweig unten). Key = relatedTransactionId. Vom Nutzer direkt bestätigte
+// Fakten (Liga-Insider-Wissen), nicht aus der API ableitbar - daher hier hart hinterlegt statt geraten.
+const TRADE_OVERRIDES = {
+  '19263173-a7ad-4737-94bc-5cf1021c25c4': {
+    title: 'Trade: Zurich City Ravens ↔ TM06',
+    detail: 'Zurich City Ravens erhält Chig Okonkwo, Jacory Croskey-Merritt und Tee Higgins. TM06 erhält Colston Loveland und D\'Andre Swift.'
+  },
+  '1bab103b-9025-438e-b857-b2bf8955b31a': {
+    title: 'Trade: Run CMC ↔ TM06',
+    detail: 'Run CMC erhält Jadrian Price, Parker Washington und Terrance Ferguson. TM06 erhält Evan Engram und Chase Brown.'
+  },
+  'ec134c0f-92ca-463e-9826-3c7b31fbb873': {
+    title: 'Trade: Hopp Schwiiz ↔ TM06',
+    detail: 'Hopp Schwiiz erhält Caleb Williams. TM06 erhält Jayden Daniels.'
+  }
+};
+
 // Baut die Anzeige-Transaktionen (Format wie von power-rankings.html erwartet: id/week/date/type/
 // title/detail/note, TRADE zusätzlich mit legs) aus ESPNs rohem Transaktions-Log.
 //
@@ -1788,21 +1806,31 @@ function buildTransactionsFromLog(rawTx, teamNames, playerInfo) {
         });
         return;
       }
-      // Fallback: ESPN liefert die ursprüngliche TRADE_PROPOSAL manchmal nicht zurück (live beobachtet
-      // bei einem echten Trade dieser Liga - über keine Wochen-Abfrage 1..17 noch den Recent-Activity-
-      // Feed auffindbar, vermutlich intern überschrieben/ersetzt). Zeigt den Trade trotzdem an (Teams
-      // aus dem zugehörigen TRADE_ACCEPT + der eigenen teamId), nur ohne Spieler-Details, statt ihn
-      // komplett verschwinden zu lassen.
+      // Fallback: ESPN liefert die ursprüngliche TRADE_PROPOSAL manchmal nicht zurück (bestätigte
+      // Datenlücke - über keine Wochen-Abfrage 1..17 noch den Recent-Activity-Feed auffindbar).
+      // TRADE_UPHOLD.teamId ist in diesem Zustand NICHT vertrauenswürdig für die Gegenseite - in der
+      // Praxis hat es bei 3 von 3 betroffenen Trades den falschen Gegner geliefert (unterschiedlich
+      // falsch jedes Mal, kein fester Platzhalter). Nur TRADE_ACCEPT.teamId war in allen bekannten
+      // Fällen korrekt. Für die 3 bereits identifizierten Trades liegt eine vom Nutzer bestätigte
+      // manuelle Korrektur vor (TRADE_OVERRIDES); für jeden künftigen, bisher unbekannten Fall dieser
+      // Art wird nur die sicher bekannte Seite gezeigt statt eine falsche Gegenseite zu raten.
+      const override = TRADE_OVERRIDES[t.relatedTransactionId];
+      if (override) {
+        out.push({
+          id: 'trade-' + t.relatedTransactionId,
+          week: t.scoringPeriodId, date: fmtDate(t), type: 'TRADE',
+          title: override.title, detail: override.detail, note: ''
+        });
+        return;
+      }
       const accept = rawTx.find((a) => a.type === 'TRADE_ACCEPT' && a.relatedTransactionId === t.relatedTransactionId);
-      const teamIds = [...new Set([accept?.teamId, t.teamId].filter((id) => id != null))];
-      if (!teamIds.length) return;
+      if (!accept) return;
+      const knownTeam = teamNames[accept.teamId];
       out.push({
         id: 'trade-' + t.relatedTransactionId,
         week: t.scoringPeriodId, date: fmtDate(t), type: 'TRADE',
-        title: teamIds.length > 1 ? `Trade: ${teamIds.map((tid) => teamNames[tid]).join(' ↔ ')}` : 'Trade rechtskräftig',
-        detail: teamIds.length > 1
-          ? `Trade zwischen ${teamIds.map((tid) => teamNames[tid]).join(' und ')} ist rechtskräftig geworden – die gehandelten Spieler sind in ESPNs Daten für uns nicht abrufbar.`
-          : 'Ein Trade ist rechtskräftig geworden – Details sind in ESPNs Daten für uns nicht abrufbar.',
+        title: `Trade bestätigt: ${knownTeam}`,
+        detail: `${knownTeam} hat einen Trade abgeschlossen – der Gegner und die gehandelten Spieler sind in ESPNs Daten für uns nicht abrufbar.`,
         note: ''
       });
     }
