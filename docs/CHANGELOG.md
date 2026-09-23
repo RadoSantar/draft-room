@@ -976,3 +976,5 @@ dort einen kleinen Label-Tag ("Spiel um Platz 3", "Platz 5/6" etc.)
 bekommen, damit die Zuordnung trotzdem eindeutig bleibt. Sektions-
 Überschrift entsprechend zu "Consolation Bracket (Platz 3, 5–10)"
 präzisiert.
+
+## 2026-09-23 – `efd03c8` Session-Log: Spiel-um-Platz-3-Verschiebung nachgetragen
