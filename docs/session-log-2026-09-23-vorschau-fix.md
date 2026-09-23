@@ -208,6 +208,16 @@ Commits `b5a3a98` (Hauptfix), `45cf41c` (currentWeek-Korrektur), `7bf040d` (Aufr
 
 Commit `43e4920` (Fallback-Fix), `b03c9f4` (Aufräumen Debug-Tooling), plus Sync-Lauf `e246691`, gepusht.
 
+**Vierte Iteration (Gegner-Team in Woche 2/3 trotzdem falsch):** Nutzer meldete direkt im Anschluss: "es ist bei woche 2 und 3 jeweils nur ein trade partner korrekt" – und lieferte die echten Fakten aus eigenem Wissen (später auch für Woche 1 nachgereicht, die zunächst unauffällig schien): Woche 1 Zurich City Ravens ↔ TM06, Woche 2 Run CMC ↔ TM06, Woche 3 Hopp Schwiiz ↔ TM06 – jeweils mit den echten gehandelten Spielern.
+
+**Root Cause gefunden:** Der eben gebaute Fallback nutzte `TRADE_UPHOLD.teamId` als Quelle für die zweite Trade-Seite. Erneuter Debug-Workflow (Rohdaten aller 3 betroffenen Trades + Team-Namen-Liste gedumpt) zeigt: `TRADE_ACCEPT.teamId` war in allen 3 Fällen korrekt (stimmt exakt mit den vom Nutzer bestätigten Teams überein), `TRADE_UPHOLD.teamId` dagegen in allen 3 Fällen falsch – und jedes Mal ein *anderes* falsches Team (Zurich City Ravens, dann ein anderes Team, dann Saints of Anarchy), kein fester Platzhalter-Bug. Das Feld ist in diesem kaputten Datenzustand (fehlende TRADE_PROPOSAL) also grundsätzlich nicht vertrauenswürdig für die Gegenseite – vermutlich ein Nebeneffekt derselben zugrunde liegenden ESPN-Datenlücke.
+
+**Fix:** `TRADE_UPHOLD.teamId` wird nicht mehr zur Bestimmung der Gegenseite verwendet. Neue `TRADE_OVERRIDES`-Konstante in `sync-espn.mjs` mit den 3 vom Nutzer bestätigten Trades (Teams + echte Spieler-Details, exakt wie vom Nutzer mitgeteilt). Für jeden künftigen, noch unbekannten Fall dieser Art (neue Trades mit fehlender Proposal) zeigt der generische Fallback nur noch die sicher bekannte Seite aus `TRADE_ACCEPT` mit ehrlichem Hinweis, dass der Gegner nicht abrufbar ist – statt weiter zu raten.
+
+**Getestet:** Syntax-Check ok, danach echter Sync-Lauf ausgelöst und `data/transactions.json` direkt geprüft: alle 3 Trades zeigen jetzt exakt die vom Nutzer bestätigten Teams und Spieler. Playwright gegen die live regenerierten Daten bestätigt dieselben 3 korrekten Titel auf `power-rankings.html`, keine Konsolen-Fehler.
+
+Commits `5568c28` (Fix inkl. TRADE_OVERRIDES), `42ab014` (Aufräumen Debug-Tooling), plus Sync-Lauf `3048981`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
