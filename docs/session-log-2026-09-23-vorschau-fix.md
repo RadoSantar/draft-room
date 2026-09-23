@@ -125,6 +125,16 @@ Commit `8290e37` (Code), `7fcf9fc` (automatischer Sync-Lauf, erzeugt `playoff-br
 
 Commit `6b9a12c`, gepusht.
 
+**Zweite Korrektur nach Nutzer-Feedback (Qualifikationsregel war falsch):** "das playoff bracket stimmt so aber noch nicht es sind jeweils platz 1&2 von AFC & NFC in den playoffs nicht platz 1-4 der Liga". Die ursprüngliche Annahme (übernommen aus dem bis dahin unbemerkt falschen statischen Beispiel in `index.html`s FAQ) war: 2 Conference-Sieger + 2 liga-weite Wildcards nach Gesamt-Bilanz. Tatsächliches Format dieser Liga: schlicht die **Top 2 jeder Conference** (2 aus NFC, 2 aus AFC) – unabhängig davon, wie stark die andere Conference insgesamt ist.
+
+- `computePlayoffPicture()` in `sync-espn.mjs` korrigiert: Playoff-Pool ist jetzt `confStandings[id].rank <= 2` (statt Conference-Leader + beste 2 Nicht-Leader liga-weit), geseedet 1-4 nach Gesamt-Bilanz über beide Conferences. Diese eine Funktion wird von drei Stellen geteilt (Playoff-Bracket, `data/playoff-picture.json` für my-team.html's Playoff-Chancen, und `findPlayoffRaceFact()` für generierte Recaps) – der Fix behebt alle drei auf einmal.
+- `qualTag`-Badge basiert jetzt auf dem echten Conference-Rang (`rank===1` → "Conf.-Sieger", `rank===2` → "Conf. #2") statt auf der Seed-Nummer, da Seed 1-4 nicht mehr zwingend "2 Sieger, dann 2 Wildcards" in dieser Reihenfolge sind.
+- Statisches FAQ-Beispiel in `index.html` ("Playoff-Format") ebenfalls korrigiert (Regel-Erklärung, Quali-Tags, Zusammenfassungs-Notiz) – die Beispiel-Zahlen selbst blieben gültig, weil die "Wildcards" des ursprünglichen Beispiels zufällig ohnehin die Conference-Zweiten waren. Beschreibender Kommentar in `my-team.html` ebenfalls angepasst.
+
+**Getestet:** Gezielter Testfall mit einer durchweg starken Conference (bis 13-2 auf Platz 3) gegen eine durchweg schwache (bis 4-11 auf Platz 2) – bestätigt, dass die schwache Conference-Nummer-2 jetzt korrekt qualifiziert und die starke Conference-Nummer-3 trotz besserer Bilanz draussen bleibt. Danach echten Sync-Lauf ausgelöst (Run #31) und die echten Ergebnisse von Hand gegen die tatsächlichen Conference-Tabellen nachgerechnet (NFC: Apukalypse Now, Buhaaner qualifizieren; AFC: TM06, Zurich City Ravens – Run CMC bleibt trotz mehr Punkten als Buhaaner draussen, weil es in der stärkeren AFC nur Rang 3 ist) – korrekt. Live-Seite per Playwright erneut geprüft, keine Fehler.
+
+Commit `5a56985` (Code), Sync-Run #31 (erzeugt korrigierte `data/playoff-bracket.json`/`playoff-picture.json`), gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
