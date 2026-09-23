@@ -1099,3 +1099,12 @@ War statisch hinterlegt und stimmte längst nicht mehr (Liga ist bei
 Woche 3) - "Stand <Datum>" allein reicht.
 
 ## 2026-09-23 – `3a99596` Changelog: "Nach dem Draft"-Präfix-Fix dokumentiert
+
+## 2026-09-23 – `301088a` Mein Team: redundante Team-Auswahl auf der Seite entfernt
+
+Team wird bereits header-weit über den Sync-Selector (id=syncTeamSelect,
+auch auf start.html als "Wähle dein Team") gewählt und geräteübergreifend
+gespeichert. Die zusätzliche "Team analysieren"-Auswahl direkt auf
+my-team.html duplizierte das unnötig. Analyse wird jetzt direkt über den
+Header-Selector gesteuert: Auswahl dort zeigt/wechselt sofort die Analyse,
+ohne zusätzlichen Klick auf der Seite selbst.
