@@ -1042,3 +1042,10 @@ Nur zur Vorbereitung der Umstellung von Roster-Diffing auf ESPNs
 echtes Transaktions-Log (siehe Session-Log) - dumpt die rohe Antwort
 in die Action-Logs, schreibt/committet nichts. Wird nach der
 Umstellung wieder entfernt.
+
+## 2026-09-23 – `7f325e0` Temp: Debug-Skript um Recent-Activity-Feed und Wochen-Param erweitert
+
+mTransactions2 zeigte fast nur Lineup-Rauschen (type ROSTER) und keine
+Waiver-/Free-Agent-Einträge - testet zusätzlich kona_league_communication
+(dieselbe Quelle wie ESPNs eigene "Recent Activity"-Seite) sowie einen
+expliziten scoringPeriodId-Parameter.
