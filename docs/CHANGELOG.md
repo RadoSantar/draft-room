@@ -959,3 +959,20 @@ Ladefehler zeigen sich jetzt direkt als Status-Zeile in der
 Playoffs-Spalte statt in einer separaten Notiz.
 
 ## 2026-09-23 – `57badfa` Session-Log: Hinweistext-Entfernung nachgetragen
+
+## 2026-09-23 – `33d813c` Playoffs-Tab: Spiel um Platz 3 zum Consolation Bracket, Finale steht allein
+
+Nutzer-Feedback: "packe die Halbfinal-Verlierer zum Consolation
+Bracket, so dass der Super Bowl alleine steht - sieht schöner aus und
+wirkt wichtiger dann."
+
+Das "Spiel um Platz 3" (Verlierer der Halbfinals) ist jetzt Teil der
+Consolation-Bracket-Sektion statt der Finale-Spalte - die Finale-Karte
+steht dort jetzt allein und bekommt dadurch mehr visuellen Raum/
+Gewicht. Da die Platzierungsspiele-Spalte im Consolation Bracket jetzt
+zwei unterschiedliche Pools mischt (Platz 3 aus dem Titel-Bracket,
+Platz 5-10 aus dem Consolation Bracket selbst), haben alle vier Karten
+dort einen kleinen Label-Tag ("Spiel um Platz 3", "Platz 5/6" etc.)
+bekommen, damit die Zuordnung trotzdem eindeutig bleibt. Sektions-
+Überschrift entsprechend zu "Consolation Bracket (Platz 3, 5–10)"
+präzisiert.
