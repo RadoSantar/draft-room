@@ -1011,3 +1011,25 @@ voneinander öffnen, damit man gezielt nur das gewünschte Team liest
 statt durch alle 10 Analysen scrollen zu müssen.
 
 ## 2026-09-23 – `f43f108` Session-Log: Power-Rankings-Aufräumarbeiten nachgetragen
+
+## 2026-09-23 – `75fecba` Power Rankings: ESPN-Satz zum Draft Recap verschoben, Transaktionen & Team-Karten einklappbar
+
+Drei Anpassungen auf Nutzer-Feedback:
+
+1. Der Satz "Den kompletten offiziellen Draft Recap gibt's dazu direkt
+   bei ESPN..." gehörte inhaltlich zum Draft-Recap-Bereich, stand aber
+   oben im allgemeinen Seiten-Intro - jetzt direkt vor der Team-Karten-
+   Liste platziert statt am Seitenanfang.
+
+2. Transaktions-Wochen (.tx-week) starten jetzt alle eingeklappt (bisher
+   war die neuste Woche automatisch offen) und sehen wie Touch-Buttons
+   aus (Pill-Form, Kartenhintergrund, Rahmen) statt wie ein Text-Link
+   mit "+"-Präfix - "Woche 1", "Woche 2" usw. als eigenständige,
+   antippbare Buttons.
+
+3. Die kompletten Team-Karten (bisher statische <section>, immer voll
+   sichtbar) sind jetzt selbst <details>-Elemente: Rang-Badge, Name und
+   Rang-Bewegung bleiben als Summary sichtbar, der Rest (Tagline, Stats,
+   Positions-Tabelle, Saison-Ausblick, Draft Recap, Draft Board) ist
+   eingeklappt und öffnet sich erst auf Klick - Pfeil-Indikator im
+   selben Rotations-Muster wie die Wochen-Karten auf schedule.html.
