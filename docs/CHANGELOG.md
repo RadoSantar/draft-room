@@ -910,3 +910,5 @@ start.html weiter. Anker-Links (#draft-tipps etc.) und bewusste
 Navigation von start.html aus zu index.html bleiben unangetastet.
 
 ## 2026-09-23 – `38c724e` Session-Log: Root-URL/PWA-Redirect-Fix + Umbau-Plan nachgetragen
+
+## 2026-09-23 – `3ad3e1d` Session-Log: Spielplan-Bracket-Feature nachgetragen
