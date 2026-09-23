@@ -124,20 +124,6 @@
   .note-box .flag{font-family:'Anton', sans-serif;color:var(--turf);font-size:12px;letter-spacing:.04em;flex:0 0 auto;}
   .note-box span:last-child{font-size:14px;color:var(--ink-soft);}
 
-  /* Team-Auswahl auf der Seite selbst */
-  .mt-team-picker{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:18px 0;}
-  .mt-team-picker label{font-family:'IBM Plex Mono', monospace;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
-  .mt-team-select{
-    font-family:'Source Serif 4', serif;
-    font-size:15px;
-    padding:8px 14px;
-    border:1px solid var(--card-border);
-    border-radius:20px;
-    background:var(--card);
-    color:var(--ink);
-    cursor:pointer;
-  }
-
   /* Bewertungs-Basis-Toggle (Projektion vs. Live-Punkteschnitt) */
   .mt-mode-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px;}
   .mt-mode-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
@@ -349,11 +335,6 @@
     <span>Automatische Näherung auf Basis von Projektion/ADP – kein Ersatz für eigene Einschätzung oder Trade-Interesse des Gegenübers. Toggle oben: Projektion oder Live-Punkteschnitt (<span class="mono" style="color:var(--amber);">amber</span> = echte Saisondaten, "Ø" = Punkteschnitt). Badges wie <span class="mt-injury-badge" style="margin-left:0;">Q</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">O</span> zeigen ESPNs Verletzungsstatus.</span>
   </div>
 
-  <div class="mt-team-picker">
-    <label class="mono" for="myTeamSelect">Team analysieren:</label>
-    <select class="mt-team-select" id="myTeamSelect" aria-label="Team für die Analyse wählen"></select>
-  </div>
-
   <div class="mt-mode-picker">
     <span class="mono mt-mode-label">Bewertungs-Basis:</span>
     <button type="button" class="mt-mode-tab" data-mode="proj">Projektion</button>
@@ -361,7 +342,7 @@
   </div>
   <p class="copy mt-mode-copy" id="mtModeCopy"></p>
 
-  <div class="calc-status" id="mainStatus">Wähle oben dein Team, um deine Analyse zu sehen.</div>
+  <div class="calc-status" id="mainStatus">Wähle oben im Header dein Team, um deine Analyse zu sehen.</div>
 
   <div id="mtContent" hidden>
     <h2 class="section-head">Diese Woche</h2>
@@ -465,7 +446,6 @@
     return '<span class="mt-injury-badge' + (isOut ? ' is-out' : '') + '" title="' + p.injuryStatus + '">' + label + '</span>';
   }
 
-  var teamPickEl = document.getElementById('myTeamSelect');
   var statusKickerEl = document.getElementById('statusKicker');
   var mainStatusEl = document.getElementById('mainStatus');
   var contentEl = document.getElementById('mtContent');
@@ -1185,28 +1165,24 @@
     renderTrackRecord(power.id);
   }
 
-  function populateTeamSelect(){
-    teamPickEl.innerHTML = '<option value="">Team wählen…</option>' + shared.TEAM_NAMES.map(function(name){
-      return '<option value="' + name + '">' + name + '</option>';
-    }).join('');
-
+  function initTeamSelection(){
     updateModeCopy();
 
+    var headerTeamSelect = document.getElementById('syncTeamSelect');
     var preselect = (window.DraftRoomSync && window.DraftRoomSync.getName && window.DraftRoomSync.getName()) || '';
     if(preselect && shared.TEAM_NAMES.indexOf(preselect) !== -1){
-      teamPickEl.value = preselect;
       showTeam(preselect);
     }
 
-    teamPickEl.addEventListener('change', function(){
-      if(teamPickEl.value) showTeam(teamPickEl.value);
-      else { CURRENT_TEAM = ''; contentEl.hidden = true; mainStatusEl.textContent = 'Wähle oben dein Team, um deine Analyse zu sehen.'; mainStatusEl.classList.remove('error'); }
+    headerTeamSelect.addEventListener('change', function(){
+      if(headerTeamSelect.value && shared.TEAM_NAMES.indexOf(headerTeamSelect.value) !== -1) showTeam(headerTeamSelect.value);
+      else { CURRENT_TEAM = ''; contentEl.hidden = true; mainStatusEl.textContent = 'Wähle oben im Header dein Team, um deine Analyse zu sehen.'; mainStatusEl.classList.remove('error'); }
     });
   }
 
   function loadInitialData(){
     statusKickerEl.textContent = 'Wird geladen…';
-    mainStatusEl.innerHTML = 'Wähle oben dein Team, um deine Analyse zu sehen.';
+    mainStatusEl.innerHTML = 'Wähle oben im Header dein Team, um deine Analyse zu sehen.';
     mainStatusEl.classList.remove('error');
     Promise.all([
       fetch('data/power-rankings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }),
@@ -1227,7 +1203,7 @@
       SUGGESTION_HISTORY = results[6];
       statusKickerEl.textContent = 'Stand ' + new Date(results[0].lastUpdated).toLocaleDateString('de-CH');
       renderTrending(results[4]);
-      populateTeamSelect();
+      initTeamSelection();
     }).catch(function(err){
       statusKickerEl.textContent = 'Fehler beim Laden der Daten';
       mainStatusEl.innerHTML = 'Daten konnten nicht geladen werden. <button type="button" class="mt-retry-btn" id="mainRetryBtn">Erneut versuchen</button>';
