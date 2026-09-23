@@ -171,6 +171,31 @@ Commit `0c74382`, gepusht.
 
 Commit `75fecba`, gepusht.
 
+## 8. Transaktionen: Woche 2 fehlte komplett – Umstieg auf ESPNs echtes Transaktions-Log
+
+**Nutzer-Frage:** "weshalb fehlt bei den transaktionen eigentlich woche2? woche 3 waiver kommen ja erst morgen dazu"
+
+**Root Cause gefunden:** Transaktionen wurden bisher durch Roster-Diffing rekonstruiert (aktueller Kader-Snapshot gegen den letzten Lauf verglichen), jede neu gefundene Differenz mit der AKTUELLEN ESPN-Matchup-Periode ZUM ZEITPUNKT DES SYNC-LAUFS gestempelt – nicht mit der Woche, in der sie tatsächlich passiert ist. Der automatische Sync läuft nur wöchentlich (Dienstags). Lauf-Historie geprüft: letzter Lauf während Woche 2 aktiv war am 16.9., danach kein Lauf bis 22.9. – zu dem Zeitpunkt zeigte ESPN schon Woche 3 an. Alle Änderungen vom 16.–21.9. (echte Woche 2) landeten dadurch fälschlich unter "Woche 3", "Woche 2" fehlte komplett. Nichts verloren, nur falsch beschriftet.
+
+**Auf Nutzer-Wunsch (per Rückfrage: "ESPNs echtes Transaktions-Log nutzen") korrigiert statt nur häufiger zu syncen:**
+
+- Per temporärem Debug-Workflow (`debug-transactions.yml`, nach Gebrauch wieder entfernt) das echte ESPN-API-Verhalten erkundet, statt blind zu raten: `view=mTransactions2` ohne `scoringPeriodId`-Parameter liefert nur die aktuelle Periode UND grösstenteils Lineup-Rauschen (type `ROSTER`). Mit explizitem `scoringPeriodId=N` bekommt man WAIVER/FREEAGENT/TRADE-Einträge – aber der Parameter filtert exakt auf GENAU DIESE eine Periode, keine kumulative Historie. Jede Woche muss also einzeln abgefragt werden.
+- Neue Funktionen in `sync-espn.mjs`: `fetchAllTransactions(throughWeek)` fragt Wochen 1..throughWeek einzeln ab und fügt zusammen. `buildTransactionsFromLog()` übersetzt ESPNs Rohformat in die bestehende Anzeige-Struktur:
+  - `FREEAGENT` (status EXECUTED): sofortige Adds/Drops, ADD+DROP im selben ESPN-Eintrag werden zu einer Zeile mit Zusatztext kombiniert (wie bisher).
+  - `WAIVER` (executionType PROCESS): EXECUTED → erfolgreicher Waiver Claim, FAILED_* → WAIVER_FAILED. PENDING/CANCELED (vom Manager zurückgezogen) werden bewusst nicht angezeigt, da kein Endergebnis.
+  - Trades laufen über mehrere verknüpfte ESPN-Einträge (TRADE_PROPOSAL trägt die Spieler-Items, TRADE_UPHOLD macht ihn nach der Review-Frist rechtskräftig – kommt 1x pro beteiligtem Team, über `relatedTransactionId` dedupliziert –, TRADE_DECLINE bei Ablehnung). Die Zuordnungstabelle wird aus ALLEN Wochen gebaut, da eine Trade-Zusage in einer späteren Woche liegen kann als das ursprüngliche Angebot.
+  - `ROSTER` (Lineup-Änderungen) und `DRAFT` (Draft-Picks) werden ignoriert.
+  - Behält die alte id-Präfix-Konvention (`add-`/`drop-` für FREEAGENT) bei, weil `findWaiverKarmaFact()`/`findWaiverInstantSuccessFact()` weiter oben im Skript genau danach filtern.
+- `roster-snapshot.json` und das gesamte alte Diff-Apparat (gainedByTeam/lostByTeam/isFirstRun) komplett entfernt – `transactions.json` wird jetzt bei jedem Lauf deterministisch aus ESPNs Log neu gebaut statt inkrementell fortgeschrieben. Die verwaiste `data/roster-snapshot.json` ebenfalls aus dem Repo entfernt.
+- **Zweiter Bugfix während der Verifikation:** `currentWeek` initial über `teamData.status.currentMatchupPeriod` bestimmt – zeigte sich als falsch (zeigt die zuletzt VOLLSTÄNDIG gewertete Woche, nicht die aktuell laufende Transaktions-Periode; Free Agency für die kommende Woche öffnet aber schon, sobald die letzte Woche fertig gewertet ist). Auf `lastCompletedWeek + 1` umgestellt – dieselbe "upcomingWeek"-Logik, die an anderer Stelle im Skript für die Wochen-Vorschau schon existiert.
+
+**Getestet:**
+- Offline mit Mock-Daten, die exakt den echten ESPN-Antworten aus dem Debug-Workflow nachgebildet sind: FREEAGENT solo/mit Drop-Partner, WAIVER erfolgreich/gescheitert/pending/zurückgezogen, Trade-Korrelation über 2 UPHOLD-Einträge auf 1 Anzeige-Eintrag dedupliziert, unrelated canceled Proposals erzeugen keine Geister-Einträge, ROSTER/DRAFT-Rauschen korrekt ignoriert.
+- Danach zwei echte Sync-Läufe ausgelöst: erster zeigte nur Wochen 1–2 (der `currentWeek`-Bug), nach dessen Fix zweiter Lauf bestätigt korrekt "30 Transaktionen aus ESPNs Log gebaut (Wochen 1-3)" – Woche 3 bewusst leer, weil aktuell alle Woche-3-Aktivität noch als PENDING-Waiver-Claims vorliegt (Waiver-Tag ist laut Nutzer erst morgen).
+- **Woche 2 zeigt jetzt 23 echte Transaktionen** (Waiver Claims, Free-Agent-Adds, ein abgelehntes Trade-Angebot, gescheiterte Waiver-Claims) mit korrekten Daten (17.–19.9.2026) statt komplett zu fehlen. Live-Seite per Playwright bestätigt: Button "Woche 2 (23)" öffnet alle 23 Einträge korrekt, keine Konsolen-Fehler.
+
+Commits `b5a3a98` (Hauptfix), `45cf41c` (currentWeek-Korrektur), `7bf040d` (Aufräumen), plus zwei Sync-Läufe, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
@@ -180,4 +205,4 @@ Commit `75fecba`, gepusht.
 - Sauberer Umbau `start.html`↔`index.html` ohne Redirect-Workaround (siehe Punkt 5 oben) – wartet auf Nutzer-Zustimmung zu `data/team-content.json`-Link-Anpassung.
 
 ## Nächster Schritt
-Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Root-URL/PWA-Redirect-Fix ist live und getestet. Sauberer Umbau ohne Workaround (Punkt 5) bei Gelegenheit mit Nutzer besprechen – insbesondere die nötige Ausnahme für `data/team-content.json`. Playoff-/Consolation-Bracket ist live (Punkt 6) – sobald die Liga-Phase weiter fortschreitet, beobachten, ob die Projektion sich wie erwartet stabilisiert, und ab Woche 16 kontrollieren, dass echte Spiele korrekt statt der Platzhalter erscheinen.
+Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Root-URL/PWA-Redirect-Fix ist live und getestet. Sauberer Umbau ohne Workaround (Punkt 5) bei Gelegenheit mit Nutzer besprechen – insbesondere die nötige Ausnahme für `data/team-content.json`. Playoff-/Consolation-Bracket ist live (Punkt 6) – sobald die Liga-Phase weiter fortschreitet, beobachten, ob die Projektion sich wie erwartet stabilisiert, und ab Woche 16 kontrollieren, dass echte Spiele korrekt statt der Platzhalter erscheinen. Transaktionen laufen jetzt über ESPNs echtes Log (Punkt 8) – bei den nächsten regulären Sync-Läufen beobachten, ob Wochen weiterhin lückenlos erscheinen (sollte durch den Wechsel weg vom Roster-Diffing strukturell nicht mehr passieren können, aber gut, es im Auge zu behalten).
