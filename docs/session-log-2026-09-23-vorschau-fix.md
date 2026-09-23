@@ -149,6 +149,10 @@ Commit `52075bf`, gepusht.
 
 Commit `33d813c`, gepusht.
 
+**Sechste Iteration nach Nutzer-Feedback (Spalten vertikal zentriert):** "lass es noch so anordnen dass der Final schön in der mitte ist und nicht oben bei halbfinale 1 klebt... und unten die hinteren 3 spiele mittig zu den rechten vier platzieren." Jede Bracket-Spalte ist jetzt intern ein Flex-Container: Die Runden-Beschriftung ("Runde 1 · Woche 16" etc.) bleibt oben fix auf gleicher Höhe wie die Nachbarspalte, darunter zentriert sich die Kartengruppe (`bracket-col-cards`, `justify-content:center`) vertikal im verbleibenden Platz. Da CSS-Grid-Zeilen standardmässig gleich hoch gestreckt werden, übernimmt die kürzere Spalte automatisch die Höhe der längeren – Finale steht jetzt mittig zwischen den beiden Halbfinal-Karten, die 3 Consolation-Runde-1-Spiele stehen mittig zu den 4 Platzierungsspielen. Playwright-Screenshot bestätigt das Ergebnis visuell, Textextraktion bestätigt alle Platzhalter-Texte weiterhin korrekt (kein Rendering-Fehler, nur eine Fehlinterpretation meinerseits beim ersten Blick auf den Screenshot).
+
+Commit `27861a9`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
