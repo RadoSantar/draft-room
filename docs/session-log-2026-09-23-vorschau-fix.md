@@ -232,6 +232,18 @@ Commit `90e2018`, gepusht.
 
 Commit `68e9261`, gepusht.
 
+## 10. Mein Team: redundante Team-Auswahl auf der Seite entfernt
+
+**Nutzer-Feedback:** "Beim Abschnitt Mein Team nochmals die Möglichkeit zu haben das team zu wählen fühlt sich redundant an wenn man das schon auf der startseite kann."
+
+**Analyse:** `my-team.html` hatte zwei Team-Auswahlfelder gleichzeitig: den header-weiten Sync-Selector (`id="syncTeamSelect"`, auf jeder Seite im Topbar, auf `start.html` unter "Wähle dein Team" beschrieben – geräteübergreifend über Supabase gespeichert) UND direkt darunter eine zweite, eigene Auswahl "Team analysieren:" (`id="myTeamSelect"`). Die Seite hat den Header-Wert zwar schon vorher automatisch als Vorauswahl übernommen (`window.DraftRoomSync.getName()`), aber die zweite, sichtbare Auswahl blieb bestehen – tatsächlich redundant, wie der Nutzer richtig bemerkt.
+
+**Fix:** Das `.mt-team-picker`-Element (Label + eigenes `<select>`) inkl. zugehöriger CSS komplett entfernt. Die Team-Auswahl läuft jetzt ausschliesslich über den Header-Selector: `initTeamSelection()` (vormals `populateTeamSelect()`) zeigt beim Laden weiterhin automatisch das synchronisierte Team, und hängt zusätzlich einen eigenen `change`-Listener an `#syncTeamSelect`, sodass eine Team-Änderung im Header die Analyse auf der Seite sofort aktualisiert (vorher hätte ein Header-Wechsel die Seite nicht automatisch neu gerendert). Status-Texte ("Wähle oben dein Team…") auf "Wähle oben im Header dein Team…" präzisiert.
+
+**Getestet:** Playwright – altes `#myTeamSelect` nicht mehr im DOM; bei vorbelegtem `localStorage`-Team wird die Analyse beim Laden automatisch angezeigt (kein Klick nötig); Team-Wechsel über den Header-Selector aktualisiert Roster/Digest nachweislich (Roster-HTML vor/nach Wechsel unterschiedlich). Hinweis: In dieser Sandbox ist der Supabase-CDN nicht erreichbar (TLS-Einschränkung der Umgebung), wodurch der Header-Selector dort standardmässig deaktiviert bleibt ("Sync nicht verfügbar") – für den Test wurde das `disabled`-Attribut clientseitig umgangen, um den neuen `change`-Listener isoliert zu prüfen. Auf der echten Seite mit funktionierendem Supabase-Zugriff ist der Selector aktiv, dasselbe Verhalten wie bei allen anderen Seiten, die ihn bereits nutzen.
+
+Commit `301088a`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
