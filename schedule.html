@@ -364,7 +364,6 @@
     <div id="bracketConsSection"></div>
   </div>
   <p class="note-text" id="standingsNote"></p>
-  <p class="note-text" id="bracketNote" style="display:none"></p>
 
   <h2 class="section-head">Spielplan</h2>
   <div class="sched-controls">
@@ -701,17 +700,12 @@
       });
     }
 
-    var bracketNoteText = '';
-
     function setStandingsView(view){
       document.querySelectorAll('.standings-tab').forEach(function(b){ b.classList.toggle('is-active', b.dataset.view === view); });
       document.getElementById('standingsTable').style.display = view === 'league' ? '' : 'none';
       document.getElementById('standingsConfWrap').style.display = view === 'conf' ? '' : 'none';
       document.getElementById('standingsBracketWrap').style.display = view === 'playoffs' ? '' : 'none';
       document.getElementById('standingsNote').style.display = view === 'playoffs' ? 'none' : '';
-      var bracketNoteEl = document.getElementById('bracketNote');
-      bracketNoteEl.style.display = view === 'playoffs' ? '' : 'none';
-      if(view === 'playoffs') bracketNoteEl.textContent = bracketNoteText;
     }
 
     document.getElementById('standingsTabs').addEventListener('click', function(e){
@@ -763,16 +757,9 @@
           'Platzierungsspiele · Woche 17',
           [bracketCardHtml(ob.place56, false), bracketCardHtml(ob.place78, false), bracketCardHtml(ob.place910, false)]
         );
-        bracketNoteText = wrap.throughWeek >= 15
-          ? 'Seeds stehen fest (Liga-Phase abgeschlossen) – Resultate aktualisieren sich automatisch, sobald ESPN sie meldet.'
-          : 'Seeds sind eine Projektion nach aktuellem Tabellenstand (Stand Woche ' + wrap.throughWeek + ') und werden bis Saisonende präziser. Sobald echte Playoff-Spiele stattfinden, ersetzen die echten Ergebnisse die Projektion automatisch.';
-        if(document.querySelector('.standings-tab[data-view="playoffs"]').classList.contains('is-active')){
-          document.getElementById('bracketNote').textContent = bracketNoteText;
-        }
       }).catch(function(){
-        document.getElementById('bracketChampSection').innerHTML = '';
+        document.getElementById('bracketChampSection').innerHTML = '<p class="calc-status error">Bracket konnte nicht geladen werden.</p>';
         document.getElementById('bracketConsSection').innerHTML = '';
-        bracketNoteText = 'Bracket konnte nicht geladen werden.';
       });
     }
 
