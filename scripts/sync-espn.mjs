@@ -246,33 +246,28 @@ function findNextOpponent(teamId, scoreboard, nextWeek, standingsById, confStand
   };
 }
 
-// Bildet ESPNs echtes 4-Team-Playoff-Bracket nach: die 2 Conference-Sieger (Seed 1/2, sortiert nach
-// Gesamt-Bilanz) plus die 2 besten Nicht-Conference-Sieger nach Gesamt-Bilanz als Wildcards
-// (Seed 3/4) – Quelle: ESPNs eigene Fan-Support-Doku ("Division winners always occupy the top
-// seeds... the team with the best winning percentage earns the higher seed" für die Wildcards,
-// Tiebreaker zuerst Points For). Bewusst KEINE Tiebreaker über Punkte simuliert (nur Siege, dann
-// Punkte als Tiebreak wie überall sonst in diesem Script) – bei echten Gleichständen kann ESPNs
-// exakte Einordnung leicht abweichen, das ist hier nur die Grundlage fürs Playoff-Rennen-Narrativ,
-// nicht die offizielle Quelle für den tatsächlichen Bracket.
+// Bildet die echten 4 Playoff-Teams dieser Liga nach: die Top 2 JEDER Conference (je 2 aus NFC und
+// AFC, nicht Conference-Sieger + liga-weite Wildcards) qualifizieren sich, geseedet 1-4 nach
+// Gesamt-Bilanz über beide Conferences hinweg. Bewusst KEIN Tiebreaker über Punkte simuliert (nur
+// Siege, dann Punkte als Tiebreak wie überall sonst in diesem Script) – bei echten Gleichständen
+// kann ESPNs exakte Einordnung leicht abweichen, das ist hier nur die Grundlage fürs
+// Playoff-Rennen-Narrativ, nicht die offizielle Quelle für den tatsächlichen Bracket.
 function computePlayoffPicture(standings, confStandings) {
-  const confLeaders = standings.filter((s) => confStandings[s.id]?.rank === 1);
-  const leaderIds = new Set(confLeaders.map((s) => s.id));
-  const seeded12 = confLeaders.slice().sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
-  const wildcardPool = standings
-    .filter((s) => !leaderIds.has(s.id))
+  const playoffPool = standings.filter((s) => (confStandings[s.id]?.rank ?? 99) <= 2);
+  const outsidePool = standings.filter((s) => (confStandings[s.id]?.rank ?? 99) > 2);
+  const playoffTeams = playoffPool
     .slice()
-    .sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
-  const seeded34 = wildcardPool.slice(0, 2);
-  const outside = wildcardPool.slice(2);
-  const playoffTeams = [...seeded12, ...seeded34].map((t, i) => ({ ...t, seed: i + 1 }));
-  const cutoffWins = seeded34.length ? seeded34[seeded34.length - 1].wins : (seeded12[seeded12.length - 1]?.wins ?? 0);
+    .sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor)
+    .map((t, i) => ({ ...t, seed: i + 1 }));
+  const outside = outsidePool.slice().sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
+  const cutoffWins = playoffTeams.length ? playoffTeams[playoffTeams.length - 1].wins : 0;
   return { playoffTeams, outside, cutoffWins };
 }
 
 // Playoff- und Consolation-Bracket (Wochen 16+17) für schedule.html. Seeds 1-4 kommen aus
-// computePlayoffPicture() (2 Conference-Sieger + 2 Wildcards), Seeds 5-10 sind die übrigen Teams in
-// derselben Sortierung (Siege, dann Punkte als Tiebreak) - deckt sich mit dem Format-Beispiel in
-// index.html ("Playoff-Format"). Solange die echten Playoff-Wochen noch nicht gespielt sind, ist das
+// computePlayoffPicture() (Top 2 je Conference, geseedet nach Gesamt-Bilanz), Seeds 5-10 sind die
+// übrigen Teams (Platz 3-5 je Conference) in derselben Sortierung (Siege, dann Punkte als
+// Tiebreak). Solange die echten Playoff-Wochen noch nicht gespielt sind, ist das
 // eine reine Projektion nach aktuellem Tabellenstand (wird über die Saison präziser); sobald ESPNs
 // Scoreboard für Woche 16/17 ein echtes Spiel mit passendem Team-Paar liefert, werden Score/Sieger
 // von dort übernommen statt geraten. Runde-2-Gegner (Finale, Platz-3, Platzierungsspiele) sind erst
@@ -338,10 +333,16 @@ function buildPlayoffBracket(standings, confStandings, scoreboard) {
   const place78 = derivedMatch(17, 'Platz 7/8', 'Sieger Spiel 3', game3, 'winner', 'Verlierer Spiel 3', game3, 'loser');
   const place910 = derivedMatch(17, 'Platz 9/10', 'Verlierer Spiel 2', game2, 'loser', 'Verlierer Spiel 1', game1, 'loser');
 
-  const qualTag = (seed) => (seed <= 2 ? 'Conf.-Sieger' : seed <= 4 ? 'Wildcard' : null);
+  const qualTag = (team) => {
+    const cs = confStandings[team.id];
+    if (!cs) return null;
+    if (cs.rank === 1) return cs.conf + '-Sieger';
+    if (cs.rank === 2) return cs.conf + ' #2';
+    return null;
+  };
   const seeds = [...playoffTeams, ...consTeams].sort((a, b) => a.seed - b.seed).map((t) => ({
     id: t.id, name: t.name, seed: t.seed, wins: t.wins, losses: t.losses, ties: t.ties,
-    pointsFor: t.pointsFor, qualTag: qualTag(t.seed)
+    pointsFor: t.pointsFor, qualTag: qualTag(t)
   }));
 
   return {
@@ -1835,8 +1836,8 @@ async function main() {
   }
 
   // ---- Playoff-Szenario je Team (für my-team.html "Playoff-Chancen") ----
-  // Nutzt dieselbe Bracket-Logik wie findPlayoffRaceFact() (Conference-Sieger als Seed 1/2, beste
-  // Non-Conference-Sieger als Wildcard-Seeds 3/4, siehe computePlayoffPicture() weiter oben), aber
+  // Nutzt dieselbe Bracket-Logik wie findPlayoffRaceFact() (Top 2 je Conference qualifizieren sich,
+  // geseedet 1-4 nach Gesamt-Bilanz, siehe computePlayoffPicture() weiter oben), aber
   // für ALLE Teams auf einmal statt nur die 2 Teams eines einzelnen Spiels. Restspiele = 15
   // (reguläre Saisonlänge dieser Liga, siehe TOTAL_SEASON_WEEKS in my-team.html) minus zuletzt
   // komplett gewertete Woche. "eliminated" = selbst mit ausschliesslich Siegen aus allen

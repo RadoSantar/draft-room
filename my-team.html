@@ -696,9 +696,10 @@
     seasonStatsEl.innerHTML = '<div class="mt-stat-grid">' + tiles.join('') + '</div>';
   }
 
-  // Playoff-Bracket dieser Liga: die 2 Conference-Sieger (Seed 1/2) plus die 2 besten Non-Conference-
-  // Sieger nach Bilanz (Seed 3/4, Punkte als Tiebreak) - exakt dieselbe Logik wie computePlayoffPicture()
-  // in sync-espn.mjs, hier serverseitig für ALLE Teams auf einmal vorberechnet (data/playoff-picture.json).
+  // Playoff-Bracket dieser Liga: die Top 2 jeder Conference (NFC und AFC), geseedet 1-4 nach
+  // Gesamt-Bilanz über beide Conferences hinweg (Punkte als Tiebreak) - exakt dieselbe Logik wie
+  // computePlayoffPicture() in sync-espn.mjs, hier serverseitig für ALLE Teams auf einmal
+  // vorberechnet (data/playoff-picture.json).
   // "eliminated" = auch mit ausschliesslich Siegen aus den verbleibenden Spielen nicht mehr genug für
   // Platz 4 - eine bewusst simple Näherung ohne echte Tiebreaker-Simulation. Vor Woche 8 (siehe
   // findPlayoffRaceFact()-Konvention an anderer Stelle in sync-espn.mjs) ist die Aussage noch zu
