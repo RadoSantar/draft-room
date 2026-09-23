@@ -1076,22 +1076,3 @@ Nutzer meldet: bei beiden Trades ist jeweils nur ein Team korrekt,
 das andere fehlerhaft. Dumpt Team-Namen + alle TRADE*-Rohdatensätze
 für die betroffenen relatedTransactionIds, um die korrekte
 Team-Zuordnungslogik zu finden.
-
-## 2026-09-23 – `5568c28` Fix: TRADE_UPHOLD.teamId als Gegner-Quelle war unzuverlässig, falsche Teams gezeigt
-
-Nutzer meldete, dass bei allen 3 Trades mit fehlender TRADE_PROPOSAL
-(siehe letzter Commit) jeweils nur eine Seite korrekt war. Direkter
-Rohdaten-Vergleich mit den vom Nutzer bestätigten echten Trades zeigt:
-TRADE_ACCEPT.teamId war in allen 3 Fällen korrekt, TRADE_UPHOLD.teamId
-dagegen in allen 3 Fällen falsch - und jedes Mal ein anderes falsches
-Team, kein fester Platzhalter. Das Feld ist in diesem kaputten
-Datenzustand also grundsätzlich nicht vertrauenswürdig.
-
-Fix: TRADE_UPHOLD.teamId wird nicht mehr für die Gegenseite verwendet.
-Für die 3 bereits identifizierten Trades liegt jetzt eine vom Nutzer
-bestätigte manuelle Korrektur vor (TRADE_OVERRIDES, inkl. korrekter
-Spieler-Details). Für jeden künftigen, noch unbekannten Fall dieser Art
-wird nur die sicher bekannte Seite (aus TRADE_ACCEPT) gezeigt statt
-eine falsche Gegenseite zu raten.
-
-## 2026-09-23 – `42ab014` Aufräumen: temporäres Debug-Tooling für Trade-Partner-Recherche entfernt
