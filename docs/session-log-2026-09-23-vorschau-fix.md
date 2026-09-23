@@ -141,6 +141,10 @@ Commit `5a56985` (Code), Sync-Run #31 (erzeugt korrigierte `data/playoff-bracket
 
 Commit `15dba6e`, gepusht.
 
+**Vierte Iteration nach Nutzer-Feedback (Hinweistext entfernt):** "den hinweis text braucht es nicht" – der erklärende Absatz unter dem Bracket ("Seeds sind eine Projektion nach aktuellem Tabellenstand…") wurde komplett entfernt, inklusive `#bracketNote`-Element und der zugehörigen JS-Logik in `setStandingsView()`/`renderBracket()`. Ladefehler zeigen sich jetzt als kurze Status-Zeile direkt in der Playoffs-Spalte statt in einer separaten Notiz. Playwright bestätigt: Element weg, Projektionstext nicht mehr im DOM, alle 10 Karten weiterhin korrekt, keine Fehler.
+
+Commit `52075bf`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
