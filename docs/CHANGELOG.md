@@ -1076,3 +1076,9 @@ Hinweis, dass Spieler-Details bei ESPN nicht abrufbar sind.
 Zusätzlich: seenTradeGroup-Dedup jetzt vor der Verzweigung gesetzt,
 da reale Daten zeigen, dass ESPN mehrere TRADE_UPHOLD-Einträge mit
 derselben relatedTransactionId liefern kann.
+
+## 2026-09-23 – `b03c9f4` Aufräumen: temporäre Debug-Tooling für Transaktions-Recherche entfernt
+
+Debug-Workflow/-Skript diente nur der Reverse-Engineering-Recherche
+zu ESPNs mTransactions2-Log (Wochen-Iteration, fehlende
+TRADE_PROPOSAL) und wird nicht mehr gebraucht.
