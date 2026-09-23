@@ -878,3 +878,8 @@ Mobile-Screenshot (420px) bestätigt die gewünschte Grösse/Prominenz.
 ## 2026-09-22 – `3a0e07b` Session-Log: Champion-Hero-Kachel nachgetragen
 
 Backup-Eintrag für Commit d7e2b42.
+
+## 2026-09-23 – `82b8274` Session-Log: Vorschau-Fix nachgetragen (neuer Tag)
+
+Backup-Eintrag für Commit 637cd8e, inkl. der noch nicht umgesetzten
+4 vorgeschlagenen Hall-of-Fame-Kategorien als offener Punkt.
