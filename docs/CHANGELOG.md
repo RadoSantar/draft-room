@@ -1108,3 +1108,5 @@ gespeichert. Die zusätzliche "Team analysieren"-Auswahl direkt auf
 my-team.html duplizierte das unnötig. Analyse wird jetzt direkt über den
 Header-Selector gesteuert: Auswahl dort zeigt/wechselt sofort die Analyse,
 ohne zusätzlichen Klick auf der Seite selbst.
+
+## 2026-09-23 – `5bcceed` Changelog: redundante Team-Auswahl auf Mein Team entfernt
