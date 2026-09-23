@@ -1069,3 +1069,10 @@ Session-Log um die dritte Transaktions-Iteration ergänzt: Root Cause
 zurück), der Fallback-Fix, der Live-Verifikationsbefund (betrifft
 auch die Trades aus Woche 1 und 2), sowie die Antwort auf die Frage
 nach Wochen-Start/-Ende.
+
+## 2026-09-23 – `22f5d12` Temp: Debug-Workflow prüft falsch zugeordnete Trade-Partner (Woche 2/3)
+
+Nutzer meldet: bei beiden Trades ist jeweils nur ein Team korrekt,
+das andere fehlerhaft. Dumpt Team-Namen + alle TRADE*-Rohdatensätze
+für die betroffenen relatedTransactionIds, um die korrekte
+Team-Zuordnungslogik zu finden.
