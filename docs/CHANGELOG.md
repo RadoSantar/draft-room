@@ -895,3 +895,16 @@ verlinken jetzt hierher; index.html bleibt inhaltlich unverändert und
 wird zu einem der Navigationsziele.
 
 ## 2026-09-23 – `7b90481` Session-Log: Neue Startseite start.html nachgetragen
+
+## 2026-09-23 – `9cbf565` Startseite: Redirect-Guard für Root-URL und PWA-Neustart
+
+Sowohl die nackte GitHub-Pages-URL als auch ein installiertes PWA-Icon
+landeten weiterhin auf index.html statt start.html - bei GitHub Pages
+serviert eine Verzeichnis-URL immer die Datei namens index.html, und
+ein bereits installiertes Icon behält den start_url-Wert von der
+Installation. Statt index.html/start.html umzubenennen (würde die fest
+verdrahteten index.html#anker-Links in data/team-content.json brechen,
+die nie automatisiert angefasst werden dürfen), leitet index.html jetzt
+per kleinem Inline-Script beim ersten Aufruf pro Session ohne Anker auf
+start.html weiter. Anker-Links (#draft-tipps etc.) und bewusste
+Navigation von start.html aus zu index.html bleiben unangetastet.
