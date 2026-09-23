@@ -196,6 +196,18 @@ Commit `75fecba`, gepusht.
 
 Commits `b5a3a98` (Hauptfix), `45cf41c` (currentWeek-Korrektur), `7bf040d` (Aufräumen), plus zwei Sync-Läufe, gepusht.
 
+**Dritte Iteration (fehlender Trade trotz neuem Log-Ansatz):** "gestern gab es einen trade... wann beginnt jeweils eine woche bzw. endet sie?" – ein echter, rechtskräftig gewordener Trade (Hopp Schwiiz ↔ Saints of Anarchy, 22.9.) erschien trotz des Umstiegs auf ESPNs Log nicht in Woche 3.
+
+**Root Cause gefunden:** `buildTransactionsFromLog()` baut Trades aus `TRADE_UPHOLD` (macht den Trade nach Review-Frist rechtskräftig) + der zugehörigen `TRADE_PROPOSAL` (trägt die Spieler-Details) zusammen, verknüpft über `relatedTransactionId`. Für genau diesen Trade lieferte ESPN die ursprüngliche `TRADE_PROPOSAL` nirgends zurück – exhaustiv geprüft über alle `scoringPeriodId` 0–3 einzeln sowie über den "Recent Activity"-Feed (`kona_league_communication`, liefert für diese Liga generell 0 Einträge). Eine echte Datenlücke bei ESPN, kein Fehler in unserem Code. Ohne Behandlung wurde der Trade beim fehlenden Proposal-Match still verworfen – `if (!proposal) return;`.
+
+**Fix:** Neuer Fallback-Pfad in der `TRADE_UPHOLD`-Verarbeitung: fehlt die Proposal, werden die beiden beteiligten Teams stattdessen aus dem zugehörigen `TRADE_ACCEPT`-Eintrag (dessen `teamId`) plus der eigenen `teamId` des `TRADE_UPHOLD`-Eintrags abgeleitet, und der Trade wird trotzdem angezeigt – mit einem ehrlichen Hinweis, dass die gehandelten Spieler bei ESPN für uns nicht abrufbar sind, statt komplett zu verschwinden. Dabei auch einen latenten Duplikat-Fall behoben: reale Daten zeigten 2 `TRADE_UPHOLD`-Einträge mit derselben `relatedTransactionId` (nicht zuverlässig 1x pro Team) – die Dedup-Markierung (`seenTradeGroup.add()`) wird jetzt sofort nach der ersten Prüfung gesetzt, bevor in den Detail- oder Fallback-Pfad verzweigt wird, damit kein zweiter Eintrag entsteht.
+
+**Getestet:** Offline mit einem Mock, der exakt die reale ESPN-Datenform nachbildet (1 `TRADE_ACCEPT` mit `teamId: 6`, 2 `TRADE_UPHOLD` mit `teamId: 1`, keine passende Proposal) – Ergebnis: genau 1 Eintrag, keine Duplikate, korrekte Teamnamen. Danach live per Sync-Lauf verifiziert: Der Trade vom 22.9. (Woche 3) erscheint jetzt korrekt. Überraschender Nebenbefund: auch die beiden bereits bekannten Trades aus Woche 1 und Woche 2 hatten offenbar dieselbe Datenlücke – sie erscheinen jetzt ebenfalls (vorher vermutlich ebenso still verworfen, nur nicht aufgefallen), ebenfalls ohne Spieler-Details. Die Lücke scheint also systemisch bei ESPN zu liegen, nicht auf diesen einen Trade beschränkt. Playwright gegen die live regenerierten Daten bestätigt: alle 3 Trades erscheinen in den jeweils richtigen Wochen mit dem Hinweistext, keine Duplikate, keine Konsolen-Fehler.
+
+**Antwort auf "wann beginnt/endet eine Woche?"** (aus den Rohdaten abgeleitet): Free Agency/Trades für die neue Periode öffnen, sobald die letzte Partie der Vorwoche (meist Montagabend) gewertet ist – sofortige Free-Agent-Adds sind ab dann jederzeit möglich (z.B. Woche 1: erste Aktivität bereits am 6.9.). Waiver-Claims dagegen werden nicht sofort verarbeitet, sondern laufen erst zu einem festen wöchentlichen Termin (beobachtete `waiverProcessStatus`-Zeitstempel: 9.9. und 17.9., jeweils 2–3 Tage nach Wochenbeginn) – deckt sich mit der Nutzer-Aussage, dass Woche-3-Waiver "erst morgen" (also mit demselben Rhythmus) durchlaufen.
+
+Commit `43e4920` (Fallback-Fix), `b03c9f4` (Aufräumen Debug-Tooling), plus Sync-Lauf `e246691`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
