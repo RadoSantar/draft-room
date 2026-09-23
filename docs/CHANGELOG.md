@@ -994,3 +994,5 @@ gestreckt werden, übernimmt automatisch die kürzere Spalte die Höhe
 der längeren und zentriert ihre Karten mittig darin - Finale mittig
 zwischen den Halbfinals, die 3 Consolation-Runde-1-Spiele mittig zu
 den 4 Platzierungsspielen.
+
+## 2026-09-23 – `25a2c9d` Session-Log: Spalten-Zentrierung nachgetragen
