@@ -957,3 +957,5 @@ Nutzer-Feedback: der erklärende Absatz unter dem Bracket
 bracketNote-Element und die zugehörige Logik komplett entfernt.
 Ladefehler zeigen sich jetzt direkt als Status-Zeile in der
 Playoffs-Spalte statt in einer separaten Notiz.
+
+## 2026-09-23 – `57badfa` Session-Log: Hinweistext-Entfernung nachgetragen
