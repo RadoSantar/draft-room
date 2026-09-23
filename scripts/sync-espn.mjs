@@ -1767,24 +1767,43 @@ function buildTransactionsFromLog(rawTx, teamNames, playerInfo) {
 
     if (t.type === 'TRADE_UPHOLD') {
       if (seenTradeGroup.has(t.relatedTransactionId)) return;
-      const proposal = proposalById[t.relatedTransactionId];
-      if (!proposal || !proposal.items?.length) return;
       seenTradeGroup.add(t.relatedTransactionId);
-      const teamIds = [...new Set(proposal.items.map((i) => i.toTeamId))];
-      const legs = teamIds.map((tid) => ({
-        teamId: tid,
-        gainedIds: proposal.items.filter((i) => i.toTeamId === tid).map((i) => i.playerId),
-        lostIds: proposal.items.filter((i) => i.fromTeamId === tid).map((i) => i.playerId)
-      }));
-      const detail = teamIds.map((tid) => {
-        const gets = proposal.items.filter((i) => i.toTeamId === tid).map((i) => playerInfo(i.playerId).name).join(', ') || '(nichts)';
-        return `${teamNames[tid]} erhält ${gets}.`;
-      }).join(' ');
+      const proposal = proposalById[t.relatedTransactionId];
+      if (proposal && proposal.items?.length) {
+        const teamIds = [...new Set(proposal.items.map((i) => i.toTeamId))];
+        const legs = teamIds.map((tid) => ({
+          teamId: tid,
+          gainedIds: proposal.items.filter((i) => i.toTeamId === tid).map((i) => i.playerId),
+          lostIds: proposal.items.filter((i) => i.fromTeamId === tid).map((i) => i.playerId)
+        }));
+        const detail = teamIds.map((tid) => {
+          const gets = proposal.items.filter((i) => i.toTeamId === tid).map((i) => playerInfo(i.playerId).name).join(', ') || '(nichts)';
+          return `${teamNames[tid]} erhält ${gets}.`;
+        }).join(' ');
+        out.push({
+          id: 'trade-' + t.relatedTransactionId,
+          week: t.scoringPeriodId, date: fmtDate(t), type: 'TRADE',
+          title: `Trade: ${teamIds.map((tid) => teamNames[tid]).join(' ↔ ')}`,
+          detail, legs, note: ''
+        });
+        return;
+      }
+      // Fallback: ESPN liefert die ursprüngliche TRADE_PROPOSAL manchmal nicht zurück (live beobachtet
+      // bei einem echten Trade dieser Liga - über keine Wochen-Abfrage 1..17 noch den Recent-Activity-
+      // Feed auffindbar, vermutlich intern überschrieben/ersetzt). Zeigt den Trade trotzdem an (Teams
+      // aus dem zugehörigen TRADE_ACCEPT + der eigenen teamId), nur ohne Spieler-Details, statt ihn
+      // komplett verschwinden zu lassen.
+      const accept = rawTx.find((a) => a.type === 'TRADE_ACCEPT' && a.relatedTransactionId === t.relatedTransactionId);
+      const teamIds = [...new Set([accept?.teamId, t.teamId].filter((id) => id != null))];
+      if (!teamIds.length) return;
       out.push({
         id: 'trade-' + t.relatedTransactionId,
         week: t.scoringPeriodId, date: fmtDate(t), type: 'TRADE',
-        title: `Trade: ${teamIds.map((tid) => teamNames[tid]).join(' ↔ ')}`,
-        detail, legs, note: ''
+        title: teamIds.length > 1 ? `Trade: ${teamIds.map((tid) => teamNames[tid]).join(' ↔ ')}` : 'Trade rechtskräftig',
+        detail: teamIds.length > 1
+          ? `Trade zwischen ${teamIds.map((tid) => teamNames[tid]).join(' und ')} ist rechtskräftig geworden – die gehandelten Spieler sind in ESPNs Daten für uns nicht abrufbar.`
+          : 'Ein Trade ist rechtskräftig geworden – Details sind in ESPNs Daten für uns nicht abrufbar.',
+        note: ''
       });
     }
     // ROSTER (Lineup-Änderungen), DRAFT (Draft-Picks), TRADE_PROPOSAL/TRADE_ACCEPT (Zwischenschritte,
