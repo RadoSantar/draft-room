@@ -883,3 +883,13 @@ Backup-Eintrag für Commit d7e2b42.
 
 Backup-Eintrag für Commit 637cd8e, inkl. der noch nicht umgesetzten
 4 vorgeschlagenen Hall-of-Fame-Kategorien als offener Punkt.
+
+## 2026-09-23 – `489ee33` Neue Startseite start.html als mobile Navigations-Hub
+
+Landet man künftig zuerst auf start.html: Team wählen (Sync), Design
+auswählen, dann 6 grosse Buttons zu Mein Team, Spielplan, Power
+Rankings, Übersicht (index.html), Hall of Fame und Draft Board -
+schnellerer Einstieg auf dem Handy statt dem langen Guide als
+Startpunkt. Alle Seiten-Logos und die PWA (manifest.json start_url)
+verlinken jetzt hierher; index.html bleibt inhaltlich unverändert und
+wird zu einem der Navigationsziele.
