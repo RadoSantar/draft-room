@@ -1092,3 +1092,8 @@ bleiben erhalten. Nebenbei bemerkt: der Transaktionen-Absatz behauptete noch
 (alle Wochen starten eingeklappt) nicht mehr, jetzt korrigiert.
 
 ## 2026-09-23 – `8df7a5d` Changelog: Power-Rankings-Textkürzungen dokumentiert
+
+## 2026-09-23 – `68e9261` Power Rankings: "Nach dem Draft"-Präfix aus dem Status-Kicker entfernt
+
+War statisch hinterlegt und stimmte längst nicht mehr (Liga ist bei
+Woche 3) - "Stand <Datum>" allein reicht.
