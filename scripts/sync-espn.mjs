@@ -269,6 +269,88 @@ function computePlayoffPicture(standings, confStandings) {
   return { playoffTeams, outside, cutoffWins };
 }
 
+// Playoff- und Consolation-Bracket (Wochen 16+17) für schedule.html. Seeds 1-4 kommen aus
+// computePlayoffPicture() (2 Conference-Sieger + 2 Wildcards), Seeds 5-10 sind die übrigen Teams in
+// derselben Sortierung (Siege, dann Punkte als Tiebreak) - deckt sich mit dem Format-Beispiel in
+// index.html ("Playoff-Format"). Solange die echten Playoff-Wochen noch nicht gespielt sind, ist das
+// eine reine Projektion nach aktuellem Tabellenstand (wird über die Saison präziser); sobald ESPNs
+// Scoreboard für Woche 16/17 ein echtes Spiel mit passendem Team-Paar liefert, werden Score/Sieger
+// von dort übernommen statt geraten. Runde-2-Gegner (Finale, Platz-3, Platzierungsspiele) sind erst
+// bekannt, sobald Runde 1 ein echtes Ergebnis hat - bis dahin bleibt teamA/teamB null und
+// placeholderA/B beschreiben die Quelle ("Sieger Halbfinale A"), analog zum statischen Beispiel.
+function buildPlayoffBracket(standings, confStandings, scoreboard) {
+  const { playoffTeams, outside } = computePlayoffPicture(standings, confStandings);
+  const consTeams = outside.map((t, i) => ({ ...t, seed: i + 5 }));
+  const bySeed = {};
+  [...playoffTeams, ...consTeams].forEach((t) => { bySeed[t.seed] = t; });
+
+  const weekGames = (wk) => (scoreboard.find((w) => w.week === wk) || {}).games || [];
+  const findGame = (wk, idA, idB) => weekGames(wk).find((g) =>
+    (g.homeId === idA && g.awayId === idB) || (g.homeId === idB && g.awayId === idA));
+  const teamRef = (t) => (t ? { id: t.id, name: t.name, seed: t.seed } : null);
+  const decideWinner = (g, hiId) => {
+    if (!g || (g.winner !== 'HOME' && g.winner !== 'AWAY')) return null;
+    return (g.winner === 'HOME') === (g.homeId === hiId) ? 'A' : 'B';
+  };
+  const scoreFor = (g, id) => (g.homeId === id ? g.homeScore : g.awayScore);
+
+  function seedMatch(week, label, seedHi, seedLo) {
+    const hi = bySeed[seedHi], lo = bySeed[seedLo];
+    const teamA = teamRef(hi), teamB = teamRef(lo);
+    const g = (hi && lo) ? findGame(week, hi.id, lo.id) : null;
+    const winner = g ? decideWinner(g, hi.id) : null;
+    return {
+      week, label, teamA, teamB,
+      scoreA: winner ? scoreFor(g, hi.id) : null,
+      scoreB: winner ? scoreFor(g, lo.id) : null,
+      winner
+    };
+  }
+
+  function derivedMatch(week, label, placeholderA, srcA, pickA, placeholderB, srcB, pickB) {
+    const pick = (src, which) => {
+      if (!src || !src.winner) return null;
+      if (which === 'winner') return src.winner === 'A' ? src.teamA : src.teamB;
+      return src.winner === 'A' ? src.teamB : src.teamA;
+    };
+    const hi = pick(srcA, pickA);
+    const lo = pick(srcB, pickB);
+    if (!hi || !lo) return { week, label, teamA: hi, teamB: lo, scoreA: null, scoreB: null, winner: null, placeholderA, placeholderB };
+    const g = findGame(week, hi.id, lo.id);
+    const winner = g ? decideWinner(g, hi.id) : null;
+    return {
+      week, label, teamA: hi, teamB: lo,
+      scoreA: winner ? scoreFor(g, hi.id) : null,
+      scoreB: winner ? scoreFor(g, lo.id) : null,
+      winner, placeholderA, placeholderB
+    };
+  }
+
+  const semiA = seedMatch(16, 'Halbfinale A', 1, 4);
+  const semiB = seedMatch(16, 'Halbfinale B', 2, 3);
+  const final = derivedMatch(17, 'Finale · Platz 1/2', 'Sieger Halbfinale A', semiA, 'winner', 'Sieger Halbfinale B', semiB, 'winner');
+  const thirdPlace = derivedMatch(17, 'Spiel um Platz 3', 'Verlierer Halbfinale A', semiA, 'loser', 'Verlierer Halbfinale B', semiB, 'loser');
+
+  const game1 = seedMatch(16, 'Spiel 1', 5, 10);
+  const game2 = seedMatch(16, 'Spiel 2', 6, 9);
+  const game3 = seedMatch(16, 'Spiel 3', 7, 8);
+  const place56 = derivedMatch(17, 'Platz 5/6', 'Sieger Spiel 1', game1, 'winner', 'Sieger Spiel 2', game2, 'winner');
+  const place78 = derivedMatch(17, 'Platz 7/8', 'Sieger Spiel 3', game3, 'winner', 'Verlierer Spiel 3', game3, 'loser');
+  const place910 = derivedMatch(17, 'Platz 9/10', 'Verlierer Spiel 2', game2, 'loser', 'Verlierer Spiel 1', game1, 'loser');
+
+  const qualTag = (seed) => (seed <= 2 ? 'Conf.-Sieger' : seed <= 4 ? 'Wildcard' : null);
+  const seeds = [...playoffTeams, ...consTeams].sort((a, b) => a.seed - b.seed).map((t) => ({
+    id: t.id, name: t.name, seed: t.seed, wins: t.wins, losses: t.losses, ties: t.ties,
+    pointsFor: t.pointsFor, qualTag: qualTag(t.seed)
+  }));
+
+  return {
+    seeds,
+    champBracket: { semiA, semiB, final, thirdPlace },
+    consBracket: { game1, game2, game3, place56, place78, place910 }
+  };
+}
+
 // Playoff-Rennen-Kontext ab Woche 8: steht ein Team aktuell auf einem Playoff-Platz (mit wie viel
 // Polster), jagt es den letzten Platz noch ein, oder ist es rechnerisch schon draussen (Elimination
 // hier als einfache Maximal-Siege-Schranke: selbst mit ausschliesslich Siegen aus allen verbleibenden
@@ -1550,6 +1632,11 @@ async function runSanityChecks() {
     problems.push('scoreboard.json hat keine Wochen');
   }
 
+  const bracket = await readJsonSafe('playoff-bracket.json', null);
+  if (!bracket || (bracket.seeds || []).length !== EXPECTED_TEAM_COUNT) {
+    problems.push(`playoff-bracket.json hat ${bracket?.seeds?.length ?? 0} statt ${EXPECTED_TEAM_COUNT} Seeds`);
+  }
+
   if (problems.length) {
     throw new Error('Sanity-Check fehlgeschlagen:\n- ' + problems.join('\n- '));
   }
@@ -1777,6 +1864,14 @@ async function main() {
     throughWeek: lastCompletedWeek,
     cutoffWins,
     teams: playoffPictureTeams
+  });
+
+  // ---- Playoff- und Consolation-Bracket (für schedule.html) ----
+  const playoffBracket = buildPlayoffBracket(standings, confStandings, scoreboard);
+  await writeJson('playoff-bracket.json', {
+    lastUpdated: nowIso(),
+    throughWeek: lastCompletedWeek,
+    ...playoffBracket
   });
 
   if (lastCompletedWeek > 0) {
