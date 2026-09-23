@@ -40,3 +40,18 @@ tx.forEach((t) => {
     console.log(JSON.stringify(t, null, 2));
   }
 });
+
+console.log('\n\n========== ATTEMPT 2: kona_league_communication (Recent Activity feed) ==========');
+const commData = await fetchLeague(['kona_league_communication']);
+const topics = commData.topics || [];
+console.log('total topics:', topics.length);
+if (topics.length) {
+  console.log(JSON.stringify(topics.slice(0, 5), null, 2));
+}
+
+console.log('\n\n========== ATTEMPT 3: mTransactions2 with explicit scoringPeriodId=1 ==========');
+const week1Data = await fetchLeague(['mTransactions2'], 1);
+console.log('total transactions (week1 param):', (week1Data.transactions || []).length);
+const w1Types = {};
+(week1Data.transactions || []).forEach((t) => { w1Types[t.type] = (w1Types[t.type] || 0) + 1; });
+console.log('week1 types:', JSON.stringify(w1Types));
