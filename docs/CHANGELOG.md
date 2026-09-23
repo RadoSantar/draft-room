@@ -1059,3 +1059,5 @@ expliziten scoringPeriodId-Parameter.
 ## 2026-09-23 – `bfbcd58` Temp: Debug-Workflow für Trade-Status und Wochen-Grenzen
 
 ## 2026-09-23 – `f099450` Temp: Debug-Skript sucht die fehlende TRADE_PROPOSAL über alle Wochen
+
+## 2026-09-23 – `e645118` Temp: Debug-Skript prüft Recent-Activity-Feed und Woche-0 als letzte Quellen
