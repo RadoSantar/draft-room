@@ -135,6 +135,12 @@ Commit `6b9a12c`, gepusht.
 
 Commit `5a56985` (Code), Sync-Run #31 (erzeugt korrigierte `data/playoff-bracket.json`/`playoff-picture.json`), gepusht.
 
+**Dritte Iteration nach Nutzer-Feedback (Kartendesign statt Einzeiler):** Nutzer schickte einen Screenshot von ESPNs eigener "Projected Playoff Matchups"-Ansicht als Vorbild ("das gefällt mir von der Anordnung besser") mit dem Wunsch, das Finale als "unser Fantasy Super Bowl" optisch hervorstechen zu lassen. Die dünnen `.bracket-row`-Einzeiler wurden durch ein Karten-Layout ersetzt: pro Match eine eigene Karte mit den zwei Team-Zeilen übereinander (Seed-Badge, Name, Score sobald entschieden), Runde 1 und Runde 2 als zwei Grid-Spalten nebeneinander (bricht auf schmalen Screens auf eine Spalte um) – dieselbe Anordnung wie im ESPN-Screenshot, aber in der eigenen dunklen Turf/Chalk/Amber-Optik statt ESPNs hellem Corporate-Look. Unentschiedene Runde-2-Gegner zeigen eine gedimmte kursive "TBD"-Zeile mit dem Platzhaltertext. Die Finale-Karte hat jetzt einen dicken Amber-Rahmen, Schlagschatten und ein "🏆 Fantasy Super Bowl"-Banner oben.
+
+**Getestet:** Playwright gegen die echten Live-Daten (Sync-Run #31s `playoff-bracket.json`) – 10 Karten total, genau 1 als "is-final" markiert, korrekter Text im Finale-Banner. Screenshots bei 420px (mobil, einspaltig) und 1000px (Desktop, zwei Spalten nebeneinander) visuell geprüft – Layout entspricht der gewünschten Anordnung, Finale-Karte klar abgehoben, keine Konsolen-Fehler.
+
+Commit `15dba6e`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
