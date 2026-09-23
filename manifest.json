@@ -2,7 +2,7 @@
   "name": "Fantasy Playbook – Swissleague",
   "short_name": "Fantasy Playbook",
   "description": "Draft Board, Spielplan, Power Rankings und Punkterechner für unsere Fantasy-Football-Liga.",
-  "start_url": "./index.html",
+  "start_url": "./start.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait-primary",

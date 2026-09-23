@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Start – Fantasy Playbook</title>
+<meta name="description" content="Team wählen, Design einstellen und schnell zu Mein Team, Spielplan, Power Rankings, Übersicht, Hall of Fame oder Draft Board springen.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 34'%3E%3Cellipse cx='12' cy='17' rx='8.5' ry='16' fill='%237A4A2B' stroke='%234E2E19' stroke-width='1'/%3E%3Cline x1='12' y1='7' x2='12' y2='27' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='12' x2='15' y2='12' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='17' x2='15' y2='17' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3Cline x1='9' y1='22' x2='15' y2='22' stroke='%23F3EFE4' stroke-width='1.6' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#1E4638">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Fantasy Playbook">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="theme.css?v=20260915">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="sync.js"></script>
+<script src="shared.js?v=20260915"></script>
+<script data-goatcounter="https://radosantar.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--chalk);
+    color:var(--ink);
+    font-family:'Source Serif 4', Georgia, serif;
+    line-height:1.65;
+  }
+  h1,h2,h3,.display{
+    font-family:'Anton', sans-serif;
+    font-weight:400;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+    text-wrap:balance;
+  }
+  .mono{font-family:'IBM Plex Mono', monospace;}
+  a{color:inherit;}
+
+  header.topbar{
+    background:var(--turf);
+    color:var(--chalk);
+    padding:14px 24px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    position:sticky;
+    top:0;
+    z-index:20;
+    border-bottom:3px solid var(--amber);
+  }
+  .title-group{display:flex;align-items:center;gap:10px;text-decoration:none;}
+  header.topbar .title{font-family:'Anton', sans-serif;font-size:20px;letter-spacing:0.04em;color:var(--chalk);}
+
+  main{max-width:640px;margin:0 auto;padding:32px 24px 96px;}
+  .kicker{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:var(--hash);
+    margin-bottom:6px;
+  }
+  h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
+  h2.section-head{font-size:20px;margin:36px 0 4px;}
+  p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
+
+  .start-section{margin-top:8px;}
+  .start-select-wrap{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:12px;
+    padding:14px 16px;
+    margin-top:10px;
+  }
+  .start-select{
+    flex:1 1 auto;
+    font-family:'Source Serif 4', serif;
+    font-size:16px;
+    color:var(--ink);
+    background:none;
+    border:none;
+    cursor:pointer;
+    padding:4px 0;
+  }
+  .start-select:focus-visible{outline:2px solid var(--amber);outline-offset:2px;}
+  .start-status{font-family:'IBM Plex Mono', monospace;font-size:12px;color:var(--ink-soft);white-space:nowrap;}
+
+  .start-section .theme-picker{margin-bottom:0;margin-top:10px;}
+  .start-section .theme-select-wrap{padding:14px 16px;border-radius:12px;}
+  .start-section .theme-preview-ball,.start-section .theme-preview-logo{width:28px;height:28px;}
+  .start-section .theme-select{font-size:16px;}
+
+  .start-grid{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+  .start-card{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:12px;
+    padding:16px 18px;
+    min-height:64px;
+    text-decoration:none;
+    color:var(--ink);
+    transition:border-color .15s ease, transform .15s ease;
+  }
+  .start-card:hover, .start-card:focus-visible{border-color:var(--amber);}
+  .start-card:active{transform:scale(0.99);}
+  .start-card .start-card-body{flex:1;min-width:0;}
+  .start-card-title{
+    display:block;
+    font-family:'Anton', sans-serif;
+    font-size:17px;
+    letter-spacing:.01em;
+    color:var(--turf);
+    margin-bottom:3px;
+  }
+  .start-card-desc{display:block;font-size:13px;color:var(--ink-soft);line-height:1.4;}
+  .start-card-arrow{
+    flex-shrink:0;
+    width:32px;
+    height:32px;
+    border-radius:50%;
+    background:var(--amber);
+    color:var(--turf);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:16px;
+    font-weight:700;
+  }
+
+  @media (max-width:640px){
+    header.topbar{padding:12px 16px;flex-wrap:wrap;}
+    main{padding:24px 16px 80px;}
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="title-group">
+    <img class="header-logo is-hidden" id="headerLogo" src="" alt="">
+    <span class="title">Fantasy Playbook</span>
+  </div>
+</header>
+
+<main>
+  <div class="kicker">Start</div>
+  <h1>Willkommen zurück</h1>
+  <p class="copy">Team wählen, Design einstellen und direkt zu deinen Seiten springen.</p>
+
+  <div class="start-section">
+    <h2 class="section-head">Wähle dein Team</h2>
+    <p class="copy">Damit deine Team- und Design-Wahl geräteübergreifend gespeichert wird.</p>
+    <div class="start-select-wrap">
+      <select class="start-select" id="syncTeamSelect" aria-label="Team wählen"></select>
+      <span class="start-status mono" id="syncStatus"></span>
+    </div>
+  </div>
+
+  <div class="start-section">
+    <h2 class="section-head">Design auswählen</h2>
+    <p class="copy">Färbt die ganze Seite im Look deines Lieblings-NFL-Teams ein.</p>
+    <div class="theme-picker" role="group" aria-label="Team-Design wählen">
+      <div class="theme-select-wrap">
+        <svg class="theme-preview-ball" id="themePreviewBall" viewBox="0 0 24 34" width="20" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <ellipse cx="12" cy="17" rx="8.5" ry="16" fill="#7A4A2B" stroke="#4E2E19" stroke-width="1"/>
+          <line x1="12" y1="7" x2="12" y2="27" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="9" y1="12" x2="15" y2="12" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="9" y1="17" x2="15" y2="17" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+          <line x1="9" y1="22" x2="15" y2="22" stroke="#F3EFE4" stroke-width="1.6" stroke-linecap="round"/>
+        </svg>
+        <img class="theme-preview-logo is-hidden" id="themePreviewLogo" src="" alt="">
+        <select class="theme-select" id="themeSelect" aria-label="Team-Design auswählen"></select>
+      </div>
+    </div>
+  </div>
+
+  <div class="start-section">
+    <h2 class="section-head">Navigation</h2>
+    <div class="start-grid">
+      <a class="start-card" href="my-team.html">
+        <div class="start-card-body">
+          <span class="start-card-title">Mein Team</span>
+          <span class="start-card-desc">Dein Kader, Free-Agent- und Trade-Vorschläge, beste Startaufstellung.</span>
+        </div>
+        <span class="start-card-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="start-card" href="schedule.html">
+        <div class="start-card-body">
+          <span class="start-card-title">Spielplan</span>
+          <span class="start-card-desc">Der komplette 15-Wochen-Spielplan, nach Team filterbar.</span>
+        </div>
+        <span class="start-card-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="start-card" href="power-rankings.html">
+        <div class="start-card-body">
+          <span class="start-card-title">Power Rankings</span>
+          <span class="start-card-desc">Draft-Analyse aller 10 Teams: Stärken/Schwächen je Position und Ausblick.</span>
+        </div>
+        <span class="start-card-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="start-card" href="index.html">
+        <div class="start-card-body">
+          <span class="start-card-title">Übersicht</span>
+          <span class="start-card-desc">FAQ, Regeln, Scoring-System und Strategie-Tipps – der komplette Guide.</span>
+        </div>
+        <span class="start-card-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="start-card" href="hall-of-fame.html">
+        <div class="start-card-body">
+          <span class="start-card-title">Hall of Fame</span>
+          <span class="start-card-desc">Meister und Rekorde – pro Jahr und über alle Saisons hinweg.</span>
+        </div>
+        <span class="start-card-arrow" aria-hidden="true">→</span>
+      </a>
+      <a class="start-card" href="draft-board.html">
+        <div class="start-card-body">
+          <span class="start-card-title">Draft Board</span>
+          <span class="start-card-desc">Eigene Draft-Rangliste vorbereiten, am Draft-Tag live durchklicken.</span>
+        </div>
+        <span class="start-card-arrow" aria-hidden="true">→</span>
+      </a>
+    </div>
+  </div>
+</main>
+
+<script>
+(function(){
+  var themePicker = window.DraftRoomShared.initThemePicker({
+    select: document.getElementById('themeSelect'),
+    headerLogo: document.getElementById('headerLogo'),
+    previewBall: document.getElementById('themePreviewBall'),
+    previewLogo: document.getElementById('themePreviewLogo')
+  });
+
+  window.__draftRoomSync = window.DraftRoomShared.initSyncBar({
+    nameInput: document.getElementById('syncTeamSelect'),
+    statusEl: document.getElementById('syncStatus'),
+    onPull: function(row){
+      if(row.theme !== undefined && row.theme !== null && themePicker) themePicker.applyTheme(row.theme || '');
+    }
+  });
+
+  document.getElementById('themeSelect').addEventListener('change', function(e){
+    if(window.__draftRoomSync) window.__draftRoomSync.push({ theme: e.target.value });
+  });
+})();
+</script>
+
+</body>
+</html>
