@@ -978,3 +978,19 @@ bekommen, damit die Zuordnung trotzdem eindeutig bleibt. Sektions-
 präzisiert.
 
 ## 2026-09-23 – `efd03c8` Session-Log: Spiel-um-Platz-3-Verschiebung nachgetragen
+
+## 2026-09-23 – `27861a9` Playoffs-Tab: kürzere Bracket-Spalte vertikal zur längeren zentriert
+
+Nutzer-Feedback: das Finale soll nicht oben an Halbfinale 1 kleben,
+sondern schön mittig zwischen den beiden Halbfinal-Karten stehen; im
+Consolation Bracket sollen die 3 Runde-1-Spiele mittig zu den 4
+Platzierungsspielen rechts stehen, für ein gleichmässigeres Bild.
+
+Jede Bracket-Spalte ist jetzt intern ein Flex-Container: Die Runden-
+Beschriftung bleibt oben fix (beide Spalten-Labels bleiben auf
+gleicher Höhe), darunter zentriert sich die Kartengruppe vertikal im
+verbleibenden Platz. Da CSS-Grid-Zeilen standardmässig gleich hoch
+gestreckt werden, übernimmt automatisch die kürzere Spalte die Höhe
+der längeren und zentriert ihre Karten mittig darin - Finale mittig
+zwischen den Halbfinals, die 3 Consolation-Runde-1-Spiele mittig zu
+den 4 Platzierungsspielen.
