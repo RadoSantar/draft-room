@@ -79,8 +79,6 @@
   }
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
   h2.section-head{font-size:22px;margin:32px 0 4px;}
-  .section-head-row{display:flex;align-items:center;flex-wrap:wrap;gap:10px;margin:32px 0 4px;}
-  .section-head-row h2.section-head{margin:0;}
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:64ch;}
   .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
   .calc-status.error{color:var(--endzone);}
@@ -251,24 +249,23 @@
   .note-text a{color:var(--turf);text-decoration:underline;text-decoration-color:var(--hash);text-decoration-thickness:1px;text-underline-offset:2px;}
   .note-text a:hover{text-decoration-color:var(--amber);}
 
-  /* Playoff / consolation bracket */
-  .bracket-wrap{display:flex;flex-direction:column;gap:26px;margin-top:18px;}
-  .bracket-heading{font-family:'Anton', sans-serif;font-size:15px;letter-spacing:.02em;margin-bottom:10px;}
-  .bracket-heading.champ{color:var(--amber);}
-  .bracket-heading.cons{color:var(--hash);}
-  .bracket{display:grid;grid-template-columns:repeat(3, 1fr);gap:14px;}
-  .bracket.single{grid-template-columns:1fr;max-width:340px;}
-  .bracket-round-label{font-size:10px;color:var(--hash);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
-  .bracket-match{background:var(--card);border:1px solid var(--card-border);border-radius:6px;padding:8px 10px;font-size:12px;color:var(--ink-soft);margin-bottom:6px;}
-  .bracket-match:last-child{margin-bottom:0;}
-  .bracket-match .seed{display:inline-block;font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--chalk);background:var(--turf);border-radius:4px;padding:1px 5px;margin-right:5px;}
-  .bracket-match .vs{color:var(--hash);font-size:10px;margin:0 4px;text-transform:uppercase;}
-  .bracket-match .game-tag{display:block;font-family:'IBM Plex Mono', monospace;font-size:9px;color:var(--hash);text-transform:uppercase;letter-spacing:.05em;margin-bottom:3px;}
-  .bracket-match.final{border-left:4px solid var(--amber);color:var(--ink);font-weight:600;}
-  .bracket.cons .bracket-match.final{border-left-color:var(--hash);}
-  @media (max-width:720px){
-    .bracket{grid-template-columns:1fr;}
+  /* Playoff / consolation bracket - im selben dunklen Standings-Look, nur mit Match- statt Team-Zeilen */
+  .bracket-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:9px 14px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11px;
+    border-bottom:1px solid rgba(255,255,255,0.08);
   }
+  .bracket-row:last-child{border-bottom:none;}
+  .bracket-row .bracket-stage{min-width:92px;color:var(--hash);text-transform:uppercase;letter-spacing:.04em;}
+  .bracket-row .bracket-matchup{flex:1;font-family:'Source Serif 4', serif;font-size:14px;color:var(--chalk);}
+  .bracket-row .bracket-matchup .seed{display:inline-block;font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--turf);background:var(--amber);border-radius:4px;padding:1px 5px;margin-right:4px;}
+  .bracket-row .bracket-matchup .vs{color:var(--hash);font-size:10px;margin:0 4px;text-transform:uppercase;}
+  .bracket-row .bracket-score{min-width:64px;text-align:right;color:var(--amber);font-weight:600;font-size:12px;}
+  .bracket-row.final .bracket-stage{color:var(--amber);}
 
   @media (max-width:640px){
     header.topbar{padding:12px 16px;flex-wrap:wrap;}
@@ -321,14 +318,12 @@
   <div class="kicker">Saison 2026 · 09.09.–21.12. · 15 Wochen</div>
   <h1>Spielplan</h1>
 
-  <div class="section-head-row">
-    <h2 class="section-head">Standings</h2>
-    <a href="#playoffs" class="sched-toggle">🏆 Playoffs</a>
-  </div>
+  <h2 class="section-head">Standings</h2>
   <div class="calc-status" id="standingsStatus">Lade aktuelle Tabelle…</div>
   <div class="standings-tabs" id="standingsTabs" style="display:none" role="tablist">
     <button type="button" class="standings-tab is-active" data-view="conf">Nach Conference</button>
     <button type="button" class="standings-tab" data-view="league">Liga</button>
+    <button type="button" class="standings-tab" data-view="playoffs">Playoffs</button>
   </div>
   <div class="standings-table" id="standingsTable" style="display:none"></div>
   <div class="standings-conf-wrap" id="standingsConfWrap">
@@ -337,11 +332,13 @@
     <div class="standings-div-label mono">AFC</div>
     <div class="standings-table" id="standingsTableAFC"></div>
   </div>
+  <div class="standings-conf-wrap" id="standingsBracketWrap" style="display:none">
+    <div class="standings-div-label mono">Playoffs um den Titel (Platz 1–4)</div>
+    <div class="standings-table" id="bracketChampTable"></div>
+    <div class="standings-div-label mono">Consolation Bracket (Platz 5–10)</div>
+    <div class="standings-table" id="bracketConsTable"></div>
+  </div>
   <p class="note-text" id="standingsNote"></p>
-
-  <h2 class="section-head" id="playoffs">Playoffs &amp; Consolation Bracket</h2>
-  <div class="calc-status" id="bracketStatus">Lade Bracket…</div>
-  <div class="bracket-wrap" id="bracketWrap" style="display:none"></div>
   <p class="note-text" id="bracketNote" style="display:none"></p>
 
   <h2 class="section-head">Spielplan</h2>
@@ -666,12 +663,10 @@
       fetch('data/standings.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         var rows = wrap.data || [];
         tableEl.innerHTML = standingsRowsHtml(rows);
-        var isConf = document.querySelector('.standings-tab[data-view="conf"]').classList.contains('is-active');
-        tableEl.style.display = isConf ? 'none' : '';
         nfcEl.innerHTML = standingsRowsHtml(rows.filter(function(r){ return teams[r.name] === 'NFC'; }));
         afcEl.innerHTML = standingsRowsHtml(rows.filter(function(r){ return teams[r.name] === 'AFC'; }));
-        document.getElementById('standingsConfWrap').style.display = isConf ? '' : 'none';
         tabsEl.style.display = '';
+        setStandingsView('conf');
         statusEl.textContent = '';
         var d = new Date(wrap.lastUpdated);
         noteEl.textContent = 'Stand: ' + d.toLocaleDateString('de-CH') + ' ' + d.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }) + ' – aktualisiert sich automatisch, sobald Spiele gewertet wurden.';
@@ -681,13 +676,23 @@
       });
     }
 
+    var bracketNoteText = '';
+
+    function setStandingsView(view){
+      document.querySelectorAll('.standings-tab').forEach(function(b){ b.classList.toggle('is-active', b.dataset.view === view); });
+      document.getElementById('standingsTable').style.display = view === 'league' ? '' : 'none';
+      document.getElementById('standingsConfWrap').style.display = view === 'conf' ? '' : 'none';
+      document.getElementById('standingsBracketWrap').style.display = view === 'playoffs' ? '' : 'none';
+      document.getElementById('standingsNote').style.display = view === 'playoffs' ? 'none' : '';
+      var bracketNoteEl = document.getElementById('bracketNote');
+      bracketNoteEl.style.display = view === 'playoffs' ? '' : 'none';
+      if(view === 'playoffs') bracketNoteEl.textContent = bracketNoteText;
+    }
+
     document.getElementById('standingsTabs').addEventListener('click', function(e){
       var btn = e.target.closest('.standings-tab');
       if(!btn) return;
-      document.querySelectorAll('.standings-tab').forEach(function(b){ b.classList.toggle('is-active', b === btn); });
-      var isConf = btn.dataset.view === 'conf';
-      document.getElementById('standingsTable').style.display = isConf ? 'none' : '';
-      document.getElementById('standingsConfWrap').style.display = isConf ? '' : 'none';
+      setStandingsView(btn.dataset.view);
     });
 
     function bracketTeamHtml(team, placeholder){
@@ -695,46 +700,34 @@
       return placeholder || '?';
     }
 
-    function bracketMatchHtml(m, isFinal){
+    function bracketRowHtml(m, isFinal){
       var decided = m.winner === 'A' || m.winner === 'B';
-      var scoreHtml = decided ? ' <strong>' + m.scoreA.toFixed(1) + ' : ' + m.scoreB.toFixed(1) + '</strong>' : '';
-      return '<div class="bracket-match' + (isFinal ? ' final' : '') + '">' +
-        '<span class="game-tag">' + m.label + '</span>' +
-        bracketTeamHtml(m.teamA, m.placeholderA) + ' <span class="vs">vs</span> ' + bracketTeamHtml(m.teamB, m.placeholderB) +
+      var scoreHtml = decided ? '<span class="bracket-score">' + m.scoreA.toFixed(1) + ':' + m.scoreB.toFixed(1) + '</span>' : '<span class="bracket-score"></span>';
+      return '<div class="bracket-row' + (isFinal ? ' final' : '') + '">' +
+        '<span class="bracket-stage">' + m.label + '</span>' +
+        '<span class="bracket-matchup">' + bracketTeamHtml(m.teamA, m.placeholderA) + ' <span class="vs">vs</span> ' + bracketTeamHtml(m.teamB, m.placeholderB) + '</span>' +
         scoreHtml +
       '</div>';
     }
 
     function renderBracket(){
-      var statusEl = document.getElementById('bracketStatus');
-      var noteEl = document.getElementById('bracketNote');
-      var wrapEl = document.getElementById('bracketWrap');
       fetch('data/playoff-bracket.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         var cb = wrap.champBracket, ob = wrap.consBracket;
-        wrapEl.innerHTML =
-          '<div>' +
-            '<div class="bracket-heading champ">Playoffs um den Titel (Platz 1–4)</div>' +
-            '<div class="bracket">' +
-              '<div><div class="bracket-round-label">Woche 16 · Halbfinale</div>' + bracketMatchHtml(cb.semiA, false) + bracketMatchHtml(cb.semiB, false) + '</div>' +
-              '<div><div class="bracket-round-label">Woche 17 · Finale</div>' + bracketMatchHtml(cb.final, true) + bracketMatchHtml(cb.thirdPlace, false) + '</div>' +
-            '</div>' +
-          '</div>' +
-          '<div>' +
-            '<div class="bracket-heading cons">Consolation Bracket um Platz 5–10</div>' +
-            '<div class="bracket cons">' +
-              '<div><div class="bracket-round-label">Woche 16 · Runde 1</div>' + bracketMatchHtml(ob.game1, false) + bracketMatchHtml(ob.game2, false) + bracketMatchHtml(ob.game3, false) + '</div>' +
-              '<div><div class="bracket-round-label">Woche 17 · Platzierungsspiele</div>' + bracketMatchHtml(ob.place56, true) + bracketMatchHtml(ob.place78, false) + bracketMatchHtml(ob.place910, false) + '</div>' +
-            '</div>' +
-          '</div>';
-        wrapEl.style.display = '';
-        statusEl.textContent = '';
-        noteEl.textContent = wrap.throughWeek >= 15
+        document.getElementById('bracketChampTable').innerHTML =
+          bracketRowHtml(cb.semiA, false) + bracketRowHtml(cb.semiB, false) + bracketRowHtml(cb.final, true) + bracketRowHtml(cb.thirdPlace, false);
+        document.getElementById('bracketConsTable').innerHTML =
+          bracketRowHtml(ob.game1, false) + bracketRowHtml(ob.game2, false) + bracketRowHtml(ob.game3, false) +
+          bracketRowHtml(ob.place56, true) + bracketRowHtml(ob.place78, false) + bracketRowHtml(ob.place910, false);
+        bracketNoteText = wrap.throughWeek >= 15
           ? 'Seeds stehen fest (Liga-Phase abgeschlossen) – Resultate aktualisieren sich automatisch, sobald ESPN sie meldet.'
           : 'Seeds sind eine Projektion nach aktuellem Tabellenstand (Stand Woche ' + wrap.throughWeek + ') und werden bis Saisonende präziser. Sobald echte Playoff-Spiele stattfinden, ersetzen die echten Ergebnisse die Projektion automatisch.';
-        noteEl.style.display = '';
+        if(document.querySelector('.standings-tab[data-view="playoffs"]').classList.contains('is-active')){
+          document.getElementById('bracketNote').textContent = bracketNoteText;
+        }
       }).catch(function(){
-        statusEl.textContent = 'Bracket konnte nicht geladen werden.';
-        statusEl.classList.add('error');
+        document.getElementById('bracketChampTable').innerHTML = '';
+        document.getElementById('bracketConsTable').innerHTML = '';
+        bracketNoteText = 'Bracket konnte nicht geladen werden.';
       });
     }
 
