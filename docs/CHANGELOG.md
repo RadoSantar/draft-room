@@ -996,3 +996,16 @@ zwischen den Halbfinals, die 3 Consolation-Runde-1-Spiele mittig zu
 den 4 Platzierungsspielen.
 
 ## 2026-09-23 – `25a2c9d` Session-Log: Spalten-Zentrierung nachgetragen
+
+## 2026-09-23 – `0c74382` Power Rankings: Verlauf-Texte entfernt, SOS-Text gekürzt, Draft Recap einklappbar
+
+Auf Wunsch die beiden Erklär-Absätze über Power-Ranking-Verlauf und
+Strength-of-Schedule-Verlauf entfernt (Tabellen sind selbsterklärend),
+den SOS-Erklärtext gekürzt (Kernaussage bleibt: 15 Gegner, Conference-
+Gegner zählt doppelt, Rang 1 = schwierigster Spielplan, live).
+
+"📋 Draft Recap" pro Team ist jetzt ein <details>-Element (Muster wie
+"Komplettes Draft Board" direkt darunter) statt statisch sichtbarem
+Text - alle 10 starten eingeklappt, lassen sich einzeln unabhängig
+voneinander öffnen, damit man gezielt nur das gewünschte Team liest
+statt durch alle 10 Analysen scrollen zu müssen.
