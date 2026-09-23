@@ -29,6 +29,33 @@ Nutzer fragte, ob "Diese Saison im Rampenlicht" (aktuell 6 Kategorien) auf 10 er
 
 **Getestet:** `computeUnbeaten()`-Logik separat mit den echten Woche-3-Bilanzen durchgerechnet (Zurich City Ravens, TM06, Apukalypse Now je 2-0) – liefert jetzt korrekt alle 3 Teams. Live-Regeneration verifiziert (Text oben).
 
+## 3. Neue Startseite `start.html` – mobile Navigation optimiert
+
+**Nutzer-Wunsch:** "ich möchte gern die handy navigation weiter optimieren, wie wärs mit einer zusätzlichen neuen startseite zu oberst kommt der button wähle dein team dann kann man das design auswählen und danach Buttons die zu den Seiten führen also zuerst mein Team, Spielplan, power rankings, dann die grosse seite mit der übersicht und allem, hall of fame, draftboard"
+
+Auf Nachfrage (AskUserQuestion) bestätigt: `start.html` soll die **echte Homepage** werden – Logo-Klick auf allen Seiten und die installierte PWA (`manifest.json` `start_url`) führen künftig dorthin. `index.html` bleibt inhaltlich unverändert, wird aber zu einem Navigationsziel statt impliziter Startseite.
+
+**Umsetzung (Plan-Mode, Plan von Nutzer per ExitPlanMode bestätigt):**
+- Neue Datei `start.html`: schlanker Header (nur Branding, kein Link, kein Hamburger-Menü – die Seite IST ja schon die Navigation), drei Abschnitte im `<main>`:
+  1. **Wähle dein Team** – grosses `<select id="syncTeamSelect">` + Status, verdrahtet mit `initSyncBar()`.
+  2. **Design auswählen** – bestehendes `.theme-picker`-Markup (Ball/Logo-Preview + Select), grösser gestylt, verdrahtet mit `initThemePicker()`.
+  3. **Navigation** – 6 grosse, einspaltige Karten in exakt der gewünschten Reihenfolge: Mein Team → Spielplan → Power Rankings → Übersicht (index.html) → Hall of Fame → Draft Board, Taglines aus bestehenden Seitenbeschreibungen übernommen.
+- `my-team.html`, `draft-board.html`, `schedule.html`, `power-rankings.html`, `hall-of-fame.html`: Logo-Link (`title-group`) zeigt jetzt auf `start.html` statt `index.html`.
+- `index.html`: Logo (`title-group`) war bisher kein Link (index.html war ja "Home") – jetzt `<a href="start.html">`.
+- `manifest.json`: `start_url` von `./index.html` auf `./start.html` geändert.
+- Bewusst unverändert: die "← Übersicht"-Links in jeder Tool-Seite (zeigen auf spezifische Guide-Anker wie `index.html#draft-tipps`), sowie `index.html`s eigener Inhalt.
+
+**Getestet (Playwright, lokaler `http.server`, Mobile-Breite 420px):**
+- Team-Sync-Select zeigt Platzhalter + alle 10 Liga-Teams.
+- Theme-Select zeigt 32 NFL-Teams + Platzhalter; Auswahl setzt `data-team-theme` und ändert sichtbar Header-Hintergrundfarbe (getestet mit Carolina Panthers).
+- Alle 6 Nav-Karten haben exakt die richtigen `href`s in der richtigen Reihenfolge.
+- Logo-Links auf allen 6 betroffenen Seiten zeigen jetzt korrekt auf `start.html`.
+- `manifest.json` parst korrekt mit neuem `start_url`.
+- "← Übersicht"-Deep-Links (z.B. `index.html#draft-tipps`) unverändert bestätigt.
+- Mobile-Screenshot visuell geprüft: keine Überlappung, gute Tap-Ziele, sauberes einspaltiges Layout.
+
+Commit `489ee33`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
@@ -37,4 +64,4 @@ Nutzer fragte, ob "Diese Saison im Rampenlicht" (aktuell 6 Kategorien) auf 10 er
 - Hall of Fame: sobald die 2026er-Saison abgeschlossen ist, `data/league-history.json` von Hand ergänzen.
 
 ## Nächster Schritt
-Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten.
+Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Neue Startseite `start.html` ist live – bei Gelegenheit Nutzer-Feedback dazu einholen (z.B. ob Reihenfolge/Wortlaut der Karten passt).
