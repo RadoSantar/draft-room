@@ -1012,7 +1012,7 @@ Zeile 1: Eine einzige, knackige Schlagzeile (maximal 8 Wörter, reisserisch, OHN
 Dann eine Leerzeile.
 Danach 4-6 Sätze Fliesstext: wähle 3-4 der interessantesten Storylines aus (grösstes Prestige-Duell laut Papierform, gefährlichste Serie auf dem Spiel, spannendste Playoff-Implikation, pikanteste Revanche) und verwebe sie zu EINEM Erzählbogen mit echten Übergängen. Nenne nicht jedes Spiel der Woche - nur die Highlights.
 
-WICHTIG: Das hier ist eine VORSCHAU, kein Rückblick - schreib im Konjunktiv/Futur ("könnte", "droht", "steht auf dem Spiel", "muss beweisen"), erfinde KEINE Ergebnisse oder Spielverläufe, die noch nicht stattgefunden haben (die Spiele sind noch nicht gespielt!). Nutze nur die gelieferten Fakten (Bilanzen, Serien, Tabellenstände, frühere Duelle, Papierform-Projektion).
+WICHTIG: Das hier ist eine VORSCHAU, kein Rückblick - schreib im Konjunktiv/Futur ("könnte", "droht", "steht auf dem Spiel", "muss beweisen"), erfinde KEINE Ergebnisse oder Spielverläufe, die noch nicht stattgefunden haben (die Spiele sind noch nicht gespielt!). Nutze nur die gelieferten Fakten (Bilanzen, Serien, Tabellenstände, frühere Duelle, Papierform-Projektion). Behaupte NIE eine Alleinstellung ("einziges Team mit...", "als Einzige(r)...") ausser sie steht explizit als Fakt da - die Bilanzen ALLER Spiele der Woche stehen im Prompt, prüfe sie gegeneinander, bevor du eine Exklusivität formulierst.
 
 Stil: frech, Vorfreude/Spannung statt Schadenfreude (die kommt erst nach den Spielen), Sport-Boulevard-Vokabular ("Showdown", "Prüfstein", "Härtetest", "steht auf dem Spiel"). Vermeide technische Begriffe wie "Snapshot" oder "Projektion" im engeren Sinne - sprich von "Papierform" oder "Vorschau-Stärke". Schreib NUR Schlagzeile + Leerzeile + Fliesstext, keine weitere Einleitung, keine Überschrift wie "Vorschau:".`;
 
@@ -1077,7 +1077,27 @@ function collectPreviewFacts(game) {
 function buildWeekPreviewPrompt(games) {
   const week = games[0].week;
   const categoryUsage = {};
-  let context = `Woche ${week}: Hier sind alle ${games.length} Spiele der KOMMENDEN Woche (noch nicht gespielt) mit Bilanz und Kontext. Schreibe daraus EINE Wochen-Vorschau:\n\n`;
+
+  // Ungeschlagen-Bilanz VORAB über alle Spiele der Woche berechnen und explizit mitgeben, statt
+  // Claude die 5 einzelnen Bilanz-Angaben selbst gegeneinander abgleichen zu lassen - Live-Fehler
+  // beobachtet (22.9.2026, Woche-3-Vorschau): Text behauptete "Zurich City Ravens als einziges Team
+  // ungeschlagen", dabei waren TM06 und Apukalypse Now ebenfalls noch ohne Niederlage - beide sogar
+  // an anderer Stelle im selben Text korrekt erwähnt. Ein bereits fertig berechneter Fakt verhindert
+  // diesen Cross-Team-Zählfehler zuverlässiger als nur eine Prompt-Anweisung.
+  const allTeamRecords = [];
+  games.forEach((g) => {
+    if (g.homeRecord) allTeamRecords.push({ name: g.homeName, ...g.homeRecord });
+    if (g.awayRecord) allTeamRecords.push({ name: g.awayName, ...g.awayRecord });
+  });
+  const unbeaten = allTeamRecords.filter((t) => t.losses === 0 && (t.ties || 0) === 0 && t.wins > 0);
+
+  let context = `Woche ${week}: Hier sind alle ${games.length} Spiele der KOMMENDEN Woche (noch nicht gespielt) mit Bilanz und Kontext.\n`;
+  if (unbeaten.length === 1) {
+    context += `Fakt: ${unbeaten[0].name} ist aktuell das EINZIGE noch ungeschlagene Team der Liga - das darfst du so hervorheben.\n`;
+  } else if (unbeaten.length > 1) {
+    context += `Fakt: Aktuell sind ${unbeaten.length} Teams noch ungeschlagen: ${unbeaten.map((t) => t.name).join(', ')}. KEINES davon ist "das einzige ungeschlagene Team" - behaupte das nicht, auch nicht implizit.\n`;
+  }
+  context += `Schreibe daraus EINE Wochen-Vorschau:\n\n`;
   games.forEach((game, i) => {
     const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
     const homeRecord = game.homeRecord ? `${game.homeRecord.wins}-${game.homeRecord.losses}${game.homeRecord.ties ? '-' + game.homeRecord.ties : ''}` : '0-0';
