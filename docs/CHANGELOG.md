@@ -926,3 +926,39 @@ die Team-Zeilen (dunkler Turf-Hintergrund, IBM-Plex-Mono-Label, Amber-
 Score/Seed-Akzente) statt der vorherigen hellen Karten-Komponente.
 
 ## 2026-09-23 – `426d3da` Session-Log: Playoffs-Tab-Korrektur nachgetragen
+
+## 2026-09-23 – `5a56985` Playoff-Qualifikation korrigiert: Top 2 je Conference statt Sieger+Wildcards
+
+Nutzer-Feedback: Die Playoffs bestehen aus den Top 2 JEDER Conference
+(je 2 aus NFC und AFC), nicht aus den 2 Conference-Siegern plus 2
+liga-weiten Wildcards nach Gesamt-Bilanz. Unter der alten (falschen)
+Regel hätte eine überdurchschnittlich starke Conference ihrer eigenen
+Nummer 2 den Platz wegschnappen können - das entspricht nicht dem
+tatsächlichen Format dieser Liga.
+
+computePlayoffPicture() in sync-espn.mjs korrigiert: qualifiziert sind
+jetzt schlicht alle Teams mit Conference-Rang <=2, geseedet 1-4 nach
+Gesamt-Bilanz über beide Conferences. Betrifft sowohl das neue
+Playoff-/Consolation-Bracket (data/playoff-bracket.json) als auch die
+bestehende Playoff-Chancen-Berechnung (data/playoff-picture.json,
+my-team.html) und den Playoff-Rennen-Kontext in generierten Recaps -
+alle nutzen dieselbe Funktion.
+
+qualTag-Logik ebenfalls angepasst: Badge basiert jetzt auf dem echten
+Conference-Rang (1="Conf.-Sieger", 2="Conf. #2") statt auf der
+Seed-Nummer, da Seeds 1-4 nicht mehr zwingend "2 Sieger + 2 Wildcards"
+in dieser Reihenfolge sind.
+
+Isoliert mit einem gezielten Testfall verifiziert: eine Conference mit
+durchweg starken Bilanzen (bis 13-2 auf Platz 3) gegen eine
+durchweg schwache Conference (bis 4-11 auf Platz 2) - die schwache
+Conference-Nummer-2 qualifiziert sich jetzt korrekt trotz schlechterer
+Bilanz, die starke Conference-Nummer-3 bleibt trotz besserer Bilanz
+draussen.
+
+Statisches Playoff-Format-Beispiel in index.html (FAQ) und ein
+beschreibender Kommentar in my-team.html ebenfalls korrigiert, damit
+Dokumentation und tatsächliches Verhalten wieder übereinstimmen -
+die Beispiel-Zahlen selbst blieben gültig (die "Wildcards" des alten
+Beispiels waren zufällig ohnehin die Conference-Zweiten), nur Regel-
+Erklärung und Quali-Tags wurden angepasst.
