@@ -1061,3 +1061,11 @@ expliziten scoringPeriodId-Parameter.
 ## 2026-09-23 – `f099450` Temp: Debug-Skript sucht die fehlende TRADE_PROPOSAL über alle Wochen
 
 ## 2026-09-23 – `e645118` Temp: Debug-Skript prüft Recent-Activity-Feed und Woche-0 als letzte Quellen
+
+## 2026-09-23 – `0104aca` Changelog: fehlende TRADE_PROPOSAL-Datenlücke und Fallback-Fix dokumentiert
+
+Session-Log um die dritte Transaktions-Iteration ergänzt: Root Cause
+(ESPN liefert die ursprüngliche Proposal für manche Trades nicht
+zurück), der Fallback-Fix, der Live-Verifikationsbefund (betrifft
+auch die Trades aus Woche 1 und 2), sowie die Antwort auf die Frage
+nach Wochen-Start/-Ende.
