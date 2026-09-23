@@ -908,3 +908,5 @@ die nie automatisiert angefasst werden dürfen), leitet index.html jetzt
 per kleinem Inline-Script beim ersten Aufruf pro Session ohne Anker auf
 start.html weiter. Anker-Links (#draft-tipps etc.) und bewusste
 Navigation von start.html aus zu index.html bleiben unangetastet.
+
+## 2026-09-23 – `38c724e` Session-Log: Root-URL/PWA-Redirect-Fix + Umbau-Plan nachgetragen
