@@ -948,3 +948,12 @@ Schlagschatten und ein "🏆 Fantasy Super Bowl"-Banner, um sich klar von
 den übrigen Matches abzuheben. Weiterhin dieselbe dunkle Turf/Chalk/
 Amber-Optik wie Standings und Spielplan-Zeilen, nur als Karten statt
 Tabellenzeilen.
+
+## 2026-09-23 – `52075bf` Playoffs-Tab: Projektions-Hinweistext entfernt
+
+Nutzer-Feedback: der erklärende Absatz unter dem Bracket
+("Seeds sind eine Projektion...") wird nicht gebraucht.
+
+bracketNote-Element und die zugehörige Logik komplett entfernt.
+Ladefehler zeigen sich jetzt direkt als Status-Zeile in der
+Playoffs-Spalte statt in einer separaten Notiz.
