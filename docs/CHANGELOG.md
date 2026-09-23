@@ -1090,3 +1090,5 @@ Intro-Absatz und die Hinweisbox unter "Power Ranking" gekürzt, Kernaussagen
 bleiben erhalten. Nebenbei bemerkt: der Transaktionen-Absatz behauptete noch
 "neueste Woche automatisch aufgeklappt" - stimmte seit der letzten Änderung
 (alle Wochen starten eingeklappt) nicht mehr, jetzt korrigiert.
+
+## 2026-09-23 – `8df7a5d` Changelog: Power-Rankings-Textkürzungen dokumentiert
