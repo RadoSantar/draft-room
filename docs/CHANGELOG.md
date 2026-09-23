@@ -1035,3 +1035,10 @@ Drei Anpassungen auf Nutzer-Feedback:
    selben Rotations-Muster wie die Wochen-Karten auf schedule.html.
 
 ## 2026-09-23 – `4491a3a` Session-Log: Power-Rankings-Einklapp-Iteration nachgetragen
+
+## 2026-09-23 – `7616999` Temp: Debug-Workflow für ESPNs mTransactions2-Response-Shape
+
+Nur zur Vorbereitung der Umstellung von Roster-Diffing auf ESPNs
+echtes Transaktions-Log (siehe Session-Log) - dumpt die rohe Antwort
+in die Action-Logs, schreibt/committet nichts. Wird nach der
+Umstellung wieder entfernt.
