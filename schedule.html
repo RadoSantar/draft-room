@@ -251,8 +251,10 @@
 
   /* Playoff / consolation bracket - Runden nebeneinander, ein Kärtchen pro Match, im selben
      dunklen Turf-Look wie Standings/Spielplan-Zeilen (.sched-game/.standings-row). */
-  .bracket-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin:10px 0 22px;}
+  .bracket-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:10px 0 22px;}
+  .bracket-col{display:flex;flex-direction:column;height:100%;}
   .bracket-col-label{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+  .bracket-col-cards{display:flex;flex-direction:column;justify-content:center;flex:1;}
   .bracket-card{background:var(--turf);border-radius:8px;overflow:hidden;margin-bottom:10px;}
   .bracket-card:last-child{margin-bottom:0;}
   .bracket-team-row{
@@ -748,8 +750,8 @@
 
     function bracketColsHtml(round1Label, round1Cards, round2Label, round2Cards){
       return '<div class="bracket-cols">' +
-        '<div><div class="bracket-col-label">' + round1Label + '</div>' + round1Cards.join('') + '</div>' +
-        '<div><div class="bracket-col-label">' + round2Label + '</div>' + round2Cards.join('') + '</div>' +
+        '<div class="bracket-col"><div class="bracket-col-label">' + round1Label + '</div><div class="bracket-col-cards">' + round1Cards.join('') + '</div></div>' +
+        '<div class="bracket-col"><div class="bracket-col-label">' + round2Label + '</div><div class="bracket-col-cards">' + round2Cards.join('') + '</div></div>' +
       '</div>';
     }
 
