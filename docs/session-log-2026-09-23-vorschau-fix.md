@@ -153,6 +153,18 @@ Commit `33d813c`, gepusht.
 
 Commit `27861a9`, gepusht.
 
+## 7. Power Rankings: Verlauf-Texte entfernt, SOS-Text gekürzt, Draft Recap einklappbar
+
+**Nutzer-Wunsch:** Auf `power-rankings.html` zwei Erklär-Absätze entfernen (Power-Ranking-Verlauf-Intro, SOS-Verlauf-Intro), den SOS-Erklärtext kürzen, und die "📋 Draft Recap"-Blöcke pro Team einklappbar machen (einzeln UND grundsätzlich alle eingeklappt beim Laden), damit man gezielt nur das gewünschte Team öffnet statt durch alle 10 Analysen zu scrollen.
+
+- Die beiden Absätze über "Power-Ranking-Verlauf" und "Strength-of-Schedule-Verlauf" entfernt – die Verlaufstabellen darunter sind selbsterklärend.
+- SOS-Erklärtext gekürzt von 3 Sätzen auf 1 prägnanten Satz, Kernaussagen bleiben erhalten (15 Gegner, Conference-Gegner zählt doppelt, Rang 1 = schwierigster Spielplan, aktualisiert sich live mit den Power Rankings).
+- "📋 Draft Recap" pro Team-Karte ist jetzt ein `<details>`-Element (`.recap-details`, gleiches `+`/`−`-Marker-Muster wie das bereits bestehende "Komplettes Draft Board (20 Picks)" direkt darunter), statt statisch sichtbarem Text. Alle 10 starten eingeklappt und lassen sich unabhängig voneinander öffnen.
+
+**Getestet:** Playwright – beide entfernten Texte nicht mehr im DOM, SOS-Absatz zeigt den gekürzten Text, 10 `.recap-details`-Elemente vorhanden, keines davon beim Laden `open`, Klick auf eines öffnet nur dieses eine und zeigt den korrekten Analyse-Text, keine Konsolen-Fehler. Screenshot einer Team-Karte visuell bestätigt: "Draft Recap" und "Komplettes Draft Board" erscheinen jetzt einheitlich als zwei eingeklappte Aufklapp-Zeilen am Kartenende.
+
+Commit `0c74382`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
