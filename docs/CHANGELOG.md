@@ -1061,24 +1061,3 @@ expliziten scoringPeriodId-Parameter.
 ## 2026-09-23 – `f099450` Temp: Debug-Skript sucht die fehlende TRADE_PROPOSAL über alle Wochen
 
 ## 2026-09-23 – `e645118` Temp: Debug-Skript prüft Recent-Activity-Feed und Woche-0 als letzte Quellen
-
-## 2026-09-23 – `43e4920` Fix: fehlende TRADE_PROPOSAL für abgeschlossenen Trade abfangen
-
-ESPN liefert für einen realen, rechtskräftigen Trade dieser Liga die
-ursprüngliche TRADE_PROPOSAL nicht zurück (geprüft über alle Wochen
-1-17 sowie den Recent-Activity-Feed - echte Datenlücke bei ESPN, kein
-Bug bei uns). Ohne Fallback wurde der Trade komplett aus den
-Transaktionen verworfen. Neu: bei fehlender Proposal werden die
-Teamnamen aus dem zugehörigen TRADE_ACCEPT + der eigenen teamId der
-TRADE_UPHOLD abgeleitet und der Trade trotzdem angezeigt, mit
-Hinweis, dass Spieler-Details bei ESPN nicht abrufbar sind.
-
-Zusätzlich: seenTradeGroup-Dedup jetzt vor der Verzweigung gesetzt,
-da reale Daten zeigen, dass ESPN mehrere TRADE_UPHOLD-Einträge mit
-derselben relatedTransactionId liefern kann.
-
-## 2026-09-23 – `b03c9f4` Aufräumen: temporäre Debug-Tooling für Transaktions-Recherche entfernt
-
-Debug-Workflow/-Skript diente nur der Reverse-Engineering-Recherche
-zu ESPNs mTransactions2-Log (Wochen-Iteration, fehlende
-TRADE_PROPOSAL) und wird nicht mehr gebraucht.
