@@ -930,3 +930,21 @@ Score/Seed-Akzente) statt der vorherigen hellen Karten-Komponente.
 ## 2026-09-23 – `0468279` Session-Log: Playoff-Qualifikationsregel-Korrektur nachgetragen
 
 ## 2026-09-23 – `3390ef7` Session-Log: Bracket-Kartendesign nachgetragen
+
+## 2026-09-23 – `15dba6e` Playoffs-Tab: Kartendesign mit zwei Runden nebeneinander, Finale hervorgehoben
+
+Nutzer-Feedback (mit ESPN-Screenshot als Vorbild): Bracket-Anordnung als
+zwei Runden-Spalten nebeneinander gefällt besser als die bisherigen
+dünnen Einzeiler, und das Finale soll als "Fantasy Super Bowl" optisch
+hervorstechen.
+
+Jedes Match ist jetzt eine eigene Karte mit den zwei Team-Zeilen
+übereinander (Seed-Badge, Name, Score sobald entschieden), Runde 1 und
+Runde 2/Finale als eigene Spalten nebeneinander (Grid, bricht auf
+schmalen Screens auf eine Spalte um). Noch unbekannte Runde-2-Gegner
+zeigen eine gedimmte "TBD"-Zeile mit dem Platzhaltertext (z.B. "Sieger
+Halbfinale A"). Die Finale-Karte bekommt einen dicken Amber-Rahmen,
+Schlagschatten und ein "🏆 Fantasy Super Bowl"-Banner, um sich klar von
+den übrigen Matches abzuheben. Weiterhin dieselbe dunkle Turf/Chalk/
+Amber-Optik wie Standings und Spielplan-Zeilen, nur als Karten statt
+Tabellenzeilen.
