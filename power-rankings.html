@@ -715,7 +715,7 @@
       return Object.assign({}, p, contentById[p.id] || {});
     }).sort(function(a,b){ return a.rank - b.rank; });
 
-    statusKickerEl.textContent = 'Nach dem Draft · Stand ' + fmtDate(powerWrap.lastUpdated);
+    statusKickerEl.textContent = 'Stand ' + fmtDate(powerWrap.lastUpdated);
     rankStatusEl.textContent = '';
 
     rankListEl.innerHTML = TEAMS.map(rankItemHtml).join('');
