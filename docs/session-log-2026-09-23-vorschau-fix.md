@@ -145,6 +145,10 @@ Commit `15dba6e`, gepusht.
 
 Commit `52075bf`, gepusht.
 
+**Fünfte Iteration nach Nutzer-Feedback (Spiel um Platz 3 verschoben):** "packe die Halbfinal-Verlierer zum Consolation Bracket, so dass der Super Bowl alleine steht - sieht schöner aus und wirkt wichtiger dann." Das "Spiel um Platz 3" wandert aus der Finale-Spalte in die Platzierungsspiele-Spalte des Consolation Brackets – die Finale-Karte steht dort jetzt allein mit entsprechend mehr Raum/Gewicht. Da diese Spalte dadurch zwei Pools mischt (Platz 3 aus dem Titel-Bracket, Platz 5-10 aus dem Consolation Bracket), haben alle vier Karten dort jetzt einen kleinen Label-Tag (`bracket-card-tag`, z.B. "Spiel um Platz 3", "Platz 5/6") für klare Zuordnung. Sektions-Überschrift zu "Consolation Bracket (Platz 3, 5–10)" präzisiert. Playwright bestätigt: Finale-Spalte hat genau 1 Karte, Consolation-Spalte hat 7 (3 Runde 1 + 4 mit Tag), Tags korrekt beschriftet, keine Fehler.
+
+Commit `33d813c`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
