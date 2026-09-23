@@ -1053,3 +1053,5 @@ expliziten scoringPeriodId-Parameter.
 ## 2026-09-23 – `e2e7772` Temp: Debug-Skript auf scoringPeriodId=3 fokussiert (kumulative Historie)
 
 ## 2026-09-23 – `dcee9d3` Temp: Debug-Skript vergleicht scoringPeriodId 1/2/3, Detail für Woche 2
+
+## 2026-09-23 – `0954ddc` Session-Log: Transaktions-Log-Umstellung nachgetragen
