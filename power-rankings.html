@@ -109,17 +109,26 @@
   .tx-week{margin:10px 0;}
   .tx-week summary{
     cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
     font-family:'IBM Plex Mono', monospace;
     font-size:12px;
+    font-weight:600;
     text-transform:uppercase;
-    letter-spacing:.05em;
+    letter-spacing:.04em;
     color:var(--turf);
-    padding:8px 0;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:8px 16px;
     list-style:none;
   }
+  .tx-week summary:hover{border-color:var(--amber);}
   .tx-week summary::-webkit-details-marker{display:none;}
   .tx-week summary::before{content:'+ ';color:var(--amber);font-weight:700;}
   .tx-week[open] summary::before{content:'\2212 ';}
+  .tx-week[open] summary{border-color:var(--amber);}
   .tx-feed{display:flex;flex-direction:column;gap:10px;margin:10px 0 6px;}
   .tx-item{
     background:var(--card);
@@ -204,7 +213,12 @@
     margin:40px 0;
     scroll-margin-top:80px;
   }
+  .team-card > summary{cursor:pointer;list-style:none;}
+  .team-card > summary::-webkit-details-marker{display:none;}
   .team-card-head{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:4px;}
+  .team-card-arrow{margin-left:auto;font-size:16px;color:var(--amber);transition:transform .15s ease;flex:0 0 auto;}
+  .team-card[open] .team-card-arrow{transform:rotate(90deg);}
+  .team-card-body{margin-top:14px;}
   .team-rank-badge{
     font-family:'Anton', sans-serif;
     font-size:32px;
@@ -442,7 +456,6 @@
   <div class="kicker" id="statusKicker">Wird geladen…</div>
   <h1>Power Rankings</h1>
   <p class="copy">Komplette Analyse aller 10 Teams: Draft Board, Stärken und Schwächen je Position, alle Transaktionen seit dem Draft sowie ein Ausblick auf die Saison. Die Power Rankings basieren auf der bestmöglichen Start-Aufstellung jedes Teams (1 QB, 2 RB, 2 WR, 2 Flex, 2 TE, 1 K, 1 DEF), berechnet mit ESPNs Saison-Projektionen nach unserem eigenen Scoring – derselben Näherung, die auch der <a href="index.html#rechner">Punkterechner</a> und das <a href="draft-board.html">Draft Board</a> verwenden. Diese Seite aktualisiert sich automatisch etwa einmal pro Woche mit aktuellen Kadern und Transaktionen.</p>
-  <p class="copy">Den kompletten offiziellen Draft Recap gibt's dazu direkt bei ESPN: <a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN ansehen →</a></p>
 
   <div class="note-box">
     <span class="flag">Hinweis</span>
@@ -478,6 +491,7 @@
   <h2 class="section-head">Strength-of-Schedule-Verlauf</h2>
   <div class="history-scroll"><div id="sosHistoryTable"></div></div>
 
+  <p class="copy">Den kompletten offiziellen Draft Recap gibt's dazu direkt bei ESPN: <a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN ansehen →</a></p>
   <div id="teamCards"></div>
 
   <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, Transaktionen) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a> (fehlende wochenbasierte Boni, K-Distanz-Staffelung vereinfacht, DST ohne INT/Fumble/TD-Boni). Automatische Aktualisierung läuft etwa wöchentlich per GitHub Actions; die geschriebenen Analysen/Ausblicke werden unabhängig davon von Hand gepflegt.</p>
@@ -721,28 +735,31 @@
     document.getElementById('sosStatus').textContent = '';
 
     teamCardsEl.innerHTML = TEAMS.map(function(t){
-      return '<section class="team-card" id="team-' + t.id + '">' +
-        '<div class="team-card-head">' +
+      return '<details class="team-card" id="team-' + t.id + '">' +
+        '<summary><div class="team-card-head">' +
           '<span class="team-rank-badge mono">#' + t.rank + '</span>' +
           '<h2>' + t.name + '</h2>' +
           rankMoveHtml(t) +
+          '<span class="team-card-arrow">▸</span>' +
+        '</div></summary>' +
+        '<div class="team-card-body">' +
+          '<p class="team-tagline">' + (t.tagline || '') + '</p>' +
+          '<div class="team-links"><a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN →</a></div>' +
+          '<div class="team-stats">' +
+            '<div class="team-stat"><div class="team-stat-label mono">Start-Projektion</div><div class="team-stat-value amber">' + fmt(t.starterTotal) + '</div></div>' +
+            '<div class="team-stat"><div class="team-stat-label mono">Bench-Projektion</div><div class="team-stat-value">' + fmt(t.benchTotal) + '</div></div>' +
+            '<div class="team-stat"><div class="team-stat-label mono">Gesamt</div><div class="team-stat-value">' + fmt(t.starterTotal + t.benchTotal) + '</div></div>' +
+            '<div class="team-stat"><div class="team-stat-label mono">SOS (Ø Gegner)</div><div class="team-stat-value">' + fmt(t.sos) + '</div></div>' +
+          '</div>' +
+          posTableHtml(t) +
+          (t.hype ? '<div class="hype-box"><div class="hype-label mono">⚡ Saison-Ausblick</div><div class="hype-text">' + t.hype + '</div></div>' : '') +
+          (t.p3 ? '<details class="trade-update"' + ' open><summary>Update</summary><p>' + t.p3 + '</p></details>' : '') +
+          '<details class="recap-details"><summary class="mono">📋 Draft Recap</summary>' +
+            '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
+          '</details>' +
+          '<details class="board-details"><summary>Komplettes Draft Board (20 Picks)</summary>' + boardTableHtml(t) + '</details>' +
         '</div>' +
-        '<p class="team-tagline">' + (t.tagline || '') + '</p>' +
-        '<div class="team-links"><a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN →</a></div>' +
-        '<div class="team-stats">' +
-          '<div class="team-stat"><div class="team-stat-label mono">Start-Projektion</div><div class="team-stat-value amber">' + fmt(t.starterTotal) + '</div></div>' +
-          '<div class="team-stat"><div class="team-stat-label mono">Bench-Projektion</div><div class="team-stat-value">' + fmt(t.benchTotal) + '</div></div>' +
-          '<div class="team-stat"><div class="team-stat-label mono">Gesamt</div><div class="team-stat-value">' + fmt(t.starterTotal + t.benchTotal) + '</div></div>' +
-          '<div class="team-stat"><div class="team-stat-label mono">SOS (Ø Gegner)</div><div class="team-stat-value">' + fmt(t.sos) + '</div></div>' +
-        '</div>' +
-        posTableHtml(t) +
-        (t.hype ? '<div class="hype-box"><div class="hype-label mono">⚡ Saison-Ausblick</div><div class="hype-text">' + t.hype + '</div></div>' : '') +
-        (t.p3 ? '<details class="trade-update"' + ' open><summary>Update</summary><p>' + t.p3 + '</p></details>' : '') +
-        '<details class="recap-details"><summary class="mono">📋 Draft Recap</summary>' +
-          '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
-        '</details>' +
-        '<details class="board-details"><summary>Komplettes Draft Board (20 Picks)</summary>' + boardTableHtml(t) + '</details>' +
-      '</section>';
+      '</details>';
     }).join('');
 
     // Transactions grouped by week, newest open; innerhalb einer Woche nach Datum sortiert (neuste
@@ -760,7 +777,7 @@
     var byWeek = {};
     tx.forEach(function(t){ (byWeek[t.week] = byWeek[t.week] || []).push(t); });
     var weekNums = Object.keys(byWeek).map(Number).sort(function(a,b){ return b - a; });
-    txWeeksEl.innerHTML = weekNums.map(function(wk, idx){
+    txWeeksEl.innerHTML = weekNums.map(function(wk){
       var items = byWeek[wk].map(function(t){
         return '<div class="tx-item">' +
           '<div class="tx-date mono">' + t.date + '</div>' +
@@ -772,7 +789,7 @@
           '</div>' +
         '</div>';
       }).join('');
-      return '<details class="tx-week"' + (idx === 0 ? ' open' : '') + '><summary>Woche ' + wk + ' (' + byWeek[wk].length + ')</summary><div class="tx-feed">' + items + '</div></details>';
+      return '<details class="tx-week"><summary>Woche ' + wk + ' (' + byWeek[wk].length + ')</summary><div class="tx-feed">' + items + '</div></details>';
     }).join('');
 
     renderHistory(historyWrap, TEAMS);
