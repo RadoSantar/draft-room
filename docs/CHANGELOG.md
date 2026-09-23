@@ -878,33 +878,3 @@ Mobile-Screenshot (420px) bestätigt die gewünschte Grösse/Prominenz.
 ## 2026-09-22 – `3a0e07b` Session-Log: Champion-Hero-Kachel nachgetragen
 
 Backup-Eintrag für Commit d7e2b42.
-
-## 2026-09-23 – `637cd8e` Vorschau: Explizite Ungeschlagen-Bilanz verhindert falsche Alleinstellungs-Behauptung
-
-Nutzer-Feedback: die Woche-3-Vorschau behauptete "Zurich City Ravens als
-einziges Team mit blütenweisser Weste", tatsächlich waren TM06 und
-Apukalypse Now ebenfalls noch ungeschlagen (beide 2-0) - TM06 wurde im
-selben Text sogar korrekt als "ungeschlagene AFC-Spitzenreiterin" erwähnt,
-ein interner Widerspruch.
-
-Root Cause: buildWeekPreviewPrompt() lieferte pro Spiel nur die Bilanz der
-beiden beteiligten Teams (homeRecord/awayRecord) - über alle 5 Spielzeilen
-verteilt waren zwar alle 10 Bilanzen im Prompt enthalten, aber Claude
-musste sie selbst gegeneinander abgleichen, um eine Exklusivitäts-Aussage
-("einziges Team") korrekt zu treffen, und hat sich dabei verzählt.
-
-Fix: buildWeekPreviewPrompt() berechnet die Ungeschlagen-Bilanz jetzt VORAB
-über ALLE Spiele der Woche und gibt einen fertigen, unmissverständlichen
-Fakt vor ("X ist das einzige ungeschlagene Team" bzw. bei mehreren "Y
-Teams sind ungeschlagen: ... - KEINES davon ist das einzige"). Zusätzlich
-WEEK_PREVIEW_SYSTEM_PROMPT um eine generelle Anweisung ergänzt, nie eine
-unbelegte Alleinstellung zu behaupten, als zweite Absicherung für andere
-Kategorien (Serien etc.), die denselben Cross-Team-Zählfehler treffen
-könnten.
-
-data/week-previews.json: Woche-3-Eintrag gelöscht, damit der nächste
-Sync-Lauf ihn unter dem korrigierten Prompt neu generiert.
-
-Verifiziert: computeUnbeaten()-Logik separat mit den echten Woche-3-Daten
-durchgerechnet (Zurich City Ravens, TM06, Apukalypse Now je 2-0) - liefert
-jetzt korrekt alle 3 Teams statt fälschlich nur eines.
