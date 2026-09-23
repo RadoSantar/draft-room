@@ -228,6 +228,10 @@ Commits `5568c28` (Fix inkl. TRADE_OVERRIDES), `42ab014` (Aufräumen Debug-Tooli
 
 Commit `90e2018`, gepusht.
 
+**Zweite Iteration ("Nach dem Draft"-Präfix entfernt):** Nutzer meldete direkt danach, dass der Status-Kicker oben auf der Seite noch "Nach dem Draft · Stand 23.09.2026 22:48" zeigt – das Präfix wird nicht mehr benötigt, "Stand ..." allein reicht. War statisch hinterlegt (`statusKickerEl.textContent = 'Nach dem Draft · Stand ' + ...`) und stimmte längst nicht mehr, da die Liga bereits bei Woche 3 ist. Präfix entfernt, zeigt jetzt nur noch "Stand <Datum>".
+
+Commit `68e9261`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
