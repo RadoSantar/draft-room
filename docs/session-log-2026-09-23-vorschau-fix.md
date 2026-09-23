@@ -218,6 +218,16 @@ Commit `43e4920` (Fallback-Fix), `b03c9f4` (Aufräumen Debug-Tooling), plus Sync
 
 Commits `5568c28` (Fix inkl. TRADE_OVERRIDES), `42ab014` (Aufräumen Debug-Tooling), plus Sync-Lauf `3048981`, gepusht.
 
+## 9. Power Rankings: Intro- und Hinweistext weiter gekürzt
+
+**Nutzer-Wunsch:** Zwei weitere Texte auf `power-rankings.html` kürzen: den Intro-Absatz direkt unter der Überschrift und die "Hinweis"-Box darunter.
+
+- Intro-Absatz: von "Komplette Analyse aller 10 Teams: ... Diese Seite aktualisiert sich automatisch etwa einmal pro Woche mit aktuellen Kadern und Transaktionen." auf eine kürzere Fassung gekürzt, Kernaussagen (10-Teams-Analyse, Berechnungsgrundlage der Power Rankings, Bezug zu Punkterechner/Draft Board, wöchentliches Auto-Update) bleiben erhalten, beide Links (`#rechner`, `draft-board.html`) blieben unangetastet.
+- Hinweisbox: von 4 Sätzen auf eine kompaktere Fassung gekürzt, alle 4 Kernaussagen (Näherung/keine Vorhersage, fehlende Wochenboni, ADP-Bezug bei Value/Reach, überspitzte Saisonausblicke) bleiben erhalten.
+- **Nebenbefund:** Der Transaktionen-Absatz behauptete noch "neueste Woche automatisch aufgeklappt" – das stimmte seit der Umstellung auf standardmässig eingeklappte Wochen (Punkt 7, zweite Iteration) nicht mehr. Beiläufig korrigiert auf "zum Öffnen antippen", da direkt im selben Bereich aufgefallen.
+
+Commit `90e2018`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
