@@ -910,23 +910,3 @@ start.html weiter. Anker-Links (#draft-tipps etc.) und bewusste
 Navigation von start.html aus zu index.html bleiben unangetastet.
 
 ## 2026-09-23 – `38c724e` Session-Log: Root-URL/PWA-Redirect-Fix + Umbau-Plan nachgetragen
-
-## 2026-09-23 – `8290e37` Spielplan: Info-Texte entfernt, Playoff- & Consolation-Bracket ergänzt
-
-Auf Wunsch drei als nicht zwingend nötig empfundene Erklär-Absätze
-oberhalb/unterhalb des Spielplans entfernt.
-
-Neu: Button "Playoffs" bei den Standings springt zu einem neuen
-Playoffs/Consolation-Bracket-Abschnitt. Die Seeds (1-4 Playoffs, 5-10
-Consolation) werden serverseitig im wöchentlichen Sync berechnet
-(buildPlayoffBracket() in sync-espn.mjs, wiederverwendet dieselbe
-Conference-Sieger+Wildcard-Logik wie computePlayoffPicture()) und nach
-data/playoff-bracket.json geschrieben - läuft automatisch mit
-standings.json mit. Vor Woche 16 ist das eine reine Projektion nach
-aktuellem Tabellenstand; sobald ESPNs Scoreboard ein echtes Spiel
-zwischen den erwarteten Teams liefert, übernimmt der Bracket Score und
-Sieger direkt von dort statt sie zu schätzen. Runde-2-Gegner (Finale,
-Spiel um Platz 3, Platzierungsspiele) bleiben Platzhalter ("Sieger
-Halbfinale A" etc.), bis Runde 1 ein echtes Ergebnis hat - exakt das
-Format, das bereits als statisches Beispiel in index.html erklärt wird.
-CSS-Bracket-Komponente von dort für die echte, live Version übernommen.
