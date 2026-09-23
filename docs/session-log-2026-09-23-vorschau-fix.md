@@ -165,6 +165,12 @@ Commit `27861a9`, gepusht.
 
 Commit `0c74382`, gepusht.
 
+**Zweite Iteration (ESPN-Satz verschoben, Transaktionen & Team-Karten einklappbar):** Drei weitere Anpassungen im direkten Anschluss: (a) "dieser Satz gehört auch zum Draft Recap und nicht nach oben" – der Satz "Den kompletten offiziellen Draft Recap gibt's dazu direkt bei ESPN..." stand im allgemeinen Seiten-Intro oben, gehört inhaltlich aber zum Draft-Recap-Bereich – jetzt direkt vor der Team-Karten-Liste platziert. (b) "transaktionen sollen auch standardmässig eingeklappt sein... soll es nach touch buttons und nicht nach link aussehen" – `.tx-week` startet jetzt immer eingeklappt (bisher war die neuste Woche automatisch offen) und die Summary sieht jetzt wie ein Pill-Button aus (Kartenhintergrund, Rahmen, abgerundet) statt wie ein Text-Link mit "+"-Präfix. (c) "und die teams sollen auch eingeklappt sein" – die kompletten Team-Karten (bisher statische, immer voll sichtbare `<section>`) sind jetzt selbst `<details>`-Elemente: Rang-Badge, Name und Rang-Bewegung bleiben als Summary sichtbar, der ganze Rest (Tagline, Stats, Positions-Tabelle, Saison-Ausblick, Draft Recap, Draft Board) ist eingeklappt und öffnet sich erst auf Klick, mit demselben rotierenden Pfeil-Muster wie die Wochen-Karten auf `schedule.html`.
+
+**Getestet:** Playwright – Satz steht jetzt als direktes Geschwister-Element unmittelbar vor `#teamCards`; beide Transaktions-Wochen starten eingeklappt, Summary-Hintergrund/Radius bestätigen den Button-Look; alle 10 Team-Karten starten eingeklappt, Klick öffnet gezielt nur die eine Karte und zeigt danach Stats/Tabelle korrekt an; keine Konsolen-Fehler. Screenshots bestätigen das Ergebnis visuell.
+
+Commit `75fecba`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
