@@ -288,6 +288,15 @@
   }
   .bracket-card.is-final .bracket-team-row .name{font-size:15.5px;}
   .bracket-card.is-final .bracket-team-row{padding:11px 12px;}
+  .bracket-card-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:9.5px;
+    font-weight:600;
+    letter-spacing:.05em;
+    text-transform:uppercase;
+    color:var(--hash);
+    padding:7px 12px 0;
+  }
   @media (max-width:720px){
     .bracket-cols{grid-template-columns:1fr;}
   }
@@ -360,7 +369,7 @@
   <div id="standingsBracketWrap" style="display:none">
     <div class="standings-div-label mono">Playoffs um den Titel (Platz 1–4)</div>
     <div id="bracketChampSection"></div>
-    <div class="standings-div-label mono">Consolation Bracket (Platz 5–10)</div>
+    <div class="standings-div-label mono">Consolation Bracket (Platz 3, 5–10)</div>
     <div id="bracketConsSection"></div>
   </div>
   <p class="note-text" id="standingsNote"></p>
@@ -725,13 +734,15 @@
       return '<div class="bracket-team-row is-tbd"><span class="name">' + (placeholder || 'TBD') + '</span></div>';
     }
 
-    function bracketCardHtml(m, isFinal){
+    function bracketCardHtml(m, isFinal, showLabel){
       var decided = m.winner === 'A' || m.winner === 'B';
       var rowA = bracketTeamRowHtml(m.teamA, m.placeholderA, decided ? m.scoreA : null, m.winner === 'A');
       var rowB = bracketTeamRowHtml(m.teamB, m.placeholderB, decided ? m.scoreB : null, m.winner === 'B');
+      var tagHtml = isFinal
+        ? '<div class="bracket-final-tag">🏆 Fantasy Super Bowl</div>'
+        : (showLabel ? '<div class="bracket-card-tag">' + m.label + '</div>' : '');
       return '<div class="bracket-card' + (isFinal ? ' is-final' : '') + '">' +
-        (isFinal ? '<div class="bracket-final-tag">🏆 Fantasy Super Bowl</div>' : '') +
-        rowA + rowB +
+        tagHtml + rowA + rowB +
       '</div>';
     }
 
@@ -747,15 +758,15 @@
         var cb = wrap.champBracket, ob = wrap.consBracket;
         document.getElementById('bracketChampSection').innerHTML = bracketColsHtml(
           'Runde 1 · Woche 16',
-          [bracketCardHtml(cb.semiA, false), bracketCardHtml(cb.semiB, false)],
+          [bracketCardHtml(cb.semiA, false, false), bracketCardHtml(cb.semiB, false, false)],
           'Finale · Woche 17',
-          [bracketCardHtml(cb.final, true), bracketCardHtml(cb.thirdPlace, false)]
+          [bracketCardHtml(cb.final, true, false)]
         );
         document.getElementById('bracketConsSection').innerHTML = bracketColsHtml(
           'Runde 1 · Woche 16',
-          [bracketCardHtml(ob.game1, false), bracketCardHtml(ob.game2, false), bracketCardHtml(ob.game3, false)],
+          [bracketCardHtml(ob.game1, false, false), bracketCardHtml(ob.game2, false, false), bracketCardHtml(ob.game3, false, false)],
           'Platzierungsspiele · Woche 17',
-          [bracketCardHtml(ob.place56, false), bracketCardHtml(ob.place78, false), bracketCardHtml(ob.place910, false)]
+          [bracketCardHtml(cb.thirdPlace, false, true), bracketCardHtml(ob.place56, false, true), bracketCardHtml(ob.place78, false, true), bracketCardHtml(ob.place910, false, true)]
         );
       }).catch(function(){
         document.getElementById('bracketChampSection').innerHTML = '<p class="calc-status error">Bracket konnte nicht geladen werden.</p>';
