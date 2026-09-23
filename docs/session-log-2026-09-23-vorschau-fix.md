@@ -113,14 +113,17 @@ Nutzer-Wunsch: einen Plan für den "richtigen" Umbau ohne den Redirect-Workaroun
 - Vor Woche 16 sind alle Paarungen eine reine **Projektion** nach aktuellem Tabellenstand. Sobald `data/scoreboard.json` (das ESPNs `playoffTierType` schon länger passthrough-mässig mitführt) ein echtes Spiel zwischen den erwarteten zwei Teams liefert, übernimmt der Bracket Score und Sieger von dort statt sie zu schätzen.
 - Runde-2-Gegner (Finale, Spiel um Platz 3, die drei Platzierungsspiele) hängen vom Ausgang von Runde 1 ab und sind daher bis dahin nur Platzhalter-Text ("Sieger Halbfinale A" etc.) – exakt wie im ursprünglichen statischen Beispiel in `index.html`.
 - Sanity-Check ergänzt: `playoff-bracket.json` muss genau 10 Seeds haben.
-- Frontend: Button "🏆 Playoffs" bei der Standings-Überschrift springt per Anker zu einem neuen Abschnitt weiter unten; dort werden beide Brackets mit der (aus `index.html` übernommenen) Bracket-CSS-Komponente gerendert.
+- Frontend (1. Version): Button "🏆 Playoffs" bei der Standings-Überschrift sprang per Anker zu einem neuen Abschnitt weiter unten; dort wurden beide Brackets mit der (aus `index.html` übernommenen) hellen Bracket-CSS-Komponente gerendert.
 
 **Getestet:**
 - Bracket-Pairing-Logik zuerst isoliert mit Mock-Daten geprüft (Szenario "keine echten Spiele" → korrekte Seed-Paarungen + Platzhalter; Szenario "Runde 1 entschieden" → Runde 2 löst korrekt auf, inkl. dem etwas ungewöhnlichen "Platz 7/8 = Sieger Spiel 3 vs. Verlierer Spiel 3"-Rematch) – alle Erwartungen exakt getroffen.
-- Playwright gegen `schedule.html` mit gemockten Projektions- und Real-Ergebnis-Szenarien – Button, Bracket-Sichtbarkeit, alle 10 Matches und die Projektions-/Final-Hinweistexte wie erwartet.
-- Danach echten Sync über `espn-sync.yml` manuell angestossen (Run #30, erfolgreich) und `data/playoff-bracket.json` live erzeugen lassen – 10 echte Seeds nach aktuellem Wochen-2-Stand, korrekte Paarungen. Live-Seite (mit echten Daten, kein Mock) per Playwright erneut geprüft: entfernte Texte sind weg, Bracket rendert fehlerfrei, keine Konsolen-Fehler.
+- Danach echten Sync über `espn-sync.yml` manuell angestossen (Run #30, erfolgreich) und `data/playoff-bracket.json` live erzeugen lassen – 10 echte Seeds nach aktuellem Wochen-2-Stand, korrekte Paarungen.
 
-Commit `8290e37` (Code), `7fcf9fc` (automatischer Sync-Lauf, erzeugt `playoff-bracket.json`), gepusht.
+Commit `8290e37` (Code), `7fcf9fc` (automatischer Sync-Lauf, erzeugt `playoff-bracket.json`).
+
+**Korrektur nach Nutzer-Feedback:** Die separate Sektion mit Button/hellem Kartendesign war nicht gewünscht. Stattdessen: "Playoffs" wurde als **dritter Tab** direkt in die bestehende Standings-Tab-Leiste eingebaut (neben "Nach Conference"/"Liga") – Klick darauf blendet die Standings-Tabelle aus und zeigt beide Brackets an exakt derselben Stelle, im selben dunklen `.standings-table`-Look (Turf-Hintergrund, IBM-Plex-Mono, Amber-Akzente für Seed-Badges und Scores) statt der hellen Karten-Optik. Die alte Sektion (eigene Überschrift, Sprung-Button, `.bracket-match`/`.bracket-wrap`-CSS) wurde komplett entfernt. `setStandingsView(view)` steuert jetzt zentral, welche der drei Ansichten (Conference/Liga/Playoffs) sichtbar ist. Playwright erneut gegen die echten Live-Daten geprüft: alle drei Tab-Zustände schalten korrekt um, Bracket-Zeilen zeigen dieselben 10 Matches wie zuvor, keine Konsolen-Fehler, Screenshot bestätigt einheitliches Design.
+
+Commit `6b9a12c`, gepusht.
 
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
