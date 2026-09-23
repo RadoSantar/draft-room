@@ -101,6 +101,27 @@ Nutzer-Wunsch: einen Plan für den "richtigen" Umbau ohne den Redirect-Workaroun
 
 **Status:** Nicht umgesetzt – wartet auf Nutzer-Entscheid zur blockierenden Voraussetzung (Punkt 8) und allgemeines Go.
 
+## 6. Spielplan: Info-Texte entfernt, Playoff- & Consolation-Bracket ergänzt
+
+**Nutzer-Wunsch:** Drei als nicht zwingend nötig empfundene Erklär-Absätze auf `schedule.html` entfernen (oberhalb des Spielplans: der lange Absatz über Liga-Phase-Format; unterhalb: die zwei Absätze zu Doppel-Duellen/"Max. Conference-intern" und zum Playoff-Übergang). Ausserdem: bei den Standings einen Button für die Playoffs ergänzen, und ein Playoff-/Consolation-Bracket, das jede Woche zusammen mit den Standings automatisch aktualisiert wird.
+
+**Text-Entfernung:** Die drei genannten Absätze (`schedule.html`, ehemals Zeilen 302/332/333) entfernt, Rest der Seite unverändert.
+
+**Playoff-/Consolation-Bracket:** Das exakte Format war bereits als statisches Beispiel in `index.html`s "Playoff-Format"-Kapitel dokumentiert (2 Conference-Sieger + 2 Wildcards = Seeds 1-4 im Titel-Bracket, Seeds 5-10 im Consolation-Bracket, feste Paarungen für Woche 16/Runde 1 und Woche 17/Platzierungsspiele) – daraus liess sich eine präzise, deterministische Berechnung ableiten, keine Annahmen nötig.
+
+- Neue Funktion `buildPlayoffBracket()` in `scripts/sync-espn.mjs` (direkt nach `computePlayoffPicture()`, die schon Seeds 1-4 lieferte – Seeds 5-10 sind einfach die "outside"-Teams derselben Sortierung weitergezählt). Läuft im selben wöchentlichen Sync wie Standings, schreibt `data/playoff-bracket.json`.
+- Vor Woche 16 sind alle Paarungen eine reine **Projektion** nach aktuellem Tabellenstand. Sobald `data/scoreboard.json` (das ESPNs `playoffTierType` schon länger passthrough-mässig mitführt) ein echtes Spiel zwischen den erwarteten zwei Teams liefert, übernimmt der Bracket Score und Sieger von dort statt sie zu schätzen.
+- Runde-2-Gegner (Finale, Spiel um Platz 3, die drei Platzierungsspiele) hängen vom Ausgang von Runde 1 ab und sind daher bis dahin nur Platzhalter-Text ("Sieger Halbfinale A" etc.) – exakt wie im ursprünglichen statischen Beispiel in `index.html`.
+- Sanity-Check ergänzt: `playoff-bracket.json` muss genau 10 Seeds haben.
+- Frontend: Button "🏆 Playoffs" bei der Standings-Überschrift springt per Anker zu einem neuen Abschnitt weiter unten; dort werden beide Brackets mit der (aus `index.html` übernommenen) Bracket-CSS-Komponente gerendert.
+
+**Getestet:**
+- Bracket-Pairing-Logik zuerst isoliert mit Mock-Daten geprüft (Szenario "keine echten Spiele" → korrekte Seed-Paarungen + Platzhalter; Szenario "Runde 1 entschieden" → Runde 2 löst korrekt auf, inkl. dem etwas ungewöhnlichen "Platz 7/8 = Sieger Spiel 3 vs. Verlierer Spiel 3"-Rematch) – alle Erwartungen exakt getroffen.
+- Playwright gegen `schedule.html` mit gemockten Projektions- und Real-Ergebnis-Szenarien – Button, Bracket-Sichtbarkeit, alle 10 Matches und die Projektions-/Final-Hinweistexte wie erwartet.
+- Danach echten Sync über `espn-sync.yml` manuell angestossen (Run #30, erfolgreich) und `data/playoff-bracket.json` live erzeugen lassen – 10 echte Seeds nach aktuellem Wochen-2-Stand, korrekte Paarungen. Live-Seite (mit echten Daten, kein Mock) per Playwright erneut geprüft: entfernte Texte sind weg, Bracket rendert fehlerfrei, keine Konsolen-Fehler.
+
+Commit `8290e37` (Code), `7fcf9fc` (automatischer Sync-Lauf, erzeugt `playoff-bracket.json`), gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
@@ -110,4 +131,4 @@ Nutzer-Wunsch: einen Plan für den "richtigen" Umbau ohne den Redirect-Workaroun
 - Sauberer Umbau `start.html`↔`index.html` ohne Redirect-Workaround (siehe Punkt 5 oben) – wartet auf Nutzer-Zustimmung zu `data/team-content.json`-Link-Anpassung.
 
 ## Nächster Schritt
-Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Root-URL/PWA-Redirect-Fix ist live und getestet. Sauberer Umbau ohne Workaround (Punkt 5) bei Gelegenheit mit Nutzer besprechen – insbesondere die nötige Ausnahme für `data/team-content.json`.
+Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Root-URL/PWA-Redirect-Fix ist live und getestet. Sauberer Umbau ohne Workaround (Punkt 5) bei Gelegenheit mit Nutzer besprechen – insbesondere die nötige Ausnahme für `data/team-content.json`. Playoff-/Consolation-Bracket ist live (Punkt 6) – sobald die Liga-Phase weiter fortschreitet, beobachten, ob die Projektion sich wie erwartet stabilisiert, und ab Woche 16 kontrollieren, dass echte Spiele korrekt statt der Platzhalter erscheinen.
