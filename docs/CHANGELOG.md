@@ -893,3 +893,5 @@ schnellerer Einstieg auf dem Handy statt dem langen Guide als
 Startpunkt. Alle Seiten-Logos und die PWA (manifest.json start_url)
 verlinken jetzt hierher; index.html bleibt inhaltlich unverändert und
 wird zu einem der Navigationsziele.
+
+## 2026-09-23 – `7b90481` Session-Log: Neue Startseite start.html nachgetragen
