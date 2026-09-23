@@ -1644,6 +1644,156 @@ async function runSanityChecks() {
   console.log('Sanity-Check OK: alle Kern-Dateien plausibel.');
 }
 
+// Holt ESPNs komplettes Transaktions-Log über alle Wochen 1..throughWeek. scoringPeriodId filtert
+// exakt auf diese eine Periode (keine kumulative Historie über den Parameter hinweg) - siehe
+// Kommentar am Aufrufer in main() für den Hintergrund, warum das dem früheren Roster-Diffing
+// vorgezogen wurde. Enthält viel Rauschen (type ROSTER = reine Lineup-Änderungen, type DRAFT = die
+// Draft-Picks selbst), das buildTransactionsFromLog() unten herausfiltert.
+async function fetchAllTransactions(throughWeek) {
+  const all = [];
+  for (let wk = 1; wk <= throughWeek; wk++) {
+    const data = await fetchLeague(['mTransactions2'], wk);
+    all.push(...(data.transactions || []));
+  }
+  return all;
+}
+
+// Baut die Anzeige-Transaktionen (Format wie von power-rankings.html erwartet: id/week/date/type/
+// title/detail/note, TRADE zusätzlich mit legs) aus ESPNs rohem Transaktions-Log.
+//
+// ESPNs Trade-Ablauf verteilt sich über mehrere verknüpfte Einträge: TRADE_PROPOSAL (trägt die
+// eigentlichen Spieler-Items), optional TRADE_ACCEPT, und am Ende entweder TRADE_UPHOLD (Trade wurde
+// nach Ablauf der Review-Frist rechtskräftig - kommt einmal PRO beteiligtem Team, hier über
+// relatedTransactionId dedupliziert) oder TRADE_DECLINE. relatedTransactionId auf diesen Folge-
+// Einträgen zeigt auf die id des ursprünglichen TRADE_PROPOSAL, aus dem die Spieler-Items geholt
+// werden (kann in einer früheren Woche liegen als der Abschluss - deshalb wird die Zuordnungstabelle
+// aus ALLEN Wochen gebaut, nicht nur der aktuellen).
+//
+// Behält bewusst die alte id-Präfix-Konvention ('add-'/'drop-' für FREEAGENT) bei, weil
+// findWaiverKarmaFact()/findWaiverInstantSuccessFact() weiter oben im Skript genau danach filtern.
+function buildTransactionsFromLog(rawTx, teamNames, playerInfo) {
+  const proposalById = {};
+  rawTx.forEach((t) => { if (t.type === 'TRADE_PROPOSAL') proposalById[t.id] = t; });
+
+  const fmtDate = (t) => new Date(t.processDate || t.proposedDate).toLocaleDateString('de-CH');
+  const out = [];
+  const seenTradeGroup = new Set();
+
+  rawTx.forEach((t) => {
+    if (t.type === 'FREEAGENT' && t.status === 'EXECUTED') {
+      const adds = (t.items || []).filter((i) => i.type === 'ADD');
+      const drops = (t.items || []).filter((i) => i.type === 'DROP');
+      if (adds.length) {
+        adds.forEach((a) => {
+          const info = playerInfo(a.playerId);
+          const dropInfo = drops.length ? playerInfo(drops[0].playerId) : null;
+          out.push({
+            id: 'add-' + t.teamId + '-' + a.playerId + '-' + t.id,
+            week: t.scoringPeriodId, date: fmtDate(t), type: 'FREEAGENT',
+            teamId: t.teamId, playerId: a.playerId,
+            title: `${teamNames[t.teamId]} holt ${info.name}`,
+            detail: dropInfo
+              ? `${teamNames[t.teamId]} holt ${info.name} (${info.pos}, ${info.proTeam}) und wirft dafür ${dropInfo.name} ab.`
+              : `${teamNames[t.teamId]} holt ${info.name} (${info.pos}, ${info.proTeam}) dazu.`,
+            note: ''
+          });
+        });
+      } else {
+        drops.forEach((d) => {
+          const info = playerInfo(d.playerId);
+          out.push({
+            id: 'drop-' + t.teamId + '-' + d.playerId + '-' + t.id,
+            week: t.scoringPeriodId, date: fmtDate(t), type: 'FREEAGENT',
+            teamId: t.teamId, playerId: d.playerId,
+            title: `${teamNames[t.teamId]} wirft ${info.name} ab`,
+            detail: `${teamNames[t.teamId]} lässt ${info.name} (${info.pos}, ${info.proTeam}) frei.`,
+            note: ''
+          });
+        });
+      }
+      return;
+    }
+
+    if (t.type === 'WAIVER' && t.executionType === 'PROCESS') {
+      const adds = (t.items || []).filter((i) => i.type === 'ADD');
+      const drops = (t.items || []).filter((i) => i.type === 'DROP');
+      if (t.status === 'EXECUTED') {
+        adds.forEach((a) => {
+          const info = playerInfo(a.playerId);
+          const dropInfo = drops.length ? playerInfo(drops[0].playerId) : null;
+          out.push({
+            id: 'waiver-' + t.teamId + '-' + a.playerId + '-' + t.id,
+            week: t.scoringPeriodId, date: fmtDate(t), type: 'WAIVER',
+            teamId: t.teamId, playerId: a.playerId,
+            title: `Waiver Claim: ${teamNames[t.teamId]} sichert sich ${info.name}`,
+            detail: dropInfo
+              ? `${teamNames[t.teamId]} holt ${info.name} (${info.pos}, ${info.proTeam}) über den Waiver Wire und wirft dafür ${dropInfo.name} ab.`
+              : `${teamNames[t.teamId]} holt ${info.name} (${info.pos}, ${info.proTeam}) über den Waiver Wire dazu.`,
+            note: ''
+          });
+        });
+      } else if (typeof t.status === 'string' && t.status.startsWith('FAILED')) {
+        adds.forEach((a) => {
+          const info = playerInfo(a.playerId);
+          out.push({
+            id: 'waiverfail-' + t.teamId + '-' + a.playerId + '-' + t.id,
+            week: t.scoringPeriodId, date: fmtDate(t), type: 'WAIVER_FAILED',
+            teamId: t.teamId, playerId: a.playerId,
+            title: `Waiver Claim gescheitert: ${teamNames[t.teamId]}`,
+            detail: `${teamNames[t.teamId]}s Waiver-Claim auf ${info.name} (${info.pos}, ${info.proTeam}) ist nicht durchgekommen.`,
+            note: ''
+          });
+        });
+      }
+      // PENDING (noch nicht verarbeitet) / CANCELED (vom Manager selbst zurückgezogen) - kein
+      // Endergebnis, wird bewusst nicht angezeigt.
+      return;
+    }
+
+    if (t.type === 'TRADE_DECLINE') {
+      const proposal = proposalById[t.relatedTransactionId];
+      const teamIds = proposal ? [...new Set(proposal.items.map((i) => i.toTeamId))] : [];
+      out.push({
+        id: 'declined-' + t.id,
+        week: t.scoringPeriodId, date: fmtDate(t), type: 'DECLINED',
+        title: 'Trade-Angebot abgelehnt',
+        detail: teamIds.length
+          ? `Trade-Angebot zwischen ${teamIds.map((tid) => teamNames[tid]).join(' und ')} wurde abgelehnt.`
+          : 'Ein Trade-Angebot wurde abgelehnt.',
+        note: ''
+      });
+      return;
+    }
+
+    if (t.type === 'TRADE_UPHOLD') {
+      if (seenTradeGroup.has(t.relatedTransactionId)) return;
+      const proposal = proposalById[t.relatedTransactionId];
+      if (!proposal || !proposal.items?.length) return;
+      seenTradeGroup.add(t.relatedTransactionId);
+      const teamIds = [...new Set(proposal.items.map((i) => i.toTeamId))];
+      const legs = teamIds.map((tid) => ({
+        teamId: tid,
+        gainedIds: proposal.items.filter((i) => i.toTeamId === tid).map((i) => i.playerId),
+        lostIds: proposal.items.filter((i) => i.fromTeamId === tid).map((i) => i.playerId)
+      }));
+      const detail = teamIds.map((tid) => {
+        const gets = proposal.items.filter((i) => i.toTeamId === tid).map((i) => playerInfo(i.playerId).name).join(', ') || '(nichts)';
+        return `${teamNames[tid]} erhält ${gets}.`;
+      }).join(' ');
+      out.push({
+        id: 'trade-' + t.relatedTransactionId,
+        week: t.scoringPeriodId, date: fmtDate(t), type: 'TRADE',
+        title: `Trade: ${teamIds.map((tid) => teamNames[tid]).join(' ↔ ')}`,
+        detail, legs, note: ''
+      });
+    }
+    // ROSTER (Lineup-Änderungen), DRAFT (Draft-Picks), TRADE_PROPOSAL/TRADE_ACCEPT (Zwischenschritte,
+    // noch kein Endergebnis) - bewusst ignoriert.
+  });
+
+  return out;
+}
+
 async function main() {
   console.log('Lade Liga-Daten von ESPN…');
   const teamData = await fetchLeague(['mTeam', 'mRoster', 'mStandings']);
@@ -2071,98 +2221,20 @@ async function main() {
     }
   }
 
-  // ---- Transaktionen: Roster-Diff gegen letzten Snapshot (erkennt Trades/Adds/Drops generisch) ----
+  // ---- Transaktionen: ESPNs echtes Transaktions-Log (mTransactions2) ----
+  // Ersetzt das frühere Roster-Diffing gegen roster-snapshot.json. Der alte Ansatz stempelte jede
+  // neu entdeckte Änderung mit der AKTUELLEN Matchup-Periode zum Zeitpunkt des jeweiligen Sync-Laufs
+  // - bei nur wöchentlichem Cron konnte das eine ganze Kalenderwoche falsch beschriften (live
+  // beobachtet: Woche 2 fehlte komplett, alles landete unter Woche 3, weil zwischen dem letzten Lauf
+  // während Woche 2 und dem nächsten Lauf die Periode schon auf 3 gesprungen war). ESPNs echtes Log
+  // liefert Datum/Woche direkt vom Server. WICHTIG: scoringPeriodId filtert exakt auf genau diese
+  // eine Periode (keine kumulative Historie) - jede Woche 1..currentWeek muss einzeln abgefragt
+  // werden (siehe fetchAllTransactions()).
   const currentWeek = teamData.status?.currentMatchupPeriod || teamData.scoringPeriodId || 1;
-  const snapshot = await readJsonSafe('roster-snapshot.json', {});
-  const oldTx = await readJsonSafe('transactions.json', { data: [] });
-  const existingTx = oldTx.data || [];
-  const newTx = [];
-  const todayStr = new Date().toLocaleDateString('de-CH');
-
-  const gainedByTeam = {}, lostByTeam = {};
-  teamData.teams.forEach((t) => {
-    const prevIds = new Set(snapshot[t.id] || []);
-    const currIds = new Set(currentRosterIds[t.id]);
-    gainedByTeam[t.id] = [...currIds].filter((id) => !prevIds.has(id));
-    lostByTeam[t.id] = [...prevIds].filter((id) => !currIds.has(id));
-  });
-
-  const isFirstRun = Object.keys(snapshot).length === 0;
-  if (!isFirstRun) {
-    // Trades: ein Spieler, den Team A verliert und Team B im selben Lauf gewinnt.
-    const consumed = new Set();
-    teamData.teams.forEach((tA) => {
-      lostByTeam[tA.id].forEach((playerId) => {
-        if (consumed.has(playerId)) return;
-        teamData.teams.forEach((tB) => {
-          if (tB.id === tA.id) return;
-          if (gainedByTeam[tB.id].includes(playerId)) {
-            // gefunden: Trade-Leg A -> B. Sammle alle Spieler, die zwischen genau
-            // diesen zwei Teams wechselten, zu einem einzigen Trade-Eintrag.
-            const aToB = lostByTeam[tA.id].filter((id) => gainedByTeam[tB.id].includes(id));
-            const bToA = lostByTeam[tB.id].filter((id) => gainedByTeam[tA.id].includes(id));
-            if (aToB.length && !aToB.some((id) => consumed.has(id))) {
-              aToB.forEach((id) => consumed.add(id));
-              bToA.forEach((id) => consumed.add(id));
-              const aGets = bToA.map((id) => playerInfo(id).name).join(', ') || '(nichts)';
-              const bGets = aToB.map((id) => playerInfo(id).name).join(', ') || '(nichts)';
-              newTx.push({
-                id: 'trade-' + tA.id + '-' + tB.id + '-' + Date.now(),
-                week: currentWeek, date: todayStr, type: 'TRADE',
-                title: `Trade: ${teamNames[tA.id]} ↔ ${teamNames[tB.id]}`,
-                detail: `${teamNames[tA.id]} erhält ${aGets}. ${teamNames[tB.id]} erhält ${bGets}.`,
-                // Strukturiert (zusätzlich zum Fliesstext oben) für findTradeImpactFact(): wer hat
-                // welche Spieler-IDs bekommen/abgegeben, pro Team-Seite des Trades.
-                legs: [
-                  { teamId: tA.id, gainedIds: bToA, lostIds: aToB },
-                  { teamId: tB.id, gainedIds: aToB, lostIds: bToA }
-                ],
-                note: ''
-              });
-            }
-          }
-        });
-      });
-    });
-    // Übrige Adds/Drops (nicht Teil eines Trades) = Waiver/Free Agent
-    teamData.teams.forEach((t) => {
-      const gained = gainedByTeam[t.id].filter((id) => !consumed.has(id));
-      const lost = lostByTeam[t.id].filter((id) => !consumed.has(id));
-      gained.forEach((id) => {
-        const dropped = lost.length ? playerInfo(lost.shift()).name : null;
-        newTx.push({
-          id: 'add-' + t.id + '-' + id + '-' + Date.now(),
-          week: currentWeek, date: todayStr, type: 'FREEAGENT',
-          teamId: t.id, playerId: id,
-          title: `${teamNames[t.id]} holt ${playerInfo(id).name}`,
-          detail: dropped ? `${teamNames[t.id]} holt ${playerInfo(id).name} (${playerInfo(id).pos}, ${playerInfo(id).proTeam}) und wirft dafür ${dropped} ab.` : `${teamNames[t.id]} holt ${playerInfo(id).name} (${playerInfo(id).pos}, ${playerInfo(id).proTeam}) dazu.`,
-          note: ''
-        });
-      });
-      lost.forEach((id) => {
-        newTx.push({
-          id: 'drop-' + t.id + '-' + id + '-' + Date.now(),
-          week: currentWeek, date: todayStr, type: 'FREEAGENT',
-          teamId: t.id, playerId: id,
-          title: `${teamNames[t.id]} wirft ${playerInfo(id).name} ab`,
-          detail: `${teamNames[t.id]} lässt ${playerInfo(id).name} (${playerInfo(id).pos}, ${playerInfo(id).proTeam}) frei.`,
-          note: ''
-        });
-      });
-    });
-  } else {
-    console.log('Erster Lauf: kein Roster-Snapshot vorhanden, Transaktions-Diff wird übersprungen (nicht als Adds/Drops gewertet).');
-  }
-
-  if (newTx.length) {
-    console.log(`${newTx.length} neue Transaktion(en) erkannt.`);
-  }
-  await writeJson('transactions.json', { lastUpdated: nowIso(), data: [...existingTx, ...newTx] });
-
-  // ---- Snapshot für den nächsten Lauf speichern ----
-  const newSnapshot = {};
-  Object.keys(currentRosterIds).forEach((tid) => { newSnapshot[tid] = currentRosterIds[tid]; });
-  await writeJson('roster-snapshot.json', newSnapshot);
+  const rawTx = await fetchAllTransactions(currentWeek);
+  const txData = buildTransactionsFromLog(rawTx, teamNames, playerInfo);
+  console.log(`${txData.length} Transaktionen aus ESPNs Log gebaut (Wochen 1-${currentWeek}).`);
+  await writeJson('transactions.json', { lastUpdated: nowIso(), data: txData });
 
   await runSanityChecks();
   console.log('Sync abgeschlossen.');
