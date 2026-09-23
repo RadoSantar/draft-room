@@ -2230,7 +2230,13 @@ async function main() {
   // liefert Datum/Woche direkt vom Server. WICHTIG: scoringPeriodId filtert exakt auf genau diese
   // eine Periode (keine kumulative Historie) - jede Woche 1..currentWeek muss einzeln abgefragt
   // werden (siehe fetchAllTransactions()).
-  const currentWeek = teamData.status?.currentMatchupPeriod || teamData.scoringPeriodId || 1;
+  //
+  // currentWeek = lastCompletedWeek + 1 (dieselbe "upcomingWeek"-Logik wie beim Wochen-Vorschau-Block
+  // oben), NICHT teamData.status.currentMatchupPeriod: Free Agency/Waivers für die kommende Woche
+  // öffnen bereits, sobald die letzte Woche fertig gewertet ist - currentMatchupPeriod hinkt dem einen
+  // Schritt hinterher (zeigt noch die zuletzt VOLLSTÄNDIG gewertete Woche, nicht die aktuell laufende
+  // Transaktions-Periode) und hätte hier live beobachtet die gerade aktive Woche 3 komplett verpasst.
+  const currentWeek = lastCompletedWeek + 1;
   const rawTx = await fetchAllTransactions(currentWeek);
   const txData = buildTransactionsFromLog(rawTx, teamNames, playerInfo);
   console.log(`${txData.length} Transaktionen aus ESPNs Log gebaut (Wochen 1-${currentWeek}).`);
