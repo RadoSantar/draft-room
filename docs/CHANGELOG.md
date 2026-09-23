@@ -1053,3 +1053,16 @@ expliziten scoringPeriodId-Parameter.
 ## 2026-09-23 – `e2e7772` Temp: Debug-Skript auf scoringPeriodId=3 fokussiert (kumulative Historie)
 
 ## 2026-09-23 – `dcee9d3` Temp: Debug-Skript vergleicht scoringPeriodId 1/2/3, Detail für Woche 2
+
+## 2026-09-23 – `45cf41c` Transaktionen: currentWeek-Bestimmung korrigiert (Woche 3 fehlte sonst)
+
+Erster Live-Lauf mit dem neuen Transaktions-Log-Fetch zeigte nur Wochen
+1-2, Woche 3 fehlte trotz laufender Aktivität. Ursache:
+teamData.status.currentMatchupPeriod zeigt die zuletzt VOLLSTÄNDIG
+gewertete Woche, nicht die aktuell laufende Transaktions-Periode -
+Free Agency/Waivers für die kommende Woche öffnen aber schon, sobald
+die letzte Woche fertig gewertet ist.
+
+currentWeek jetzt konsistent mit der bereits an anderer Stelle im
+Skript verwendeten "upcomingWeek"-Logik (Wochen-Vorschau-Block)
+berechnet: lastCompletedWeek + 1.
