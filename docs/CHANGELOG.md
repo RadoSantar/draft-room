@@ -1033,3 +1033,5 @@ Drei Anpassungen auf Nutzer-Feedback:
    Positions-Tabelle, Saison-Ausblick, Draft Recap, Draft Board) ist
    eingeklappt und öffnet sich erst auf Klick - Pfeil-Indikator im
    selben Rotations-Muster wie die Wochen-Karten auf schedule.html.
+
+## 2026-09-23 – `4491a3a` Session-Log: Power-Rankings-Einklapp-Iteration nachgetragen
