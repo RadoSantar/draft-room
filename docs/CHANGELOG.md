@@ -1009,3 +1009,5 @@ Gegner zählt doppelt, Rang 1 = schwierigster Spielplan, live).
 Text - alle 10 starten eingeklappt, lassen sich einzeln unabhängig
 voneinander öffnen, damit man gezielt nur das gewünschte Team liest
 statt durch alle 10 Analysen scrollen zu müssen.
+
+## 2026-09-23 – `f43f108` Session-Log: Power-Rankings-Aufräumarbeiten nachgetragen
