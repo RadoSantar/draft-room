@@ -928,3 +928,5 @@ Score/Seed-Akzente) statt der vorherigen hellen Karten-Komponente.
 ## 2026-09-23 – `426d3da` Session-Log: Playoffs-Tab-Korrektur nachgetragen
 
 ## 2026-09-23 – `0468279` Session-Log: Playoff-Qualifikationsregel-Korrektur nachgetragen
+
+## 2026-09-23 – `3390ef7` Session-Log: Bracket-Kartendesign nachgetragen
