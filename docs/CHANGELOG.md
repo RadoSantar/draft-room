@@ -1049,3 +1049,5 @@ mTransactions2 zeigte fast nur Lineup-Rauschen (type ROSTER) und keine
 Waiver-/Free-Agent-Einträge - testet zusätzlich kona_league_communication
 (dieselbe Quelle wie ESPNs eigene "Recent Activity"-Seite) sowie einen
 expliziten scoringPeriodId-Parameter.
+
+## 2026-09-23 – `e2e7772` Temp: Debug-Skript auf scoringPeriodId=3 fokussiert (kumulative Historie)
