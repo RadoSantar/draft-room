@@ -249,23 +249,48 @@
   .note-text a{color:var(--turf);text-decoration:underline;text-decoration-color:var(--hash);text-decoration-thickness:1px;text-underline-offset:2px;}
   .note-text a:hover{text-decoration-color:var(--amber);}
 
-  /* Playoff / consolation bracket - im selben dunklen Standings-Look, nur mit Match- statt Team-Zeilen */
-  .bracket-row{
+  /* Playoff / consolation bracket - Runden nebeneinander, ein Kärtchen pro Match, im selben
+     dunklen Turf-Look wie Standings/Spielplan-Zeilen (.sched-game/.standings-row). */
+  .bracket-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start;margin:10px 0 22px;}
+  .bracket-col-label{font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--hash);letter-spacing:.05em;text-transform:uppercase;margin-bottom:8px;}
+  .bracket-card{background:var(--turf);border-radius:8px;overflow:hidden;margin-bottom:10px;}
+  .bracket-card:last-child{margin-bottom:0;}
+  .bracket-team-row{
     display:flex;
     align-items:center;
-    gap:10px;
-    padding:9px 14px;
+    gap:8px;
+    padding:9px 12px;
     font-family:'IBM Plex Mono', monospace;
-    font-size:11px;
+    font-size:12px;
     border-bottom:1px solid rgba(255,255,255,0.08);
   }
-  .bracket-row:last-child{border-bottom:none;}
-  .bracket-row .bracket-stage{min-width:92px;color:var(--hash);text-transform:uppercase;letter-spacing:.04em;}
-  .bracket-row .bracket-matchup{flex:1;font-family:'Source Serif 4', serif;font-size:14px;color:var(--chalk);}
-  .bracket-row .bracket-matchup .seed{display:inline-block;font-family:'IBM Plex Mono', monospace;font-size:10px;color:var(--turf);background:var(--amber);border-radius:4px;padding:1px 5px;margin-right:4px;}
-  .bracket-row .bracket-matchup .vs{color:var(--hash);font-size:10px;margin:0 4px;text-transform:uppercase;}
-  .bracket-row .bracket-score{min-width:64px;text-align:right;color:var(--amber);font-weight:600;font-size:12px;}
-  .bracket-row.final .bracket-stage{color:var(--amber);}
+  .bracket-team-row:last-child{border-bottom:none;}
+  .bracket-team-row .seed{flex:0 0 auto;display:inline-block;font-size:10px;color:var(--turf);background:var(--amber);border-radius:4px;padding:1px 5px;}
+  .bracket-team-row .name{flex:1;font-family:'Source Serif 4', serif;font-size:14px;color:var(--chalk);min-width:0;}
+  .bracket-team-row .score{flex:0 0 auto;color:var(--amber);font-weight:600;font-size:12px;}
+  .bracket-team-row.is-winner .name{font-weight:600;}
+  .bracket-team-row.is-tbd{color:var(--ink-soft);font-style:italic;opacity:.75;}
+  .bracket-team-row.is-tbd .name{color:inherit;font-family:'IBM Plex Mono', monospace;font-size:12px;}
+  .bracket-card.is-final{
+    border:2px solid var(--amber);
+    box-shadow:0 4px 14px rgba(233,167,59,0.25);
+  }
+  .bracket-final-tag{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:10px;
+    font-weight:600;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    color:var(--turf);
+    background:var(--amber);
+    padding:5px 12px;
+    text-align:center;
+  }
+  .bracket-card.is-final .bracket-team-row .name{font-size:15.5px;}
+  .bracket-card.is-final .bracket-team-row{padding:11px 12px;}
+  @media (max-width:720px){
+    .bracket-cols{grid-template-columns:1fr;}
+  }
 
   @media (max-width:640px){
     header.topbar{padding:12px 16px;flex-wrap:wrap;}
@@ -332,11 +357,11 @@
     <div class="standings-div-label mono">AFC</div>
     <div class="standings-table" id="standingsTableAFC"></div>
   </div>
-  <div class="standings-conf-wrap" id="standingsBracketWrap" style="display:none">
+  <div id="standingsBracketWrap" style="display:none">
     <div class="standings-div-label mono">Playoffs um den Titel (Platz 1–4)</div>
-    <div class="standings-table" id="bracketChampTable"></div>
+    <div id="bracketChampSection"></div>
     <div class="standings-div-label mono">Consolation Bracket (Platz 5–10)</div>
-    <div class="standings-table" id="bracketConsTable"></div>
+    <div id="bracketConsSection"></div>
   </div>
   <p class="note-text" id="standingsNote"></p>
   <p class="note-text" id="bracketNote" style="display:none"></p>
@@ -695,29 +720,49 @@
       setStandingsView(btn.dataset.view);
     });
 
-    function bracketTeamHtml(team, placeholder){
-      if(team) return '<span class="seed">' + team.seed + '</span>' + team.name;
-      return placeholder || '?';
+    function bracketTeamRowHtml(team, placeholder, score, isWinner){
+      if(team){
+        return '<div class="bracket-team-row' + (isWinner ? ' is-winner' : '') + '">' +
+          '<span class="seed">' + team.seed + '</span>' +
+          '<span class="name">' + team.name + '</span>' +
+          (score != null ? '<span class="score">' + score.toFixed(1) + '</span>' : '') +
+        '</div>';
+      }
+      return '<div class="bracket-team-row is-tbd"><span class="name">' + (placeholder || 'TBD') + '</span></div>';
     }
 
-    function bracketRowHtml(m, isFinal){
+    function bracketCardHtml(m, isFinal){
       var decided = m.winner === 'A' || m.winner === 'B';
-      var scoreHtml = decided ? '<span class="bracket-score">' + m.scoreA.toFixed(1) + ':' + m.scoreB.toFixed(1) + '</span>' : '<span class="bracket-score"></span>';
-      return '<div class="bracket-row' + (isFinal ? ' final' : '') + '">' +
-        '<span class="bracket-stage">' + m.label + '</span>' +
-        '<span class="bracket-matchup">' + bracketTeamHtml(m.teamA, m.placeholderA) + ' <span class="vs">vs</span> ' + bracketTeamHtml(m.teamB, m.placeholderB) + '</span>' +
-        scoreHtml +
+      var rowA = bracketTeamRowHtml(m.teamA, m.placeholderA, decided ? m.scoreA : null, m.winner === 'A');
+      var rowB = bracketTeamRowHtml(m.teamB, m.placeholderB, decided ? m.scoreB : null, m.winner === 'B');
+      return '<div class="bracket-card' + (isFinal ? ' is-final' : '') + '">' +
+        (isFinal ? '<div class="bracket-final-tag">🏆 Fantasy Super Bowl</div>' : '') +
+        rowA + rowB +
+      '</div>';
+    }
+
+    function bracketColsHtml(round1Label, round1Cards, round2Label, round2Cards){
+      return '<div class="bracket-cols">' +
+        '<div><div class="bracket-col-label">' + round1Label + '</div>' + round1Cards.join('') + '</div>' +
+        '<div><div class="bracket-col-label">' + round2Label + '</div>' + round2Cards.join('') + '</div>' +
       '</div>';
     }
 
     function renderBracket(){
       fetch('data/playoff-bracket.json', { cache: 'no-store' }).then(function(r){ return r.json(); }).then(function(wrap){
         var cb = wrap.champBracket, ob = wrap.consBracket;
-        document.getElementById('bracketChampTable').innerHTML =
-          bracketRowHtml(cb.semiA, false) + bracketRowHtml(cb.semiB, false) + bracketRowHtml(cb.final, true) + bracketRowHtml(cb.thirdPlace, false);
-        document.getElementById('bracketConsTable').innerHTML =
-          bracketRowHtml(ob.game1, false) + bracketRowHtml(ob.game2, false) + bracketRowHtml(ob.game3, false) +
-          bracketRowHtml(ob.place56, true) + bracketRowHtml(ob.place78, false) + bracketRowHtml(ob.place910, false);
+        document.getElementById('bracketChampSection').innerHTML = bracketColsHtml(
+          'Runde 1 · Woche 16',
+          [bracketCardHtml(cb.semiA, false), bracketCardHtml(cb.semiB, false)],
+          'Finale · Woche 17',
+          [bracketCardHtml(cb.final, true), bracketCardHtml(cb.thirdPlace, false)]
+        );
+        document.getElementById('bracketConsSection').innerHTML = bracketColsHtml(
+          'Runde 1 · Woche 16',
+          [bracketCardHtml(ob.game1, false), bracketCardHtml(ob.game2, false), bracketCardHtml(ob.game3, false)],
+          'Platzierungsspiele · Woche 17',
+          [bracketCardHtml(ob.place56, false), bracketCardHtml(ob.place78, false), bracketCardHtml(ob.place910, false)]
+        );
         bracketNoteText = wrap.throughWeek >= 15
           ? 'Seeds stehen fest (Liga-Phase abgeschlossen) – Resultate aktualisieren sich automatisch, sobald ESPN sie meldet.'
           : 'Seeds sind eine Projektion nach aktuellem Tabellenstand (Stand Woche ' + wrap.throughWeek + ') und werden bis Saisonende präziser. Sobald echte Playoff-Spiele stattfinden, ersetzen die echten Ergebnisse die Projektion automatisch.';
@@ -725,8 +770,8 @@
           document.getElementById('bracketNote').textContent = bracketNoteText;
         }
       }).catch(function(){
-        document.getElementById('bracketChampTable').innerHTML = '';
-        document.getElementById('bracketConsTable').innerHTML = '';
+        document.getElementById('bracketChampSection').innerHTML = '';
+        document.getElementById('bracketConsSection').innerHTML = '';
         bracketNoteText = 'Bracket konnte nicht geladen werden.';
       });
     }
