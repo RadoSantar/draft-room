@@ -259,14 +259,21 @@
   .pos-table td.delta.neg{color:var(--endzone-soft);font-weight:600;}
   .pos-table tr:last-child td{border-bottom:none;}
 
-  .recap-label{
+  .recap-details{margin-top:16px;}
+  .recap-details summary{
+    cursor:pointer;
     font-family:'IBM Plex Mono', monospace;
     font-size:10px;
     text-transform:uppercase;
     letter-spacing:.08em;
     color:var(--hash);
-    margin:0 0 6px;
+    padding:8px 0;
+    list-style:none;
   }
+  .recap-details summary::-webkit-details-marker{display:none;}
+  .recap-details summary::before{content:'+ ';color:var(--amber);font-weight:700;}
+  .recap-details[open] summary::before{content:'\2212 ';}
+  .team-analysis{margin-top:6px;}
   .team-analysis p{font-size:14.5px;color:var(--ink-soft);margin-bottom:10px;max-width:68ch;}
   .team-analysis strong{color:var(--ink);}
 
@@ -461,16 +468,14 @@
   </div>
 
   <h2 class="section-head">Power-Ranking-Verlauf</h2>
-  <p class="copy">Wie sich die Rangliste seit dem Draft entwickelt hat: 1. nach dem Draft, 2. vor dem ersten Spieltag (inkl. Trades/Waiver bis dahin), danach automatisch nach jedem abgeschlossenen Spieltag.</p>
   <div class="history-scroll"><div id="historyTable"></div></div>
 
   <h2 class="section-head">Strength of Schedule</h2>
-  <p class="copy">Wie stark sind im Schnitt die 15 Gegner, auf die jedes Team diese Saison trifft (der Conference-Gegner zählt doppelt, da man ihn zweimal spielt) – gemessen am aktuellen Power-Ranking-Score der Gegner. Rang 1 = schwierigster Spielplan. Die Werte verschieben sich automatisch mit, sobald sich die Power Rankings durch Trades, Waiver oder gespielte Wochen ändern – kein fixer Vorschau-Wert, sondern ein Live-Blick auf "wie hart ist mein Spielplan gerade".</p>
+  <p class="copy">Durchschnittliche Stärke der 15 Saison-Gegner nach aktuellem Power-Ranking-Score (Conference-Gegner zählt doppelt). Rang 1 = schwierigster Spielplan – aktualisiert sich automatisch mit den Power Rankings.</p>
   <div class="calc-status" id="sosStatus">Lade aktuelle Daten…</div>
   <div class="rank-list" id="sosList"></div>
 
   <h2 class="section-head">Strength-of-Schedule-Verlauf</h2>
-  <p class="copy">Wie sich der SOS-Rang je Team seit dem Draft entwickelt hat, in denselben Etappen wie oben beim Power-Ranking-Verlauf: 1. nach dem Draft, 2. vor dem ersten Spieltag, danach nach jedem abgeschlossenen Spieltag. Grün = Spielplan wird im Vergleich leichter (SOS-Rang steigt), Rot = Spielplan wird härter (SOS-Rang sinkt Richtung 1).</p>
   <div class="history-scroll"><div id="sosHistoryTable"></div></div>
 
   <div id="teamCards"></div>
@@ -733,8 +738,9 @@
         posTableHtml(t) +
         (t.hype ? '<div class="hype-box"><div class="hype-label mono">⚡ Saison-Ausblick</div><div class="hype-text">' + t.hype + '</div></div>' : '') +
         (t.p3 ? '<details class="trade-update"' + ' open><summary>Update</summary><p>' + t.p3 + '</p></details>' : '') +
-        '<div class="recap-label mono">📋 Draft Recap</div>' +
-        '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
+        '<details class="recap-details"><summary class="mono">📋 Draft Recap</summary>' +
+          '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
+        '</details>' +
         '<details class="board-details"><summary>Komplettes Draft Board (20 Picks)</summary>' + boardTableHtml(t) + '</details>' +
       '</section>';
     }).join('');
