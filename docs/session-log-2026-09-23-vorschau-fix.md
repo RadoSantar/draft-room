@@ -56,12 +56,58 @@ Auf Nachfrage (AskUserQuestion) bestätigt: `start.html` soll die **echte Homepa
 
 Commit `489ee33`, gepusht.
 
+## 4. Root-URL und PWA-Neustart landeten auf `index.html` statt `start.html`
+
+**Nutzer-Feedback:** Zwei Meldungen kurz nacheinander – (a) "wenn ich die pwa schliesse und wieder öffne lande ich nicht auf der start sondern auf der index", (b) "auch online wenn ich im browser https://radosantar.github.io/draft-room/ öffne lande ich auf der übersicht und nicht auf der startseite".
+
+**Root Cause:** Beides dasselbe strukturelle Problem, kein Caching-Bug (`sw.js` ist ein reiner Passthrough-Service-Worker, cacht nichts). GitHub Pages liefert für eine Verzeichnis-URL (`/draft-room/`, ohne Dateinamen) automatisch die Datei `index.html` – normale Web-Server-Konvention. Bei der installierten PWA kommt zusätzlich hinzu: der `start_url` wird beim Installieren ins Home-Screen-Icon "eingebrannt" und danach nicht rückwirkend aktualisiert.
+
+**Warum kein Datei-Umbenennen als Sofort-Fix:** Die "saubere" Lösung wäre, `start.html` in `index.html` umzubenennen und das alte `index.html` (FAQ/Guide) umzubenennen. Aber `data/team-content.json` (von Hand geschriebene Team-Analysen, dürfen nie automatisiert angefasst werden) enthält mindestens einen fest verdrahteten Link `index.html#term-zero-rb-hero-rb` im Fliesstext – eine Umbenennung hätte diesen Link gebrochen. Ausserdem hätten alle "← Übersicht"-Deep-Links auf 5 Tool-Seiten mit-migriert werden müssen. Deshalb stattdessen ein kleiner, gezielter Workaround.
+
+**Fix:** Redirect-Guard per Inline-Script, direkt nach `<meta charset>` in `index.html` (läuft so früh wie möglich, kein sichtbarer Flash):
+```js
+var isHome = /\/(index\.html)?$/.test(location.pathname);
+if (isHome && !location.hash && !sessionStorage.getItem('draftroom-entered')) {
+  location.replace('start.html');
+}
+```
+`start.html` setzt beim Laden das `sessionStorage`-Flag `draftroom-entered`. Wirkung: nackte Root-URL UND vom PWA-Icon geöffnetes `index.html` leiten (ohne Anker, ohne bereits gesetztes Flag) sofort auf `start.html` weiter. Anker-Links (`index.html#draft-tipps` usw. – exakt die Links aus den Tool-Seiten und aus `team-content.json`) werden nie umgeleitet. Klickt man von `start.html` aus bewusst auf die "Übersicht"-Kachel, ist das Flag schon gesetzt → kein Zurück-Bounce. Schliesst man Tab/App komplett, ist `sessionStorage` leer → nächster Aufruf landet wieder auf `start.html`.
+
+**Getestet (Playwright):** (1) frischer Aufruf `/index.html` ohne Anker → landet auf `start.html`. (2) `/index.html#draft-tipps` → bleibt dort, kein Redirect. (3) erst `start.html`, dann Klick auf "Übersicht"-Kachel → bleibt auf `index.html`. (4) neuer Browser-Context (simuliert komplettes Schliessen) → `/index.html` leitet wieder auf `start.html` weiter. Alle vier Fälle wie erwartet.
+
+Commit `9cbf565`, gepusht.
+
+## 5. Geplanter (noch nicht umgesetzter) sauberer Umbau ohne Workaround
+
+Nutzer-Wunsch: einen Plan für den "richtigen" Umbau ohne den Redirect-Workaround, inklusive Backup/Fallback, für später vorbereitet zu haben.
+
+**Ziel:** `start.html` wird physisch zu `index.html` (überschreibt die alte Datei), das bisherige `index.html` (FAQ/Guide) wird zu `uebersicht.html`. Damit liefert GitHub Pages die Root-URL sofort korrekt, kein JS-Redirect mehr nötig, funktioniert auch für Social-Media-/Crawler-Vorschauen ohne JS-Ausführung.
+
+**Nötige Änderungen (bei Umsetzung):**
+1. `index.html` → `uebersicht.html` umbenennen (Inhalt unverändert).
+2. `start.html` → `index.html` umbenennen (überschreibt die dann freie Datei); Redirect-Guard-Script wieder entfernen (wird überflüssig).
+3. Alle "← Übersicht"-Links und Inline-Gloss-Links auf den 5 Tool-Seiten (`index.html#draft-tipps`, `index.html#rechner`, `index.html#roster-tipps`, `index.html#trades`, `index.html#basics` usw.) → `uebersicht.html#anker`.
+4. Die 6 `title-group`-Logo-Links (aktuell `start.html`) → zurück auf `index.html`.
+5. Die neue `index.html` (ex-`start.html`) eigene "Übersicht"-Kachel → `href="uebersicht.html"` statt `index.html`.
+6. `manifest.json`: `start_url` zurück auf `./index.html`.
+7. Eigene OG-/Twitter-Meta-Tags für die neue `index.html` ergänzen (aktuell hat `start.html` keine); `uebersicht.html`s `og:url` auf die neue Datei anpassen.
+8. **Blockierende Voraussetzung:** `data/team-content.json` enthält im TM06-Eintrag den Link `index.html#term-zero-rb-hero-rb` – müsste auf `uebersicht.html#...` geändert werden. Da diese Datei nie automatisiert angefasst werden darf, braucht es dafür **explizite Nutzer-Zustimmung** für genau diese eine Pfad-Anpassung (keine inhaltliche Änderung an den Analysen), bevor der Umbau starten kann.
+
+**Backup/Fallback-Strategie:**
+- Vor dem Umbau einen Git-Tag auf dem aktuellen `main`-Stand setzen und pushen (z.B. `git tag backup-vor-index-umbau && git push origin backup-vor-index-umbau`) als klarer Rückspring-Punkt.
+- Der gesamte Umbau in einem einzigen, sauber benannten Commit (nicht vermischt mit anderen Änderungen) – ermöglicht im Fehlerfall ein atomares `git revert <commit>`.
+- Hinweis: `start.html` als Dateiname verschwindet danach; da die Seite erst seit kurzem existiert und noch nicht breit geteilt wurde, ist das Risiko kaputter externer Links/Lesezeichen gering, aber nicht null.
+- Verifikation wie gehabt per Playwright: alle Links auf allen 8 Seiten stichprobenartig prüfen, `manifest.json` parsen, und zusätzlich das rohe HTML von `index.html` (ohne JS-Ausführung, z.B. per `curl`) kontrollieren, dass es direkt den Start-Hub-Inhalt enthält (Crawler-Perspektive).
+
+**Status:** Nicht umgesetzt – wartet auf Nutzer-Entscheid zur blockierenden Voraussetzung (Punkt 8) und allgemeines Go.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
 - Bye-Week-Hinweis im Digest: weiterhin zurückgestellt (siehe früherer Session-Log).
 - Hall of Fame: 4 weitere Saison-Highlight-Kategorien (siehe Punkt 1 oben) – warten auf Nutzer-Zustimmung.
 - Hall of Fame: sobald die 2026er-Saison abgeschlossen ist, `data/league-history.json` von Hand ergänzen.
+- Sauberer Umbau `start.html`↔`index.html` ohne Redirect-Workaround (siehe Punkt 5 oben) – wartet auf Nutzer-Zustimmung zu `data/team-content.json`-Link-Anpassung.
 
 ## Nächster Schritt
-Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Neue Startseite `start.html` ist live – bei Gelegenheit Nutzer-Feedback dazu einholen (z.B. ob Reihenfolge/Wortlaut der Karten passt).
+Nutzer könnte auf die vorgeschlagenen 4 Hall-of-Fame-Kategorien zurückkommen – bei Zustimmung direkt umsetzen (Muster wie die vorherigen 6 Kategorien: computeSeasonHighlights() in hall-of-fame.html erweitern). Ansonsten: weiter die Sync-Workflow-Zuverlässigkeit (Cron-Minute-Offset, Fast-Retry, Sanity-Check) über die nächsten Dienstage beobachten. Root-URL/PWA-Redirect-Fix ist live und getestet. Sauberer Umbau ohne Workaround (Punkt 5) bei Gelegenheit mit Nutzer besprechen – insbesondere die nötige Ausnahme für `data/team-content.json`.
