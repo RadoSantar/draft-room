@@ -1097,3 +1097,5 @@ bleiben erhalten. Nebenbei bemerkt: der Transaktionen-Absatz behauptete noch
 
 War statisch hinterlegt und stimmte längst nicht mehr (Liga ist bei
 Woche 3) - "Stand <Datum>" allein reicht.
+
+## 2026-09-23 – `3a99596` Changelog: "Nach dem Draft"-Präfix-Fix dokumentiert
