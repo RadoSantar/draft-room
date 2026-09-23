@@ -924,3 +924,5 @@ Playoffs-Tab ersetzt jetzt Standings-Tabelle/Conference-Ansicht 1:1 an
 derselben Stelle. Bracket-Zeilen im selben .standings-table-Look wie
 die Team-Zeilen (dunkler Turf-Hintergrund, IBM-Plex-Mono-Label, Amber-
 Score/Seed-Akzente) statt der vorherigen hellen Karten-Komponente.
+
+## 2026-09-23 – `426d3da` Session-Log: Playoffs-Tab-Korrektur nachgetragen
