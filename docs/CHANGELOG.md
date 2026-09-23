@@ -1083,3 +1083,10 @@ Session-Log um die vierte Transaktions-Iteration ergänzt: Nutzer
 bestätigte, dass TRADE_UPHOLD.teamId in allen 3 Fällen das falsche
 Gegner-Team lieferte. Root Cause, der Fix (TRADE_OVERRIDES statt
 TRADE_UPHOLD.teamId) und die Live-Verifikation dokumentiert.
+
+## 2026-09-23 – `90e2018` Power Rankings: Intro- und Hinweistext gekürzt, veralteten Transaktionstext korrigiert
+
+Intro-Absatz und die Hinweisbox unter "Power Ranking" gekürzt, Kernaussagen
+bleiben erhalten. Nebenbei bemerkt: der Transaktionen-Absatz behauptete noch
+"neueste Woche automatisch aufgeklappt" - stimmte seit der letzten Änderung
+(alle Wochen starten eingeklappt) nicht mehr, jetzt korrigiert.
