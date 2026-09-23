@@ -1093,3 +1093,5 @@ bestätigte manuelle Korrektur vor (TRADE_OVERRIDES, inkl. korrekter
 Spieler-Details). Für jeden künftigen, noch unbekannten Fall dieser Art
 wird nur die sicher bekannte Seite (aus TRADE_ACCEPT) gezeigt statt
 eine falsche Gegenseite zu raten.
+
+## 2026-09-23 – `42ab014` Aufräumen: temporäres Debug-Tooling für Trade-Partner-Recherche entfernt
