@@ -912,3 +912,15 @@ Navigation von start.html aus zu index.html bleiben unangetastet.
 ## 2026-09-23 – `38c724e` Session-Log: Root-URL/PWA-Redirect-Fix + Umbau-Plan nachgetragen
 
 ## 2026-09-23 – `3ad3e1d` Session-Log: Spielplan-Bracket-Feature nachgetragen
+
+## 2026-09-23 – `6b9a12c` Spielplan: Playoffs als dritter Standings-Tab statt eigener Sektion
+
+Nutzer-Feedback: Playoffs sollten wie "Nach Conference"/"Liga" ein
+dritter Umschalt-Tab bei den Standings sein, im selben dunklen
+Tabellen-Design, der die Standings beim Umschalten ausblendet - keine
+separate Sektion mit eigenem Button/Kartendesign weiter unten.
+
+Playoffs-Tab ersetzt jetzt Standings-Tabelle/Conference-Ansicht 1:1 an
+derselben Stelle. Bracket-Zeilen im selben .standings-table-Look wie
+die Team-Zeilen (dunkler Turf-Hintergrund, IBM-Plex-Mono-Label, Amber-
+Score/Seed-Akzente) statt der vorherigen hellen Karten-Komponente.
