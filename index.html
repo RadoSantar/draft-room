@@ -2,6 +2,16 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
+<script>
+(function(){
+  try {
+    var isHome = /\/(index\.html)?$/.test(location.pathname);
+    if (isHome && !location.hash && !sessionStorage.getItem('draftroom-entered')) {
+      location.replace('start.html');
+    }
+  } catch(e) {}
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Fantasy Playbook</title>
 <meta name="description" content="FAQ &amp; Strategie-Guide für unsere ESPN NFL Fantasy Football Liga.">
