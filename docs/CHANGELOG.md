@@ -1269,3 +1269,5 @@ Startseite, dazu weiche Hover-Übergänge für Positions-Tabs, Sortier-
 Buttons und Status-Filter-Buttons. Der Live-Suchfilter (applyFilter,
 feuert bei jedem Tastendruck) bekommt bewusst KEINE Fade-Animation -
 das würde bei schnellem Tippen eher unruhig als smooth wirken.
+
+## 2026-09-24 – `5e86c7b` Changelog: seitenweiten Animations-Rollout dokumentiert
