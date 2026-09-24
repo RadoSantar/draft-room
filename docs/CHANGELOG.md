@@ -1190,3 +1190,17 @@ bei den Transaktionen auf power-rankings.html. Jede Position lässt
 sich unabhängig öffnen/schliessen, startet eingeklappt.
 
 ## 2026-09-24 – `ba65737` Changelog: Free-Agent-Empfehlungen pro Position aufklappbar dokumentiert
+
+## 2026-09-24 – `30f6d58` Mein Team: sanftere Animationen (Auf-/Zuklappen, Inhalts-Wechsel, Seitenaufbau)
+
+Testweise nur auf dieser Seite, bevor wir es ggf. auf die restliche
+Seite ausrollen:
+- <details>-Elemente (Trade-Ideen, Free-Agent-Gruppen) klappen jetzt
+  über die Höhe sanft auf/zu (Web Animations API) statt hart zu
+  springen - Technik nach web.dev "expand and collapse component".
+- Team-/Modus-Wechsel faded den Inhalt kurz statt hart auszutauschen.
+- Dezenter Fade-in beim Laden der Seite.
+- Bewertungs-Basis-Buttons und die neuen Aufklapp-Buttons bekommen
+  weiche Farbübergänge statt hartem Wechsel bei Hover/Aktivierung.
+- Respektiert prefers-reduced-motion (Animationen werden dann
+  übersprungen, normales <details>-Verhalten bleibt erhalten).
