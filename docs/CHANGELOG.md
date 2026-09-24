@@ -1154,3 +1154,11 @@ Beide Varianten (Live-Punkteschnitt/Projektion) entfernt, unbenutzte
 .mt-mode-copy-CSS mit aufgeräumt.
 
 ## 2026-09-24 – `b47742a` Changelog: Bewertungs-Basis-Erklärtext entfernt dokumentiert
+
+## 2026-09-24 – `f93f0a4` Stand-Kicker auf allen 3 Seiten ans Seitenende verschoben
+
+"Stand <Datum>"-Anzeige (statusKicker) auf my-team.html, power-rankings.html
+und hall-of-fame.html stand bisher ganz oben vor der Überschrift - jetzt am
+Ende der Seite nach dem letzten Inhalt, mit entsprechendem Abstand nach
+oben statt nach unten. Bleibt jeweils ausserhalb des versteckbaren
+Content-Wrappers, damit Lade-/Fehlerzustände weiterhin sichtbar sind.
