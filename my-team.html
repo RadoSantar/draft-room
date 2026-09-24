@@ -857,35 +857,14 @@
   }
 
   // Bündelt die wichtigsten Signale der Woche an einer Stelle oben auf der Seite, statt dass man
-  // sich durch Roster/Analyse/FA/Trades scrollen muss, um sich ein Bild zu machen:
-  // 1. Schwächste Position + (sobald geladen) die Top-Free-Agent-Empfehlung dafür.
-  // 2. Divergenz-Alarm: unabhängig vom aktuell gewählten Toggle wird IMMER sowohl die proj- als
-  //    auch die live-optimale Aufstellung berechnet (siehe modeOverride bei buildOptimalLineupByValue).
-  //    Weicht die live-optimale Aufstellung von der proj-optimalen ab (ein Bankspieler mit besserem
-  //    echtem Punkteschnitt würde einen aktuellen proj-Starter verdrängen), lohnt sich ein Blick auf
-  //    den Live-Modus - nur relevant, wenn man gerade NICHT schon im Live-Modus ist, sonst zeigt die
-  //    Aufstellung das längst.
+  // sich durch Roster/Analyse/FA/Trades scrollen muss, um sich ein Bild zu machen: schwächste
+  // Position + (sobald geladen) die Top-Free-Agent-Empfehlung dafür.
   function renderDigest(rawRoster, weakPositions){
     var items = [];
 
     var weakest = weakPositions.filter(function(d){ return d.diff < 0; })[0];
     if(weakest){
       items.push('<div class="mt-digest-item" id="mtDigestWeakest"><strong>Schwächste Position: ' + POS_LABEL[weakest.pos] + '</strong> (' + fmtPct(weakest.pctDiff) + ' ggü. Liga-Ø) – <span id="mtDigestFaHint">Free-Agent-Empfehlung wird geladen…</span></div>');
-    }
-
-    var allPlayers = [].concat(rawRoster.starters, rawRoster.bench);
-    var projLineup = buildOptimalLineupByValue(allPlayers, 'proj');
-    var liveLineup = buildOptimalLineupByValue(allPlayers, 'live');
-    var projStarterIds = {};
-    projLineup.starters.forEach(function(p){ projStarterIds[p.playerId] = true; });
-    var liveStarterIds = {};
-    liveLineup.starters.forEach(function(p){ liveStarterIds[p.playerId] = true; });
-    var promoted = liveLineup.starters.filter(function(p){ return !projStarterIds[p.playerId]; });
-    var demoted = projLineup.starters.filter(function(p){ return !liveStarterIds[p.playerId]; });
-    if(promoted.length && VALUE_MODE !== 'live'){
-      items.push('<div class="mt-digest-item is-alert">Bessere Live-Form auf der Bank: <strong>' + promoted.map(function(p){ return p.name; }).join(', ') + '</strong> schlägt' + (promoted.length > 1 ? '' : '') + ' ' +
-        (demoted.length ? ('<strong>' + demoted.map(function(p){ return p.name; }).join(', ') + '</strong> ') : '') +
-        '– Toggle oben auf "Live-Punkteschnitt" umschalten.</div>');
     }
 
     if(!items.length){
