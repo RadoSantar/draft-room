@@ -1180,3 +1180,11 @@ Statt nur Überschrift + kleinem Pfeil jetzt ein Karten-Button
 bei Hover/offen) - deutlich als klick-/tapbares Element erkennbar.
 
 ## 2026-09-24 – `0b22861` Changelog: Trade-Ideen-Button-Look dokumentiert
+
+## 2026-09-24 – `ce8f3db` Mein Team: Free-Agent-Empfehlungen pro Position als Button aufklappbar
+
+Jede Positions-Gruppe (bisher statische Überschrift) ist jetzt ein
+eigener <details>-Block mit Pill-Button als Summary (inkl. Anzahl
+Vorschläge, z.B. "RB (3)") - gleiches Muster wie die Wochen-Buttons
+bei den Transaktionen auf power-rankings.html. Jede Position lässt
+sich unabhängig öffnen/schliessen, startet eingeklappt.
