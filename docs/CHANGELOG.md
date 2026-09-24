@@ -1164,3 +1164,9 @@ oben statt nach unten. Bleibt jeweils ausserhalb des versteckbaren
 Content-Wrappers, damit Lade-/Fehlerzustände weiterhin sichtbar sind.
 
 ## 2026-09-24 – `54579e8` Changelog: Stand-Kicker ans Seitenende verschoben dokumentiert
+
+## 2026-09-24 – `9da0fc1` Mein Team: Trade-Ideen einklappbar, WIP-Hinweis ergänzt
+
+Abschnitt startet jetzt eingeklappt (<details>, rotierender Pfeil wie
+.team-card auf power-rankings.html) und zeigt beim Öffnen einen Hinweis,
+dass die Vorschläge noch nicht wie gewünscht funktionieren.
