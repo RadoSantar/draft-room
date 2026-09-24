@@ -320,6 +320,12 @@ Commit `f93f0a4`, gepusht.
 
 Commit `9da0fc1`, gepusht.
 
+**Zweite Iteration (als Button erkennbar):** "Trade-Ideen soll als button ersichtlich sein" – die Summary war bisher nur Überschrift + kleiner Pfeil (wie `.team-card` auf power-rankings.html), zu wenig als klickbares Element erkennbar. Jetzt als Karten-Button gestaltet: Hintergrund/Rahmen im selben Stil wie die restlichen Kacheln der Seite (`var(--card)`/`var(--card-border)`, abgerundete Ecken), amber Rahmen bei Hover und im geöffneten Zustand – deutlich als eigenständiges, tapbares Element erkennbar statt wie ein normaler Seiten-Titel.
+
+**Getestet:** Playwright/Screenshots (eingeklappt und offen) bestätigen den Button-Look inkl. Hover-/Open-Zustand.
+
+Commit `469eaaf`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
