@@ -1217,3 +1217,5 @@ unverändert.
 ## 2026-09-24 – `3d13bd4` Changelog: Live-Form-Digest-Hinweis entfernt dokumentiert
 
 ## 2026-09-24 – `97bceba` Mein Team: Roster-Copy im Live-Modus gekürzt
+
+## 2026-09-24 – `1627f4b` Changelog: Roster-Copy-Kürzung dokumentiert
