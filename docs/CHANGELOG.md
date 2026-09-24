@@ -1120,3 +1120,9 @@ grün=drin, amber=in Reichweite, rot=raus) statt nur einem Textabsatz -
 die bestehende Tabelle mit allen 10 Teams bleibt darunter unverändert.
 
 ## 2026-09-24 – `071282a` Changelog: Mein Team – Reihenfolge & Playoff-Kachel dokumentiert
+
+## 2026-09-24 – `ec4c251` Start: überflüssige Texte entfernt ("Start"-Kicker, zwei Erklär-Absätze)
+
+Kicker "Start" über der Überschrift sowie die Intro-Zeile und die
+"Design auswählen"-Beschreibung entfernt - beide Abschnitte sind
+selbsterklärend (Team-Select bzw. Theme-Picker direkt darunter).
