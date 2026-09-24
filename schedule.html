@@ -106,7 +106,7 @@
   .standings-streak.win{color:var(--amber);}
 
   .standings-tabs{display:flex;gap:8px;margin:14px 0 0;}
-  .standings-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .standings-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease;}
   .standings-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
   .standings-div-label{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:18px 0 4px;}
   .standings-div-label:first-of-type{margin-top:14px;}
@@ -545,7 +545,7 @@
         winA = s1 > s2; winB = s2 > s1;
       }
       var recap = isFinal ? findRecap(wk, t1, t2) : null;
-      var recapHtml = recap ? '<details class="game-recap"><summary>Recap lesen</summary><p>' + recap.recap + '</p></details>' : '';
+      var recapHtml = recap ? '<details class="game-recap js-animatable"><summary>Recap lesen</summary><p class="details-content">' + recap.recap + '</p></details>' : '';
       return '<div class="sched-game-wrap">' +
         '<div class="sched-game' + (isFinal ? ' is-final' : '') + '" data-t1="' + t1 + '" data-t2="' + t2 + '" data-kind="' + kind + '" data-double="' + (double ? '1' : '0') + '">' +
           '<span class="sched-team side-a' + (winA ? ' winner' : '') + '"><span class="name">' + t1 + '</span><span class="conf-badge ' + c1.toLowerCase() + '">' + c1 + '</span></span>' +
@@ -560,11 +560,11 @@
     function weekRecapHtml(wk){
       var wr = WEEK_RECAPS_BY_WEEK[wk.w];
       if(!wr) return '';
-      return '<details class="week-recap"><summary>' +
+      return '<details class="week-recap js-animatable"><summary>' +
           '<span class="week-recap-tag">🗞️ Gesamt-Recap der Woche</span>' +
           '<span class="week-recap-head"><span class="week-recap-headline">' + wr.headline + '</span><span class="week-recap-arrow">▸</span></span>' +
         '</summary>' +
-        '<p class="week-recap-body">' + wr.recap + '</p></details>';
+        '<p class="week-recap-body details-content">' + wr.recap + '</p></details>';
     }
 
     var WEEK_PREVIEWS_BY_WEEK = {};
@@ -573,11 +573,11 @@
       if(!wp) return '';
       var revealDate = weekRevealDate(wk.w);
       if(revealDate && new Date() < revealDate) return '';
-      return '<details class="week-preview"><summary>' +
+      return '<details class="week-preview js-animatable"><summary>' +
           '<span class="week-preview-tag">🔮 Vorschau auf die Woche</span>' +
           '<span class="week-preview-head"><span class="week-preview-headline">' + wp.headline + '</span><span class="week-preview-arrow">▸</span></span>' +
         '</summary>' +
-        '<p class="week-preview-body">' + wp.preview + '</p></details>';
+        '<p class="week-preview-body details-content">' + wp.preview + '</p></details>';
     }
 
     /* Neue Liga-Woche wird jeweils ab Mittwoch (Tag nach dem ESPN-Sync vom Dienstag) zur
@@ -631,12 +631,13 @@
       var ordered = current.concat(future).concat(past);
       var html = ordered.map(function(wk){
         if(wk.w < currentWeek){
-          return '<details class="sched-week sched-week-collapsed"><summary>' + weekHeadHtml(wk, true) + '</summary>' + weekBodyHtml(wk) + '</details>';
+          return '<details class="sched-week sched-week-collapsed js-animatable"><summary>' + weekHeadHtml(wk, true) + '</summary><div class="details-content">' + weekBodyHtml(wk) + '</div></details>';
         }
         return '<div class="sched-week">' + weekHeadHtml(wk, false) + weekBodyHtml(wk) + '</div>';
       }).join('');
       weeksEl.innerHTML = html;
       applyFilter();
+      window.DraftRoomShared.initAnimatableDetails(weeksEl);
     }
 
     function loadScores(){
@@ -717,6 +718,12 @@
       document.getElementById('standingsConfWrap').style.display = view === 'conf' ? '' : 'none';
       document.getElementById('standingsBracketWrap').style.display = view === 'playoffs' ? '' : 'none';
       document.getElementById('standingsNote').style.display = view === 'playoffs' ? 'none' : '';
+      var shown = view === 'league' ? document.getElementById('standingsTable')
+        : view === 'conf' ? document.getElementById('standingsConfWrap')
+        : document.getElementById('standingsBracketWrap');
+      shown.classList.remove('fade-in');
+      void shown.offsetWidth;
+      shown.classList.add('fade-in');
     }
 
     document.getElementById('standingsTabs').addEventListener('click', function(e){
@@ -794,6 +801,9 @@
         });
         weekEl.classList.toggle('is-week-hidden', !anyVisible);
       });
+      weeksEl.classList.remove('fade-in');
+      void weeksEl.offsetWidth;
+      weeksEl.classList.add('fade-in');
     }
 
     filterEl.addEventListener('change', function(){
