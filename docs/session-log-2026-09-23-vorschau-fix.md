@@ -275,6 +275,17 @@ Entfernt, inklusive der dadurch unbenutzt gewordenen `.note-box`-CSS in dieser D
 
 Commit `c9e5028`, gepusht.
 
+## 14. Mein Team: Bewertungs-Basis-Toggle zum Roster verschoben, mobile Ausrichtung korrigiert
+
+**Nutzer-Wunsch:** Den "Bewertungs-Basis"-Toggle (Label + Buttons "Projektion"/"Live-Punkteschnitt" + Erklärtext) von oben im Intro nach unten zum "Mein Roster"-Abschnitt verschieben, und die beiden Buttons sauberer anordnen ("auf dem Handy so unschön versetzt").
+
+- Block verschoben: steht jetzt direkt unter der "Mein Roster"-Überschrift, vor der Roster-Beschreibung und dem Roster selbst – inhaltlich passender, da der Toggle direkt beeinflusst, wie das Roster (und die Team-Analyse) berechnet wird.
+- Mobile-Layout-Fix: Label und die beiden Buttons waren vorher im selben wrappenden Flex-Container (`.mt-mode-picker{display:flex;flex-wrap:wrap}`) – auf schmalen Screens brach das ungleichmässig um. Jetzt steht das Label auf eigener Zeile (`display:block`), die beiden Buttons in einem eigenen Flex-Container (`.mt-mode-tabs`) darunter, je `flex:1` – liegen dadurch immer gleich breit nebeneinander in einer Reihe, unabhängig von Bildschirmbreite.
+
+**Getestet:** Playwright mit mobilem Viewport (390×844) – Toggle jetzt als Kind-Element direkt bei "Mein Roster" im DOM bestätigt (nicht mehr direkt nach `<h1>`), beide Buttons exakt gleiche Y-Position (selbe Zeile) und gleiche Breite (175px), Screenshot bestätigt sauberes Ergebnis.
+
+Commit `b365f7a`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
