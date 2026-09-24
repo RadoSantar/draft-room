@@ -1213,3 +1213,5 @@ Nicht mehr benötigt. Die proj-/live-Divergenzberechnung war nur für
 diesen einen Digest-Eintrag da und wird mit entfernt - schwächste
 Position + Free-Agent-Hinweis im "Diese Woche"-Digest bleiben
 unverändert.
+
+## 2026-09-24 – `3d13bd4` Changelog: Live-Form-Digest-Hinweis entfernt dokumentiert
