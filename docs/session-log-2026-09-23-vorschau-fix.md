@@ -374,6 +374,14 @@ Commit `30f6d58`, gepusht.
 
 Commits `42094a6` (Grundlage + Power Rankings), `f446ac3` (Spielplan), `1c45f0b` (Hall of Fame, Startseite/Glossar, Draft Board), gepusht.
 
+**Zweite Iteration (Crossfade zwischen Seiten):** Nutzer fragte, ob der Seitenwechsel selbst (nicht nur das Ankommen) auch angenehm animiert ist. Antwort nach Test: das Ankommen faded bereits sanft ein (per echtem Link-Klick verifiziert, Opacity 0→1 über ~300ms), aber die verlassende Seite verschwindet technisch bedingt hart (klassische Mehrseiten-Navigation ohne JS-Router, kein Exit-Effekt möglich). Vorschlag gemacht: Cross-Document View Transitions API für einen echten Crossfade zwischen alter und neuer Seite. Nutzer: "ja ergänze das."
+
+**Umgesetzt:** `@view-transition { navigation: auto; }` + kurze Animationsdauer (0.25s) auf `::view-transition-old(root)`/`::view-transition-new(root)` in `theme.css` ergänzt, geschützt durch `prefers-reduced-motion: no-preference`. Muss laut Spec auf BEIDEN an einer Navigation beteiligten Seiten vorhanden sein, damit der Browser den Übergang aktiviert – deshalb bewusst in der von allen 7 Seiten eingebundenen `theme.css` statt pro Seite dupliziert. Reines progressive enhancement: Browser ohne Unterstützung ignorieren die unbekannte At-Regel und navigieren exakt wie bisher, kein Fallback-Code nötig.
+
+**Getestet:** Playwright – lauscht auf den echten `pagereveal`-Event der Ziel-Seite nach einem echten Link-Klick (nicht nur `page.goto()`, das würde denselben Navigations-Typ nicht zwingend auslösen). Bei normaler Navigation ist `event.viewTransition` gesetzt (Chromium 141 in dieser Umgebung unterstützt die Cross-Document-Variante seit Chrome 126) – Transition ist also nachweislich aktiv, nicht nur syntaktisch vorhanden. Mit `reducedMotion:'reduce'`-Emulation ist `event.viewTransition` korrekt `undefined` – die Reduced-Motion-Abschaltung funktioniert wie beabsichtigt. Cache-Busting-Version für `theme.css` auf `20260924b` erhöht.
+
+Commit `b519d0f`, gepusht.
+
 ## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
 
 **Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
