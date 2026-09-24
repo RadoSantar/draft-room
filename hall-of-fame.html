@@ -438,7 +438,7 @@
     var cb = playoffs.consolationBracket;
     if(cb && cb.fifthPlaceGame) lines.push(matchLineHtml('Spiel um Platz 5 Wo. ' + cb.fifthPlaceGame.week, cb.fifthPlaceGame));
     if(!lines.length) return '';
-    return '<details class="hof-playoff-details"><summary>Playoff-Ergebnisse</summary>' + lines.join('') + '</details>';
+    return '<details class="hof-playoff-details js-animatable"><summary>Playoff-Ergebnisse</summary><div class="details-content">' + lines.join('') + '</div></details>';
   }
 
   function seasonCardHtml(year, season, hofRecordsForYear, isLive, liveStandings){
@@ -687,6 +687,7 @@
     renderHighlights(computeSeasonHighlights(seasonStats, scoreboard, power));
     renderRivalries(computeRivalries(scoreboard));
     renderSeasons(leagueHistory, standings, liveSummary);
+    window.DraftRoomShared.initAnimatableDetails();
 
     statusKickerEl.textContent = 'Vorjahre von Hand aus ESPN gepflegt · laufende Saison live berechnet';
     contentEl.hidden = false;

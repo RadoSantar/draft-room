@@ -836,6 +836,7 @@
     border-radius:20px;
     padding:7px 16px;
     cursor:pointer;
+    transition:background-color .15s ease,border-color .15s ease,color .15s ease;
   }
   .pos-tab.active{
     background:var(--amber);
@@ -2780,6 +2781,11 @@
     });
     listEl.style.display = '';
     statusEl.textContent = '';
+    if(!animate){
+      listEl.classList.remove('fade-in');
+      void listEl.offsetWidth;
+      listEl.classList.add('fade-in');
+    }
     if(data.length > DEFAULT_SHOW[pos]){
       moreBtn.classList.add('is-visible');
       moreBtn.textContent = expanded[pos] ? 'Weniger anzeigen' : 'Mehr anzeigen (Top ' + FETCH_LIMIT[pos] + ')';
