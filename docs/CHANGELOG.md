@@ -1178,3 +1178,5 @@ dass die Vorschläge noch nicht wie gewünscht funktionieren.
 Statt nur Überschrift + kleinem Pfeil jetzt ein Karten-Button
 (Hintergrund/Rahmen wie die restlichen Kacheln der Seite, amber Rahmen
 bei Hover/offen) - deutlich als klick-/tapbares Element erkennbar.
+
+## 2026-09-24 – `0b22861` Changelog: Trade-Ideen-Button-Look dokumentiert
