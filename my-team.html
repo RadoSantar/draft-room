@@ -96,6 +96,7 @@
     border-radius:12px;
     padding:10px 18px;
     margin:36px 0 4px;
+    transition:border-color .15s ease;
   }
   .mt-section-collapsible summary:hover{border-color:var(--amber);}
   .mt-section-collapsible[open] summary{border-color:var(--amber);}
@@ -103,6 +104,26 @@
   .mt-section-collapsible summary h2{margin:0;}
   .mt-section-arrow{font-size:16px;color:var(--amber);transition:transform .15s ease;}
   .mt-section-collapsible[open] .mt-section-arrow{transform:rotate(90deg);}
+
+  /* Sanftes Auf-/Zuklappen für <details class="mt-animatable"> (JS animiert die Höhe per Web
+     Animations API, siehe initAnimatableDetails weiter unten) - ohne JS/bei reduced-motion bleibt
+     es beim normalen, sofortigen <details>-Verhalten. */
+  details.mt-animatable{overflow:hidden;}
+  details.mt-animatable > .details-content{padding-top:2px;}
+
+  /* Inhalts-Fade beim Team-/Modus-Wechsel, damit der Wechsel nicht hart "poppt" */
+  #mtContent{transition:opacity .2s ease;}
+  #mtContent.is-refreshing{opacity:0;}
+
+  @media (prefers-reduced-motion: reduce){
+    #mtContent{transition:none;}
+  }
+
+  @keyframes mtPageFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+  @media (prefers-reduced-motion: no-preference){
+    main{animation:mtPageFadeIn .3s ease;}
+  }
+
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
   .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .calc-status.error{color:var(--endzone);}
@@ -137,7 +158,7 @@
   .mt-mode-picker{margin:10px 0 6px;}
   .mt-mode-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);margin-bottom:8px;}
   .mt-mode-tabs{display:flex;gap:8px;}
-  .mt-mode-tab{flex:1;font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .mt-mode-tab{flex:1;font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease;}
   .mt-mode-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
 
   /* Roster */
@@ -247,6 +268,7 @@
     border-radius:20px;
     padding:8px 16px;
     margin-bottom:8px;
+    transition:border-color .15s ease;
   }
   .mt-rec-group-label:hover{border-color:var(--amber);}
   .mt-rec-group[open] .mt-rec-group-label{border-color:var(--amber);}
@@ -417,11 +439,13 @@
     <p class="copy" id="mtTrendingCopy"></p>
     <div id="mtTrending"></div>
 
-    <details class="mt-section-collapsible">
+    <details class="mt-section-collapsible mt-animatable">
       <summary><h2 class="section-head">Trade-Ideen</h2><span class="mt-section-arrow">▸</span></summary>
-      <p class="note-text">🚧 Noch in Arbeit – funktionieren noch nicht ganz wie gewünscht.</p>
-      <p class="copy" id="mtTradesCopy"></p>
-      <div id="mtTrades"></div>
+      <div class="details-content">
+        <p class="note-text">🚧 Noch in Arbeit – funktionieren noch nicht ganz wie gewünscht.</p>
+        <p class="copy" id="mtTradesCopy"></p>
+        <div id="mtTrades"></div>
+      </div>
     </details>
 
     <h2 class="section-head">Track-Record vergangener Tipps</h2>
@@ -974,8 +998,9 @@
               : '<p class="copy">Drop-Kandidat: <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') – schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
           } else dropHint = '';
         }
-        return '<details class="mt-rec-group"><summary class="mt-rec-group-label mono">' + POS_LABEL[pos] + ' (' + list.length + ')</summary>' + cards + dropHint + '</details>';
+        return '<details class="mt-rec-group mt-animatable"><summary class="mt-rec-group-label mono">' + POS_LABEL[pos] + ' (' + list.length + ')</summary><div class="details-content">' + cards + dropHint + '</div></details>';
       }).join('') || '<p class="copy">Keine passenden Free Agents gefunden.</p>';
+      initAnimatableDetails(faEl);
     }).catch(function(){
       if(token !== faRequestToken) return;
       faEl.innerHTML = '';
@@ -1196,6 +1221,61 @@
     '</div>';
   }
 
+  // Animiert das Auf-/Zuklappen von <details class="mt-animatable"> sanft über die Höhe (native
+  // <details> springen sonst hart auf/zu) - per Web Animations API, Technik nach web.dev "Building
+  // an expand and collapse component". Braucht ein direktes .details-content-Kind für die Ziel-Höhe.
+  // Bei reduced-motion oder fehlender Animate-Unterstützung bleibt es beim normalen Sofort-Verhalten.
+  function initAnimatableDetails(root){
+    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    (root || document).querySelectorAll('details.mt-animatable').forEach(function(el){
+      if(el.dataset.animReady || typeof el.animate !== 'function') return;
+      el.dataset.animReady = '1';
+      var summary = el.querySelector('summary');
+      var content = el.querySelector(':scope > .details-content');
+      if(!summary || !content) return;
+      var anim = null, isClosing = false, isExpanding = false;
+
+      function onFinish(isOpen){
+        el.open = isOpen;
+        anim = null;
+        isClosing = false;
+        isExpanding = false;
+        el.style.height = '';
+        el.style.overflow = '';
+      }
+      function expand(){
+        isExpanding = true;
+        var startHeight = el.offsetHeight + 'px';
+        var endHeight = (summary.offsetHeight + content.offsetHeight) + 'px';
+        if(anim) anim.cancel();
+        anim = el.animate({ height: [startHeight, endHeight] }, { duration: 200, easing: 'ease-out' });
+        anim.onfinish = function(){ onFinish(true); };
+        anim.oncancel = function(){ isExpanding = false; };
+      }
+      function open(){
+        el.style.height = el.offsetHeight + 'px';
+        el.open = true;
+        window.requestAnimationFrame(expand);
+      }
+      function shrink(){
+        isClosing = true;
+        var startHeight = el.offsetHeight + 'px';
+        var endHeight = summary.offsetHeight + 'px';
+        if(anim) anim.cancel();
+        anim = el.animate({ height: [startHeight, endHeight] }, { duration: 200, easing: 'ease-out' });
+        anim.onfinish = function(){ onFinish(false); };
+        anim.oncancel = function(){ isClosing = false; };
+      }
+
+      summary.addEventListener('click', function(e){
+        e.preventDefault();
+        el.style.overflow = 'hidden';
+        if(isClosing || !el.open) open();
+        else if(isExpanding || el.open) shrink();
+      });
+    });
+  }
+
   function showTeam(teamName){
     CURRENT_TEAM = teamName;
     var power = POWER.filter(function(t){ return t.name === teamName; })[0];
@@ -1209,6 +1289,7 @@
     mainStatusEl.textContent = '';
     mainStatusEl.classList.remove('error');
     contentEl.hidden = false;
+    contentEl.classList.add('is-refreshing');
 
     var roster = liveOptimizedTeam(rawRoster);
     renderRoster(roster);
@@ -1221,6 +1302,11 @@
     renderFreeAgents(roster, weakPositions);
     renderTrades(power.id, roster, weakPositions);
     renderTrackRecord(power.id);
+    initAnimatableDetails(contentEl);
+
+    window.requestAnimationFrame(function(){
+      window.requestAnimationFrame(function(){ contentEl.classList.remove('is-refreshing'); });
+    });
   }
 
   function initTeamSelection(){
