@@ -82,6 +82,14 @@
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
   h2.section-head{font-size:22px;margin:36px 0 4px;}
   h3.sub-head{font-size:16px;margin:18px 0 6px;color:var(--turf);}
+
+  /* Einklappbarer Abschnitt (z.B. Trade-Ideen) - Pfeil rotiert beim Öffnen, wie .team-card auf
+     power-rankings.html */
+  .mt-section-collapsible summary{cursor:pointer;list-style:none;display:flex;align-items:baseline;gap:8px;}
+  .mt-section-collapsible summary::-webkit-details-marker{display:none;}
+  .mt-section-collapsible summary h2{margin:36px 0 4px;}
+  .mt-section-arrow{font-size:16px;color:var(--amber);transition:transform .15s ease;}
+  .mt-section-collapsible[open] .mt-section-arrow{transform:rotate(90deg);}
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
   .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
   .calc-status.error{color:var(--endzone);}
@@ -374,9 +382,12 @@
     <p class="copy" id="mtTrendingCopy"></p>
     <div id="mtTrending"></div>
 
-    <h2 class="section-head">Trade-Ideen</h2>
-    <p class="copy" id="mtTradesCopy"></p>
-    <div id="mtTrades"></div>
+    <details class="mt-section-collapsible">
+      <summary><h2 class="section-head">Trade-Ideen</h2><span class="mt-section-arrow">▸</span></summary>
+      <p class="note-text">🚧 Noch in Arbeit – funktionieren noch nicht ganz wie gewünscht.</p>
+      <p class="copy" id="mtTradesCopy"></p>
+      <div id="mtTrades"></div>
+    </details>
 
     <h2 class="section-head">Track-Record vergangener Tipps</h2>
     <p class="copy" id="mtTrackRecordCopy"></p>
