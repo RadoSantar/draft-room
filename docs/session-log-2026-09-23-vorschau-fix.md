@@ -308,6 +308,18 @@ Commit `eb75d5d`, gepusht.
 
 Commit `f93f0a4`, gepusht.
 
+## 17. Mein Team: Trade-Ideen einklappbar, WIP-Hinweis ergänzt
+
+**Nutzer-Wunsch:** Die "Trade-Ideen" einklappen und einen Vermerk anfügen, dass die Vorschläge noch nicht wie gewünscht funktionieren ("noch in Arbeit").
+
+- Abschnitt in ein `<details class="mt-section-collapsible">` gewrappt (Überschrift + rotierender ▸-Pfeil als Summary, gleiches Interaktionsmuster wie `.team-card` auf `power-rankings.html`), startet eingeklappt.
+- Neuer Hinweistext direkt beim Öffnen sichtbar: "🚧 Noch in Arbeit – funktionieren noch nicht ganz wie gewünscht." (`.note-text`-Stil, passt zum bestehenden Hinweistext am Seitenende).
+- Inhalt (Copy-Text + Trade-Karten) wird weiterhin normal im Hintergrund berechnet/befüllt, auch während eingeklappt – nur die Anzeige ist versteckt.
+
+**Getestet:** Playwright – startet eingeklappt (`open` initial `false`), Klick auf die Summary öffnet den Abschnitt und zeigt Hinweistext + Trade-Karten korrekt, Screenshots (eingeklappt/offen) bestätigen sauberes Erscheinungsbild inkl. rotierendem Pfeil.
+
+Commit `9da0fc1`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
