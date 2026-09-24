@@ -15,10 +15,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=20260915">
+<link rel="stylesheet" href="theme.css?v=20260924">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js"></script>
-<script src="shared.js?v=20260915"></script>
+<script src="shared.js?v=20260924"></script>
 <script data-goatcounter="https://radosantar.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -105,23 +105,17 @@
   .mt-section-arrow{font-size:16px;color:var(--amber);transition:transform .15s ease;}
   .mt-section-collapsible[open] .mt-section-arrow{transform:rotate(90deg);}
 
-  /* Sanftes Auf-/Zuklappen für <details class="mt-animatable"> (JS animiert die Höhe per Web
-     Animations API, siehe initAnimatableDetails weiter unten) - ohne JS/bei reduced-motion bleibt
-     es beim normalen, sofortigen <details>-Verhalten. */
-  details.mt-animatable{overflow:hidden;}
-  details.mt-animatable > .details-content{padding-top:2px;}
+  /* Sanftes Auf-/Zuklappen für <details class="js-animatable"> - Basis-CSS (overflow:hidden) und
+     der Höhen-Animations-Helfer (initAnimatableDetails) liegen gemeinsam in theme.css/shared.js. */
+  details.js-animatable > .details-content{padding-top:2px;}
 
-  /* Inhalts-Fade beim Team-/Modus-Wechsel, damit der Wechsel nicht hart "poppt" */
+  /* Inhalts-Fade beim Team-/Modus-Wechsel, damit der Wechsel nicht hart "poppt" (Seitenaufbau-Fade
+     und reduced-motion-Handling dafür liegen gemeinsam in theme.css) */
   #mtContent{transition:opacity .2s ease;}
   #mtContent.is-refreshing{opacity:0;}
 
   @media (prefers-reduced-motion: reduce){
     #mtContent{transition:none;}
-  }
-
-  @keyframes mtPageFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
-  @media (prefers-reduced-motion: no-preference){
-    main{animation:mtPageFadeIn .3s ease;}
   }
 
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
@@ -439,7 +433,7 @@
     <p class="copy" id="mtTrendingCopy"></p>
     <div id="mtTrending"></div>
 
-    <details class="mt-section-collapsible mt-animatable">
+    <details class="mt-section-collapsible js-animatable">
       <summary><h2 class="section-head">Trade-Ideen</h2><span class="mt-section-arrow">▸</span></summary>
       <div class="details-content">
         <p class="note-text">🚧 Noch in Arbeit – funktionieren noch nicht ganz wie gewünscht.</p>
@@ -977,9 +971,9 @@
               : '<p class="copy">Drop-Kandidat: <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') – schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
           } else dropHint = '';
         }
-        return '<details class="mt-rec-group mt-animatable"><summary class="mt-rec-group-label mono">' + POS_LABEL[pos] + ' (' + list.length + ')</summary><div class="details-content">' + cards + dropHint + '</div></details>';
+        return '<details class="mt-rec-group js-animatable"><summary class="mt-rec-group-label mono">' + POS_LABEL[pos] + ' (' + list.length + ')</summary><div class="details-content">' + cards + dropHint + '</div></details>';
       }).join('') || '<p class="copy">Keine passenden Free Agents gefunden.</p>';
-      initAnimatableDetails(faEl);
+      shared.initAnimatableDetails(faEl);
     }).catch(function(){
       if(token !== faRequestToken) return;
       faEl.innerHTML = '';
@@ -1200,61 +1194,6 @@
     '</div>';
   }
 
-  // Animiert das Auf-/Zuklappen von <details class="mt-animatable"> sanft über die Höhe (native
-  // <details> springen sonst hart auf/zu) - per Web Animations API, Technik nach web.dev "Building
-  // an expand and collapse component". Braucht ein direktes .details-content-Kind für die Ziel-Höhe.
-  // Bei reduced-motion oder fehlender Animate-Unterstützung bleibt es beim normalen Sofort-Verhalten.
-  function initAnimatableDetails(root){
-    if(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    (root || document).querySelectorAll('details.mt-animatable').forEach(function(el){
-      if(el.dataset.animReady || typeof el.animate !== 'function') return;
-      el.dataset.animReady = '1';
-      var summary = el.querySelector('summary');
-      var content = el.querySelector(':scope > .details-content');
-      if(!summary || !content) return;
-      var anim = null, isClosing = false, isExpanding = false;
-
-      function onFinish(isOpen){
-        el.open = isOpen;
-        anim = null;
-        isClosing = false;
-        isExpanding = false;
-        el.style.height = '';
-        el.style.overflow = '';
-      }
-      function expand(){
-        isExpanding = true;
-        var startHeight = el.offsetHeight + 'px';
-        var endHeight = (summary.offsetHeight + content.offsetHeight) + 'px';
-        if(anim) anim.cancel();
-        anim = el.animate({ height: [startHeight, endHeight] }, { duration: 200, easing: 'ease-out' });
-        anim.onfinish = function(){ onFinish(true); };
-        anim.oncancel = function(){ isExpanding = false; };
-      }
-      function open(){
-        el.style.height = el.offsetHeight + 'px';
-        el.open = true;
-        window.requestAnimationFrame(expand);
-      }
-      function shrink(){
-        isClosing = true;
-        var startHeight = el.offsetHeight + 'px';
-        var endHeight = summary.offsetHeight + 'px';
-        if(anim) anim.cancel();
-        anim = el.animate({ height: [startHeight, endHeight] }, { duration: 200, easing: 'ease-out' });
-        anim.onfinish = function(){ onFinish(false); };
-        anim.oncancel = function(){ isClosing = false; };
-      }
-
-      summary.addEventListener('click', function(e){
-        e.preventDefault();
-        el.style.overflow = 'hidden';
-        if(isClosing || !el.open) open();
-        else if(isExpanding || el.open) shrink();
-      });
-    });
-  }
-
   function showTeam(teamName){
     CURRENT_TEAM = teamName;
     var power = POWER.filter(function(t){ return t.name === teamName; })[0];
@@ -1281,7 +1220,7 @@
     renderFreeAgents(roster, weakPositions);
     renderTrades(power.id, roster, weakPositions);
     renderTrackRecord(power.id);
-    initAnimatableDetails(contentEl);
+    shared.initAnimatableDetails(contentEl);
 
     window.requestAnimationFrame(function(){
       window.requestAnimationFrame(function(){ contentEl.classList.remove('is-refreshing'); });

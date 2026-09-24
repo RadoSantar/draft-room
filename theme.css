@@ -444,3 +444,19 @@
 @media (max-width:640px){
   .back-to-top{right:14px;bottom:14px;width:40px;height:40px;}
 }
+
+/* Gemeinsame Basis fürs sanftere Grundgefühl der Seite (Auf-/Zuklappen, Seitenaufbau) - Details
+   siehe initAnimatableDetails() in shared.js. Erstmal auf my-team.html erprobt, jetzt seitenweit. */
+details.js-animatable{overflow:hidden;}
+
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+
+/* Wiederverwendbares Fade-in für Inhalte, die per Tab/Filter neu eingeblendet werden (z.B. Liga-
+   vs. Conference-Ansicht) - Klasse per JS beim Umschalten setzen (siehe jeweilige Seiten). */
+@media (prefers-reduced-motion: no-preference){
+  .fade-in{animation:pageFadeIn .2s ease;}
+}
+
+@media (prefers-reduced-motion: no-preference){
+  main{animation:pageFadeIn .3s ease;}
+}

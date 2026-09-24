@@ -278,6 +278,64 @@
     return entry ? entry.stats : null;
   }
 
+  /* Animiert das Auf-/Zuklappen von <details class="js-animatable"> sanft über die Höhe (native
+     <details> springen sonst hart auf/zu) - per Web Animations API, Technik nach web.dev "Building
+     an expand and collapse component". Braucht ein direktes .details-content-Kind für die Ziel-Höhe.
+     Bei reduced-motion oder fehlender Animate-Unterstützung bleibt es beim normalen Sofort-Verhalten.
+     root (optional): nur <details> innerhalb dieses Elements verdrahten (z.B. nach dynamischem
+     Neu-Rendern eines Teilbereichs) - ohne Argument wird das ganze Dokument durchsucht. Bereits
+     verdrahtete <details> werden übersprungen (data-anim-ready), also beliebig oft aufrufbar. */
+  function initAnimatableDetails(root){
+    if(global.matchMedia && global.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    (root || document).querySelectorAll('details.js-animatable').forEach(function(el){
+      if(el.dataset.animReady || typeof el.animate !== 'function') return;
+      el.dataset.animReady = '1';
+      var summary = el.querySelector('summary');
+      var content = el.querySelector(':scope > .details-content');
+      if(!summary || !content) return;
+      var anim = null, isClosing = false, isExpanding = false;
+
+      function onFinish(isOpen){
+        el.open = isOpen;
+        anim = null;
+        isClosing = false;
+        isExpanding = false;
+        el.style.height = '';
+        el.style.overflow = '';
+      }
+      function expand(){
+        isExpanding = true;
+        var startHeight = el.offsetHeight + 'px';
+        var endHeight = (summary.offsetHeight + content.offsetHeight) + 'px';
+        if(anim) anim.cancel();
+        anim = el.animate({ height: [startHeight, endHeight] }, { duration: 200, easing: 'ease-out' });
+        anim.onfinish = function(){ onFinish(true); };
+        anim.oncancel = function(){ isExpanding = false; };
+      }
+      function open(){
+        el.style.height = el.offsetHeight + 'px';
+        el.open = true;
+        global.requestAnimationFrame(expand);
+      }
+      function shrink(){
+        isClosing = true;
+        var startHeight = el.offsetHeight + 'px';
+        var endHeight = summary.offsetHeight + 'px';
+        if(anim) anim.cancel();
+        anim = el.animate({ height: [startHeight, endHeight] }, { duration: 200, easing: 'ease-out' });
+        anim.onfinish = function(){ onFinish(false); };
+        anim.oncancel = function(){ isClosing = false; };
+      }
+
+      summary.addEventListener('click', function(e){
+        e.preventDefault();
+        el.style.overflow = 'hidden';
+        if(isClosing || !el.open) open();
+        else if(isExpanding || el.open) shrink();
+      });
+    });
+  }
+
   global.DraftRoomShared = {
     ADP_URL: ADP_URL,
     SLOT_IDS: SLOT_IDS,
@@ -290,6 +348,7 @@
     syncHeaderLogo: syncHeaderLogo,
     initThemePicker: initThemePicker,
     initSyncBar: initSyncBar,
-    initHeaderNav: initHeaderNav
+    initHeaderNav: initHeaderNav,
+    initAnimatableDetails: initAnimatableDetails
   };
 })(window);

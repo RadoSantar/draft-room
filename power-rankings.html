@@ -15,10 +15,10 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Anton&family=Source+Serif+4:opsz,wght@8..60,400;8..60,600;8..60,700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="theme.css?v=20260915">
+<link rel="stylesheet" href="theme.css?v=20260924">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="sync.js"></script>
-<script src="shared.js?v=20260915"></script>
+<script src="shared.js?v=20260924"></script>
 <script data-goatcounter="https://radosantar.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
 <style>
   *{box-sizing:border-box;margin:0;padding:0;}
@@ -125,6 +125,7 @@
     border-radius:20px;
     padding:8px 16px;
     list-style:none;
+    transition:border-color .15s ease;
   }
   .tx-week summary:hover{border-color:var(--amber);}
   .tx-week summary::-webkit-details-marker{display:none;}
@@ -201,7 +202,7 @@
   .rank-score small{display:block;font-size:9px;color:var(--chalk);opacity:.7;text-transform:uppercase;letter-spacing:.05em;}
 
   .rank-tabs{display:flex;gap:8px;margin:20px 0 0;}
-  .rank-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid var(--card-border);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .rank-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid var(--card-border);background:transparent;color:var(--ink-soft);cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease;}
   .rank-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
   .rank-div-label{font-family:'IBM Plex Mono', monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--hash);margin:18px 0 4px;}
   .rank-div-label:first-of-type{margin-top:14px;}
@@ -593,7 +594,7 @@
         '<td class="num">' + (p.proj !== null ? fmt(p.proj) : '–') + '</td>' +
         '<td class="num">' + fmt(p.adp) + '</td></tr>';
     }).join('');
-    return '<table class="board-table"><thead><tr><th>Runde.Pick</th><th class="num">Overall</th><th>Pos</th><th>Spieler</th><th class="num">Proj.</th><th class="num">ADP</th></tr></thead><tbody>' + rows + '</tbody></table>';
+    return '<table class="board-table details-content"><thead><tr><th>Runde.Pick</th><th class="num">Overall</th><th>Pos</th><th>Spieler</th><th class="num">Proj.</th><th class="num">ADP</th></tr></thead><tbody>' + rows + '</tbody></table>';
   }
 
   function rankMoveHtml(t){
@@ -738,14 +739,14 @@
     document.getElementById('sosStatus').textContent = '';
 
     teamCardsEl.innerHTML = TEAMS.map(function(t){
-      return '<details class="team-card" id="team-' + t.id + '">' +
+      return '<details class="team-card js-animatable" id="team-' + t.id + '">' +
         '<summary><div class="team-card-head">' +
           '<span class="team-rank-badge mono">#' + t.rank + '</span>' +
           '<h2>' + t.name + '</h2>' +
           rankMoveHtml(t) +
           '<span class="team-card-arrow">▸</span>' +
         '</div></summary>' +
-        '<div class="team-card-body">' +
+        '<div class="team-card-body details-content">' +
           '<p class="team-tagline">' + (t.tagline || '') + '</p>' +
           '<div class="team-links"><a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN →</a></div>' +
           '<div class="team-stats">' +
@@ -756,11 +757,11 @@
           '</div>' +
           posTableHtml(t) +
           (t.hype ? '<div class="hype-box"><div class="hype-label mono">⚡ Saison-Ausblick</div><div class="hype-text">' + t.hype + '</div></div>' : '') +
-          (t.p3 ? '<details class="trade-update"' + ' open><summary>Update</summary><p>' + t.p3 + '</p></details>' : '') +
-          '<details class="recap-details"><summary class="mono">📋 Draft Recap</summary>' +
-            '<div class="team-analysis"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
+          (t.p3 ? '<details class="trade-update js-animatable"' + ' open><summary>Update</summary><p class="details-content">' + t.p3 + '</p></details>' : '') +
+          '<details class="recap-details js-animatable"><summary class="mono">📋 Draft Recap</summary>' +
+            '<div class="team-analysis details-content"><p>' + (t.p1||'') + '</p><p>' + (t.p2||'') + '</p></div>' +
           '</details>' +
-          '<details class="board-details"><summary>Komplettes Draft Board (20 Picks)</summary>' + boardTableHtml(t) + '</details>' +
+          '<details class="board-details js-animatable"><summary>Komplettes Draft Board (20 Picks)</summary>' + boardTableHtml(t) + '</details>' +
         '</div>' +
       '</details>';
     }).join('');
@@ -792,11 +793,12 @@
           '</div>' +
         '</div>';
       }).join('');
-      return '<details class="tx-week"><summary>Woche ' + wk + ' (' + byWeek[wk].length + ')</summary><div class="tx-feed">' + items + '</div></details>';
+      return '<details class="tx-week js-animatable"><summary>Woche ' + wk + ' (' + byWeek[wk].length + ')</summary><div class="tx-feed details-content">' + items + '</div></details>';
     }).join('');
 
     renderHistory(historyWrap, TEAMS);
     renderSosHistory(historyWrap, TEAMS);
+    window.DraftRoomShared.initAnimatableDetails();
   }).catch(function(err){
     statusKickerEl.textContent = 'Fehler beim Laden der Daten';
     rankStatusEl.textContent = 'Daten konnten nicht geladen werden. Bitte später erneut versuchen.';
@@ -808,8 +810,13 @@
     if(!btn) return;
     document.querySelectorAll('.rank-tab').forEach(function(b){ b.classList.toggle('is-active', b === btn); });
     var isConf = btn.dataset.view === 'conf';
+    var confWrap = document.getElementById('rankConfWrap');
     rankListEl.style.display = isConf ? 'none' : '';
-    document.getElementById('rankConfWrap').style.display = isConf ? '' : 'none';
+    confWrap.style.display = isConf ? '' : 'none';
+    var shown = isConf ? confWrap : rankListEl;
+    shown.classList.remove('fade-in');
+    void shown.offsetWidth;
+    shown.classList.add('fade-in');
   });
 })();
 </script>
