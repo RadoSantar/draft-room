@@ -265,6 +265,16 @@ Alle drei entfernt – beide betroffenen Abschnitte (Team-Wahl, Design-Wahl) sin
 
 Commit `ec4c251`, gepusht.
 
+## 13. Mein Team: Hinweis-Box entfernt
+
+**Nutzer-Wunsch:** Die Hinweis-Box direkt unter dem Intro auf `my-team.html` entfernen (Näherung/ADP-Erklärung, Toggle-Erklärung, Injury-Badge-Legende).
+
+Entfernt, inklusive der dadurch unbenutzt gewordenen `.note-box`-CSS in dieser Datei.
+
+**Getestet:** Playwright – kein `.note-box`-Element mehr im DOM, Hinweistext nicht mehr vorhanden, keine Konsolen-Fehler.
+
+Commit `c9e5028`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
