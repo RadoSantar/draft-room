@@ -1133,3 +1133,5 @@ selbsterklärend (Team-Select bzw. Theme-Picker direkt darunter).
 
 Erklärte Näherung/ADP, Toggle und Injury-Badges - auf Nutzer-Wunsch
 entfernt, unbenutzte .note-box-CSS mit aufgeräumt.
+
+## 2026-09-24 – `30fc0c1` Changelog: Hinweis-Box auf Mein Team entfernt dokumentiert
