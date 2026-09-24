@@ -353,6 +353,16 @@ Commit `ce8f3db`, gepusht.
 
 Commit `30f6d58`, gepusht.
 
+## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
+
+**Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
+
+Entfernt: der komplette proj-/live-Divergenz-Vergleich in `renderDigest()` (baute `projLineup`/`liveLineup` per `buildOptimalLineupByValue()`, verglich Starter-Sets, zeigte bei Abweichung diesen Alert-Eintrag) – nur für diesen einen Eintrag gebraucht, `buildOptimalLineupByValue()` selbst bleibt (wird an anderer Stelle für die eigentliche Roster-Optimierung weiter verwendet). "Schwächste Position"-Hinweis im Digest bleibt unverändert.
+
+**Getestet:** Playwright – Digest zeigt nur noch den Positions-Hinweis, kein "Bessere Live-Form..." mehr, auch nicht nach Umschalten auf "Live-Punkteschnitt", keine Konsolen-Fehler.
+
+Commit `4772606`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
