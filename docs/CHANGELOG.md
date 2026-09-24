@@ -1188,3 +1188,5 @@ eigener <details>-Block mit Pill-Button als Summary (inkl. Anzahl
 Vorschläge, z.B. "RB (3)") - gleiches Muster wie die Wochen-Buttons
 bei den Transaktionen auf power-rankings.html. Jede Position lässt
 sich unabhängig öffnen/schliessen, startet eingeklappt.
+
+## 2026-09-24 – `ba65737` Changelog: Free-Agent-Empfehlungen pro Position aufklappbar dokumentiert
