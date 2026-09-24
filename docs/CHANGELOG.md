@@ -1172,3 +1172,9 @@ Abschnitt startet jetzt eingeklappt (<details>, rotierender Pfeil wie
 dass die Vorschläge noch nicht wie gewünscht funktionieren.
 
 ## 2026-09-24 – `9a07813` Changelog: Trade-Ideen einklappbar + WIP-Hinweis dokumentiert
+
+## 2026-09-24 – `469eaaf` Mein Team: Trade-Ideen-Umschalter als Button gestaltet
+
+Statt nur Überschrift + kleinem Pfeil jetzt ein Karten-Button
+(Hintergrund/Rahmen wie die restlichen Kacheln der Seite, amber Rahmen
+bei Hover/offen) - deutlich als klick-/tapbares Element erkennbar.
