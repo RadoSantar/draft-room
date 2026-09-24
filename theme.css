@@ -460,3 +460,18 @@ details.js-animatable{overflow:hidden;}
 @media (prefers-reduced-motion: no-preference){
   main{animation:pageFadeIn .3s ease;}
 }
+
+/* Sanfter Crossfade beim eigentlichen Seitenwechsel (nicht nur beim Ankommen): Cross-Document View
+   Transitions - muss auf BEIDEN Seiten (verlassend + ankommend) vorhanden sein, deshalb hier in der
+   von allen Seiten eingebundenen theme.css statt pro Seite. Unterstützende Browser (aktuell
+   Chromium-basiert) blenden alt/neu weich ineinander statt hart umzuspringen; alle anderen
+   ignorieren die Regel und navigieren wie bisher (progressive enhancement, kein Fallback nötig). */
+@media (prefers-reduced-motion: no-preference){
+  @view-transition {
+    navigation: auto;
+  }
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: 0.25s;
+  }
+}
