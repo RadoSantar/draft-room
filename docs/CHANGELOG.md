@@ -1206,3 +1206,10 @@ Seite ausrollen:
   übersprungen, normales <details>-Verhalten bleibt erhalten).
 
 ## 2026-09-24 – `870b7ca` Changelog: Animations-Testlauf auf Mein Team dokumentiert
+
+## 2026-09-24 – `4772606` Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
+
+Nicht mehr benötigt. Die proj-/live-Divergenzberechnung war nur für
+diesen einen Digest-Eintrag da und wird mit entfernt - schwächste
+Position + Free-Agent-Hinweis im "Diese Woche"-Digest bleiben
+unverändert.
