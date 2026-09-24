@@ -255,6 +255,16 @@ Commit `301088a`, gepusht.
 
 Commit `12b6008`, gepusht.
 
+## 12. Start: überflüssige Texte entfernt
+
+**Nutzer-Wunsch:** Auf `start.html` drei Texte entfernen, die die Seite unnötig aufblasen: den Kicker "Start" über der Überschrift, den Intro-Satz "Team wählen, Design einstellen und direkt zu deinen Seiten springen." und die Beschreibung "Färbt die ganze Seite im Look deines Lieblings-NFL-Teams ein." unter "Design auswählen".
+
+Alle drei entfernt – beide betroffenen Abschnitte (Team-Wahl, Design-Wahl) sind über den direkt darunterliegenden Select/Theme-Picker selbsterklärend, die Zwischenüberschrift "Damit deine Team- und Design-Wahl geräteübergreifend gespeichert wird." blieb als einziger erklärender Text unter "Wähle dein Team" stehen.
+
+**Getestet:** Playwright – keiner der drei Texte mehr im DOM, Seite lädt ohne Konsolen-Fehler, restliche Struktur (Team-Select, Theme-Picker, Navigations-Kacheln) unverändert.
+
+Commit `ec4c251`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
