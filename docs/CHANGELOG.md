@@ -1126,3 +1126,5 @@ die bestehende Tabelle mit allen 10 Teams bleibt darunter unverändert.
 Kicker "Start" über der Überschrift sowie die Intro-Zeile und die
 "Design auswählen"-Beschreibung entfernt - beide Abschnitte sind
 selbsterklärend (Team-Select bzw. Theme-Picker direkt darunter).
+
+## 2026-09-24 – `29f0e57` Changelog: Start-Textkürzungen dokumentiert
