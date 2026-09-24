@@ -110,20 +110,6 @@
   .mt-skeleton .mt-skeleton-line{height:12px;border-radius:4px;background:var(--card-border);margin-bottom:6px;}
   .mt-skeleton .mt-skeleton-line:last-child{margin-bottom:0;width:55%;}
 
-  .note-box{
-    background:var(--card);
-    border:1px solid var(--card-border);
-    border-left:4px solid var(--amber);
-    border-radius:6px;
-    padding:12px 16px;
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    margin:18px 0;
-  }
-  .note-box .flag{font-family:'Anton', sans-serif;color:var(--turf);font-size:12px;letter-spacing:.04em;flex:0 0 auto;}
-  .note-box span:last-child{font-size:14px;color:var(--ink-soft);}
-
   /* Bewertungs-Basis-Toggle (Projektion vs. Live-Punkteschnitt) */
   .mt-mode-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px;}
   .mt-mode-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
@@ -347,11 +333,6 @@
   <div class="kicker" id="statusKicker">Wird geladen…</div>
   <h1>Mein Team</h1>
   <p class="copy">Dein Kader, Stärken/Schwächen im Liga-Vergleich, und automatische Free-Agent-/Trade-Ideen für deine schwächsten Positionen.</p>
-
-  <div class="note-box">
-    <span class="flag">Hinweis</span>
-    <span>Automatische Näherung auf Basis von Projektion/ADP – kein Ersatz für eigene Einschätzung oder Trade-Interesse des Gegenübers. Toggle oben: Projektion oder Live-Punkteschnitt (<span class="mono" style="color:var(--amber);">amber</span> = echte Saisondaten, "Ø" = Punkteschnitt). Badges wie <span class="mt-injury-badge" style="margin-left:0;">Q</span>/<span class="mt-injury-badge is-out" style="margin-left:0;">O</span> zeigen ESPNs Verletzungsstatus.</span>
-  </div>
 
   <div class="mt-mode-picker">
     <span class="mono mt-mode-label">Bewertungs-Basis:</span>
