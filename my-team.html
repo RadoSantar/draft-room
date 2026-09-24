@@ -77,6 +77,8 @@
     color:var(--hash);
     margin-bottom:6px;
   }
+  /* Steht jetzt am Seitenende statt oben - braucht dort Abstand nach oben statt nach unten */
+  #statusKicker{margin:28px 0 0;}
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
   h2.section-head{font-size:22px;margin:36px 0 4px;}
   h3.sub-head{font-size:16px;margin:18px 0 6px;color:var(--turf);}
@@ -330,7 +332,6 @@
     </div>
   </div>
 
-  <div class="kicker" id="statusKicker">Wird geladen…</div>
   <h1>Mein Team</h1>
   <p class="copy">Dein Kader, Stärken/Schwächen im Liga-Vergleich, und automatische Free-Agent-/Trade-Ideen für deine schwächsten Positionen.</p>
 
@@ -383,6 +384,8 @@
 
     <p class="note-text">Datenquelle: ESPN Fantasy API, verarbeitet nach unserem <a href="index.html#rechner">Liga-Scoring</a>. Kader aktualisiert sich wöchentlich, Free Agents live bei jedem Aufruf.</p>
   </div>
+
+  <div class="kicker" id="statusKicker">Wird geladen…</div>
 </main>
 
 <button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">

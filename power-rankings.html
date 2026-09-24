@@ -77,6 +77,8 @@
     color:var(--hash);
     margin-bottom:6px;
   }
+  /* Steht jetzt am Seitenende statt oben - braucht dort Abstand nach oben statt nach unten */
+  #statusKicker{margin:28px 0 0;}
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
   h2.section-head{font-size:22px;margin:36px 0 4px;}
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
@@ -453,7 +455,6 @@
     </div>
   </div>
 
-  <div class="kicker" id="statusKicker">Wird geladen…</div>
   <h1>Power Rankings</h1>
   <p class="copy">Analyse aller 10 Teams: Draft Board, Stärken/Schwächen je Position, Transaktionen und Saison-Ausblick. Die Power Rankings basieren auf der bestmöglichen Start-Aufstellung (1 QB, 2 RB, 2 WR, 2 Flex, 2 TE, 1 K, 1 DEF), berechnet mit ESPNs Saison-Projektionen nach unserem Scoring – wie beim <a href="index.html#rechner">Punkterechner</a> und <a href="draft-board.html">Draft Board</a>. Aktualisiert sich automatisch wöchentlich.</p>
 
@@ -495,6 +496,8 @@
   <div id="teamCards"></div>
 
   <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, Transaktionen) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a> (fehlende wochenbasierte Boni, K-Distanz-Staffelung vereinfacht, DST ohne INT/Fumble/TD-Boni). Automatische Aktualisierung läuft etwa wöchentlich per GitHub Actions; die geschriebenen Analysen/Ausblicke werden unabhängig davon von Hand gepflegt.</p>
+
+  <div class="kicker" id="statusKicker">Wird geladen…</div>
 </main>
 
 <button id="backToTop" class="back-to-top is-hidden" aria-label="Nach oben scrollen" title="Nach oben">
