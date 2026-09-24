@@ -286,6 +286,16 @@ Commit `c9e5028`, gepusht.
 
 Commit `b365f7a`, gepusht.
 
+## 15. Mein Team: Erklärtext unter Bewertungs-Basis-Buttons entfernt
+
+**Nutzer-Wunsch:** Die beiden Erklärtexte unter den "Projektion"/"Live-Punkteschnitt"-Buttons entfernen ("Nutzt echten Punkteschnitt, sobald verfügbar..." bzw. "Nutzt durchgehend die Vorschau-Projektion...").
+
+Entfernt (`#mtModeCopy`-Element, das JS, das ihn befüllt, sowie die dadurch unbenutzte `.mt-mode-copy`-CSS).
+
+**Getestet:** Playwright – Element nicht mehr im DOM, beide Textvarianten nicht mehr vorhanden, Umschalten zwischen den Buttons weiterhin fehlerfrei.
+
+Commit `eb75d5d`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
