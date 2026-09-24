@@ -353,6 +353,27 @@ Commit `ce8f3db`, gepusht.
 
 Commit `30f6d58`, gepusht.
 
+## 19b. Animationen seitenweit ausgerollt
+
+**Nutzer-Feedback:** "die animationen finde ich gut setze sie überall um" – nachdem Punkt 19 (Testlauf) nur auf `my-team.html` lief, sollten dieselben Prinzipien jetzt auf alle Seiten.
+
+**Grundlage extrahiert statt dupliziert:**
+- `initAnimatableDetails()` von `my-team.html` nach `shared.js` verschoben (`window.DraftRoomShared.initAnimatableDetails`), Klasse umbenannt von `mt-animatable` auf generisch `js-animatable`. `my-team.html` ruft jetzt die geteilte Funktion auf statt eine eigene Kopie zu pflegen.
+- Basis-CSS (`details.js-animatable{overflow:hidden;}`, Seitenaufbau-Fade-in `@keyframes pageFadeIn` auf `main`, wiederverwendbare `.fade-in`-Utility-Klasse für Tab-/Filter-Wechsel) nach `theme.css` verschoben – gilt jetzt automatisch für alle 7 Seiten, die theme.css einbinden.
+- Cache-Busting-Version (`?v=`) für `theme.css`/`shared.js` in allen Seiten von `20260915` auf `20260924` hochgezählt (Konvention laut Kommentar in `shared.js`).
+
+**Pro Seite:**
+- **Power Rankings:** `team-card`, `trade-update`, `recap-details`, `board-details`, `tx-week` klappen sanft auf/zu (auch verschachtelt getestet: Draft Recap innerhalb einer offenen Team-Karte). "Liga"/"Nach Conference"-Tab-Wechsel fadet jetzt. Hover-Übergänge für `rank-tab` und `tx-week`-Button ergänzt.
+- **Spielplan:** `game-recap`, `week-recap`, `week-preview`, vergangene Wochen (`sched-week-collapsed`) klappen sanft auf/zu. Team-/Double-/Conference-Filter faden die Wochenliste kurz (das harte `is-filtered-out`/`is-week-hidden`-Umschalten selbst bleibt aus Performance-Gründen – echtes Höhen-Collapse für potenziell viele gleichzeitig gefilterte Zeilen wäre unruhiger statt smoother gewesen). Standings-Tabs (Liga/Nach Conference/Playoffs) faden beim Wechsel, plus Hover-Übergang für die Tab-Buttons.
+- **Hall of Fame:** `hof-playoff-details` (Playoff-Ergebnisse) klappt sanft auf/zu.
+- **Startseite/Glossar (`index.html`):** Überraschender Befund – die Glossar-Begriffe (`term-card`) und Tipp-Karten hatten bereits eine eigene, gleichwertige Web-Animations-API-Höhenanimation aus einer früheren Session-Iteration (identisches Muster, unabhängig von diesem Rollout entstanden) – bewusst unangetastet gelassen statt zu duplizieren/ersetzen. Ergänzt: der Draft-Pick-Tracker-Tab-Wechsel (QB/RB/WR/TE/K/DEF) fadet den Spieler-Pool jetzt sanft ein statt hart umzuspringen, plus Hover-Übergang für die Tabs.
+- **Draft Board:** derselbe Tab-Wechsel-Fade wie beim Draft-Pick-Tracker, dazu Hover-Übergänge für Positions-Tabs, Sortier-Buttons und Status-Filter-Buttons. Der Live-Suchfilter (feuert bei jedem Tastendruck) bekommt bewusst KEINE Fade-Animation – bei schnellem Tippen würde das eher unruhig als smooth wirken.
+- **`start.html`:** hatte bereits saubere Hover-/Active-Übergänge auf den Navigations-Kacheln, keine Änderung nötig – bekommt automatisch den globalen Seitenaufbau-Fade-in über `theme.css`.
+
+**Getestet:** Playwright auf jeder Seite einzeln – `<details>`-Höhen-Animationen per Stichproben-Sampling verifiziert (z.B. Power-Rankings-Team-Karte 89px→1098px über ~200ms, verschachtelt mit Draft Recap innerhalb), Tab-/Filter-Fades per Klassen-Check bestätigt (dort wo echte ESPN-Live-Daten nötig waren, mit Playwright-Route-Interception gemockt, da diese Sandbox keinen Zugriff auf ESPNs API hat). Abschliessender Cross-Check: `main`-Fade-in-Animation auf allen stichprobenartig geprüften Seiten aktiv, keine Konsolen-Fehler, `my-team.html` funktioniert nach dem Umbau auf die geteilte Funktion weiterhin korrekt.
+
+Commits `42094a6` (Grundlage + Power Rankings), `f446ac3` (Spielplan), `1c45f0b` (Hall of Fame, Startseite/Glossar, Draft Board), gepusht.
+
 ## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
 
 **Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
