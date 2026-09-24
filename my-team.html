@@ -116,7 +116,6 @@
   .mt-mode-tabs{display:flex;gap:8px;}
   .mt-mode-tab{flex:1;font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
   .mt-mode-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
-  .mt-mode-copy{margin-bottom:16px;}
 
   /* Roster */
   .mt-roster{background:var(--turf);border-radius:10px;overflow:hidden;color:var(--chalk);margin:14px 0;}
@@ -357,7 +356,6 @@
         <button type="button" class="mt-mode-tab" data-mode="live">Live-Punkteschnitt</button>
       </div>
     </div>
-    <p class="copy mt-mode-copy" id="mtModeCopy"></p>
     <p class="copy" id="mtRosterCopy"></p>
     <div class="mt-roster" id="mtRoster"></div>
 
@@ -1101,9 +1099,6 @@
     document.querySelectorAll('.mt-mode-tab').forEach(function(btn){
       btn.classList.toggle('is-active', btn.dataset.mode === VALUE_MODE);
     });
-    document.getElementById('mtModeCopy').textContent = VALUE_MODE === 'live'
-      ? 'Nutzt echten Punkteschnitt, sobald verfügbar (amber) – sonst Fallback auf Projektion.'
-      : 'Nutzt durchgehend die Vorschau-Projektion, unabhängig von gespielten Wochen.';
     document.getElementById('mtRosterCopy').textContent = VALUE_MODE === 'live'
       ? 'Beste Aufstellung nach Live-Punkteschnitt – ein Bankspieler in besserer Form kann so einen Starter verdrängen.'
       : 'Beste Aufstellung nach Saison-Projektion.';
