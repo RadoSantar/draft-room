@@ -1241,3 +1241,14 @@ auf/zu (verschachtelt getestet: Draft Recap innerhalb einer offenen
 Team-Karte). "Liga"/"Nach Conference"-Tab-Wechsel faded jetzt sanft
 statt hart umzuspringen. Weiche Hover-Übergänge für rank-tab und
 tx-week-Button ergänzt.
+
+## 2026-09-24 – `f446ac3` Animationen seitenweit ausgerollt (2/2): Spielplan
+
+game-recap, week-recap, week-preview und vergangene Wochen (sched-week
+sched-week-collapsed) klappen jetzt sanft auf/zu. Team-/Double-/Conf-
+Filter faded die Wochenliste kurz statt hart umzuspringen (harte
+is-filtered-out/is-week-hidden-Umschaltung bleibt für Performance -
+volles Höhen-Collapse für potenziell viele gleichzeitig gefilterte
+Zeilen wäre unruhiger, nicht smoother, gewesen). Standings-Tabs (Liga/
+Nach Conference/Playoffs) faden beim Wechsel jetzt ebenfalls sanft,
+plus weicher Hover-Übergang für die Tab-Buttons.
