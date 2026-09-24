@@ -171,6 +171,24 @@
   .mt-stat-sub{font-size:11.5px;color:var(--ink-soft);margin-top:2px;}
 
   /* Playoff-Chancen */
+  .mt-playoff-hero{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-left:4px solid var(--hash);
+    border-radius:8px;
+    padding:16px 18px;
+    margin:14px 0;
+  }
+  .mt-playoff-hero.status-in{border-left-color:var(--turf);}
+  .mt-playoff-hero.status-chasing{border-left-color:var(--amber);}
+  .mt-playoff-hero.status-eliminated{border-left-color:var(--endzone);}
+  .mt-playoff-hero-icon{font-size:30px;line-height:1;flex:0 0 auto;}
+  .mt-playoff-hero-body{flex:1;}
+  .mt-playoff-hero-label{font-family:'IBM Plex Mono', monospace;font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--hash);margin-bottom:4px;}
+  .mt-playoff-hero-text{font-size:16px;color:var(--ink);}
   .mt-playoff-list{margin:14px 0;}
   .mt-playoff-row{display:flex;align-items:center;gap:10px;padding:7px 10px;border-bottom:1px solid var(--card-border);font-size:14px;}
   .mt-playoff-row:last-child{border-bottom:none;}
@@ -345,20 +363,20 @@
   <div class="calc-status" id="mainStatus">Wähle oben im Header dein Team, um deine Analyse zu sehen.</div>
 
   <div id="mtContent" hidden>
+    <h2 class="section-head">Deine Saison bisher</h2>
+    <p class="copy" id="mtSeasonStatsCopy"></p>
+    <div id="mtSeasonStats"></div>
+
+    <h2 class="section-head">Playoff-Chancen</h2>
+    <div class="mt-playoff-hero" id="mtPlayoffHero"></div>
+    <div id="mtPlayoff"></div>
+
     <h2 class="section-head">Diese Woche</h2>
     <div id="mtDigest"></div>
 
     <h2 class="section-head">Mein Roster</h2>
     <p class="copy" id="mtRosterCopy"></p>
     <div class="mt-roster" id="mtRoster"></div>
-
-    <h2 class="section-head">Deine Saison bisher</h2>
-    <p class="copy" id="mtSeasonStatsCopy"></p>
-    <div id="mtSeasonStats"></div>
-
-    <h2 class="section-head">Playoff-Chancen</h2>
-    <p class="copy" id="mtPlayoffCopy"></p>
-    <div id="mtPlayoff"></div>
 
     <h2 class="section-head">Team-Analyse</h2>
     <p class="copy" id="mtAnalysisCopy"></p>
@@ -452,7 +470,7 @@
   var rosterEl = document.getElementById('mtRoster');
   var seasonStatsCopyEl = document.getElementById('mtSeasonStatsCopy');
   var seasonStatsEl = document.getElementById('mtSeasonStats');
-  var playoffCopyEl = document.getElementById('mtPlayoffCopy');
+  var playoffHeroEl = document.getElementById('mtPlayoffHero');
   var playoffEl = document.getElementById('mtPlayoff');
   var analysisTableEl = document.getElementById('mtAnalysisTable');
   var analysisTextEl = document.getElementById('mtAnalysisText');
@@ -684,20 +702,32 @@
   // Platz 4 - eine bewusst simple Näherung ohne echte Tiebreaker-Simulation. Vor Woche 8 (siehe
   // findPlayoffRaceFact()-Konvention an anderer Stelle in sync-espn.mjs) ist die Aussage noch zu
   // verrauscht, deshalb dieselbe Schwelle hier für die Anzeige übernommen statt eine eigene zu erfinden.
+  function playoffHeroHtml(status, icon, text){
+    return '<span class="mt-playoff-hero-icon">' + icon + '</span>' +
+      '<div class="mt-playoff-hero-body">' +
+        '<div class="mt-playoff-hero-label">Playoff-Status</div>' +
+        '<div class="mt-playoff-hero-text">' + text + '</div>' +
+      '</div>';
+  }
+
   function renderPlayoffPicture(teamId){
     if(!PLAYOFF_PICTURE || !PLAYOFF_PICTURE.teams || !PLAYOFF_PICTURE.teams.length){
-      playoffCopyEl.textContent = 'Noch keine Playoff-Daten verfügbar.';
+      playoffHeroEl.className = 'mt-playoff-hero';
+      playoffHeroEl.innerHTML = playoffHeroHtml('', '⏳', 'Noch keine Playoff-Daten verfügbar.');
       playoffEl.innerHTML = '';
       return;
     }
     var throughWeek = PLAYOFF_PICTURE.throughWeek || 0;
     if(throughWeek < 8){
-      playoffCopyEl.textContent = 'Playoff-Einschätzung startet ab Woche 8 (aktuell: Woche ' + throughWeek + ').';
+      playoffHeroEl.className = 'mt-playoff-hero';
+      playoffHeroEl.innerHTML = playoffHeroHtml('', '⏳', 'Playoff-Einschätzung startet ab Woche 8 (aktuell: Woche ' + throughWeek + ').');
       playoffEl.innerHTML = '';
       return;
     }
 
     var mine = PLAYOFF_PICTURE.teams.filter(function(t){ return t.id === teamId; })[0];
+    var status = mine ? mine.status : '';
+    var icon = status === 'in' ? '🏆' : status === 'chasing' ? '🔥' : status === 'eliminated' ? '❌' : '⏳';
     var headline = '';
     if(mine){
       if(mine.status === 'in'){
@@ -714,7 +744,8 @@
         headline = 'Rechnerisch keine Playoff-Chance mehr diese Saison.';
       }
     }
-    playoffCopyEl.textContent = (headline ? headline + ' ' : '') + '(Stand Woche ' + throughWeek + '.)';
+    playoffHeroEl.className = 'mt-playoff-hero' + (status ? ' status-' + status : '');
+    playoffHeroEl.innerHTML = playoffHeroHtml(status, icon, (headline ? headline + ' ' : '') + '(Stand Woche ' + throughWeek + '.)');
 
     var statusRank = { in: 0, chasing: 1, eliminated: 2 };
     var sorted = PLAYOFF_PICTURE.teams.slice().sort(function(a, b){
