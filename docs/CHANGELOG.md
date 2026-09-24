@@ -1147,3 +1147,8 @@ versetzt, jetzt liegen Label und Buttons sauber in eigenen Zeilen und
 die Buttons gleich breit nebeneinander.
 
 ## 2026-09-24 – `b06e3d9` Changelog: Bewertungs-Basis-Toggle verschoben & mobile Ausrichtung dokumentiert
+
+## 2026-09-24 – `eb75d5d` Mein Team: Erklärtext unter Bewertungs-Basis-Buttons entfernt
+
+Beide Varianten (Live-Punkteschnitt/Projektion) entfernt, unbenutzte
+.mt-mode-copy-CSS mit aufgeräumt.
