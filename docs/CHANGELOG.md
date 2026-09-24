@@ -1204,3 +1204,5 @@ Seite ausrollen:
   weiche Farbübergänge statt hartem Wechsel bei Hover/Aktivierung.
 - Respektiert prefers-reduced-motion (Animationen werden dann
   übersprungen, normales <details>-Verhalten bleibt erhalten).
+
+## 2026-09-24 – `870b7ca` Changelog: Animations-Testlauf auf Mein Team dokumentiert
