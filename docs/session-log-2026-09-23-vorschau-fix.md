@@ -363,6 +363,10 @@ Entfernt: der komplette proj-/live-Divergenz-Vergleich in `renderDigest()` (baut
 
 Commit `4772606`, gepusht.
 
+**Zweite Iteration (Roster-Copy gekürzt):** Direkt im Anschluss: "Beste Aufstellung nach Live-Punkteschnitt – ein Bankspieler in besserer Form kann so einen Starter verdrängen." auf "Beste Aufstellung nach Live-Punkteschnitt" gekürzt (Erklärsatz war mit dem eben entfernten Digest-Hinweis redundant geworden). Per Playwright bestätigt.
+
+Commit `97bceba`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
