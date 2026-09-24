@@ -1135,3 +1135,13 @@ Erklärte Näherung/ADP, Toggle und Injury-Badges - auf Nutzer-Wunsch
 entfernt, unbenutzte .note-box-CSS mit aufgeräumt.
 
 ## 2026-09-24 – `30fc0c1` Changelog: Hinweis-Box auf Mein Team entfernt dokumentiert
+
+## 2026-09-24 – `b365f7a` Mein Team: Bewertungs-Basis-Toggle zum Roster verschoben, mobile Ausrichtung korrigiert
+
+Toggle (Projektion/Live-Punkteschnitt) samt Erklärtext steht jetzt direkt
+bei "Mein Roster" statt oben im Intro - dort wo er inhaltlich hingehört.
+Ausserdem die beiden Buttons in eine eigene Flex-Reihe (.mt-mode-tabs,
+flex:1 je Button) gepackt statt im selben wrappenden Flex-Container wie
+das Label - auf schmalen Screens standen sie vorher gegeneinander
+versetzt, jetzt liegen Label und Buttons sauber in eigenen Zeilen und
+die Buttons gleich breit nebeneinander.
