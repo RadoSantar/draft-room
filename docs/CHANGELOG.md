@@ -1128,3 +1128,8 @@ Kicker "Start" über der Überschrift sowie die Intro-Zeile und die
 selbsterklärend (Team-Select bzw. Theme-Picker direkt darunter).
 
 ## 2026-09-24 – `29f0e57` Changelog: Start-Textkürzungen dokumentiert
+
+## 2026-09-24 – `c9e5028` Mein Team: Hinweis-Box entfernt
+
+Erklärte Näherung/ADP, Toggle und Injury-Badges - auf Nutzer-Wunsch
+entfernt, unbenutzte .note-box-CSS mit aufgeräumt.
