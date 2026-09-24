@@ -1145,3 +1145,5 @@ flex:1 je Button) gepackt statt im selben wrappenden Flex-Container wie
 das Label - auf schmalen Screens standen sie vorher gegeneinander
 versetzt, jetzt liegen Label und Buttons sauber in eigenen Zeilen und
 die Buttons gleich breit nebeneinander.
+
+## 2026-09-24 – `b06e3d9` Changelog: Bewertungs-Basis-Toggle verschoben & mobile Ausrichtung dokumentiert
