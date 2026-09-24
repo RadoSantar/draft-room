@@ -230,7 +230,29 @@
 
   /* Empfehlungs-Karten (Free Agents / Trades) */
   .mt-rec-group{margin:18px 0;}
-  .mt-rec-group-label{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.05em;color:var(--turf);margin-bottom:8px;}
+  .mt-rec-group-label{
+    cursor:pointer;
+    list-style:none;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:var(--turf);
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:8px 16px;
+    margin-bottom:8px;
+  }
+  .mt-rec-group-label:hover{border-color:var(--amber);}
+  .mt-rec-group[open] .mt-rec-group-label{border-color:var(--amber);}
+  .mt-rec-group-label::-webkit-details-marker{display:none;}
+  .mt-rec-group-label::before{content:'+ ';color:var(--amber);font-weight:700;}
+  .mt-rec-group[open] .mt-rec-group-label::before{content:'\2212 ';}
   .mt-rec-card{
     background:var(--card);
     border:1px solid var(--card-border);
@@ -952,7 +974,7 @@
               : '<p class="copy">Drop-Kandidat: <strong>' + weakest.player.name + '</strong>' + injuryBadgeHtml(weakest.player) + ' (' + wvBasis + ') – schwächster Bankspieler auf ' + POS_LABEL[pos] + '.</p>';
           } else dropHint = '';
         }
-        return '<div class="mt-rec-group"><div class="mt-rec-group-label mono">' + POS_LABEL[pos] + '</div>' + cards + dropHint + '</div>';
+        return '<details class="mt-rec-group"><summary class="mt-rec-group-label mono">' + POS_LABEL[pos] + ' (' + list.length + ')</summary>' + cards + dropHint + '</details>';
       }).join('') || '<p class="copy">Keine passenden Free Agents gefunden.</p>';
     }).catch(function(){
       if(token !== faRequestToken) return;
