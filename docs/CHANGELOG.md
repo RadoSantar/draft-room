@@ -1219,3 +1219,25 @@ unverändert.
 ## 2026-09-24 – `97bceba` Mein Team: Roster-Copy im Live-Modus gekürzt
 
 ## 2026-09-24 – `1627f4b` Changelog: Roster-Copy-Kürzung dokumentiert
+
+## 2026-09-24 – `42094a6` Animationen seitenweit ausgerollt (1/2): Grundlage + Power Rankings
+
+Nutzer-Feedback zum Testlauf auf my-team.html war positiv ("die
+animationen finde ich gut setze sie überall um"). Gemeinsame Basis
+extrahiert statt pro Seite zu duplizieren:
+- initAnimatableDetails() von my-team.html nach shared.js verschoben
+  (generische Klasse "js-animatable" + ".details-content"-Kind statt
+  "mt-"-Präfix), my-team.html ruft jetzt shared.initAnimatableDetails()
+  auf statt eine eigene Kopie zu pflegen.
+- Basis-CSS (overflow:hidden für js-animatable, Seitenaufbau-Fade-in,
+  wiederverwendbare .fade-in-Utility für Tab-/Filter-Wechsel) nach
+  theme.css verschoben, gilt automatisch für alle Seiten.
+- Cache-Busting-Version (?v=) für theme.css/shared.js in allen 7 Seiten
+  hochgezählt, wie im Hinweis-Kommentar in shared.js vorgesehen.
+
+Power Rankings als erste weitere Seite ausgerollt: team-card, trade-
+update, recap-details, board-details und tx-week klappen jetzt sanft
+auf/zu (verschachtelt getestet: Draft Recap innerhalb einer offenen
+Team-Karte). "Liga"/"Nach Conference"-Tab-Wechsel faded jetzt sanft
+statt hart umzuspringen. Weiche Hover-Übergänge für rank-tab und
+tx-week-Button ergänzt.
