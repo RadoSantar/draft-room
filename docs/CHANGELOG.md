@@ -1118,3 +1118,5 @@ ohne zusätzlichen Klick auf der Seite selbst.
 prominente Status-Kachel (Icon + Headline, farbiger Rand je nach Status:
 grün=drin, amber=in Reichweite, rot=raus) statt nur einem Textabsatz -
 die bestehende Tabelle mit allen 10 Teams bleibt darunter unverändert.
+
+## 2026-09-24 – `071282a` Changelog: Mein Team – Reihenfolge & Playoff-Kachel dokumentiert
