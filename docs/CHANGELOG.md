@@ -1252,3 +1252,20 @@ volles Höhen-Collapse für potenziell viele gleichzeitig gefilterte
 Zeilen wäre unruhiger, nicht smoother, gewesen). Standings-Tabs (Liga/
 Nach Conference/Playoffs) faden beim Wechsel jetzt ebenfalls sanft,
 plus weicher Hover-Übergang für die Tab-Buttons.
+
+## 2026-09-24 – `1c45f0b` Animationen auf Hall of Fame, Startseite/Glossar und Draft Board ergänzt
+
+Hall of Fame: Playoff-Ergebnisse (hof-playoff-details) klappen jetzt
+sanft auf/zu.
+
+index.html/start.html: Glossar-Begriffe (term-card) und Tipp-Karten
+hatten bereits eine eigene, gleichwertige Höhen-Animation von früher -
+unangetastet gelassen. Ergänzt: der Draft-Pick-Tracker-Tab-Wechsel
+(QB/RB/WR/...) fadet den Spieler-Pool jetzt sanft ein statt hart
+umzuspringen, plus weicher Hover-Übergang für die Tabs.
+
+Draft Board: derselbe Tab-Wechsel-Fade wie bei den Draft-Picks auf der
+Startseite, dazu weiche Hover-Übergänge für Positions-Tabs, Sortier-
+Buttons und Status-Filter-Buttons. Der Live-Suchfilter (applyFilter,
+feuert bei jedem Tastendruck) bekommt bewusst KEINE Fade-Animation -
+das würde bei schnellem Tippen eher unruhig als smooth wirken.
