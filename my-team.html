@@ -111,9 +111,10 @@
   .mt-skeleton .mt-skeleton-line:last-child{margin-bottom:0;width:55%;}
 
   /* Bewertungs-Basis-Toggle (Projektion vs. Live-Punkteschnitt) */
-  .mt-mode-picker{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 6px;}
-  .mt-mode-label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);}
-  .mt-mode-tab{font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:6px 14px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
+  .mt-mode-picker{margin:10px 0 6px;}
+  .mt-mode-label{display:block;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--hash);margin-bottom:8px;}
+  .mt-mode-tabs{display:flex;gap:8px;}
+  .mt-mode-tab{flex:1;font-family:'IBM Plex Mono', monospace;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding:8px 10px;border-radius:999px;border:1px solid rgba(0,0,0,0.15);background:transparent;color:var(--ink-soft);cursor:pointer;}
   .mt-mode-tab.is-active{background:var(--turf);color:var(--chalk);border-color:var(--turf);}
   .mt-mode-copy{margin-bottom:16px;}
 
@@ -334,13 +335,6 @@
   <h1>Mein Team</h1>
   <p class="copy">Dein Kader, Stärken/Schwächen im Liga-Vergleich, und automatische Free-Agent-/Trade-Ideen für deine schwächsten Positionen.</p>
 
-  <div class="mt-mode-picker">
-    <span class="mono mt-mode-label">Bewertungs-Basis:</span>
-    <button type="button" class="mt-mode-tab" data-mode="proj">Projektion</button>
-    <button type="button" class="mt-mode-tab" data-mode="live">Live-Punkteschnitt</button>
-  </div>
-  <p class="copy mt-mode-copy" id="mtModeCopy"></p>
-
   <div class="calc-status" id="mainStatus">Wähle oben im Header dein Team, um deine Analyse zu sehen.</div>
 
   <div id="mtContent" hidden>
@@ -356,6 +350,14 @@
     <div id="mtDigest"></div>
 
     <h2 class="section-head">Mein Roster</h2>
+    <div class="mt-mode-picker">
+      <span class="mono mt-mode-label">Bewertungs-Basis:</span>
+      <div class="mt-mode-tabs">
+        <button type="button" class="mt-mode-tab" data-mode="proj">Projektion</button>
+        <button type="button" class="mt-mode-tab" data-mode="live">Live-Punkteschnitt</button>
+      </div>
+    </div>
+    <p class="copy mt-mode-copy" id="mtModeCopy"></p>
     <p class="copy" id="mtRosterCopy"></p>
     <div class="mt-roster" id="mtRoster"></div>
 
