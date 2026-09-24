@@ -338,6 +338,21 @@ Commit `469eaaf`, gepusht.
 
 Commit `ce8f3db`, gepusht.
 
+## 19. Mein Team: sanftere Animationen (Testlauf vor Seiten-weitem Rollout)
+
+**Nutzer-Frage (exploratorisch):** "lässt sich das grundsätzliche gefühl der seite verbessern? ... alles so plötzlich wenn sich buttons öffnen/schliessen, wenn filter angewendet werden oder auch beim seiten wechsel." Empfehlung gegeben (gemeinsamer Animations-Helper, respektiert `prefers-reduced-motion`) und vorgeschlagen, es erst an einer Seite zu zeigen, bevor es überall ausgerollt wird. Nutzer: "mach es mal bei mein team."
+
+**Umgesetzt (nur `my-team.html`, bewusst noch nicht seitenweit):**
+- **Sanftes Auf-/Zuklappen für `<details>`:** Native `<details>` springen ohne Höhen-Übergang hart auf/zu. Neue `initAnimatableDetails()`-Funktion (Web Animations API, Technik nach web.dev "Building an expand and collapse component") animiert die Höhe über 200ms für alle `<details class="mt-animatable">` – aktuell Trade-Ideen und jede Free-Agent-Positions-Gruppe. Braucht dafür ein `.details-content`-Wrapper-Div als direktes Kind (für Trade-Ideen im HTML ergänzt, bei den dynamisch gebauten Free-Agent-Gruppen im Template-String). Wird nach jedem `renderFreeAgents()`-Lauf erneut für die frisch eingefügten Elemente aufgerufen (dynamisch generierter Inhalt).
+- **Inhalts-Fade beim Team-/Modus-Wechsel:** `showTeam()` (zentrale Re-Render-Funktion für sowohl Team- als auch Bewertungs-Basis-Wechsel) fadet `#mtContent` kurz aus und nach dem Neu-Rendern wieder ein (`.is-refreshing`-Klasse + CSS-Transition, per doppeltem `requestAnimationFrame` entfernt, damit der Browser den Opacity-Sprung sicher erst rendert bevor er zurückfaded).
+- **Seitenaufbau-Fade:** dezente `@keyframes`-Einblendung auf `<main>` beim Laden.
+- **Weiche Hover-/Aktiv-Übergänge:** Farbübergänge (statt hartem Wechsel) für die Bewertungs-Basis-Buttons und die neuen Aufklapp-Button-Rahmen (Trade-Ideen, Free-Agent-Gruppen).
+- **`prefers-reduced-motion: reduce` respektiert:** Die `<details>`-Höhenanimation wird dann komplett übersprungen (normales, sofortiges `<details>`-Verhalten bleibt erhalten), der Content-Fade läuft ohne Transition, der Seitenaufbau-Fade wird nicht angewendet.
+
+**Getestet:** Playwright, je einmal mit normaler und mit `reducedMotion:'reduce'`-Emulation – Trade-Ideen und Free-Agent-Gruppen öffnen/schliessen korrekt (`open`-Status vor/nach Klick verifiziert) in beiden Modi, keine JS-Fehler (nur die bekannten, unabhängigen ESPN-Netzwerk-Fehler dieser Sandbox). Höhen-Stichproben alle ~30ms während der Öffnen-Animation bestätigen eine tatsächlich graduelle Höhenzunahme (98px → 420px → 829px → ... → 1387px über ~200ms) statt eines harten Sprungs.
+
+Commit `30f6d58`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
