@@ -1162,3 +1162,5 @@ und hall-of-fame.html stand bisher ganz oben vor der Überschrift - jetzt am
 Ende der Seite nach dem letzten Inhalt, mit entsprechendem Abstand nach
 oben statt nach unten. Bleibt jeweils ausserhalb des versteckbaren
 Content-Wrappers, damit Lade-/Fehlerzustände weiterhin sichtbar sind.
+
+## 2026-09-24 – `54579e8` Changelog: Stand-Kicker ans Seitenende verschoben dokumentiert
