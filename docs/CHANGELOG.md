@@ -1170,3 +1170,5 @@ Content-Wrappers, damit Lade-/Fehlerzustände weiterhin sichtbar sind.
 Abschnitt startet jetzt eingeklappt (<details>, rotierender Pfeil wie
 .team-card auf power-rankings.html) und zeigt beim Öffnen einen Hinweis,
 dass die Vorschläge noch nicht wie gewünscht funktionieren.
+
+## 2026-09-24 – `9a07813` Changelog: Trade-Ideen einklappbar + WIP-Hinweis dokumentiert
