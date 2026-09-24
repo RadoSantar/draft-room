@@ -244,6 +244,17 @@ Commit `68e9261`, gepusht.
 
 Commit `301088a`, gepusht.
 
+## 11. Mein Team: Saison-Rückblick & Playoff-Chancen nach oben, Playoff-Kachel
+
+**Nutzer-Wunsch:** "Deine Saison bisher" und "Playoff-Chancen" auf `my-team.html` nach oben verschieben, und "Playoff-Chancen" eine schöne Kachel geben.
+
+- Reihenfolge geändert: "Deine Saison bisher" und "Playoff-Chancen" stehen jetzt als erste zwei Abschnitte ganz oben, noch vor "Diese Woche" und "Mein Roster" (davor unverändert weiter unten: Team-Analyse, Free-Agent-Empfehlungen, Trending, Trade-Ideen, Track-Record).
+- Playoff-Chancen bekommt eine neue Status-Kachel (`.mt-playoff-hero`, Icon + "Playoff-Status"-Label + Headline-Text) direkt unter der Überschrift, im selben Karten-Stil wie der Rest der Seite (`var(--card)`/`var(--card-border)`), mit farbigem linkem Rand je nach Status: grün (drin), amber (in Reichweite/"chasing"), rot (raus/"eliminated"), grau vor Woche 8 bzw. ohne Daten. Icon passend: 🏆 drin, 🔥 in Reichweite, ❌ raus, ⏳ noch keine Aussage möglich. Ersetzt den bisherigen reinen Textabsatz (`mtPlayoffCopy`); die bestehende Tabelle mit allen 10 Teams bleibt unverändert darunter.
+
+**Getestet:** Playwright – Abschnitts-Reihenfolge per `h2.section-head`-Liste bestätigt (Saison bisher → Playoff-Chancen → Diese Woche → Mein Roster → ...). Kachel-Rendering für den Vor-Woche-8-Fall (Platzhaltertext, neutrales ⏳, kein Statusrand) sowie – per Route-Interception mit gemockten `data/playoff-picture.json`-Daten – für Status "chasing" (🔥, amber Rand, korrekter Headline-Text "1 Sieg hinter Platz 4...") verifiziert.
+
+Commit `12b6008`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
