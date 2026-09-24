@@ -296,6 +296,18 @@ Entfernt (`#mtModeCopy`-Element, das JS, das ihn befüllt, sowie die dadurch unb
 
 Commit `eb75d5d`, gepusht.
 
+## 16. Stand-Kicker auf allen 3 Seiten ans Seitenende verschoben
+
+**Nutzer-Wunsch:** Die "Stand <Datum>"-Anzeige (wie auf "Mein Team" – stand dort ganz oben) soll auf allen Seiten neu ganz unten stehen statt oben.
+
+**Analyse:** Dieser dynamische Status-Kicker (`id="statusKicker"`) existiert auf genau 3 Seiten: `my-team.html`, `power-rankings.html`, `hall-of-fame.html` – jeweils direkt über der `<h1>`. Andere `.kicker`-Vorkommen im Rest der Seite (z.B. `draft-board.html`s "Eigenes Cheat-Sheet", `schedule.html`s Saison-Zeitraum, diverse statische Kicker auf `index.html`) sind rein statischer Deko-Text, keine Datenaktualitäts-Anzeige – blieben unangetastet. `draft-board.html` hat keinen Stand-Kicker. `schedule.html` hat eine eigene, bereits kontextuell platzierte "Stand: ..."-Notiz direkt bei der Standings-Tabelle (nicht am Seitenanfang) – ebenfalls nicht Ziel dieser Änderung.
+
+**Fix:** Auf allen 3 betroffenen Seiten den Kicker von vor der `<h1>` an das Ende von `<main>` verschoben (nach dem letzten Inhalt/Hinweistext). Bleibt bewusst als Geschwister-Element ausserhalb des jeweils versteckbaren Content-Wrappers (`#mtContent`/`#hofContent`), damit Lade- und Fehlerzustände ("Wird geladen…", "Fehler beim Laden der Daten") weiterhin sichtbar sind, auch bevor der Hauptinhalt eingeblendet wird. CSS-seitig `margin-bottom` durch ein `#statusKicker{margin:28px 0 0;}` ergänzt, da am Seitenende ein Abstand nach oben statt nach unten gebraucht wird.
+
+**Getestet:** Playwright auf allen 3 Seiten – Kicker jeweils als letztes Kind-Element von `<main>` bestätigt, zeigt weiterhin den korrekten Text ("Stand ...", bzw. bei Hall of Fame den eigenen Status-Text), keine Konsolen-Fehler. Screenshot (mobiler Viewport) bestätigt saubere Abstände am Seitenende.
+
+Commit `f93f0a4`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
