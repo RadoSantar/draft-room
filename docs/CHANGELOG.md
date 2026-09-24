@@ -1271,3 +1271,20 @@ feuert bei jedem Tastendruck) bekommt bewusst KEINE Fade-Animation -
 das würde bei schnellem Tippen eher unruhig als smooth wirken.
 
 ## 2026-09-24 – `5e86c7b` Changelog: seitenweiten Animations-Rollout dokumentiert
+
+## 2026-09-24 – `b519d0f` Sanfter Crossfade zwischen Seiten via Cross-Document View Transitions
+
+Nutzer bestätigte den bisherigen Fade-in beim Ankommen als gut, wollte
+aber auch für den eigentlichen Seitenwechsel selbst etwas Sanfteres.
+Cross-Document View Transitions (@view-transition{navigation:auto} +
+kurze Animationsdauer auf ::view-transition-old/new(root)) in
+theme.css ergänzt - muss auf beiden beteiligten Seiten vorhanden sein,
+deshalb dort statt pro Seite. Unterstützende Browser blenden alte und
+neue Seite jetzt weich ineinander statt hart umzuspringen; alle
+anderen ignorieren die Regel und navigieren wie bisher (progressive
+enhancement). Respektiert prefers-reduced-motion.
+
+Verifiziert per Playwright über den echten pagereveal-Event
+(e.viewTransition vorhanden bei normaler Navigation, korrekt fehlend
+bei reduced-motion-Emulation). Cache-Busting-Version für theme.css
+entsprechend erhöht.
