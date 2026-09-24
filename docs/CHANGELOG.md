@@ -1110,3 +1110,11 @@ Header-Selector gesteuert: Auswahl dort zeigt/wechselt sofort die Analyse,
 ohne zusätzlichen Klick auf der Seite selbst.
 
 ## 2026-09-23 – `5bcceed` Changelog: redundante Team-Auswahl auf Mein Team entfernt
+
+## 2026-09-24 – `12b6008` Mein Team: Saison-Rückblick & Playoff-Chancen nach oben, Playoff-Kachel
+
+"Deine Saison bisher" und "Playoff-Chancen" stehen jetzt ganz oben, vor
+"Diese Woche" und "Mein Roster". Playoff-Chancen bekommt zusätzlich eine
+prominente Status-Kachel (Icon + Headline, farbiger Rand je nach Status:
+grün=drin, amber=in Reichweite, rot=raus) statt nur einem Textabsatz -
+die bestehende Tabelle mit allen 10 Teams bleibt darunter unverändert.
