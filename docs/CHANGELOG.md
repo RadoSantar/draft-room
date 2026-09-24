@@ -1152,3 +1152,5 @@ die Buttons gleich breit nebeneinander.
 
 Beide Varianten (Live-Punkteschnitt/Projektion) entfernt, unbenutzte
 .mt-mode-copy-CSS mit aufgeräumt.
+
+## 2026-09-24 – `b47742a` Changelog: Bewertungs-Basis-Erklärtext entfernt dokumentiert
