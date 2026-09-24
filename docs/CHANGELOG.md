@@ -1288,3 +1288,5 @@ Verifiziert per Playwright über den echten pagereveal-Event
 (e.viewTransition vorhanden bei normaler Navigation, korrekt fehlend
 bei reduced-motion-Emulation). Cache-Busting-Version für theme.css
 entsprechend erhöht.
+
+## 2026-09-24 – `3e8c80a` Changelog: View-Transitions-Crossfade dokumentiert
