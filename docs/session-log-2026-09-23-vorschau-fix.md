@@ -326,6 +326,18 @@ Commit `9da0fc1`, gepusht.
 
 Commit `469eaaf`, gepusht.
 
+## 18. Mein Team: Free-Agent-Empfehlungen pro Position als Button aufklappbar
+
+**Nutzer-Wunsch:** Die Free-Agent-Empfehlungen sollen ebenfalls pro Position als Button aufklappbar sein (analog zum eben umgesetzten Trade-Ideen-Button).
+
+- Jede Positions-Gruppe (`renderFreeAgents()` in `my-team.html`, bisher eine statische `.mt-rec-group-label`-Überschrift pro Position) ist jetzt ein eigener `<details class="mt-rec-group">`-Block, Summary im selben Pill-Button-Stil wie die "Woche X"-Buttons bei den Transaktionen auf `power-rankings.html` (`+`/`−`-Marker, abgerundete Pille, amber Rahmen bei Hover/offen) – bewusst die kleinere Pill-Variante statt der grossen Karten-Button-Optik von Trade-Ideen, da dies Unterabschnitte innerhalb von "Free-Agent-Empfehlungen" sind, kein eigener H2-Abschnitt.
+- Summary zeigt zusätzlich die Anzahl gefundener Spieler, z.B. "RB (3)".
+- Jede Position lässt sich unabhängig öffnen/schliessen, startet eingeklappt.
+
+**Getestet:** Da ESPNs Free-Agent-API von dieser Sandbox aus nicht erreichbar ist (Netzwerk-Einschränkung, bereits von früheren Supabase-Tests bekannt), wurde der Fetch per Playwright-Route-Interception mit synthetischen Spielerdaten gemockt. Ergebnis: 3 Positions-Gruppen korrekt gerendert (alle initial eingeklappt), Klick öffnet gezielt nur die angeklickte Gruppe, Karten- und Drop-Hinweis-Inhalt korrekt sichtbar, Screenshots bestätigen den Button-Look.
+
+Commit `ce8f3db`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
