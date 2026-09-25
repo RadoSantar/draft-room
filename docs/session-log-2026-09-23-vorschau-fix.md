@@ -548,6 +548,18 @@ Commit `d020bb5`, gepusht.
 
 Commit `c9e0ab1`, gepusht.
 
+## 27. Tool-Nav: "Startseite"-Link ergänzt, fehlender Draft-Board-Link bei Hall of Fame nachgetragen
+
+**Nutzer-Meldung:** "über das menü oben rechts kommt man mit den buttons immer zurück zur übersicht statt zur startseite. der button fehlt na noch." Das mobile Hamburger-Menü (`.tool-nav`) auf allen 5 Tool-Seiten führte immer nur zurück zur "Übersicht" (`index.html`), nirgends direkt zur eigentlichen Startseite (`start.html`) – obwohl `start.html` seit der Redirect-Guard-Änderung (Punkt 5/oben) die echte Landingpage ist. Der Logo-Klick oben links ging zwar schon länger zu `start.html`, aber im Navigations-Menü selbst fehlte ein entsprechender Eintrag.
+
+**Umgesetzt:** Auf `my-team.html`, `draft-board.html`, `schedule.html`, `hall-of-fame.html` und `power-rankings.html` jeweils `<a href="start.html">Startseite</a>` als ersten Eintrag im `.tool-nav` ergänzt, vor "← Übersicht".
+
+**Nebenbei aufgefallen und mitkorrigiert:** `hall-of-fame.html` verlinkte als einzige der 5 Seiten nicht auf "Draft Board" (alle anderen 4 Seiten verlinken konsistent auf die jeweils anderen 4 Tool-Seiten) – ergänzt.
+
+**Getestet:** Playwright – alle 5 Seiten zeigen "Startseite" jetzt als ersten Menüpunkt mit `href="start.html"`, Klick navigiert tatsächlich dorthin; `hall-of-fame.html` verlinkt jetzt auf alle 4 anderen Tool-Seiten. Screenshot des mobilen Menüs bestätigt sauberes Layout.
+
+Commit `3f8c494`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
