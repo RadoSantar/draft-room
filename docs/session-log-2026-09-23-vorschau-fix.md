@@ -472,6 +472,12 @@ Commit `97bceba`, gepusht.
 
 Commit `bf2db30`, gepusht.
 
+## 22. Startseite: Überschrift "Willkommen zurück" → "Willkommen im Fantasy Playbook"
+
+**Nutzer-Wunsch:** "bei der startseite heisst es aktuell willkommen zurück ich denke willkommen im Fantasy Playbook ist besser." Einzeilige Textänderung in `start.html` (`<h1>Willkommen zurück</h1>` → `<h1>Willkommen im Fantasy Playbook</h1>`).
+
+Commit `d6306c8`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
