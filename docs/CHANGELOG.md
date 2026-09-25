@@ -1372,3 +1372,5 @@ auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
 ## 2026-09-25 – `c71ab48` Changelog: Startseiten-Überschrift geändert
 
 ## 2026-09-25 – `01e47f6` Startseite: Überschrift auf "Willkommen" gekürzt, dafür grösser
+
+## 2026-09-25 – `dc06c96` Changelog: Startseiten-Überschrift gekürzt und vergrössert
