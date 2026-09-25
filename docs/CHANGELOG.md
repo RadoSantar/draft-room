@@ -1374,3 +1374,21 @@ auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
 ## 2026-09-25 – `01e47f6` Startseite: Überschrift auf "Willkommen" gekürzt, dafür grösser
 
 ## 2026-09-25 – `dc06c96` Changelog: Startseiten-Überschrift gekürzt und vergrössert
+
+## 2026-09-25 – `2280963` Hall of Fame: interne Arbeits-Notizen und redundante Copy entfernt
+
+Entfernt (auf Nutzer-Wunsch, nicht benötigt):
+- Die zwei langen "note"-Felder in league-history.json (Saison 2024/2025)
+  waren interne Rechercheh-Vermerke (z.B. Begründung für rank-Sortierung,
+  Unsicherheit zu "Lord of the Rings"), wurden aber über hall-of-fame.html
+  als sichtbarer .hof-note-Text auf der Seite angezeigt.
+- Zwei Absatz-Untertitel ("Meister, Rekorde..." unter der H1, "Die besten
+  Leistungen..." über Allzeit-Rekorde) gestrichen.
+- "Ewige Tabelle"-Copy gekürzt: "(dabei seit 2024). Punkte fehlen für
+  2024/2025, da ESPNs Hall of Fame diese nicht pro Team auflistet - bewusst
+  nicht geraten." entfernt, Rest ("Karriere-Bilanz... Gründungsmitglied.")
+  bleibt.
+
+Per Playwright verifiziert: alle vier Texte nicht mehr im gerenderten
+Body-Text, keine Konsolen-/Seiten-Fehler, kein Layout-Bruch in Allzeit-
+Rekorde, Ewige Tabelle oder den Saison-Karten (2024/2025).
