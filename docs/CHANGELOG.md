@@ -1370,3 +1370,5 @@ auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
 ## 2026-09-25 – `d6306c8` Startseite: Überschrift "Willkommen zurück" zu "Willkommen im Fantasy Playbook"
 
 ## 2026-09-25 – `c71ab48` Changelog: Startseiten-Überschrift geändert
+
+## 2026-09-25 – `01e47f6` Startseite: Überschrift auf "Willkommen" gekürzt, dafür grösser
