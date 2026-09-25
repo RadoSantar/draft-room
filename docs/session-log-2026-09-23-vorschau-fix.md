@@ -454,6 +454,24 @@ Commit `4772606`, gepusht.
 
 Commit `97bceba`, gepusht.
 
+## 21. Neuer leichter, täglicher Transaktions-Sync (Waiver/Trades/Drops)
+
+**Kontext:** Nach dem "Unbekannter Spieler"-Fix (Punkt 20d) fragte der Nutzer, wann die Transaktions-Abfragen laufen. Antwort: bisher nur als Teil des vollen `espn-sync.yml`-Laufs, der ausschliesslich dienstags läuft (5x im 2h-Abstand). Waiver-Claims/Trades passieren aber über die ganze Woche verteilt – ein Montag-Waiver wäre also erst am folgenden Dienstag auf der Seite sichtbar. Nutzer-Wunsch: "einen leichteren nur transaktionen workflow der 1x täglich läuft".
+
+**Umsetzung:**
+- Neues Skript `scripts/sync-transactions.mjs`: holt nur Team-Namen (`mTeam`) + genug Scoreboard-Daten, um die aktuelle Woche zu bestimmen, dann `fetchAllTransactions()` + `buildTransactionsFromLog()` – schreibt ausschliesslich `transactions.json`. Kein Roster-/Draft-Fetch, keine Recap-Generierung, kein Claude-Aufruf, kein `ANTHROPIC_API_KEY` nötig (nur `ESPN_S2`/`ESPN_SWID`).
+- Um dieselbe Logik nicht zweimal zu pflegen (siehe Kommentar in `espn-client.mjs` – auseinanderlaufende Skript-Logik war hier schon mal Bug-Ursache), importiert `sync-transactions.mjs` `fetchProjections()`, `fetchAllTransactions()` und `buildTransactionsFromLog()` direkt aus `sync-espn.mjs` (dort jetzt `export`). Der bereits im Fix aus Punkt 20d verwendete Ansatz (unbekannte Transaktions-Spieler-IDs gezielt per `fetchProjections()` nachladen) kommt hier direkt zum Einsatz – ganz ohne Roster/Draft als Basis, weil dieser leichte Sync sie gar nicht erst braucht.
+- Da `sync-espn.mjs` am Dateiende bisher unbedingt `main()` aufrief, hätte ein blosser Import versehentlich den kompletten schweren Sync (inkl. Claude-Recap-Calls) mit ausgelöst. Fix: `main()` läuft jetzt nur noch, wenn die Datei direkt ausgeführt wird (`import.meta.url === file://${process.argv[1]}`-Guard) – beim regulären `node scripts/sync-espn.mjs`-Aufruf (wie in `espn-sync.yml`) unverändertes Verhalten.
+- Die `lastCompletedWeek`-Berechnung ("Woche gilt als abgeschlossen, wenn alle Matchups einen Sieger haben") war bisher inline in `main()`. In eigene exportierte Funktion `computeLastCompletedWeek()` ausgelagert, die `main()` jetzt selbst auch aufruft (identische Regel an einer Stelle statt potenziell zweimal von Hand nachgebaut) und die `sync-transactions.mjs` mitnutzt.
+- Neuer Workflow `.github/workflows/sync-transactions.yml`: täglich um 08:23 UTC (Minute bewusst nicht :00/:30, wie bei den anderen Workflows begründet), plus `workflow_dispatch`. Committet nur bei tatsächlicher Änderung, mit demselben Fetch-Reset-Retry-Muster wie `espn-live-snapshot.yml` bei Push-Konflikten. Rührt nie `team-content.json` an. Läuft komplett unabhängig vom Dienstags-Sync (der weiterhin zusätzlich Standings/Scoreboard/Power-Rankings/Recaps abdeckt) – beide schreiben `transactions.json` deterministisch aus demselben ESPN-Log, kein Konfliktpotenzial zwischen den beiden Workflows.
+
+**Getestet:**
+- `node --check` für beide Skripte.
+- Import-Guard offline verifiziert: `import('./scripts/sync-espn.mjs')` mit Fake-Credentials lädt nur die exportierten Funktionen, löst KEINEN Fetch/`main()`-Lauf aus; `node scripts/sync-espn.mjs` direkt mit Fake-Credentials startet weiterhin sofort `main()` (schlägt wie erwartet mit 401 fehl) – Guard funktioniert in beide Richtungen korrekt.
+- Live verifiziert: Workflow per `mcp__github__actions_run_trigger` ausgelöst (Run #1, erfolgreich), Commit `ca19330` ("Transaktions-Sync") gepusht. Neues `transactions.json` enthält 49 Einträge, keine "Unbekannter Spieler"-Platzhalter, u.a. korrekt aufgelöst: "Saints of Anarchy holt Raiders D/ST" – genau das Beispiel, das der Nutzer ursprünglich bei der TM1-Frage (Punkt 20c) genannt hatte.
+
+Commit `bf2db30`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
