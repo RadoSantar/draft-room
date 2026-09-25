@@ -1,0 +1,61 @@
+name: ESPN Transaktions-Sync (täglich, leicht)
+
+# Aktualisiert NUR data/transactions.json, einmal täglich - im Unterschied zum vollen Sync
+# (espn-sync.yml), der nur dienstags läuft, weil er zusätzlich Standings/Scoreboard/Power-Rankings
+# neu berechnet und Claude Recaps schreiben lässt (teuer, unter der Woche ohnehin unverändert).
+# Waiver-Claims und Trades passieren aber über die ganze Woche verteilt - dieser Workflow sorgt
+# dafür, dass Transaktionen nicht bis zum nächsten Dienstag auf der Seite fehlen.
+#
+# Braucht bewusst NUR ESPN_S2/ESPN_SWID, kein ANTHROPIC_API_KEY - ruft nie Claude auf.
+# Rührt NIE team-content.json an.
+on:
+  schedule:
+    # Jeden Tag um 08:23 UTC (Minute bewusst nicht :00/:30, siehe Kommentar in espn-sync.yml zur
+    # höheren Ausfallquote von Scheduled-Workflows zur vollen/halben Stunde).
+    - cron: '23 8 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  sync-transactions:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Transaktionen synchronisieren
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+        run: node scripts/sync-transactions.mjs
+
+      - name: transactions.json committen
+        run: |
+          git config user.name "espn-sync-bot"
+          git config user.email "actions@users.noreply.github.com"
+          for delay in 0 2 4 8 16; do
+            if [ "$delay" != "0" ]; then
+              echo "Erneuter Versuch in ${delay}s…"
+              git fetch origin main
+              git reset --soft origin/main
+              sleep "$delay"
+            fi
+            git add data/transactions.json
+            if git diff --cached --quiet; then
+              echo "Keine Änderungen, nichts zu committen."
+              exit 0
+            fi
+            git commit -m "Transaktions-Sync"
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+          done
+          echo "Push nach mehreren Versuchen fehlgeschlagen."
+          exit 1

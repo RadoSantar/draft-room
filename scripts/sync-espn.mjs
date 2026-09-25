@@ -53,7 +53,7 @@ async function fetchTopFreeAgent(pos, rosteredIdSet) {
   };
 }
 
-async function fetchProjections(ids) {
+export async function fetchProjections(ids) {
   if (!ids.length) return {};
   const filter = JSON.stringify({ players: { filterIds: { value: ids } } });
   const res = await fetch(DEFAULTS_URL, { headers: { 'x-fantasy-filter': filter } });
@@ -1772,13 +1772,28 @@ async function runSanityChecks() {
 // Kommentar am Aufrufer in main() für den Hintergrund, warum das dem früheren Roster-Diffing
 // vorgezogen wurde. Enthält viel Rauschen (type ROSTER = reine Lineup-Änderungen, type DRAFT = die
 // Draft-Picks selbst), das buildTransactionsFromLog() unten herausfiltert.
-async function fetchAllTransactions(throughWeek) {
+export async function fetchAllTransactions(throughWeek) {
   const all = [];
   for (let wk = 1; wk <= throughWeek; wk++) {
     const data = await fetchLeague(['mTransactions2'], wk);
     all.push(...(data.transactions || []));
   }
   return all;
+}
+
+// Eine Woche gilt als abgeschlossen, sobald in ihr mindestens ein Matchup steht und ALLE Matchups
+// einen Sieger haben (kein 'UNDECIDED' mehr) - identisch zur Logik, mit der main() weiter unten
+// lastCompletedWeek aus dem bereits gebauten scoreboard.json-Array ableitet. Als eigene exportierte
+// Funktion, damit sync-transactions.mjs (leichter täglicher Transaktions-Sync) dieselbe Regel nutzen
+// kann, ohne sie ein zweites Mal von Hand nachzubauen (siehe Kommentar in espn-client.mjs zu
+// auseinanderlaufender Logik zwischen Skripten).
+export function computeLastCompletedWeek(scoreboard) {
+  let lastCompletedWeek = 0;
+  for (const wk of scoreboard) {
+    if (wk.games.length && wk.games.every((g) => g.winner !== 'UNDECIDED')) lastCompletedWeek = wk.week;
+    else break;
+  }
+  return lastCompletedWeek;
 }
 
 // Manuell bestätigte Korrekturen für Trades, deren TRADE_PROPOSAL bei ESPN nicht abrufbar ist (siehe
@@ -1812,7 +1827,7 @@ const TRADE_OVERRIDES = {
 //
 // Behält bewusst die alte id-Präfix-Konvention ('add-'/'drop-' für FREEAGENT) bei, weil
 // findWaiverKarmaFact()/findWaiverInstantSuccessFact() weiter oben im Skript genau danach filtern.
-function buildTransactionsFromLog(rawTx, teamNames, playerInfo) {
+export function buildTransactionsFromLog(rawTx, teamNames, playerInfo) {
   const proposalById = {};
   rawTx.forEach((t) => { if (t.type === 'TRADE_PROPOSAL') proposalById[t.id] = t; });
 
@@ -2149,11 +2164,7 @@ async function main() {
   // ("Nach dem Draft" und "Vor dem 1. Spieltag" sind einmalig von Hand gesetzt und
   // werden hier nie verändert; ab der ersten komplett gewerteten Woche kommt pro
   // Woche automatisch ein neuer bzw. aktualisierter Snapshot dazu.)
-  let lastCompletedWeek = 0;
-  for (const wk of scoreboard) {
-    if (wk.games.length && wk.games.every((g) => g.winner !== 'UNDECIDED')) lastCompletedWeek = wk.week;
-    else break;
-  }
+  const lastCompletedWeek = computeLastCompletedWeek(scoreboard);
 
   // ---- Playoff-Szenario je Team (für my-team.html "Playoff-Chancen") ----
   // Nutzt dieselbe Bracket-Logik wie findPlayoffRaceFact() (Top 2 je Conference qualifizieren sich,
@@ -2436,7 +2447,13 @@ async function main() {
   console.log('Sync abgeschlossen.');
 }
 
-main().catch((err) => {
-  console.error('Sync fehlgeschlagen:', err);
-  process.exit(1);
-});
+// Nur automatisch starten, wenn diese Datei direkt ausgeführt wird (node scripts/sync-espn.mjs) -
+// nicht, wenn sync-transactions.mjs (leichter täglicher Transaktions-Sync) einzelne Funktionen von
+// hier importiert. Sonst würde jeder Import versehentlich den kompletten schweren Sync (inkl. Claude-
+// Recap-Calls) mit auslösen.
+if (import.meta.url === `file://${process.argv[1]}`) {
+  main().catch((err) => {
+    console.error('Sync fehlgeschlagen:', err);
+    process.exit(1);
+  });
+}
