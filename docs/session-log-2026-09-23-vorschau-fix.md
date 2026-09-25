@@ -516,6 +516,20 @@ Commit `2280963`, gepusht.
 
 Commit `5a0953d`, gepusht.
 
+## 25. Power Rankings: interne Methodik-/Datenquellen-Texte entfernt
+
+**Nutzer-Wunsch:** Vier Textstellen auf der Power-Rankings-Seite entfernen (vorheriger Versuch des Nutzers in diesem Fluss war versehentlich der falsche kopierte Text von der Hall-of-Fame-Bereinigung – das war bereits erledigt; dies hier ist die eigentliche Anfrage):
+1. Zweiter Teil des Intro-Satzes unter der H1 (Aufstellungs-/Berechnungs-Details: "Die Power Rankings basieren auf der bestmöglichen Start-Aufstellung...").
+2. Kompletter "Hinweis"-Kasten (Näherung/Value-Reach/Saisonausblick-Disclaimer).
+3. Bei "Strength of Schedule": nur die zwei Fragmente "(Conference-Gegner zählt doppelt)" und "– aktualisiert sich automatisch mit den Power Rankings" – Rest des Satzes bleibt.
+4. Abschliessender "Datenquelle: ESPN Fantasy API..."-Absatz am Seitenende.
+
+**Umgesetzt:** In `power-rankings.html` den Intro-Satz auf "Analyse aller 10 Teams: Draft Board, Stärken/Schwächen je Position, Transaktionen und Saison-Ausblick." gekürzt, den kompletten `.note-box`-Hinweiskasten entfernt, den Strength-of-Schedule-Satz auf "Durchschnittliche Stärke der 15 Saison-Gegner nach aktuellem Power-Ranking-Score. Rang 1 = schwierigster Spielplan." gekürzt, den `.note-text`-Datenquellen-Absatz am Seitenende entfernt. Da danach keine `.note-box`/`.note-text`-Elemente mehr auf der Seite vorkamen, auch die zugehörigen, jetzt toten CSS-Regeln (inkl. der `.note-text a`-Link-Styles, `p.copy a`-Styles blieben bestehen) mit entfernt.
+
+**Getestet:** Playwright – keiner der vier Texte mehr in `body.innerText()`, keine Konsolen-/Seitenfehler. Screenshots von Kopfbereich, Strength-of-Schedule und Seitenende bestätigen sauberes Layout ohne Lücken an den entfernten Stellen.
+
+Commit `b928056`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
