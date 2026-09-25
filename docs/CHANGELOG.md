@@ -1351,3 +1351,5 @@ Nutzer vermutet, dass manche Teams (z.B. Saints of Anarchy bei einem
 Drop) fälschlich mit einem Abbrev-artigen Platzhalter statt dem
 richtigen Namen erscheinen. Prüft name/location/nickname/abbrev für
 alle 10 Teams, um die Ursache zu finden.
+
+## 2026-09-25 – `30beb16` Aufräumen: temporäres Debug-Tooling für Team-Namensfelder entfernt
