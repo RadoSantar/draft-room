@@ -148,8 +148,7 @@
   /* Pro Jahr */
   .hof-season-card{background:var(--turf);color:var(--chalk);border-radius:10px;padding:18px 20px;margin:14px 0;}
   .hof-season-head{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:4px;}
-  .hof-season-year{font-family:'Anton', sans-serif;font-size:24px;letter-spacing:.02em;}
-  .hof-live-badge{font-family:'IBM Plex Mono', monospace;font-size:10.5px;background:var(--amber);color:var(--turf);padding:2px 9px;border-radius:20px;}
+  .hof-season-year{font-family:'Anton', sans-serif;font-size:24px;letter-spacing:.02em;color:var(--chalk);}
   .hof-podium{font-size:14.5px;margin:8px 0 14px;}
   .hof-podium strong{color:var(--amber);}
   .hof-standings-row{display:flex;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid rgba(243,239,228,0.15);font-size:14px;}
@@ -440,7 +439,7 @@
   }
 
   function seasonCardHtml(year, season, hofRecordsForYear, isLive, liveStandings){
-    var yearLabel = '<span class="hof-season-year display">' + year + '</span>' + (isLive ? ' <span class="hof-live-badge mono">läuft</span>' : '');
+    var yearLabel = '<span class="hof-season-year display">' + year + '</span>';
     var podium;
     if(isLive){
       podium = '<div class="hof-podium">Zwischenstand – noch kein Meister, Saison läuft.</div>';
