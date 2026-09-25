@@ -1362,20 +1362,3 @@ Nutzer fragt, weshalb manche Transaktionen (z.B. playerId -16030,
 -16029) als "Unbekannter Spieler" statt mit echtem Namen erscheinen.
 Prüft, ob diese IDs überhaupt über ESPNs leaguedefaults-Endpunkt
 auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
-
-## 2026-09-25 – `82261a6` Fix: "Unbekannter Spieler #<id>" bei kurzlebigen Waiver-Adds/Drops
-
-Root Cause: allNeededIds (Basis für die einmalige fetchProjections()-Abfrage)
-wird nur aus gedrafteten + aktuell/vorher gerosterten Spieler-IDs gebaut.
-Spieler, die zwischen zwei Roster-Snapshots komplett geholt UND wieder
-gedroppt wurden (z.B. ein D/ST, das binnen weniger Tage abgeworfen wurde),
-fehlen dort und fallen in playerInfo() auf den "Unbekannter Spieler #<id>"-
-Fallback zurück - obwohl ESPNs leaguedefaults-Endpunkt diese IDs problemlos
-auflöst, wenn man gezielt danach fragt (per Debug-Workflow bestätigt).
-
-Fix: sammelt alle in den rohen Transaktionen referenzierten playerIds ein,
-holt für die noch unbekannten gezielt per fetchProjections() nach und merged
-sie in projections, bevor buildTransactionsFromLog() darauf zugreift.
-
-Aufräumen: temporären Debug-Workflow (debug-unknown-players.mjs/.yml)
-entfernt, nachdem die Diagnose abgeschlossen ist.
