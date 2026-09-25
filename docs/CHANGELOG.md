@@ -1394,3 +1394,22 @@ Body-Text, keine Konsolen-/Seiten-Fehler, kein Layout-Bruch in Allzeit-
 Rekorde, Ewige Tabelle oder den Saison-Karten (2024/2025).
 
 ## 2026-09-25 – `d1ec1dd` Changelog: Hall-of-Fame-Textaufräumung dokumentiert
+
+## 2026-09-25 – `5a0953d` Hall of Fame: Jahreszahl in Saison-Kacheln war unsichtbar (Farbbug)
+
+Root Cause: <span class="hof-season-year display"> erbte über die globale
+".display"-Regel (h1,h2,h3,.display{color:var(--turf);...}) dieselbe
+dunkelgrüne Farbe wie der Kartenhintergrund selbst (.hof-season-card{
+background:var(--turf);...}) - Jahreszahl stand im DOM, war aber
+unsichtbar (turf-auf-turf). Fix: .hof-season-year bekommt jetzt explizit
+color:var(--chalk), sichtbar wie der restliche Kartentext.
+
+Zusätzlich: "läuft"-Badge neben der Jahreszahl der laufenden Saison
+entfernt (Nutzer-Wunsch) - 2026 steht jetzt genauso da wie 2025/2024.
+Der "Zwischenstand – noch kein Meister, Saison läuft."-Hinweis darunter
+bleibt unverändert, macht den Live-Status weiterhin klar. Verwaiste
+.hof-live-badge-CSS-Regel entfernt.
+
+Per Playwright verifiziert: Jahreszahl (2026/2025/2024) jetzt mit Farbe
+rgb(243,239,228) sichtbar in allen drei Karten, kein "läuft" mehr neben
+2026, keine Konsolenfehler.
