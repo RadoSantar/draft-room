@@ -117,12 +117,22 @@
   .team-cards-wrap > summary{
     cursor:pointer;
     list-style:none;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
     font-family:'Anton', sans-serif;
-    font-size:22px;
+    font-size:19px;
     letter-spacing:.02em;
     text-transform:uppercase;
     color:var(--turf);
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:10px;
+    padding:12px 20px;
+    transition:border-color .15s ease;
   }
+  .team-cards-wrap > summary:hover{border-color:var(--amber);}
+  .team-cards-wrap[open] > summary{border-color:var(--amber);}
   .team-cards-wrap > summary::-webkit-details-marker{display:none;}
   .team-cards-wrap > summary::before{content:'+ ';color:var(--amber);font-weight:700;}
   .team-cards-wrap[open] > summary::before{content:'\2212 ';}
