@@ -1,26 +1,31 @@
 name: ESPN Live-Score-Snapshot
 
-# Holt mehrmals pro Spieltag (Do/So/Mo, während die NFL-Spiele laufen) den aktuellen
-# Zwischenstand der laufenden Fantasy-Woche und hängt ihn an data/live-snapshots.json an.
-# Dient AUSSCHLIESSLICH dazu, dass der wöchentliche ESPN-Sync (siehe espn-sync.yml) am Ende
-# der Woche echte Verlaufs-Storylines bauen kann (Kollaps/Comeback, Führungswechsel) – sonst
-# wäre nach Wochenende nur noch der Endstand sichtbar, kein Verlauf.
+# Holt alle 30 Minuten während jedes NFL-Spieltags (Do/So/Mo) den aktuellen Zwischenstand der
+# laufenden Fantasy-Woche und hängt ihn an data/live-snapshots.json an - beginnend jeweils VOR dem
+# ersten Kickoff des Tages bis nach dem letzten Spielende. Dient AUSSCHLIESSLICH dazu, dass der
+# wöchentliche ESPN-Sync (siehe espn-sync.yml) am Ende der Woche echte Verlaufs-Storylines bauen
+# kann (Kollaps/Comeback, Führungswechsel, nie eingeholter Vorsprung, bis zum letzten Spiel offene
+# Rennen) - sonst wäre nach Wochenende nur noch der Endstand sichtbar, kein Verlauf. Je dichter die
+# Zwischenstände, desto genauer diese Geschichten.
 #
-# Die Zeiten sind grosszügige, ungefähre Fenster rund um die üblichen NFL-Anstosszeiten
-# (Thursday/Sunday/Monday Night Football + Sonntag-Nachmittagsspiele), bewusst nicht
-# minutengenau – bei Zeitzonenumstellung (Sommer-/Winterzeit in den USA) verschieben sich die
-# echten Anstosszeiten ohnehin leicht gegenüber UTC, exakte Präzision ist für die Storyline-
-# Zwecke hier nicht nötig. Läuft NIE Claude/Anthropic-Calls oder committet team-content.json.
+# Jeder Tag braucht zwei cron-Zeilen, weil das Fenster über Mitternacht UTC hinausläuft (ein
+# einzelner cron-Eintrag kann keinen Wochentags-Wechsel innerhalb einer Zeile abbilden):
+# - Do 23:00 UTC bis Fr 05:30 UTC: vor dem Thursday-Night-Kickoff bis nach Spielende.
+# - So 16:00 UTC bis Mo 05:30 UTC: vor den frühen Sonntagsspielen, durchgehend über die späten
+#   Nachmittagsspiele und das Sunday Night Football hinweg, bis nach dessen Ende.
+# - Mo 23:00 UTC bis Di 05:30 UTC: vor dem Monday-Night-Kickoff bis nach Spielende.
+# Die Fenster sind grosszügig bemessen (nicht minutengenau) - bei Zeitzonenumstellung (Sommer-/
+# Winterzeit in den USA) verschieben sich die echten Anstosszeiten ohnehin leicht gegenüber UTC,
+# der Puffer an beiden Enden fängt das ab. Läuft NIE Claude/Anthropic-Calls oder committet
+# team-content.json.
 on:
   schedule:
-    - cron: '30 23 * * 4'  # Donnerstag 23:30 UTC – mitten im Thursday Night Football
-    - cron: '0 3 * * 5'    # Freitag 03:00 UTC – kurz nach Ende des TNF
-    - cron: '0 18 * * 0'   # Sonntag 18:00 UTC – mitten in den frühen Sonntagsspielen
-    - cron: '0 21 * * 0'   # Sonntag 21:00 UTC – mitten in den späten Nachmittagsspielen
-    - cron: '30 23 * * 0'  # Sonntag 23:30 UTC – während des Sunday Night Football
-    - cron: '0 3 * * 1'    # Montag 03:00 UTC – kurz nach Ende des SNF
-    - cron: '30 23 * * 1'  # Montag 23:30 UTC – mitten im Monday Night Football
-    - cron: '0 3 * * 2'    # Dienstag 03:00 UTC – kurz nach Ende des MNF, vor dem Haupt-Sync um 05:00 UTC
+    - cron: '*/30 23 * * 4'   # Donnerstag 23:00/23:30 UTC – vor dem TNF-Kickoff
+    - cron: '*/30 0-5 * * 5'  # Freitag 00:00–05:30 UTC – während/nach dem TNF
+    - cron: '*/30 16-23 * * 0' # Sonntag 16:00–23:30 UTC – vor den frühen Spielen bis ins SNF hinein
+    - cron: '*/30 0-5 * * 1'  # Montag 00:00–05:30 UTC – während/nach dem SNF
+    - cron: '*/30 23 * * 1'   # Montag 23:00/23:30 UTC – vor dem MNF-Kickoff
+    - cron: '*/30 0-5 * * 2'  # Dienstag 00:00–05:30 UTC – während/nach dem MNF
   workflow_dispatch: {}
 
 permissions:
