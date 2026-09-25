@@ -1510,3 +1510,5 @@ verlinken konsistent auf die jeweils anderen 4 Tool-Seiten) - ergänzt.
 Per Playwright verifiziert: alle 5 Seiten zeigen "Startseite" jetzt als
 ersten Menüpunkt mit href="start.html", Klick navigiert tatsächlich dorthin;
 hall-of-fame.html verlinkt jetzt auf alle 4 anderen Tool-Seiten.
+
+## 2026-09-25 – `43d97d1` Changelog: Startseite-Link im Tool-Nav dokumentiert
