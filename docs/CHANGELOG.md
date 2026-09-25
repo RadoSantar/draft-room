@@ -1342,3 +1342,5 @@ Alle neuen Funktionen offline mit synthetischen Zwischenständen
 getestet (9 Testfälle, alle korrekt), inkl. der bump()-Rekordlogik
 (steigt nur, sinkt nie, auch über mehrere Wochen mit dazwischen
 kleineren/keinen Comebacks hinweg).
+
+## 2026-09-25 – `819073d` Changelog: Wire-to-Wire + 5 weitere Recap-Fakten dokumentiert
