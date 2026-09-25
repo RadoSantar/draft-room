@@ -482,6 +482,25 @@ Commit `d6306c8`, gepusht.
 
 Commit `01e47f6`, gepusht.
 
+## 23. Hall of Fame: interne Arbeits-Notizen und redundante Copy entfernt
+
+**Nutzer-Wunsch:** Vier konkret zitierte Texte auf der Hall-of-Fame-Seite werden nicht benötigt:
+1. Der lange "note"-Text der Saison 2025 ("Auch hier: rank = finale Playoff-Platzierung...").
+2. Der lange "note"-Text der Saison 2024 ("Liga hatte 2024 offenbar nur 6 Teams...").
+3. "Die besten Leistungen über alle Saisons hinweg – ... live markiert und können noch fallen." (Untertitel über Allzeit-Rekorde).
+4. "Meister, Rekorde und die Geschichte der Liga – pro Jahr und über alle Saisons hinweg." (Untertitel unter der H1).
+
+Zusätzlich beim "Ewige Tabelle"-Untertitel nur den doppelt/redundant wirkenden hinteren Teil streichen, Rest behalten: aus "Karriere-Bilanz jedes Teams über alle Saisons hinweg (inkl. laufender Saison). ⭐ markiert ein Gründungsmitglied (dabei seit 2024). Punkte fehlen für 2024/2025, da ESPNs Hall of Fame diese nicht pro Team auflistet – bewusst nicht geraten." wird "Karriere-Bilanz jedes Teams über alle Saisons hinweg (inkl. laufender Saison). ⭐ markiert ein Gründungsmitglied."
+
+**Umgesetzt:**
+- Die beiden `note`-Felder (Saison 2024 und 2025) in `data/league-history.json` waren ursprünglich interne Recherche-Vermerke aus einer früheren Session (z.B. Begründung, warum `rank` nicht nach Bilanz sortiert ist, oder Unsicherheit zu "Lord of the Rings"/2024). `hall-of-fame.html`s `renderSeasons()` zeigte sie aber über `.hof-note` sichtbar auf der Seite an – komplett entfernt (Feld aus dem JSON gelöscht statt nur die Anzeige zu unterdrücken, da der Nutzer explizit sagte, die Texte werden nicht gebraucht).
+- Die zwei `<p class="copy">`-Untertitel in `hall-of-fame.html` (unter H1, über Allzeit-Rekorde) komplett entfernt.
+- "Ewige Tabelle"-Copy gekürzt wie oben beschrieben.
+
+**Getestet:** Playwright – `body.innerText()` enthält keinen der vier Texte mehr, keine Konsolen-/Seiten-Fehler, Screenshots von "Allzeit-Rekorde"/"Ewige Tabelle" oben und der 2025er-Saisonkarte (die zuvor die lange "Auch hier..."-Notiz zeigte) bestätigen sauberes Layout ohne Lücke.
+
+Commit `2280963`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
