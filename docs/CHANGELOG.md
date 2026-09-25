@@ -1461,3 +1461,5 @@ Wrapper-Details automatisch mit ab.
 Per Playwright verifiziert: Wrapper standardmässig zu, Klick öffnet alle
 10 Team-Summaries (noch einzeln zugeklappt), Klick auf eine einzelne
 Team-Summary öffnet nur diese - keine Konsolenfehler.
+
+## 2026-09-25 – `6b2d292` Changelog: Draft-Recap-Sammel-Toggle dokumentiert
