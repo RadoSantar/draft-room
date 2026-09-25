@@ -1355,3 +1355,10 @@ alle 10 Teams, um die Ursache zu finden.
 ## 2026-09-25 – `30beb16` Aufräumen: temporäres Debug-Tooling für Team-Namensfelder entfernt
 
 ## 2026-09-25 – `6bc07db` Changelog: TM1-Vermutung geprüft, Fehlalarm dokumentiert
+
+## 2026-09-25 – `078eaf5` Temp: Debug-Workflow prüft "Unbekannter Spieler #<id>"-Fälle
+
+Nutzer fragt, weshalb manche Transaktionen (z.B. playerId -16030,
+-16029) als "Unbekannter Spieler" statt mit echtem Namen erscheinen.
+Prüft, ob diese IDs überhaupt über ESPNs leaguedefaults-Endpunkt
+auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
