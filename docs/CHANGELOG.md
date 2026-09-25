@@ -1353,3 +1353,5 @@ richtigen Namen erscheinen. Prüft name/location/nickname/abbrev für
 alle 10 Teams, um die Ursache zu finden.
 
 ## 2026-09-25 – `30beb16` Aufräumen: temporäres Debug-Tooling für Team-Namensfelder entfernt
+
+## 2026-09-25 – `6bc07db` Changelog: TM1-Vermutung geprüft, Fehlalarm dokumentiert
