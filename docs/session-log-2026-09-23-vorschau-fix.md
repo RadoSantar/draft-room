@@ -540,6 +540,14 @@ Commit `b928056`, gepusht.
 
 Commit `d020bb5`, gepusht.
 
+**Zweite Iteration (Button-Erkennbarkeit + wahrgenommene Animation):** Direkt im Anschluss Nutzer-Feedback: "dieser ist so noch nicht als button erkennbar ausserdem fehlt die animation." Root Cause geprüft (Playwright, `getComputedStyle().height`-Sampling über die ~200ms Animationsdauer): die Höhen-Animation lief technisch bereits korrekt (Werte interpolierten sauber, z.B. 237px → 710px → 1086px → 1335px → 1435px). Das eigentliche Problem war rein optisch – die `<summary>` hatte keinerlei Button-Chrome (kein Hintergrund/Rahmen/Polsterung), nur grossen Anton-Überschriften-Text mit "+"-Präfix, wirkte also wie eine reine Überschrift statt wie ein klickbares Element. Ohne sichtbare Box registrierte der wachsende Inhaltsbereich beim Klick vermutlich eher als normaler Seiten-Reflow denn als gezielte Animation.
+
+**Fix:** `.team-cards-wrap > summary` bekommt jetzt dieselbe Pill-Optik wie `.tx-week summary` (Hintergrund `var(--card)`, Rahmen `var(--card-border)`, abgerundete Ecken, Polsterung, Hover-/Open-Zustand mit `border-color:var(--amber)` + `transition`), bei etwas kleinerer Schrift (19px statt 22px) passend zur kompakteren Box.
+
+**Getestet:** Playwright – Hover-Rahmenfarbe wechselt zu Amber, Klick öffnet/schliesst mit sichtbarem Animationsverlauf, keine Konsolenfehler, Screenshots bestätigen klar als Button erkennbare Pille in zu- und aufgeklapptem Zustand.
+
+Commit `c9e0ab1`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
