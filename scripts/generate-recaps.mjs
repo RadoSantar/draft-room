@@ -217,6 +217,11 @@ function collectFacts(game) {
     facts.push({ category: 'sustainedNailbiter', text: `Dauerhafter Nervenkrieg laut unseren Zwischenständen: Über weite Strecken der Woche lagen die Teams innerhalb von 5 Punkten auseinander – nicht nur am Ende knapp, sondern die ganze Woche über zum Zerreissen gespannt.` });
   }
 
+  if (game.wireToWire) {
+    const w = game.wireToWire;
+    facts.push({ category: 'wireToWire', text: `Wire-to-Wire laut unseren Zwischenständen: ${w.team} lag zu keinem erfassten Zeitpunkt der Woche auch nur kurz zurück und kontrollierte das Spiel von Anfang bis Ende durch (Endabstand ${w.finalMargin.toFixed(1)} Punkte) – nie wirklich in Gefahr.` });
+  }
+
   if (game.seasonPersonality) {
     const sp = game.seasonPersonality;
     facts.push({ category: 'seasonPersonality', text: `Saison-Persönlichkeit: ${sp.team} hat sich diese Saison einen Ruf erarbeitet als ${sp.label} (${sp.count} von ${sp.games} Spielen mit Live-Daten passen zu diesem Muster).` });
@@ -553,6 +558,9 @@ const BADGE_POOL = {
   sustainedNailbiter: [
     'Dauerhafter Nervenkrieg', 'Von Anfang bis Ende zum Zerreissen gespannt', 'Die ganze Woche ein Krimi'
   ],
+  wireToWire: [
+    'Von Anfang bis Ende kontrolliert', 'Nie in Gefahr', 'Wire-to-Wire', 'Die Führung nie abgegeben'
+  ],
   seasonPersonalityComeback: [
     'Der ewige Last-Minute-Held', 'Bekannt für die grosse Aufholjagd', 'Comeback-König der Liga'
   ],
@@ -712,6 +720,7 @@ const BADGE_CATEGORY_TO_FACT_CATEGORY = {
   survivedScare: 'survivedScare',
   mondayRescue: 'mondayRescue',
   sustainedNailbiter: 'sustainedNailbiter',
+  wireToWire: 'wireToWire',
   seasonPersonalityComeback: 'seasonPersonality',
   seasonPersonalityCollapse: 'seasonPersonality',
   seasonPersonalityNailbiter: 'seasonPersonality',
@@ -787,6 +796,7 @@ function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   if (game.survivedScare) categories.push('survivedScare');
   if (game.mondayRescue) categories.push('mondayRescue');
   if (game.sustainedNailbiter) categories.push('sustainedNailbiter');
+  if (game.wireToWire) categories.push('wireToWire');
   if (game.seasonPersonality?.key === 'comebackWins') categories.push('seasonPersonalityComeback');
   if (game.seasonPersonality?.key === 'collapseLosses') categories.push('seasonPersonalityCollapse');
   if (game.seasonPersonality?.key === 'sustainedNailbiters') categories.push('seasonPersonalityNailbiter');

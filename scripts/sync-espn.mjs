@@ -613,6 +613,26 @@ function findSustainedNailbiterFact(game, liveSnapshots) {
   return { streak: maxStreak };
 }
 
+// Wire-to-Wire: das SIEGER-Team führte laut unseren Zwischenständen die ganze Woche durch - lag zu
+// keinem erfassten Zeitpunkt auch nur kurz zurück (1 Punkt Toleranz für Rundungs-Gleichstände).
+// Gegenstück zu findComebackFact() (dort verliert das früh führende Team am Ende noch; hier
+// kontrolliert der Sieger das Spiel einfach durch). Braucht mindestens 2 echte Zwischenstände plus
+// Endstand, sonst ist "nie zurückgelegen" nur Zufall dünner Daten. Blowouts (≥50 Punkte Vorsprung,
+// selbes Kriterium wie der "blowout"-Badge) werden bewusst ausgeschlossen - die sind schon durch den
+// Blowout-Hinweis abgedeckt, "wire-to-wire" soll ein noch spannend aussehendes Spiel markieren, das
+// nie wirklich kippte, nicht jeden Kantersieg zusätzlich labeln.
+function findWireToWireFact(game, liveSnapshots) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const diffs = extractDiffTimeline(game, liveSnapshots);
+  if (diffs.length < 3) return null;
+  const winnerIsHome = game.winner === 'HOME';
+  const neverTrailed = winnerIsHome ? diffs.every((d) => d >= -1) : diffs.every((d) => d <= 1);
+  if (!neverTrailed) return null;
+  const finalMargin = Math.abs(game.homeScore - game.awayScore);
+  if (finalMargin >= 50) return null;
+  return { team: winnerIsHome ? game.homeName : game.awayName, finalMargin };
+}
+
 // Saison-Persönlichkeit: aus data/season-personality.json (siehe archiveLiveSnapshotWeek() weiter
 // unten) – ein Team, das über mehrere Wochen hinweg auffällig oft comebackt/kollabiert/im
 // Nervenkrieg steckt/von vorne bis hinten führt, bekommt dafür einen wiederkehrenden Beinamen. Erst
@@ -1495,6 +1515,8 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
     if (mondayRescue) result.mondayRescue = mondayRescue;
     const sustainedNailbiter = findSustainedNailbiterFact(game, ctx.liveSnapshots);
     if (sustainedNailbiter) result.sustainedNailbiter = sustainedNailbiter;
+    const wireToWire = findWireToWireFact(game, ctx.liveSnapshots);
+    if (wireToWire) result.wireToWire = wireToWire;
   }
 
   if (ctx?.seasonPersonality) {
