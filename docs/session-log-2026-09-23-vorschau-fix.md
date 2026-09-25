@@ -426,6 +426,20 @@ Commit `b4d0a44`, gepusht.
 
 Debug-Tooling nach Gebrauch wieder entfernt (Commit `30beb16`).
 
+## 20d. "Unbekannter Spieler #<id>" bei Transaktionen – echter Root Cause gefunden und gefixt
+
+**Nutzer-Frage:** "woran könnte es dann liegen dass gewisse daten nicht geliefert werden? dass wir teilweise unbekannter spieler und eine nummer bei den transaktionen haben?" – bezog sich auf Einträge wie "TM06 holt Unbekannter Spieler #-16030 ... über den Waiver Wire".
+
+**Geprüft:** Temporärer Debug-Workflow (`debug-unknown-players.mjs`) hat zwei Dinge separat geprüft: (1) ob ESPNs `leaguedefaults`-Endpunkt die betroffenen IDs (`-16030`, `-16029`, `4429835`, `4596334`) überhaupt auflösen kann, wenn man gezielt danach fragt – ja, problemlos (`-16030`/`-16029` sind D/ST-Einträge, `defaultPositionId: 16`); (2) wo diese IDs in den rohen ESPN-Transaktionen (`mTransactions2`) über Wochen 1-3 auftauchen – alle vier wurden von Team 7 (TM06) innerhalb weniger Tage geholt UND wieder gedroppt, komplett zwischen zwei Roster-Snapshots.
+
+**Root Cause:** Kein ESPN-Datenproblem, sondern eine zu enge Vorauswahl in unserem eigenen Code. `sync-espn.mjs` baut die Liste der abzufragenden Spieler-IDs (`allNeededIds`) nur aus gedrafteten + aktuell gerosterten + in der Vorwoche gerosterten Spielern. Wird ein Spieler zwischen zwei Roster-Snapshots komplett geholt und wieder abgeworfen, taucht er in keiner dieser drei Quellen auf, landet also nie in der einmaligen `fetchProjections(allNeededIds)`-Abfrage – und `playerInfo()` fällt für ihn auf den "Unbekannter Spieler #<id>"-Platzhalter zurück, obwohl ESPN den Namen liefern könnte.
+
+**Fix:** Direkt vor `buildTransactionsFromLog()` werden jetzt alle in den rohen Transaktionen referenzierten Spieler-IDs eingesammelt, auf die noch unbekannten gefiltert (nicht in `projections`/`playerPool`) und bei Bedarf per einer zweiten, gezielten `fetchProjections()`-Abfrage nachgeholt – das Ergebnis wird per `Object.assign` in das bestehende `projections`-Objekt gemischt, sodass die `playerInfo()`-Closure es transparent mitbekommt. Kein Umbau der bestehenden Ablauf-Reihenfolge nötig, nur eine gezielte Ergänzung.
+
+**Getestet:** `node --check` bestanden; Debug-Workflow bestätigte vorab, dass die betroffenen IDs auflösbar sind. Live verifiziert: nach dem Deploy per `mcp__github__actions_run_trigger` einen echten `espn-sync.yml`-Lauf ausgelöst (Run #36, erfolgreich) und das neu erzeugte `data/transactions.json` geprüft – die vier vorher betroffenen IDs zeigen jetzt echte Namen statt Platzhalter: `-16030`/`-16029` → "Jaguars D/ST"/"Panthers D/ST", `4596334` → "Keaton Mitchell", `4429835` → "George Holani". Kein einziger "Unbekannter Spieler"-Eintrag mehr in der Datei.
+
+Debug-Tooling nach Gebrauch wieder entfernt. Commit `82261a6`, gepusht.
+
 ## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
 
 **Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
