@@ -1435,3 +1435,29 @@ Konsolen-/Seitenfehler, Layout in Transaktionen/Power-Ranking/Strength-of-
 Schedule/Seitenende sauber ohne Lücken.
 
 ## 2026-09-25 – `ac721da` Changelog: Power-Rankings-Textaufräumung dokumentiert
+
+## 2026-09-25 – `d020bb5` Power Rankings: Team-Karten unter einem gemeinsamen "Draft Recap"-Toggle
+
+Nutzer-Wunsch: die 10 aufklappbaren Team-Karten am Seitenende sollen nicht
+mehr alle offen im Fluss stehen, sondern erst hinter einem einzigen
+Klapp-Element versteckt sein - aufklappen, dann gezielt die gewünschten
+Teams einzeln öffnen.
+
+#teamCards + der zugehörige ESPN-Draft-Recap-Link stecken jetzt in einem
+neuen <details class="team-cards-wrap js-animatable"><summary>Draft
+Recap</summary>...</details>, standardmässig zugeklappt. Styling folgt der
+bestehenden +/- -Summary-Konvention (wie .tx-week/.recap-details/
+.board-details), aber in der Anton-Grossschrift-Optik der h2.section-head-
+Überschriften, da dieser Abschnitt zuvor gar keine eigene Überschrift
+hatte. Dafür die CSS-Regel von h2.section-head auf .section-head
+verallgemeinert (Tag-Einschränkung entfernt), damit die neue <summary>
+dieselbe Optik übernehmen kann, ohne Styles zu duplizieren.
+
+Bestehende JS-Logik unverändert - teamCardsEl.innerHTML wird weiterhin per
+getElementById('teamCards') befüllt, initAnimatableDetails() lief schon
+vorher einmal nach dem Rendern über das ganze Dokument und greift das neue
+Wrapper-Details automatisch mit ab.
+
+Per Playwright verifiziert: Wrapper standardmässig zu, Klick öffnet alle
+10 Team-Summaries (noch einzeln zugeklappt), Klick auf eine einzelne
+Team-Summary öffnet nur diese - keine Konsolenfehler.
