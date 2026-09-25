@@ -1368,3 +1368,5 @@ auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
 ## 2026-09-25 – `f20d799` Changelog: Neuer leichter Transaktions-Sync dokumentiert
 
 ## 2026-09-25 – `d6306c8` Startseite: Überschrift "Willkommen zurück" zu "Willkommen im Fantasy Playbook"
+
+## 2026-09-25 – `c71ab48` Changelog: Startseiten-Überschrift geändert
