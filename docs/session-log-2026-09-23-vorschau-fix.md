@@ -560,6 +560,10 @@ Commit `c9e0ab1`, gepusht.
 
 Commit `3f8c494`, gepusht.
 
+**Zweite Iteration (Pfeil entfernt):** Direkt im Anschluss: "demnach braucht es den pfeil bein übersicht button nicht mehr." Der "← "-Präfix bei "Übersicht" implizierte "zurück zum Ausgangspunkt" – das übernimmt jetzt "Startseite" als eigener erster Menüpunkt, "Übersicht" steht gleichrangig neben den anderen Zielen. Auf allen 5 Tool-Seiten `← Übersicht` zu `Übersicht` gekürzt. Per Playwright verifiziert.
+
+Commit `0996c74`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
