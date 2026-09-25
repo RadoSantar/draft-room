@@ -1344,3 +1344,10 @@ getestet (9 Testfälle, alle korrekt), inkl. der bump()-Rekordlogik
 kleineren/keinen Comebacks hinweg).
 
 ## 2026-09-25 – `819073d` Changelog: Wire-to-Wire + 5 weitere Recap-Fakten dokumentiert
+
+## 2026-09-25 – `4bdd6da` Temp: Debug-Workflow dumpt ESPNs rohe Team-Namensfelder
+
+Nutzer vermutet, dass manche Teams (z.B. Saints of Anarchy bei einem
+Drop) fälschlich mit einem Abbrev-artigen Platzhalter statt dem
+richtigen Namen erscheinen. Prüft name/location/nickname/abbrev für
+alle 10 Teams, um die Ursache zu finden.
