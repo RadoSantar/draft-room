@@ -1364,3 +1364,5 @@ Prüft, ob diese IDs überhaupt über ESPNs leaguedefaults-Endpunkt
 auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
 
 ## 2026-09-25 – `8ac42e8` Changelog: "Unbekannter Spieler"-Fix dokumentiert (Root Cause + Live-Verifikation)
+
+## 2026-09-25 – `f20d799` Changelog: Neuer leichter Transaktions-Sync dokumentiert
