@@ -1364,3 +1364,29 @@ Prüft, ob diese IDs überhaupt über ESPNs leaguedefaults-Endpunkt
 auflösbar sind, und in welchen rohen Transaktions-Items sie auftauchen.
 
 ## 2026-09-25 – `8ac42e8` Changelog: "Unbekannter Spieler"-Fix dokumentiert (Root Cause + Live-Verifikation)
+
+## 2026-09-25 – `bf2db30` Neuer leichter, täglicher Transaktions-Sync (Waiver/Trades/Drops)
+
+Bisher wurde transactions.json nur einmal wöchentlich (dienstags, als Teil
+des vollen espn-sync.yml-Laufs) aktualisiert. Waiver-Claims und Trades
+passieren aber über die ganze Woche verteilt, tauchten also teils erst
+Tage später auf der Seite auf.
+
+Neuer Workflow sync-transactions.yml läuft täglich (08:23 UTC) und ruft
+scripts/sync-transactions.mjs auf - holt nur Team-Namen + aktuelle Woche
++ Transaktionen und schreibt transactions.json. Kein Roster-/Draft-Fetch,
+keine Recap-Generierung, kein Claude-Call, kein ANTHROPIC_API_KEY nötig.
+
+Um Logik nicht doppelt zu pflegen, importiert das neue Skript
+fetchProjections()/fetchAllTransactions()/buildTransactionsFromLog() direkt
+aus sync-espn.mjs (dort jetzt exportiert) statt sie nachzubauen. Damit ein
+blosser Import nicht versehentlich den kompletten schweren Sync mit
+auslöst, ist main() in sync-espn.mjs jetzt hinter einem
+"nur bei direktem Aufruf"-Guard (import.meta.url-Check). Ausserdem die
+lastCompletedWeek-Berechnung in eine eigene exportierte Funktion
+(computeLastCompletedWeek) ausgelagert, die main() jetzt selbst auch nutzt
+- identische Regel an einer Stelle statt zweimal von Hand nachgebaut.
+
+Rührt NIE team-content.json an. Läuft komplett unabhängig vom
+Dienstags-Sync, der weiterhin auch Standings/Scoreboard/Power-Rankings/
+Recaps abdeckt.
