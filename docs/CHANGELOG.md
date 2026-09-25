@@ -1413,3 +1413,5 @@ bleibt unverändert, macht den Live-Status weiterhin klar. Verwaiste
 Per Playwright verifiziert: Jahreszahl (2026/2025/2024) jetzt mit Farbe
 rgb(243,239,228) sichtbar in allen drei Karten, kein "läuft" mehr neben
 2026, keine Konsolenfehler.
+
+## 2026-09-25 – `94118fd` Changelog: Jahreszahl-Farbbug + läuft-Badge-Entfernung dokumentiert
