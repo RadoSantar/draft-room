@@ -1290,3 +1290,5 @@ bei reduced-motion-Emulation). Cache-Busting-Version für theme.css
 entsprechend erhöht.
 
 ## 2026-09-24 – `3e8c80a` Changelog: View-Transitions-Crossfade dokumentiert
+
+## 2026-09-25 – `096fb18` Changelog: Live-Snapshot-Frequenz-Erhöhung dokumentiert
