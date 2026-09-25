@@ -112,6 +112,20 @@
   .tx-week summary::before{content:'+ ';color:var(--amber);font-weight:700;}
   .tx-week[open] summary::before{content:'\2212 ';}
   .tx-week[open] summary{border-color:var(--amber);}
+
+  .team-cards-wrap{margin:20px 0;}
+  .team-cards-wrap > summary{
+    cursor:pointer;
+    list-style:none;
+    font-family:'Anton', sans-serif;
+    font-size:22px;
+    letter-spacing:.02em;
+    text-transform:uppercase;
+    color:var(--turf);
+  }
+  .team-cards-wrap > summary::-webkit-details-marker{display:none;}
+  .team-cards-wrap > summary::before{content:'+ ';color:var(--amber);font-weight:700;}
+  .team-cards-wrap[open] > summary::before{content:'\2212 ';}
   .tx-feed{display:flex;flex-direction:column;gap:10px;margin:10px 0 6px;}
   .tx-item{
     background:var(--card);
@@ -466,8 +480,13 @@
   <h2 class="section-head">Strength-of-Schedule-Verlauf</h2>
   <div class="history-scroll"><div id="sosHistoryTable"></div></div>
 
-  <p class="copy">Den kompletten offiziellen Draft Recap gibt's dazu direkt bei ESPN: <a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN ansehen →</a></p>
-  <div id="teamCards"></div>
+  <details class="team-cards-wrap js-animatable">
+    <summary>Draft Recap</summary>
+    <div class="details-content">
+      <p class="copy">Den kompletten offiziellen Draft Recap gibt's dazu direkt bei ESPN: <a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN ansehen →</a></p>
+      <div id="teamCards"></div>
+    </div>
+  </details>
 
   <div class="kicker" id="statusKicker">Wird geladen…</div>
 </main>
