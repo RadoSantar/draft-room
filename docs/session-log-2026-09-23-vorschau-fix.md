@@ -382,6 +382,23 @@ Commits `42094a6` (Grundlage + Power Rankings), `f446ac3` (Spielplan), `1c45f0b`
 
 Commit `b519d0f`, gepusht.
 
+## 20a. Live-Score-Snapshots: von 8 auf 56 Läufe/Woche
+
+**Nutzer-Frage:** Wann werden die Zwischenstand-Snapshots für die Recaps gemacht, und wird geprüft, ob Punkte tatsächlich mitgekommen sind? Erklärt: `espn-live-snapshot.yml` lief bisher nur 8x/Woche zu festen Zeitpunkten (grob "mitten im Spiel"/"kurz danach"); ein Filter gegen 0:0-Fehlinterpretation existiert (`extractDiffTimeline()` in `sync-espn.mjs` ignoriert 0:0-Snapshots als "noch nicht angepfiffen"), aber keine Erkennung von stehengebliebenen/veralteten ESPN-Daten zwischen zwei Snapshots.
+
+**Nutzer-Wunsch:** Statt der festen Zeitpunkte durchgehend alle 30 Minuten snapshotten, jeweils ab kurz vor dem ersten Kickoff des Tages bis nach dem letzten Spielende – Donnerstag, Sonntag (früh bis Sunday Night Football durch) und Montag. Ziel: präzisere und neue Verlaufs-Storylines (Aufholjagden, ein von Beginn nie eingeholter Vorsprung, ein bis zum letzten Spiel der Woche offenes Rennen).
+
+**Umgesetzt:** `.github/workflows/espn-live-snapshot.yml` von 8 einzelnen `cron`-Zeitpunkten auf 6 `cron`-Zeilen mit `*/30`-Minutenschritt umgestellt (je 2 Zeilen pro Tag nötig, weil das Fenster über Mitternacht UTC hinausläuft und ein einzelner cron-Eintrag keinen Wochentags-Wechsel abbilden kann):
+- Do 23:00 UTC + Fr 00:00–05:30 UTC (vor TNF-Kickoff bis nach Spielende)
+- So 16:00–23:30 UTC + Mo 00:00–05:30 UTC (vor den frühen Sonntagsspielen, durchgehend bis nach dem SNF)
+- Mo 23:00 UTC + Di 00:00–05:30 UTC (vor MNF-Kickoff bis nach Spielende)
+
+56 statt 8 Läufe/Woche (leichte Einzel-Fetches, unproblematisch fürs Actions-Freikontingent). Die bestehenden Auswerte-Funktionen (`findComebackFact()`, `findLeadChangesFact()`, `findPaceFact()`, `findSurvivedScareFact()`, `findMondayNightRescueFact()`, `findSustainedNailbiterFact()`) brauchen dafür keine Code-Änderung – sie iterieren bereits generisch über beliebig viele Snapshots und profitieren automatisch von der höheren Dichte. Eine explizite "Vorsprung nie eingeholt"-Story existiert als per-Spiel-Recap-Satz noch nicht (nur als saisonlanger Zähler `ledWireToWire` in `season-personality.json`) – nicht implementiert, da vom Nutzer nicht explizit als eigener Auftrag verlangt, nur als Motivation für die dichteren Snapshots genannt.
+
+**Getestet:** YAML-Syntax lokal per `python3 -c "import yaml; ..."` validiert (6 cron-Ausdrücke korrekt geparst). Workflow live per `workflow_dispatch` ausgelöst – alle Schritte (Checkout, Node, Snapshot holen, committen) erfolgreich durchgelaufen, End-to-End bestätigt dass die neue Konfiguration funktioniert.
+
+Commit `af56360`, gepusht.
+
 ## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
 
 **Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
