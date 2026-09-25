@@ -12,8 +12,7 @@
         { "rank": 4, "name": "Hopp Schwiiz", "wins": 8, "losses": 7, "ties": 0, "pointsFor": null },
         { "rank": 5, "name": "Zurich City Ravens", "wins": 5, "losses": 10, "ties": 0, "pointsFor": null },
         { "rank": 6, "name": "Sherlock Mahomes", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null }
-      ],
-      "note": "Liga hatte 2024 offenbar nur 6 Teams (gewachsen auf 10 bis 2026). 'Lord of the Rings' existiert im aktuellen (2026er) Kader nicht - ob das derselbe Manager unter neuem Team-Namen ist, ist unbekannt, wird NICHT angenommen. pointsFor aus dem Screenshot nicht ersichtlich, bewusst null gelassen statt geraten. rank = finale Platzierung laut Playoff-Ergebnis, NICHT nach Sieganzahl sortiert (Lord of the Rings hat trotz gleicher Bilanz wie der Champion nur Rang 3, weil ESPNs Playoff-Bracket-Ergebnis zählt, nicht die Regular-Season-Bilanz)."
+      ]
     },
     "2025": {
       "champion": "Zurich City Ravens",
@@ -27,7 +26,6 @@
         { "rank": 5, "name": "Saints of Anarchy", "wins": 6, "losses": 9, "ties": 0, "pointsFor": null },
         { "rank": 6, "name": "Run CMC", "wins": 0, "losses": 15, "ties": 0, "pointsFor": null }
       ],
-      "note": "Auch hier: rank = finale Playoff-Platzierung, NICHT nach Bilanz sortiert - Sherlock Mahomes hatte die mit Abstand beste Regular-Season-Bilanz (13-2) landete aber laut Bracket-Ergebnis nur auf Rang 3, während Tackleberry Finn mit nur 6-9 im Championship-Spiel stand (Rang 2). Nutzer hat das selbst explizit angemerkt, bevor Rückfrage nötig war. Immer noch 6 Teams diese Saison (noch nicht auf die aktuellen 10 gewachsen).",
       "playoffs": {
         "format": "4 Teams (Seeds 1-4 nach Regular-Season-Bilanz), Woche 16 Halbfinale + Woche 17 Finale/3.-Platz-Spiel im Sieger-Bracket; die übrigen 2 Teams (Seeds 5-6) spielen im Trost-Bracket um Platz 5 (Bye in Woche 16, Spiel in Woche 17). Gleiches Format wie die aktuelle 2026er-Liga (Woche 16+17, siehe schedule.html).",
         "winnersBracket": {
