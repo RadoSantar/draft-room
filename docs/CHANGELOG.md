@@ -1487,3 +1487,5 @@ kompakteren Box.
 
 Per Playwright verifiziert: Hover-Rahmenfarbe wechselt zu Amber, Klick
 öffnet/schliesst mit sichtbarem Animation-Verlauf, keine Konsolenfehler.
+
+## 2026-09-25 – `1473430` Changelog: Draft-Recap-Toggle-Button-Styling dokumentiert
