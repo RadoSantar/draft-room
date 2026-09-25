@@ -1,0 +1,26 @@
+name: Debug Team Names
+
+# Temporärer, manuell auslösbarer Workflow: dumpt ESPNs rohe Team-Namensfelder (name/location/
+# nickname/abbrev) in die Action-Logs (kein data/*.json-Write, kein Commit). Wird nach Gebrauch
+# wieder entfernt.
+
+on:
+  workflow_dispatch: {}
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node einrichten
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Team-Namen dumpen
+        env:
+          ESPN_S2: ${{ secrets.ESPN_S2 }}
+          ESPN_SWID: ${{ secrets.ESPN_SWID }}
+        run: node scripts/debug-team-names.mjs
