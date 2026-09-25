@@ -1519,3 +1519,5 @@ Nutzer: "demnach braucht es den pfeil beim übersicht button nicht mehr" -
 der Pfeil implizierte "zurück zum Ausgangspunkt", was jetzt "Startseite"
 als eigener erster Menüpunkt übernimmt. "Übersicht" steht gleichrangig
 neben den anderen Zielen.
+
+## 2026-09-25 – `6d8bbfe` Changelog: Pfeil-Entfernung bei Übersicht-Link dokumentiert
