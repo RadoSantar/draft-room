@@ -82,30 +82,10 @@
   h1{font-size:clamp(30px,5vw,42px);margin-bottom:14px;}
   h2.section-head{font-size:22px;margin:36px 0 4px;}
   p.copy{font-size:15px;color:var(--ink-soft);margin-bottom:12px;max-width:66ch;}
-  p.copy a, .note-text a{color:var(--turf);text-decoration:underline;text-decoration-color:var(--hash);text-decoration-thickness:1px;text-underline-offset:2px;}
-  p.copy a:hover, .note-text a:hover{text-decoration-color:var(--amber);}
+  p.copy a{color:var(--turf);text-decoration:underline;text-decoration-color:var(--hash);text-decoration-thickness:1px;text-underline-offset:2px;}
+  p.copy a:hover{text-decoration-color:var(--amber);}
 
   .calc-status{font-family:'IBM Plex Mono', monospace;font-size:13px;color:var(--ink-soft);margin:14px 0;}
-
-  .note-box{
-    background:var(--card);
-    border:1px solid var(--card-border);
-    border-left:4px solid var(--amber);
-    border-radius:6px;
-    padding:12px 16px;
-    display:flex;
-    gap:10px;
-    align-items:flex-start;
-    margin:18px 0;
-  }
-  .note-box .flag{
-    font-family:'Anton', sans-serif;
-    color:var(--turf);
-    font-size:12px;
-    letter-spacing:.04em;
-    flex:0 0 auto;
-  }
-  .note-box span:last-child{font-size:14px;color:var(--ink-soft);}
 
   /* Transactions feed, grouped by week */
   .tx-week{margin:10px 0;}
@@ -375,8 +355,6 @@
     padding:1px 5px;
   }
 
-  .note-text{font-size:13px;color:var(--ink-soft);font-style:italic;margin-top:16px;max-width:66ch;}
-
   /* Power-Ranking-Verlauf */
   .history-scroll{overflow-x:auto;margin:14px 0;border-radius:10px;}
   .history-table{width:100%;border-collapse:collapse;background:var(--turf);color:var(--chalk);font-size:12.5px;white-space:nowrap;}
@@ -457,12 +435,7 @@
   </div>
 
   <h1>Power Rankings</h1>
-  <p class="copy">Analyse aller 10 Teams: Draft Board, Stärken/Schwächen je Position, Transaktionen und Saison-Ausblick. Die Power Rankings basieren auf der bestmöglichen Start-Aufstellung (1 QB, 2 RB, 2 WR, 2 Flex, 2 TE, 1 K, 1 DEF), berechnet mit ESPNs Saison-Projektionen nach unserem Scoring – wie beim <a href="index.html#rechner">Punkterechner</a> und <a href="draft-board.html">Draft Board</a>. Aktualisiert sich automatisch wöchentlich.</p>
-
-  <div class="note-box">
-    <span class="flag">Hinweis</span>
-    <span>Näherung auf Basis von Saison-Projektionen, keine Vorhersage – Momentaufnahme des Kader-Werts nach unserem Scoring (Wochenboni fehlen wie beim Punkterechner). "Value"/"Reach" bei Draft-Picks bezieht sich auf ESPNs öffentliche ADP, nicht unsere Projektion. Die zugespitzten Saisonausblicke in den Team-Karten sind bewusst überspitzt, keine seriöse Prognose – die nüchterne Analyse steht direkt daneben.</span>
-  </div>
+  <p class="copy">Analyse aller 10 Teams: Draft Board, Stärken/Schwächen je Position, Transaktionen und Saison-Ausblick.</p>
 
   <h2 class="section-head">Transaktionen</h2>
   <p class="copy">Nach Spielwoche gruppiert, zum Öffnen antippen. Der komplette Verlauf steht auch direkt bei ESPN: <a href="https://fantasy.espn.com/football/recentactivity?leagueId=686672943" target="_blank" rel="noopener">Recent Activity auf ESPN →</a></p>
@@ -486,7 +459,7 @@
   <div class="history-scroll"><div id="historyTable"></div></div>
 
   <h2 class="section-head">Strength of Schedule</h2>
-  <p class="copy">Durchschnittliche Stärke der 15 Saison-Gegner nach aktuellem Power-Ranking-Score (Conference-Gegner zählt doppelt). Rang 1 = schwierigster Spielplan – aktualisiert sich automatisch mit den Power Rankings.</p>
+  <p class="copy">Durchschnittliche Stärke der 15 Saison-Gegner nach aktuellem Power-Ranking-Score. Rang 1 = schwierigster Spielplan.</p>
   <div class="calc-status" id="sosStatus">Lade aktuelle Daten…</div>
   <div class="rank-list" id="sosList"></div>
 
@@ -495,8 +468,6 @@
 
   <p class="copy">Den kompletten offiziellen Draft Recap gibt's dazu direkt bei ESPN: <a href="https://fantasy.espn.com/football/league/draftrecap?leagueId=686672943" target="_blank" rel="noopener">Draft Recap auf ESPN ansehen →</a></p>
   <div id="teamCards"></div>
-
-  <p class="note-text">Datenquelle: ESPN Fantasy API (Kader, Transaktionen) und ESPNs öffentliche Saison-Projektionen, verarbeitet nach unserem Liga-Scoring – dieselbe Näherung wie beim <a href="index.html#rechner">Punkterechner</a> (fehlende wochenbasierte Boni, K-Distanz-Staffelung vereinfacht, DST ohne INT/Fumble/TD-Boni). Automatische Aktualisierung läuft etwa wöchentlich per GitHub Actions; die geschriebenen Analysen/Ausblicke werden unabhängig davon von Hand gepflegt.</p>
 
   <div class="kicker" id="statusKicker">Wird geladen…</div>
 </main>
