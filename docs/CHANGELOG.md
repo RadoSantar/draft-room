@@ -1415,3 +1415,21 @@ rgb(243,239,228) sichtbar in allen drei Karten, kein "läuft" mehr neben
 2026, keine Konsolenfehler.
 
 ## 2026-09-25 – `94118fd` Changelog: Jahreszahl-Farbbug + läuft-Badge-Entfernung dokumentiert
+
+## 2026-09-25 – `b928056` Power Rankings: interne Methodik-/Datenquellen-Texte entfernt
+
+Auf Nutzer-Wunsch entfernt:
+- Zweiter Teil des Intro-Satzes (Aufstellungs-/Berechnungs-Details) - erster
+  Satz ("Analyse aller 10 Teams...") bleibt.
+- Kompletter "Hinweis"-Kasten (Näherung/Value-Reach/Saisonausblick-Disclaimer).
+- Bei Strength of Schedule: "(Conference-Gegner zählt doppelt)" und
+  "- aktualisiert sich automatisch mit den Power Rankings" gestrichen, Rest
+  bleibt.
+- Abschliessender "Datenquelle: ESPN Fantasy API..."-Absatz am Seitenende.
+
+Zugehörige, jetzt ungenutzte CSS-Regeln (.note-box, .note-text und deren
+Link-Styles) ebenfalls entfernt.
+
+Per Playwright verifiziert: keiner der vier Texte mehr im Body-Text, keine
+Konsolen-/Seitenfehler, Layout in Transaktionen/Power-Ranking/Strength-of-
+Schedule/Seitenende sauber ohne Lücken.
