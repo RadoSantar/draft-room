@@ -1292,3 +1292,18 @@ entsprechend erhöht.
 ## 2026-09-24 – `3e8c80a` Changelog: View-Transitions-Crossfade dokumentiert
 
 ## 2026-09-25 – `096fb18` Changelog: Live-Snapshot-Frequenz-Erhöhung dokumentiert
+
+## 2026-09-25 – `889aa25` Neuer Recap-Fakt: Wire-to-Wire (Vorsprung, der von Beginn nie eingeholt wurde)
+
+Auf Nutzer-Wunsch aus der Live-Snapshot-Frequenz-Erhöhung: die "nie
+eingeholter Vorsprung"-Story existierte bisher nur als saisonlanger
+Zähler (ledWireToWire in season-personality.json), nicht als eigener
+Satz im Wochen-Recap. Neue findWireToWireFact() in sync-espn.mjs
+(Gegenstück zu findComebackFact() - hier kippt die Führung einfach
+nie) plus Anbindung in generate-recaps.mjs (Fakt-Text, Headline-Pool,
+Badge-Kategorie). Braucht mindestens 2 echte Zwischenstände plus
+Endstand, sonst wäre "nie zurückgelegen" nur Zufall dünner Daten.
+Blowouts (≥50 Punkte, gleiches Kriterium wie der Blowout-Badge)
+bewusst ausgeschlossen, damit nicht jeder Kantersieg zusätzlich als
+Wire-to-Wire markiert wird - soll ein noch spannend aussehendes
+Spiel markieren, das nie wirklich kippte.
