@@ -1392,3 +1392,5 @@ Entfernt (auf Nutzer-Wunsch, nicht benötigt):
 Per Playwright verifiziert: alle vier Texte nicht mehr im gerenderten
 Body-Text, keine Konsolen-/Seiten-Fehler, kein Layout-Bruch in Allzeit-
 Rekorde, Ewige Tabelle oder den Saison-Karten (2024/2025).
+
+## 2026-09-25 – `d1ec1dd` Changelog: Hall-of-Fame-Textaufräumung dokumentiert
