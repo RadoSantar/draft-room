@@ -2409,6 +2409,25 @@ async function main() {
   // Transaktions-Periode) und hätte hier live beobachtet die gerade aktive Woche 3 komplett verpasst.
   const currentWeek = lastCompletedWeek + 1;
   const rawTx = await fetchAllTransactions(currentWeek);
+
+  // Manche Spieler tauchen nur in Transaktionen auf (kurzzeitig geholt und wieder gedroppt, nie
+  // tatsächlich zum Zeitpunkt eines Roster-Snapshots gerostert - typischer Fall: ein D/ST, das binnen
+  // weniger Tage wieder abgeworfen wurde) und fehlen deshalb in allNeededIds/projections/playerPool
+  // weiter oben, obwohl ESPNs leaguedefaults-Endpunkt sie durchaus auflösen kann, wenn man gezielt
+  // danach fragt (per Debug-Workflow bestätigt: dieselbe fetchProjections()-Abfrage liefert für so
+  // eine ID ganz normal Namen/Position zurück). Sammelt alle in rawTx referenzierten playerIds ein
+  // und holt für die noch unbekannten gezielt nach, bevor buildTransactionsFromLog() (über die
+  // playerInfo()-Closure) darauf zugreift - verhindert "Unbekannter Spieler #<id>" bei kurzlebigen
+  // Adds/Drops.
+  const txPlayerIds = new Set();
+  rawTx.forEach((t) => { (t.items || []).forEach((i) => { if (i.playerId != null) txPlayerIds.add(i.playerId); }); });
+  const unresolvedTxIds = [...txPlayerIds].filter((id) => !projections[id] && !playerPool[id]);
+  if (unresolvedTxIds.length) {
+    console.log(`${unresolvedTxIds.length} Spieler nur aus Transaktionen bekannt, hole Namen/Position gezielt nach…`);
+    const extraProjections = await fetchProjections(unresolvedTxIds);
+    Object.assign(projections, extraProjections);
+  }
+
   const txData = buildTransactionsFromLog(rawTx, teamNames, playerInfo);
   console.log(`${txData.length} Transaktionen aus ESPNs Log gebaut (Wochen 1-${currentWeek}).`);
   await writeJson('transactions.json', { lastUpdated: nowIso(), data: txData });
