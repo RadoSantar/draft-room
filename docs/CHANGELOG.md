@@ -1512,3 +1512,10 @@ ersten Menüpunkt mit href="start.html", Klick navigiert tatsächlich dorthin;
 hall-of-fame.html verlinkt jetzt auf alle 4 anderen Tool-Seiten.
 
 ## 2026-09-25 – `43d97d1` Changelog: Startseite-Link im Tool-Nav dokumentiert
+
+## 2026-09-25 – `0996c74` Tool-Nav: "←"-Pfeil bei Übersicht entfernt, jetzt wo Startseite eigener Link ist
+
+Nutzer: "demnach braucht es den pfeil beim übersicht button nicht mehr" -
+der Pfeil implizierte "zurück zum Ausgangspunkt", was jetzt "Startseite"
+als eigener erster Menüpunkt übernimmt. "Übersicht" steht gleichrangig
+neben den anderen Zielen.
