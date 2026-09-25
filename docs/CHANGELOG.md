@@ -1433,3 +1433,5 @@ Link-Styles) ebenfalls entfernt.
 Per Playwright verifiziert: keiner der vier Texte mehr im Body-Text, keine
 Konsolen-/Seitenfehler, Layout in Transaktionen/Power-Ranking/Strength-of-
 Schedule/Seitenende sauber ohne Lücken.
+
+## 2026-09-25 – `ac721da` Changelog: Power-Rankings-Textaufräumung dokumentiert
