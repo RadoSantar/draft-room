@@ -501,6 +501,21 @@ Zusätzlich beim "Ewige Tabelle"-Untertitel nur den doppelt/redundant wirkenden 
 
 Commit `2280963`, gepusht.
 
+## 24. Hall of Fame: Jahreszahl in Saison-Kacheln unsichtbar (Farbbug) + "läuft"-Badge entfernt
+
+**Nutzer-Meldung:** "in den pro jahr kacheln bzw. den schlusstabellen fehlt die jahreszahl. und entferne bei der aktuellen die info läuft sodass da auch einfach das jahr 2026 steht."
+
+**Root Cause geprüft (Playwright, DOM/CSS-Inspektion):** Die Jahreszahl fehlte nicht wirklich im DOM – `<span class="hof-season-year display">2025</span>` war vorhanden, aber unsichtbar. Grund: die globale Regel `h1,h2,h3,.display{color:var(--turf);...}` (dunkelgrün) griff über die zusätzliche `.display`-Klasse auf dem Jahres-Span, während `.hof-season-card` selbst `background:var(--turf)` hat – also dunkelgrüner Text auf dunkelgrünem Hintergrund, computed color exakt identisch mit dem Kartenhintergrund.
+
+**Fix:**
+- `.hof-season-year` bekommt jetzt explizit `color:var(--chalk)` (überschreibt die geerbte `.display`-Farbe) – sichtbar wie der restliche helle Kartentext.
+- Das `läuft`-Badge neben der Jahreszahl der laufenden Saison (2026) entfernt – steht jetzt genauso schlicht da wie 2025/2024. Der separate Zwischenstand-Hinweis ("Zwischenstand – noch kein Meister, Saison läuft.") direkt darunter bleibt unverändert bestehen, macht den Live-Status weiterhin klar erkennbar.
+- Verwaiste `.hof-live-badge`-CSS-Regel (nur noch von diesem Badge genutzt) entfernt.
+
+**Getestet:** Playwright – `getComputedStyle().color` der Jahres-Spans in allen drei Karten (2026/2025/2024) jetzt `rgb(243,239,228)` (chalk) statt der vorherigen turf-auf-turf-Unsichtbarkeit; Screenshots bestätigen "2026"/"2025"/"2024" klar lesbar, kein "läuft"-Badge mehr, keine Konsolenfehler.
+
+Commit `5a0953d`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
