@@ -530,6 +530,16 @@ Commit `5a0953d`, gepusht.
 
 Commit `b928056`, gepusht.
 
+## 26. Power Rankings: Team-Karten unter einem gemeinsamen "Draft Recap"-Toggle
+
+**Nutzer-Wunsch:** "die aufklappbaren teams unten sind toll aber lass alle zusammen in einem einzigen draft recap einklappen dann kann man den aufklappen und danach die teams die man gerne sehen möchte." Die 10 Team-Karten standen bisher alle offen im Seitenfluss (jeweils selbst noch einzeln aufklappbar) – sollen jetzt zusätzlich hinter einem einzigen übergeordneten Klapp-Element versteckt sein.
+
+**Umgesetzt:** `#teamCards` + der zugehörige ESPN-Draft-Recap-Link-Absatz stecken jetzt in `<details class="team-cards-wrap js-animatable"><summary>Draft Recap</summary><div class="details-content">...</div></details>`, standardmässig zugeklappt. Styling folgt der bestehenden +/- -Summary-Konvention der Seite (wie `.tx-week`/`.recap-details`/`.board-details`), aber in der grossen Anton-Grossschrift-Optik der `h2.section-head`-Überschriften – dieser Abschnitt hatte zuvor gar keine eigene Section-Überschrift. Dafür `h2.section-head{...}` zu `.section-head{...}` verallgemeinert (Tag-Einschränkung entfernt), damit die neue `<summary>` dieselbe Optik übernehmen kann, ohne Styles zu duplizieren. Keine JS-Änderung nötig: `teamCardsEl.innerHTML` wird weiterhin ganz normal per `getElementById('teamCards')` befüllt, und der bereits bestehende einmalige `initAnimatableDetails()`-Aufruf nach dem Rendern greift das neue Wrapper-`<details>` automatisch mit ab (dokumentweite Abfrage).
+
+**Getestet:** Playwright – Wrapper standardmässig geschlossen (`.open === false`), Klick auf die "Draft Recap"-Summary öffnet alle 10 Team-Summaries (die selbst noch einzeln zugeklappt bleiben), Klick auf eine einzelne Team-Summary öffnet gezielt nur diese. Keine Konsolenfehler, Screenshots bestätigen sauberes Layout in zu- und aufgeklapptem Zustand.
+
+Commit `d020bb5`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
