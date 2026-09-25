@@ -1290,24 +1290,3 @@ bei reduced-motion-Emulation). Cache-Busting-Version für theme.css
 entsprechend erhöht.
 
 ## 2026-09-24 – `3e8c80a` Changelog: View-Transitions-Crossfade dokumentiert
-
-## 2026-09-25 – `af56360` Live-Score-Snapshots: alle 30 Minuten während jedes Spieltags statt nur ein paar Zeitpunkte
-
-Bisher nur 8 feste Zeitpunkte über die Woche verteilt (grob "mitten
-im Spiel" / "kurz danach"). Auf Nutzer-Wunsch jetzt durchgehend alle
-30 Minuten ab kurz vor dem jeweils ersten Kickoff des Tages bis nach
-dem letzten Spielende - Donnerstag, Sonntag (früh bis SNF-Ende durch)
-und Montag. Macht die Verlaufs-Storylines im wöchentlichen Recap
-(Kollaps/Comeback, Führungswechsel) präziser und ermöglicht neue:
-ein Vorsprung, der nie eingeholt wurde, oder ein Rennen, das erst
-mit dem letzten Spiel der Woche entschieden wurde. Die bestehenden
-Auswerte-Funktionen in sync-espn.mjs (findComebackFact() usw.)
-brauchen dafür keine Änderung, sie profitieren automatisch von den
-dichteren Zwischenständen.
-
-56 statt 8 Läufe pro Woche, jeder davon ein einzelner leichter
-ESPN-Fetch + JSON-Append - unproblematisch fürs GitHub-Actions-
-Freikontingent. 6 statt 8 cron-Zeilen (jeder Tag durchgehend über
-Mitternacht UTC hinweg statt einzelner Zeitpunkte, braucht wegen
-des Wochentags-Wechsels innerhalb des Fensters weiterhin 2 Zeilen
-pro Tag statt 1).
