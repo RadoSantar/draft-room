@@ -1307,3 +1307,38 @@ Blowouts (≥50 Punkte, gleiches Kriterium wie der Blowout-Badge)
 bewusst ausgeschlossen, damit nicht jeder Kantersieg zusätzlich als
 Wire-to-Wire markiert wird - soll ein noch spannend aussehendes
 Spiel markieren, das nie wirklich kippte.
+
+## 2026-09-25 – `b4d0a44` 5 weitere Recap-Fakten aus den Live-Zwischenständen ableitbar gemacht
+
+Auf Nutzer-Wunsch ("ja finde ich alles gut") die 5 zuvor vorgeschlagenen
+Ideen umgesetzt:
+
+- Grösster Einzelsprung (findBiggestSwingFact): welches Zeitfenster
+  zwischen zwei echten Zwischenständen den Punkteabstand am stärksten
+  verschoben hat - erst mit den seit letzter Änderung alle 30 Minuten
+  laufenden Snapshots aussagekräftig messbar. Nur Sprünge mit ≤90 Min.
+  Abstand zwischen den Messungen zählen, damit eine Lücke durch einen
+  verpassten Snapshot-Lauf nicht als falscher "plötzlicher" Sprung
+  durchgeht.
+- Buzzer-Beater-Führungswechsel (findBuzzerBeaterFact): die Führung
+  kippte erst beim allerletzten erfassten Übergang.
+- Achterbahn-Niederlage: statt eines separaten, fast identisch
+  klingenden Fakts wird die bestehende findLeadChangesFact()-Ausgabe
+  bei ≥3 Wechseln direkt schärfer formuliert (welches Team trotz des
+  Hin und Her am Ende verlor) - vermeidet zwei fast gleiche Fakten
+  im selben Spiel.
+- Wochen-weiter Fakt "bis zum letzten Spiel offen" (countGamesOpen-
+  BeforeMonday): wie viele Matchups der Woche beim MNF-Kickoff noch
+  knapp waren - fliesst als Liga-weiter Satz in den Wochenüberblick-
+  Prompt ein, nicht pro Spiel.
+- Persönlicher Bestwert: ist der Comeback dieses Spiels die grösste
+  Aufholjagd der eigenen Saison? Neues maxComebackDeficit-Feld in
+  season-personality.json (Rekordwert, kein Zähler - wird in
+  archiveLiveSnapshotWeek() nur bei neuem Bestwert überschrieben),
+  ergänzt bei Erfolg direkt den bestehenden comeback-Fakt statt einen
+  eigenen zu erzeugen (gleicher Grund: Redundanz vermeiden).
+
+Alle neuen Funktionen offline mit synthetischen Zwischenständen
+getestet (9 Testfälle, alle korrekt), inkl. der bump()-Rekordlogik
+(steigt nur, sinkt nie, auch über mehrere Wochen mit dazwischen
+kleineren/keinen Comebacks hinweg).
