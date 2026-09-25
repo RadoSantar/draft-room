@@ -399,6 +399,23 @@ Commit `b519d0f`, gepusht.
 
 Commit `af56360`, gepusht.
 
+## 20b. Wire-to-Wire-Fakt + 5 weitere Recap-Fakten aus den Live-Zwischenständen
+
+**Nutzer-Wunsch:** Den offen gelassenen "Vorsprung, der nie eingeholt wurde"-Recap-Satz ergänzen, plus die 5 in der vorherigen Antwort vorgeschlagenen Ideen umsetzen ("ja finde ich alles gut").
+
+**Wire-to-Wire (Ergänzung zu Punkt 20a):** `findWireToWireFact()` in `sync-espn.mjs` – Gegenstück zu `findComebackFact()`, das Sieger-Team führte laut Zwischenständen die ganze Woche durch, lag nie zurück (1 Punkt Toleranz). Braucht mindestens 2 echte Zwischenstände plus Endstand, Blowouts (≥50 Punkte) bewusst ausgeschlossen. Text/Headline-Pool/Badge-Kategorie in `generate-recaps.mjs` ergänzt. 6 Testfälle offline durchgespielt (echtes Wire-to-Wire, Führungswechsel, zu wenig Daten, Blowout-Ausschluss, Auswärtssieg-Variante, kurze Gleichstand-Toleranz) – alle korrekt.
+
+**5 weitere Fakten:**
+- **Grösster Einzelsprung** (`findBiggestSwingFact`): welches Zeitfenster zwischen zwei echten Zwischenständen den Punkteabstand am stärksten verschoben hat – erst mit den jetzt alle 30 Minuten laufenden Snapshots aussagekräftig messbar. Nur Sprünge mit ≤90 Minuten Abstand zwischen den beiden Messungen zählen, sonst könnte eine Lücke durch einen verpassten Snapshot-Lauf fälschlich als "plötzlicher" Sprung durchgehen.
+- **Buzzer-Beater-Führungswechsel** (`findBuzzerBeaterFact`): die Führung kippte erst beim allerletzten erfassten Übergang (vorletzter Zwischenstand → Endstand).
+- **Achterbahn-Niederlage**: bewusst KEIN separater Fakt (hätte sich fast identisch zu `leadChanges` gelesen und beide hätten im selben Spiel gemeinsam auftauchen können) – stattdessen `findLeadChangesFact()` um `loserTeam` erweitert, `generate-recaps.mjs` formuliert den bestehenden `leadChanges`-Fakt ab 3 Wechseln automatisch schärfer ("... ging X trotz des ständigen Hin und Her leer aus").
+- **Wochen-weiter Fakt "bis zum letzten Spiel offen"** (`countGamesOpenBeforeMonday`): wie viele Matchups der Woche beim Anpfiff des Monday Night Football (gleiche 18:00-UTC-Schwelle wie `findMondayNightRescueFact`) noch mit ≤15 Punkten offen waren. Kein Pro-Spiel-Fakt, sondern ein liga-weiter Satz, der direkt in `buildWeekPrompt()` (Wochenüberblick-Prompt) einfliesst – neuer dritter Parameter bei `generateWeekRecap()`.
+- **Persönlicher Bestwert**: ebenfalls bewusst kein separater Fakt, sondern Erweiterung des bestehenden `comeback`-Fakts. Neues `maxComebackDeficit`-Feld in `season-personality.json` (Rekordwert, kein Zähler – `archiveLiveSnapshotWeek()`s `bump()`-Helfer überschreibt ihn nur bei einem neuen Bestwert, senkt ihn nie). `personalBestComebackDeficit()` vergleicht den aktuellen Comeback gegen den VOR diesem Spiel gespeicherten Bestwert (erst ab dem 2. Comeback der Saison aussagekräftig) und hängt bei Erfolg einen Zusatzsatz an den bestehenden `comeback`-Fakt.
+
+**Getestet:** Alle neuen/geänderten Funktionen offline mit synthetischen Zwischenständen durchgespielt (9 Testfälle: `leadChanges` mit `loserTeam`, `biggestSwing` mit passendem und mit zu grossem Zeitabstand, `buzzerBeater` mit und ohne Flip am Schluss, `countGamesOpenBeforeMonday`, `personalBestComebackDeficit` in 3 Varianten) – alle korrekt. Separater Test für die `bump()`-Rekordlogik über 4 simulierte Wochen (steigt bei grösserem Comeback, bleibt bei kleinerem/keinem unverändert) – korrekt. Kein Live-Sync-Test möglich/sinnvoll: diese Fakten brauchen eine frisch abgeschlossene Woche mit dichten Zwischenständen aus dem neuen 30-Minuten-Rhythmus – Woche 3 ist zum Zeitpunkt dieser Änderung noch nicht gespielt.
+
+Commit `b4d0a44`, gepusht.
+
 ## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
 
 **Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
