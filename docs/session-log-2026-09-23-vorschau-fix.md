@@ -416,6 +416,16 @@ Commit `af56360`, gepusht.
 
 Commit `b4d0a44`, gepusht.
 
+## 20c. Verdacht auf "TM1"-Namensbug geprüft – Fehlalarm, unser Code ist nicht die Quelle
+
+**Nutzer-Vermutung:** "ich denke ich sehe warum du die waiver und trades teilweise nicht korrekt zuordnen kannst... drops stehen nicht mit team bezeichnung sondern abbrv... saints of anarchy hat raiders d/st gedroppt dann steht da TM1 dropped raiders d/st." Vermutung: die ESPN-Team-Abkürzung (Abbrev) wird irgendwo statt des richtigen Namens verwendet.
+
+**Geprüft:** Temporärer Debug-Workflow dumpt ESPNs rohe Team-Felder (`name`/`location`/`nickname`/`abbrev`) für alle 10 Teams. Ergebnis: Team-ID 1 hat `name: "Saints of Anarchy"`, `abbrev: "TM1"` – "TM1" ist tatsächlich ESPNs Abkürzung für dieses Team, kommt aber in unserem Code nirgends zum Einsatz (`grep abbrev` über alle Skripte: keine Treffer). Die `teamNames`-Zuordnung in `sync-espn.mjs` (`teamNames[t.id] = (t.name || '').trim()`) nutzt ausschliesslich `t.name`, und dieses Feld ist für alle 10 Teams korrekt gefüllt (auch für die anderen 9 direkt verglichen: stimmt exakt mit den bekannten Liganamen überein). `location`/`nickname` liefert ESPN für diese Liga gar nicht (leer/undefined bei allen Teams) – kein stiller Fallback-Bug, weil der Code diese Felder ohnehin nicht anfragt. Auch der spezifische Drop-Only-Zweig (`drops.forEach(...)`, der bei "nur Drop, kein Add im selben Eintrag"-Fällen greift) nutzt exakt dieselbe `teamNames[t.teamId]`-Zuordnung wie alle anderen Transaktionstypen – keine abweichende Logik gefunden.
+
+**Fazit:** Kein Bug in unserem Code nachweisbar – die Team-Namen-Zuordnung ist über alle Transaktionstypen hinweg korrekt und konsistent. "TM1" muss von einer anderen Quelle stammen (vermutlich ESPNs eigene App/Website, die für manche Ansichten die Abkürzung statt des vollen Namens zeigt) – dem Nutzer eine Rückfrage gestellt, wo genau "TM1" aufgetaucht ist, um die tatsächliche Beobachtung (falls doch ein echtes Problem auf unserer Seite vorliegt) weiter eingrenzen zu können.
+
+Debug-Tooling nach Gebrauch wieder entfernt (Commit `30beb16`).
+
 ## 20. Mein Team: "Bessere Live-Form auf der Bank"-Digest-Hinweis entfernt
 
 **Nutzer-Wunsch:** Den Digest-Hinweis "Bessere Live-Form auf der Bank: ... schlägt ... – Toggle oben auf 'Live-Punkteschnitt' umschalten." im "Diese Woche"-Abschnitt entfernen – schön, aber nicht benötigt.
