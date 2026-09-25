@@ -1463,3 +1463,27 @@ Per Playwright verifiziert: Wrapper standardmässig zu, Klick öffnet alle
 Team-Summary öffnet nur diese - keine Konsolenfehler.
 
 ## 2026-09-25 – `6b2d292` Changelog: Draft-Recap-Sammel-Toggle dokumentiert
+
+## 2026-09-25 – `c9e0ab1` Power Rankings: "Draft Recap"-Toggle als klar erkennbaren Button gestylt
+
+Nutzer-Feedback: der neue "Draft Recap"-Sammel-Toggle sah als reine grosse
+Überschrift nicht wie ein klickbares Element aus, und die Klapp-Animation
+war dadurch kaum wahrnehmbar.
+
+Root Cause geprüft (Playwright): die Höhen-Animation lief technisch
+korrekt (computed height interpoliert sauber über ~200ms von 237px auf
+1435px, per Sampling bestätigt) - das eigentliche Problem war rein
+optisch: die <summary> hatte keinerlei Button-Chrome (kein Hintergrund,
+kein Rahmen, keine Polsterung), nur grossen Anton-Überschriften-Text mit
+"+"-Präfix. Ohne sichtbare Box wirkte der wachsende Inhaltsbereich wie ein
+normaler Seiten-Reflow statt wie eine gezielte Animation.
+
+Fix: .team-cards-wrap > summary bekommt jetzt dieselbe Pill-Optik wie
+.tx-week summary (Hintergrund var(--card), Rahmen var(--card-border),
+abgerundete Ecken, Polsterung, Hover-/Open-Zustand mit
+border-color:var(--amber) + transition) - liest sich jetzt eindeutig als
+Button, bei kleinerer Schriftgrösse (19px statt 22px) passend zur
+kompakteren Box.
+
+Per Playwright verifiziert: Hover-Rahmenfarbe wechselt zu Amber, Klick
+öffnet/schliesst mit sichtbarem Animation-Verlauf, keine Konsolenfehler.
