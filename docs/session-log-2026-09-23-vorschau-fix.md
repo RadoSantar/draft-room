@@ -478,6 +478,10 @@ Commit `bf2db30`, gepusht.
 
 Commit `d6306c8`, gepusht.
 
+**Zweite Iteration (kürzer, dafür grösser):** Direkt im Anschluss: "das braucht mir zu viel platz lass uns nur willkommen schreiben dafür etwas grösser". `<h1>` auf "Willkommen" gekürzt, `font-size` von `clamp(30px,5vw,42px)` auf `clamp(38px,7vw,56px)` erhöht. Per Playwright-Screenshot (420px Viewport) verifiziert: rendert sauber, kein Layout-Bruch.
+
+Commit `01e47f6`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
