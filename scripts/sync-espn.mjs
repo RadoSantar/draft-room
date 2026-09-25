@@ -522,7 +522,10 @@ function findComebackFact(game, liveSnapshots) {
   return null;
 }
 
-// Nervenkrieg: wie oft wechselte die Führung laut unseren Zwischenständen den Besitzer.
+// Nervenkrieg: wie oft wechselte die Führung laut unseren Zwischenständen den Besitzer. Trägt
+// zusätzlich das am Ende UNTERLEGENE Team mit - ab 3 Wechseln nutzt generate-recaps.mjs das für die
+// schärfere "Achterbahn-Niederlage"-Variante (hin und her gerissen und am Ende trotzdem leer
+// ausgegangen), statt eines separaten, mit denselben Daten fast identisch klingenden Fakts.
 function findLeadChangesFact(game, liveSnapshots) {
   if (game.winner === 'TIE') return null;
   const diffs = extractDiffTimeline(game, liveSnapshots);
@@ -534,7 +537,8 @@ function findLeadChangesFact(game, liveSnapshots) {
     if (sign !== 0) lastSign = sign;
   });
   if (changes < 2) return null;
-  return { changes };
+  const loserTeam = game.winner === 'HOME' ? game.awayName : game.homeName;
+  return { changes, loserTeam };
 }
 
 // Schnellstarter/Spätzünder: Anteil des Endstands, den ein Team schon beim ersten ECHTEN Zwischen-
@@ -633,6 +637,85 @@ function findWireToWireFact(game, liveSnapshots) {
   return { team: winnerIsHome ? game.homeName : game.awayName, finalMargin };
 }
 
+// Grösster Einzelsprung: das Zeitfenster zwischen zwei aufeinanderfolgenden ECHTEN Zwischenständen
+// (nicht der synthetische Endstand-Punkt am Schluss von extractDiffTimeline), in dem sich der
+// Punkteabstand am stärksten verschoben hat - erst mit den seit Herbst 2026 alle 30 Minuten
+// laufenden Snapshots (siehe espn-live-snapshot.yml) überhaupt aussagekräftig messbar, vorher lagen
+// zwischen zwei Messungen oft schon Stunden. Nur "echte" Sprünge (≤90 Minuten Abstand zwischen den
+// beiden Messungen) zählen, damit eine grosse Lücke durch einen verpassten Snapshot-Lauf nicht als
+// falscher "plötzlicher" Sprung durchgeht.
+function findBiggestSwingFact(game, liveSnapshots) {
+  if (!liveSnapshots?.length || liveSnapshots.length < 2) return null;
+  const points = [];
+  liveSnapshots.forEach((s) => {
+    const g = s.games.find((gg) => gg.homeId === game.homeId && gg.awayId === game.awayId);
+    if (g && (g.homeScore !== 0 || g.awayScore !== 0)) points.push({ at: s.at, diff: g.homeScore - g.awayScore });
+  });
+  if (points.length < 2) return null;
+  let maxSwing = 0, maxMinutes = null;
+  for (let i = 1; i < points.length; i++) {
+    const swing = Math.abs(points[i].diff - points[i - 1].diff);
+    if (swing > maxSwing) {
+      maxSwing = swing;
+      maxMinutes = Math.round((new Date(points[i].at) - new Date(points[i - 1].at)) / 60000);
+    }
+  }
+  if (maxSwing < 15 || maxMinutes === null || maxMinutes > 90 || maxMinutes < 1) return null;
+  return { swing: maxSwing, minutes: maxMinutes };
+}
+
+// Buzzer-Beater-Führungswechsel: die Führung kippte erst beim allerletzten erfassten Übergang (vom
+// vorletzten Zwischenstand zum Endstand) - das Spiel drehte sich quasi in letzter Sekunde. Ergänzt
+// findLeadChangesFact() (zählt nur WIE OFT gewechselt wurde, nicht WANN der entscheidende Wechsel
+// kam) und kann bei Montagabend-Spielen mit findMondayNightRescueFact() zusammen auftreten - beide
+// beleuchten dasselbe dramatische Finish aus verschiedenen Blickwinkeln (Uhrzeit vs. Plötzlichkeit).
+function findBuzzerBeaterFact(game, liveSnapshots) {
+  if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
+  const diffs = extractDiffTimeline(game, liveSnapshots);
+  if (diffs.length < 3) return null;
+  const finalDiff = diffs[diffs.length - 1];
+  const prevDiff = diffs[diffs.length - 2];
+  const finalSign = finalDiff > 0 ? 1 : finalDiff < 0 ? -1 : 0;
+  const prevSign = prevDiff > 0 ? 1 : prevDiff < 0 ? -1 : 0;
+  if (finalSign === 0 || prevSign === 0 || finalSign === prevSign) return null;
+  const winnerTeam = game.winner === 'HOME' ? game.homeName : game.awayName;
+  return { winnerTeam, marginBefore: Math.abs(prevDiff) };
+}
+
+// Wochen-weite Stat (nicht pro Spiel, speist einen Satz im Wochenüberblick): wie viele der Matchups
+// dieser Woche waren noch beim Anpfiff des Monday Night Football (grosszügig: vor 18:00 UTC Montag,
+// dieselbe Schwelle wie findMondayNightRescueFact()) mit höchstens 15 Punkten Vorsprung offen -
+// selbst wenn der Vorsprung am Ende hielt, war zu dem Zeitpunkt noch nicht sicher, wer gewinnt.
+function countGamesOpenBeforeMonday(weekGames, liveSnapshots) {
+  if (!liveSnapshots?.length) return null;
+  const decided = weekGames.filter((g) => g.winner === 'HOME' || g.winner === 'AWAY');
+  if (!decided.length) return null;
+  const preMonday = liveSnapshots.filter((s) => {
+    const d = new Date(s.at);
+    return d.getUTCDay() !== 1 || d.getUTCHours() < 18;
+  }).slice(-1)[0];
+  if (!preMonday) return null;
+  let open = 0;
+  decided.forEach((g) => {
+    const match = preMonday.games.find((gg) => gg.homeId === g.homeId && gg.awayId === g.awayId);
+    if (!match) return;
+    if (Math.abs(match.homeScore - match.awayScore) <= 15) open++;
+  });
+  return { open, total: decided.length };
+}
+
+// Persönlicher Bestwert: ist DIESER Comeback die grösste Aufholjagd der eigenen Saison bisher?
+// Vergleich gegen den vor diesem Spiel in season-personality.json gespeicherten Bestwert
+// (maxComebackDeficit, siehe archiveLiveSnapshotWeek()). Erst ab dem 2. Comeback der Saison
+// aussagekräftig - beim allerersten wäre "Bestwert" trivial, weil es der einzige bisherige Fall ist.
+function personalBestComebackDeficit(comeback, seasonPersonality, winnerId) {
+  const t = seasonPersonality?.teams?.[winnerId];
+  if (!t || (t.comebackWins || 0) < 1) return null;
+  const priorBest = t.maxComebackDeficit || 0;
+  if (comeback.peakLead <= priorBest) return null;
+  return priorBest;
+}
+
 // Saison-Persönlichkeit: aus data/season-personality.json (siehe archiveLiveSnapshotWeek() weiter
 // unten) – ein Team, das über mehrere Wochen hinweg auffällig oft comebackt/kollabiert/im
 // Nervenkrieg steckt/von vorne bis hinten führt, bekommt dafür einen wiederkehrenden Beinamen. Erst
@@ -668,9 +751,14 @@ async function archiveLiveSnapshotWeek(week, weekGames, liveSnapshots) {
   if (archive.weeksArchived.includes(week)) return;
 
   const bump = (teamId, patch) => {
-    const t = archive.teams[teamId] || { games: 0, comebackWins: 0, collapseLosses: 0, sustainedNailbiters: 0, ledWireToWire: 0 };
+    const t = archive.teams[teamId] || { games: 0, comebackWins: 0, collapseLosses: 0, sustainedNailbiters: 0, ledWireToWire: 0, maxComebackDeficit: 0 };
     t.games++;
-    Object.keys(patch).forEach((k) => { if (patch[k]) t[k]++; });
+    Object.keys(patch).forEach((k) => {
+      // maxComebackDeficit ist ein Rekordwert (grösster je aufgeholter Rückstand), kein Zähler -
+      // wird nur bei einem neuen persönlichen Bestwert überschrieben, nicht bei jedem Spiel erhöht.
+      if (k === 'maxComebackDeficit') { if (patch[k] > (t.maxComebackDeficit || 0)) t.maxComebackDeficit = patch[k]; }
+      else if (patch[k]) t[k]++;
+    });
     archive.teams[teamId] = t;
   };
 
@@ -690,13 +778,15 @@ async function archiveLiveSnapshotWeek(week, weekGames, liveSnapshots) {
       comebackWins: g.winner === 'HOME' && maxAwayLead >= 15,
       collapseLosses: g.winner === 'AWAY' && maxHomeLead >= 15,
       sustainedNailbiters: sustainedNailbiter,
-      ledWireToWire: g.winner === 'HOME' && homeNeverTrailed
+      ledWireToWire: g.winner === 'HOME' && homeNeverTrailed,
+      maxComebackDeficit: (g.winner === 'HOME' && maxAwayLead >= 15) ? maxAwayLead : 0
     });
     bump(g.awayId, {
       comebackWins: g.winner === 'AWAY' && maxHomeLead >= 15,
       collapseLosses: g.winner === 'HOME' && maxAwayLead >= 15,
       sustainedNailbiters: sustainedNailbiter,
-      ledWireToWire: g.winner === 'AWAY' && awayNeverTrailed
+      ledWireToWire: g.winner === 'AWAY' && awayNeverTrailed,
+      maxComebackDeficit: (g.winner === 'AWAY' && maxHomeLead >= 15) ? maxHomeLead : 0
     });
   });
 
@@ -1504,7 +1594,14 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
 
   if (ctx?.liveSnapshots) {
     const comeback = findComebackFact(game, ctx.liveSnapshots);
-    if (comeback) result.comeback = comeback;
+    if (comeback) {
+      if (ctx?.seasonPersonality) {
+        const winnerId = game.winner === 'HOME' ? game.homeId : game.awayId;
+        const priorBest = personalBestComebackDeficit(comeback, ctx.seasonPersonality, winnerId);
+        if (priorBest !== null) comeback.priorBest = priorBest;
+      }
+      result.comeback = comeback;
+    }
     const leadChanges = findLeadChangesFact(game, ctx.liveSnapshots);
     if (leadChanges) result.leadChanges = leadChanges;
     const pace = findPaceFact(game, ctx.liveSnapshots);
@@ -1517,6 +1614,10 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
     if (sustainedNailbiter) result.sustainedNailbiter = sustainedNailbiter;
     const wireToWire = findWireToWireFact(game, ctx.liveSnapshots);
     if (wireToWire) result.wireToWire = wireToWire;
+    const biggestSwing = findBiggestSwingFact(game, ctx.liveSnapshots);
+    if (biggestSwing) result.biggestSwing = biggestSwing;
+    const buzzerBeater = findBuzzerBeaterFact(game, ctx.liveSnapshots);
+    if (buzzerBeater) result.buzzerBeater = buzzerBeater;
   }
 
   if (ctx?.seasonPersonality) {
@@ -2160,7 +2261,8 @@ async function main() {
 
     const oldWeekRecaps = await readJsonSafe('week-recaps.json', { data: {} });
     const existingWeekRecaps = oldWeekRecaps.data || {};
-    const newWeekRecap = await generateWeekRecap(enrichedGames, existingWeekRecaps);
+    const openBeforeMonday = countGamesOpenBeforeMonday(weekGames, liveSnapshots);
+    const newWeekRecap = await generateWeekRecap(enrichedGames, existingWeekRecaps, openBeforeMonday);
     if (newWeekRecap) {
       await writeJson('week-recaps.json', { lastUpdated: nowIso(), data: { ...existingWeekRecaps, [newWeekRecap.week]: newWeekRecap } });
     }

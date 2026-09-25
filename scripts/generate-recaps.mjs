@@ -189,11 +189,19 @@ function collectFacts(game) {
 
   if (game.comeback) {
     const c = game.comeback;
-    facts.push({ category: 'comeback', text: `Kollaps/Comeback laut unseren Zwischenständen im Wochenverlauf: ${c.collapsedTeam} lag zeitweise mit rund ${c.peakLead.toFixed(1)} Punkten voran, am Ende gewann aber trotzdem ${c.winnerTeam}.` });
+    let text = `Kollaps/Comeback laut unseren Zwischenständen im Wochenverlauf: ${c.collapsedTeam} lag zeitweise mit rund ${c.peakLead.toFixed(1)} Punkten voran, am Ende gewann aber trotzdem ${c.winnerTeam}.`;
+    if (c.priorBest !== undefined) {
+      text += ` Das ist die grösste Aufholjagd der bisherigen Saison von ${c.winnerTeam} (bisheriger Bestwert: ${c.priorBest.toFixed(1)} Punkte Rückstand).`;
+    }
+    facts.push({ category: 'comeback', text });
   }
 
   if (game.leadChanges) {
-    facts.push({ category: 'leadChanges', text: `Nervenkrieg laut unseren Zwischenständen: Die Führung wechselte im Wochenverlauf mindestens ${game.leadChanges.changes} Mal den Besitzer.` });
+    const lc = game.leadChanges;
+    const text = lc.changes >= 3
+      ? `Achterbahn-Niederlage laut unseren Zwischenständen: Die Führung wechselte im Wochenverlauf mindestens ${lc.changes} Mal den Besitzer – am Ende ging ${lc.loserTeam} trotz des ständigen Hin und Her leer aus.`
+      : `Nervenkrieg laut unseren Zwischenständen: Die Führung wechselte im Wochenverlauf mindestens ${lc.changes} Mal den Besitzer.`;
+    facts.push({ category: 'leadChanges', text });
   }
 
   if (game.pace) {
@@ -220,6 +228,16 @@ function collectFacts(game) {
   if (game.wireToWire) {
     const w = game.wireToWire;
     facts.push({ category: 'wireToWire', text: `Wire-to-Wire laut unseren Zwischenständen: ${w.team} lag zu keinem erfassten Zeitpunkt der Woche auch nur kurz zurück und kontrollierte das Spiel von Anfang bis Ende durch (Endabstand ${w.finalMargin.toFixed(1)} Punkte) – nie wirklich in Gefahr.` });
+  }
+
+  if (game.biggestSwing) {
+    const bs = game.biggestSwing;
+    facts.push({ category: 'biggestSwing', text: `Grösster Ruck laut unseren Zwischenständen: Innerhalb von nur rund ${bs.minutes} Minuten verschob sich der Punkteabstand um ${bs.swing.toFixed(1)} Punkte – der heftigste Sprung der ganzen Woche in diesem Spiel.` });
+  }
+
+  if (game.buzzerBeater) {
+    const bb = game.buzzerBeater;
+    facts.push({ category: 'buzzerBeater', text: `Buzzer-Beater laut unseren Zwischenständen: ${bb.winnerTeam} lag beim letzten erfassten Zwischenstand noch mit rund ${bb.marginBefore.toFixed(1)} Punkten zurück – die Führung kippte erst ganz zum Schluss.` });
   }
 
   if (game.seasonPersonality) {
@@ -561,6 +579,12 @@ const BADGE_POOL = {
   wireToWire: [
     'Von Anfang bis Ende kontrolliert', 'Nie in Gefahr', 'Wire-to-Wire', 'Die Führung nie abgegeben'
   ],
+  biggestSwing: [
+    'Der Ruck der Woche', 'In wenigen Minuten alles anders', 'Der plötzliche Umschwung'
+  ],
+  buzzerBeater: [
+    'Der Buzzer-Beater', 'Gekippt in letzter Sekunde', 'Erst ganz am Schluss gedreht'
+  ],
   seasonPersonalityComeback: [
     'Der ewige Last-Minute-Held', 'Bekannt für die grosse Aufholjagd', 'Comeback-König der Liga'
   ],
@@ -721,6 +745,8 @@ const BADGE_CATEGORY_TO_FACT_CATEGORY = {
   mondayRescue: 'mondayRescue',
   sustainedNailbiter: 'sustainedNailbiter',
   wireToWire: 'wireToWire',
+  biggestSwing: 'biggestSwing',
+  buzzerBeater: 'buzzerBeater',
   seasonPersonalityComeback: 'seasonPersonality',
   seasonPersonalityCollapse: 'seasonPersonality',
   seasonPersonalityNailbiter: 'seasonPersonality',
@@ -797,6 +823,8 @@ function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   if (game.mondayRescue) categories.push('mondayRescue');
   if (game.sustainedNailbiter) categories.push('sustainedNailbiter');
   if (game.wireToWire) categories.push('wireToWire');
+  if (game.biggestSwing) categories.push('biggestSwing');
+  if (game.buzzerBeater) categories.push('buzzerBeater');
   if (game.seasonPersonality?.key === 'comebackWins') categories.push('seasonPersonalityComeback');
   if (game.seasonPersonality?.key === 'collapseLosses') categories.push('seasonPersonalityCollapse');
   if (game.seasonPersonality?.key === 'sustainedNailbiters') categories.push('seasonPersonalityNailbiter');
@@ -954,7 +982,7 @@ export async function generateRecapsForGames(games, existingByKey) {
 // Fakten (aus collectFacts, derselben Quelle wie die Einzel-Recaps, mit eigener Kategorie-Deckelung
 // getrennt von den Einzel-Recaps), damit Claude daraus die spannendsten Geschichten der Woche
 // herauspicken kann statt jedes Spiel einzeln abzuhaken.
-function buildWeekPrompt(games) {
+function buildWeekPrompt(games, openBeforeMonday) {
   const week = games[0].week;
   const categoryUsage = {};
   let context = `Woche ${week}: Hier sind alle ${games.length} Spiele dieser Woche mit ihren wichtigsten Fakten. Schreibe daraus EINEN Wochenüberblick (nicht pro Spiel einzeln):\n\n`;
@@ -977,6 +1005,12 @@ function buildWeekPrompt(games) {
     facts.forEach((fact) => { line += ' ' + fact.text; });
     context += line + '\n';
   });
+  // Liga-weiter Fakt (nicht pro Spiel, siehe countGamesOpenBeforeMonday() in sync-espn.mjs): wie
+  // viele Matchups waren beim MNF-Kickoff noch knapp/offen - nur erwähnen, wenn mindestens eines
+  // betroffen war, sonst wäre der Satz eine Nicht-Aussage.
+  if (openBeforeMonday && openBeforeMonday.open >= 1) {
+    context += `\nLiga-weiter Fakt: ${openBeforeMonday.open} von ${openBeforeMonday.total} Matchups dieser Woche waren beim Anpfiff des Monday Night Football noch mit höchstens 15 Punkten Vorsprung offen - selbst wo der Vorsprung am Ende hielt, war es zu dem Zeitpunkt noch nicht sicher entschieden.\n`;
+  }
   context += '\nSchreibe jetzt den Wochenüberblick.';
   return context;
 }
@@ -984,15 +1018,16 @@ function buildWeekPrompt(games) {
 /**
  * @param {Array} games - alle angereicherten Spiele einer abgeschlossenen Woche.
  * @param {Object} existingWeeks - bereits vorhandene Wochen-Recaps (week -> Eintrag), um Doppel-Calls zu vermeiden.
+ * @param {Object|null} openBeforeMonday - { open, total } aus countGamesOpenBeforeMonday(), oder null.
  * @returns {Promise<Object|null>} { week, headline, recap, generatedAt } oder null, wenn nichts Neues generiert wurde.
  */
-export async function generateWeekRecap(games, existingWeeks) {
+export async function generateWeekRecap(games, existingWeeks, openBeforeMonday) {
   if (!ANTHROPIC_API_KEY) return null;
   if (!games.length) return null;
   const week = games[0].week;
   if (existingWeeks[week]) return null;
   try {
-    const prompt = buildWeekPrompt(games);
+    const prompt = buildWeekPrompt(games, openBeforeMonday);
     const raw = await callClaude(prompt, WEEK_SYSTEM_PROMPT, 2500);
     const parts = raw.split(/\n\s*\n/);
     const headline = (parts.shift() || '').trim();
