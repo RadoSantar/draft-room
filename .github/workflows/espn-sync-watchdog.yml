@@ -6,22 +6,26 @@ name: ESPN Sync Watchdog
 # 1. fast-retry (workflow_run-Trigger): reagiert INNERHALB von Sekunden, sobald ein espn-sync.yml-
 #    Lauf fertig ist. Ist der Lauf fehlgeschlagen (z.B. wegen des Sanity-Checks am Ende von
 #    sync-espn.mjs, der stillschweigend kaputte/leere Daten abfängt), wird sofort ein Retry
-#    angestossen - statt bis zum nächsten reguären 2h-Slot oder gar bis zum Tages-Check unten zu
-#    warten. Reagiert bewusst NUR auf scheduled Läufe (github.event.workflow_run.event == 'schedule'),
-#    nicht auf workflow_dispatch - sonst würde ein fehlschlagender Retry sich selbst erneut triggern
-#    (Endlosschleife). Ein einzelner zusätzlicher Retry-Versuch pro fehlgeschlagenem Lauf reicht als
-#    Netz; schlägt der auch fehl, greift der nächste reguläre 2h-Slot oder der Tages-Check.
+#    angestossen - statt bis zum nächsten reguären 2h-Slot oder gar bis zum nächsten Stunden-Check
+#    unten zu warten. Reagiert bewusst NUR auf scheduled Läufe (github.event.workflow_run.event ==
+#    'schedule'), nicht auf workflow_dispatch - sonst würde ein fehlschlagender Retry sich selbst
+#    erneut triggern (Endlosschleife). Ein einzelner zusätzlicher Retry-Versuch pro fehlgeschlagenem
+#    Lauf reicht als Netz; schlägt der auch fehl, greift der nächste reguläre 2h-Slot oder der
+#    nächste Stunden-Check.
 #
-# 2. daily-check (eigener Zeitplan): fängt das andere Fehlerbild ab, bei dem GAR KEIN Lauf feuert
+# 2. hourly-check (eigener Zeitplan): fängt das andere Fehlerbild ab, bei dem GAR KEIN Lauf feuert
 #    (GitHub kann Scheduled-Runs bei hoher Last komplett überspringen statt nur zu verzögern - live
-#    beobachtet am 22.9.2026, weder der 05:00- noch der 07:00-UTC-Trigger feuerte). Dafür gibt es
-#    kein workflow_run-Event zum Reagieren, deshalb die eigene, zeitbasierte Prüfung: läuft 1x pro
-#    Dienstag um 14:23 UTC (nach dem letzten regulären Versuch um 13:07 UTC, bewusst auf einer
-#    Minute abseits von :00), prüft ob heute überhaupt schon ein erfolgreicher Lauf war, und stösst
-#    sonst einen nach.
+#    beobachtet am 22.9.2026 und erneut am 29.9.2026, weder der 05:07- noch der 07:07-UTC-Trigger
+#    feuerte an beiden Tagen). Dafür gibt es kein workflow_run-Event zum Reagieren, deshalb die
+#    eigene, zeitbasierte Prüfung - läuft jede Stunde von 05:23 bis 14:23 UTC (bewusst auf einer
+#    Minute abseits von :00, deckt damit auch die Lücke nach jedem der 5 regulären 2h-Slots ab statt
+#    nur einmal am Nachmittag), prüft ob heute überhaupt schon ein erfolgreicher Lauf war, und stösst
+#    sonst einen nach. Ist bereits ein erfolgreicher Lauf da, ist jeder weitere stündliche Check ein
+#    reines No-Op (nur eine GitHub-API-Abfrage, kein ESPN-/Claude-Aufruf) - unproblematisch fürs
+#    Freikontingent.
 on:
   schedule:
-    - cron: '23 14 * * 2'
+    - cron: '23 5-14 * * 2'
   workflow_run:
     workflows: ["ESPN Sync"]
     types: [completed]
@@ -43,7 +47,7 @@ jobs:
           echo "Geplanter ESPN-Sync-Lauf ${{ github.event.workflow_run.id }} war '${{ github.event.workflow_run.conclusion }}' - stosse sofort einen Retry an."
           gh workflow run espn-sync.yml --ref main
 
-  daily-check:
+  hourly-check:
     if: github.event_name != 'workflow_run'
     runs-on: ubuntu-latest
     steps:
