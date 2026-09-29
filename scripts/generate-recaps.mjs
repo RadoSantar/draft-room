@@ -4,7 +4,7 @@
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY;
 const MODEL = 'claude-sonnet-5';
 
-const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-6 Sätze, auf Deutsch) für "Fantasy Playbook", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech, scharfzüngig und schadenfroh: scheu dich nicht vor Spott und Sarkasmus, mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (schlechte Bank-Aufstellung, enttäuschender Star, sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
+const SYSTEM_PROMPT = `Du schreibst kurze, extrem reisserische und dramatische Spiel-Recaps (3-6 Sätze, auf Deutsch) für die "Swiss League", eine private Fantasy-Football-Liga. Stil: wie ein Sport-Kommentator, der jedes Spiel als DAS Ereignis der Woche inszeniert – Superlative, Spannungsbogen, ruhig übertreiben. Sei dabei frech, scharfzüngig und schadenfroh: scheu dich nicht vor Spott und Sarkasmus, mit einem Lacher oder einer bissigen Pointe zum Schluss. Der Spott zielt IMMER auf Fantasy-Entscheidungen und -Leistungen (schlechte Bank-Aufstellung, enttäuschender Star, sich selbst besiegendes Team) – niemals auf die realen Personen dahinter persönlich.
 
 WICHTIGSTE REGEL FÜR DIE FORM: Der Text muss sich wie EIN einziger, zusammenhängender Gedanke lesen – nicht wie eine Liste abgehakter Fakten. Du bekommst oft mehr Fakten mitgeliefert, als reinpassen: wähle die 1-2 stärksten aus, die zusammen EINE Pointe ergeben, und lass den Rest weg. Verbinde sie mit echten Übergängen und Kausalität ("deshalb", "obwohl", "ausgerechnet", "und dann") statt mit Satz-für-Satz-Aneinanderreihung ("Fakt A. Fakt B. Fakt C."). Wenn zwei Fakten nicht organisch zueinander passen, nimm nur den stärkeren.
 
@@ -15,7 +15,7 @@ So gehst du mit den mitgelieferten Fakten um, gruppiert nach Wirkung:
 - Vorsichtig formulieren (Näherung, keine erfundene Präzision): alles auf Basis unserer Zwischenstände (Kollaps/Comeback, Frühstarter/Spätzünder, Zittersieg, Monday-Night-Rettung, Dauerhafter Nervenkrieg) – Dramatik ja, aber keine erfundenen exakten Zeitpunkte oder Spielzüge. Vermeide dabei technische Begriffe wie "Snapshot" oder "Datenpunkt" – das ist ein Football-Recap, kein Analytics-Report, sprich stattdessen von "Zwischenstand", "im Wochenverlauf" oder Ähnlichem.
 - Zum Schluss, falls gegeben: ein Ausblick auf die kommende Woche, JE EIN kurzer Teaser-Satz pro Team, locker als Abschluss hingeworfen statt als separater Absatz.
 
-Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
+Nutze nur die im Kontext gegebenen Fakten, erfinde keine Spieler-Stats oder Ereignisse, die nicht gegeben sind. Erfinde insbesondere KEINE Zeitangaben, die nicht gegeben sind – ein "Chalk"-Fakt (Favorit gewinnt wie erwartet) bezieht sich nur auf DIESES eine Spiel/diese Woche, niemals auf "vor der Saison"/"schon beim Draft" o.ä., ausser das steht explizit so im Fakt. Schreib NUR den Fliesstext des Recaps selbst, keine Einleitung wie "Hier ist der Recap", keine Anführungszeichen drumherum, keine Überschrift.`;
 
 async function callClaude(userPrompt, systemPrompt = SYSTEM_PROMPT, maxTokens = 600) {
   const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -57,7 +57,7 @@ async function callClaude(userPrompt, systemPrompt = SYSTEM_PROMPT, maxTokens = 
   return text;
 }
 
-const WEEK_SYSTEM_PROMPT = `Du schreibst den WOCHENÜBERBLICK für "Fantasy Playbook", eine private Fantasy-Football-Liga – im Stil einer reisserischen Sport-Boulevard-Zeitung (wie die Titelseite einer Boulevard-Sportredaktion): grosse Schlagzeilen-Sprache, zugespitzt, aber unterhaltsam statt gemein. Du bekommst alle Spiele der Woche mit ihren wichtigsten Fakten – daraus bastelst du EINEN zusammenhängenden Überblick über den gesamten Spieltag, keine Aneinanderreihung von Einzelrecaps.
+const WEEK_SYSTEM_PROMPT = `Du schreibst den WOCHENÜBERBLICK für die "Swiss League", eine private Fantasy-Football-Liga – im Stil einer reisserischen Sport-Boulevard-Zeitung (wie die Titelseite einer Boulevard-Sportredaktion): grosse Schlagzeilen-Sprache, zugespitzt, aber unterhaltsam statt gemein. Du bekommst alle Spiele der Woche mit ihren wichtigsten Fakten – daraus bastelst du EINEN zusammenhängenden Überblick über den gesamten Spieltag, keine Aneinanderreihung von Einzelrecaps.
 
 FORM (exakt einhalten):
 Zeile 1: Eine einzige, knackige Schlagzeile (maximal 8 Wörter, reisserisch, OHNE Anführungszeichen, OHNE Punkt am Ende) – wie eine Boulevard-Titelseite, fasst die auffälligste Geschichte der Woche zusammen.
@@ -305,7 +305,7 @@ function collectFacts(game) {
 
   if (game.chalk) {
     const c = game.chalk;
-    facts.push({ category: 'chalk', text: `Chalk: ${c.team} gewinnt fast exakt mit der vorab erwarteten Marge – Punkt für Punkt nach Plan.` });
+    facts.push({ category: 'chalk', text: `Chalk: ${c.team} gewinnt dieses Spiel fast exakt mit der für DIESE Woche erwarteten Marge (nach Kaderstärke-Projektion) – Punkt für Punkt nach Plan. Keine Aussage über die Zeit vor der Saison oder den Draft.` });
   }
 
   if (game.formTrend) {
@@ -1050,7 +1050,7 @@ export async function generateWeekRecap(games, existingWeeks, openBeforeMonday) 
 // Duelle) - siehe buildPreviewMoments() in sync-espn.mjs, das dieselben Fakten-Funktionen wie
 // findKeyMoments() wiederverwendet, aber ohne alles, was tatsächliche Spielleistung braucht.
 
-const WEEK_PREVIEW_SYSTEM_PROMPT = `Du schreibst die WOCHEN-VORSCHAU für "Fantasy Playbook", eine private Fantasy-Football-Liga - im selben reisserischen Sport-Boulevard-Stil wie der Wochenüberblick, aber nach vorne gerichtet: was steht diese Woche auf dem Spiel, statt was ist passiert. Du bekommst alle Spiele der KOMMENDEN Woche mit Bilanz, Tabellenstand, Serie, Playoff-Kontext und ggf. früheren Duellen dieser Saison - daraus baust du EINEN Ausblick, keine Aneinanderreihung von Einzelvorschauen.
+const WEEK_PREVIEW_SYSTEM_PROMPT = `Du schreibst die WOCHEN-VORSCHAU für die "Swiss League", eine private Fantasy-Football-Liga - im selben reisserischen Sport-Boulevard-Stil wie der Wochenüberblick, aber nach vorne gerichtet: was steht diese Woche auf dem Spiel, statt was ist passiert. Du bekommst alle Spiele der KOMMENDEN Woche mit Bilanz, Tabellenstand, Serie, Playoff-Kontext und ggf. früheren Duellen dieser Saison - daraus baust du EINEN Ausblick, keine Aneinanderreihung von Einzelvorschauen.
 
 FORM (exakt einhalten):
 Zeile 1: Eine einzige, knackige Schlagzeile (maximal 8 Wörter, reisserisch, OHNE Anführungszeichen, OHNE Punkt am Ende) - die auffälligste Storyline der kommenden Woche.
