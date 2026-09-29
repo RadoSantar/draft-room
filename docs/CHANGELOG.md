@@ -1540,3 +1540,5 @@ komplett übersprungenen Scheduled-Tag von bisher bis zu ~9h auf
 realistisch ~1h.
 
 ## 2026-09-29 – `e37a94d` Changelog: Watchdog-Stunden-Check dokumentiert
+
+## 2026-09-29 – `bf49829` Changelog: Power-Rankings-Umstellung auf Sieg/Niederlage-Bilanz dokumentiert
