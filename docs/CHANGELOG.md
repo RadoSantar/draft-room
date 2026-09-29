@@ -1605,3 +1605,27 @@ data/game-recaps.json: Eintrag "3-1-10" (das betroffene Spiel) gelöscht,
 data/week-recaps.json: Woche-3-Eintrag gelöscht (referenzierte ebenfalls
 "Fantasy Playbook Liga") - beide werden beim nächsten Sync-Lauf unter dem
 korrigierten Prompt neu generiert.
+
+## 2026-09-29 – `cbe7569` Recaps: Chalk-Fakt verschärft, erster Fix reichte nicht
+
+Erste Iteration (letzter Commit) hat den Liga-Namen korrekt gefixt, aber
+den falschen "schon vor der Saison Favorit"-Claim NICHT verhindert -
+live regeneriert und geprüft: der neue Recap-Text sagte praktisch
+wortgleich wieder "Queen of Chaos, schon vor der Saison als das stärkere
+Ensemble gehandelt". Die allgemeine System-Prompt-Regel gegen erfundene
+Zeitangaben reichte gegen die gegenläufige "sei extrem dramatisch/
+übertreibe"-Anweisung offenbar nicht aus.
+
+Zweite Iteration: der Chalk-Fakt-Text selbst verzichtet jetzt komplett
+auf das Wort "Favorit" (genau das Wort, das die "seit wann Favorit"-
+Fantasie triggert) und weist explizit an, es nicht zu verwenden. Statt
+"Favorit gewinnt wie erwartet" jetzt reine Zahlen-Beobachtung: "die Marge
+liegt nah an der rechnerischen Erwartung DIESER Woche - kein Beleg für
+Vor-Saison-/Draft-Status". Mirrort damit den früher schon erfolgreichen
+Ansatz bei der "einziges ungeschlagenes Team"-Vorschau-Korrektur: die
+Einschränkung direkt in den Fakt selbst schreiben statt nur allgemein im
+System-Prompt zu hoffen, dass sie befolgt wird.
+
+data/game-recaps.json: Eintrag "3-1-10" nochmal gelöscht (die erste,
+noch fehlerhafte Regeneration überschrieben) - wird beim nächsten
+Sync-Lauf unter dem verschärften Fakt-Text neu generiert.
