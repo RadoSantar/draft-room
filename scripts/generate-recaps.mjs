@@ -909,9 +909,14 @@ function buildPrompt(game, facts, categoryUsage) {
     context += 'Das Spiel endete unentschieden. ';
   } else {
     context += `${winner} gewinnt mit ${margin.toFixed(1)} Punkten Vorsprung gegen ${loser}. `;
+    // "vor der Saison" wäre hier falsch/unbelegt - favorite kommt aus der AKTUELLEN Kaderstärke-
+    // Projektion DIESER Woche (homeProj/awayProj, wöchentlich neu berechnet), nicht aus einem echten
+    // Vor-Saison-Wert (siehe Session-Log: exakt dieser Fehler wurde live in Recap-Texten beobachtet -
+    // ein Team wurde fälschlich als "schon vor der Saison Favorit" bezeichnet, obwohl es laut dem
+    // echten Vor-Saison-Power-Ranking gar nicht das stärkere Team war).
     context += wasUpset
-      ? `${favorite} galt vor der Saison als das stärker aufgestellte Team – ${winner} hat hier also den Außenseiter-Sieg gelandet. `
-      : `${winner} war schon vor der Saison das stärker aufgestellte Team und bestätigt das hier. `;
+      ? `${favorite} galt diese Woche laut Kaderstärke-Projektion als das stärker aufgestellte Team – ${winner} hat hier also den Außenseiter-Sieg gelandet. `
+      : `${winner} war diese Woche schon laut Kaderstärke-Projektion das stärker aufgestellte Team und bestätigt das hier. `;
   }
 
   facts.forEach((fact) => { context += fact.text + ' '; });
@@ -998,7 +1003,10 @@ function buildWeekPrompt(games, openBeforeMonday) {
       line += ' Unentschieden.';
     } else {
       line += ` ${winner} gewinnt mit ${margin.toFixed(1)} Punkten gegen ${loser}.`;
-      line += wasUpset ? ` Aussenseiter-Sieg, ${favorite} galt vor der Saison als stärker.` : '';
+      // "vor der Saison" wäre hier falsch/unbelegt - favorite kommt aus der AKTUELLEN Kaderstärke-
+      // Projektion DIESER Woche (homeProj/awayProj), nicht aus einem echten Vor-Saison-Wert (siehe
+      // Session-Log: exakt dieser Fehler wurde live in Recap-Texten beobachtet).
+      line += wasUpset ? ` Aussenseiter-Sieg, ${favorite} galt diese Woche laut Kaderstärke als stärker.` : '';
     }
 
     const facts = pickFactsForGame(game, categoryUsage, '-week', 2, 2);

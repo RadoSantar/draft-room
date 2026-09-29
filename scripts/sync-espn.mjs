@@ -1516,12 +1516,19 @@ function findDefendingChampionFact(game, standingsById, leagueHistory) {
 // nur diese Saison) aus der Hall of Fame geknackt - Spieler-Wochenpunkte oder Team-Wochenpunkte.
 // Braucht echte Performance-Daten dieses Spiels, deshalb NICHT vorschau-tauglich (im Unterschied zu
 // findDefendingChampionFact/findPlayoffHistoryFact).
-function findAllTimeRecordFact(game, result, leagueHistory) {
+function findAllTimeRecordFact(game, result, leagueHistory, scoreboard, seasonStats) {
   const hof = leagueHistory?.hallOfFame;
   if (!hof) return null;
 
   if (result.standout && hof.mostPlayerPointsWeek?.length) {
-    const recordHolder = hof.mostPlayerPointsWeek.reduce((a, b) => (b.points > a.points ? b : a));
+    let recordHolder = hof.mostPlayerPointsWeek.reduce((a, b) => (b.points > a.points ? b : a));
+    // Dieselbe Lücke wie beim Team-Rekord unten: league-history.json kennt nur den Stand bis
+    // Saisonende letztes Jahr. Ein bereits diese Saison (in einer früheren Woche) erzielter Bestwert
+    // steht in season-stats.json.records.topWeeklyPerformances ("Mount Rushmore") - auch hier den
+    // höheren der beiden Werte als tatsächlichen aktuellen Rekord nehmen.
+    (seasonStats?.records?.topWeeklyPerformances || []).forEach((p) => {
+      if (p.points > recordHolder.points) recordHolder = { player: p.name, points: p.points, year: Number(SEASON) };
+    });
     if (result.standout.points > recordHolder.points) {
       const team = result.standout.side === 'home' ? game.homeName : game.awayName;
       return { type: 'playerWeek', team, name: result.standout.name, points: result.standout.points, prevRecord: recordHolder.points, prevHolder: recordHolder.player, prevYear: recordHolder.year };
@@ -1529,7 +1536,25 @@ function findAllTimeRecordFact(game, result, leagueHistory) {
   }
 
   if (hof.mostTeamPointsWeek?.length) {
-    const recordHolder = hof.mostTeamPointsWeek.reduce((a, b) => (b.points > a.points ? b : a));
+    let recordHolder = hof.mostTeamPointsWeek.reduce((a, b) => (b.points > a.points ? b : a));
+    // league-history.json wird nur einmalig von Hand am Saisonende nachgetragen (siehe Kommentar
+    // dort) - ein neuer Bestwert INNERHALB der laufenden Saison (z.B. in Woche 2) taucht dort also
+    // nie rechtzeitig auf. Deshalb hier zusätzlich alle bereits gespielten Wochen VOR diesem Spiel
+    // aus dem frischen scoreboard scannen und den höheren der beiden Werte (alter Hall-of-Fame-Rekord
+    // vs. bereits diese Saison erzielter Bestwert) als tatsächlichen aktuellen Rekord verwenden -
+    // sonst könnte ein Team fälschlich als "neuer Allzeit-Rekord" gefeiert werden, obwohl es nicht
+    // mal der beste Wert dieser Saison ist (live so beobachtet: Woche 3 mit 202.5 gegen den alten
+    // Vorjahres-Rekord 199.0 verglichen, obwohl TM06 in Woche 2 bereits 212.5 erzielt hatte).
+    if (scoreboard) {
+      scoreboard.forEach((wk) => {
+        if (wk.week >= game.week) return;
+        wk.games.forEach((g) => {
+          [[g.homeName, g.homeScore], [g.awayName, g.awayScore]].forEach(([team, score]) => {
+            if (score > recordHolder.points) recordHolder = { team, points: score, year: Number(SEASON) };
+          });
+        });
+      });
+    }
     const checkTeamWeek = (teamName, score) => (score > recordHolder.points
       ? { type: 'teamWeek', team: teamName, points: score, prevRecord: recordHolder.points, prevHolder: recordHolder.team, prevYear: recordHolder.year }
       : null);
@@ -1758,7 +1783,7 @@ function findKeyMoments(game, homePerf, awayPerf, ctx) {
   if (ctx?.leagueHistory) {
     const defendingChampion = findDefendingChampionFact(game, ctx.standingsById || {}, ctx.leagueHistory);
     if (defendingChampion) result.defendingChampion = defendingChampion;
-    const allTimeRecord = findAllTimeRecordFact(game, result, ctx.leagueHistory);
+    const allTimeRecord = findAllTimeRecordFact(game, result, ctx.leagueHistory, ctx.scoreboard, ctx.seasonStats);
     if (allTimeRecord) result.allTimeRecord = allTimeRecord;
     const playoffHistory = findPlayoffHistoryFact(game, ctx.leagueHistory);
     if (playoffHistory) result.playoffHistory = playoffHistory;
