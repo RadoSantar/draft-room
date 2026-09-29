@@ -1674,3 +1674,5 @@ unabhängige Bugs gefunden und behoben:
 data/week-recaps.json: Woche-3-Eintrag gelöscht (enthielt die falsche
 199.0-Behauptung), wird beim nächsten Sync-Lauf unter dem korrigierten
 Code neu generiert.
+
+## 2026-09-29 – `ba5d5ea` Changelog: Allzeit-Rekord-Fix + zwei weitere "vor der Saison"-Bugs dokumentiert
