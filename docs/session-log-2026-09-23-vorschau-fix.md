@@ -580,6 +580,48 @@ Kein manueller Trigger von `espn-sync.yml` ausgelöst, wie vom Nutzer gewünscht
 
 Commit `3eea343`, gepusht.
 
+## 29. Power Rankings: Sortierung auf echte Sieg/Niederlage-Bilanz umgestellt
+
+**Nutzer-Meldung:** "das power ranking kann nicht korrekt sein weshalb sind die ravens auf platz 9 abgerutscht obwohl sie alle spiele gewonnen haben?" Geprüft (Rohdaten `roster.json`/`power-rankings.json`, keine Rechenfehler) und erklärt: kein Bug, sondern Absicht – Power Rankings sortierten bis dahin rein nach ESPNs Saison-Projektion der bestmöglichen Start-Aufstellung, komplett unabhängig von echten Ergebnissen. Zurich City Ravens (3-0) hatten laut ESPN-Projektion einfach einen schwächer eingeschätzten Kader (1616.5) als z.B. Buhaaner (1906.4, damals 2-1). Das war früher über einen Erklär-Absatz auf der Seite dokumentiert, den der Nutzer aber genau letzte Woche entfernen liess (Punkt 26 oben) – dadurch fehlte der Kontext.
+
+**Nutzer-Entscheidung:** "oder powerrankings umbauen anhand sieg/niederlage bilanz abgesehen von denen vor der saison natürlich die bleiben so wie sie sind." Also: Sortierung auf echte Bilanz umstellen, mit Ausnahme der beiden historischen Vor-Saison-Schnappschüsse ("Nach dem Draft"/"Vor dem 1. Spieltag" in `power-rankings-history.json`), die unverändert bleiben.
+
+**Umgesetzt:**
+- `scripts/sync-espn.mjs`: `teamsComputed` bekommt `wins`/`losses`/`ties`/`pointsFor` direkt aus ESPNs `t.record.overall` (dieselbe Quelle wie der bestehende `standings`-Block, keine doppelte Datenherkunft). Sortierregel: sobald irgendein Team mindestens ein Spiel absolviert hat, nach Siegen, dann Punkte-Für, dann `starterTotal` (Kaderstärke) als letzter Tiebreaker bei echtem Gleichstand. Vor dem ersten Spieltag (alle Teams 0-0-0) bleibt die alte, rein projektionsbasierte Sortierung – betrifft nur künftige Vor-Saison-Phasen, die beiden bereits gespeicherten Snapshots dieser Saison werden ohnehin nie neu geschrieben. `starterTotal` bleibt unverändert berechnet/gespeichert (wird weiterhin für Strength of Schedule, Matchup-Projektionen in Recaps und die Team-Karten-Detailansicht gebraucht).
+- `power-rankings.html`: `rankItemHtml()` zeigt jetzt die Bilanz ("3-0" statt "1616.5 Start-Proj.") als Score-Wert je Rang-Zeile. Strength-of-Schedule und Team-Karten-Detailansicht unverändert (nutzen weiterhin `starterTotal`).
+
+**Getestet:** 4 Offline-Testfälle für die neue Sortierlogik (reales 3-0-vs-Projektions-Szenario, Vor-Saison-Fallback, echter Gleichstand mit Projektions-Tiebreak, Team mit Unentschieden zählt als Saison-gestartet) – alle korrekt. Playwright-Rendertest mit simulierten Bilanz-Daten bestätigt saubere Anzeige, keine Konsolenfehler. Live verifiziert über einen echten Sync-Lauf: TM06 (3-0, 562.5 PF) und Zurich City Ravens (3-0, 435 PF) stehen jetzt korrekt auf Rang 1/2, exakt wie erwartet.
+
+Commit `838c7eb`, gepusht.
+
+## 30. Power Rankings: Gegner-stärke-gewichtetes Elo-Rating statt reiner Bilanz
+
+**Nutzer-Wunsch (Verfeinerung direkt im Anschluss):** "lass uns das noch verfeinern wenn beispielsweise ein 0-3 team gegen ein 3-0 team gewinnt soll der sprung höher ausfallen wir wenn es gegen ein anderes 0-3 team gewinnt umgekehrt genau so." Reine Sieg/Niederlage-Zählung (Punkt 29) kann das nicht abbilden – ein Sieg zählt immer gleich viel, egal gegen wen.
+
+**Rückfrage gestellt (AskUserQuestion), zwei offene Design-Entscheidungen:**
+1. Soll ein Rating die Bilanz als Hauptsortierung komplett ersetzen, oder nur die Reihenfolge innerhalb gleicher Bilanzen/die Sprunggrösse beeinflussen? → Nutzer: **Rating ersetzt die Bilanz komplett.**
+2. Womit soll das Rating pro Team starten? → Nutzer: **aktuelle Kaderstärke-Projektion (starterTotal)**, wie von mir empfohlen.
+
+**Umgesetzt:**
+- Neue Funktion `applyEloRatings()` in `sync-espn.mjs`: klassisches Elo-Rating pro Team (`data/power-rating.json`, `weeksApplied`-Guard analog zu `archiveSeasonStats()`/`archiveLiveSnapshotWeek()` – idempotent bei mehrfachen Sync-Läufen pro Tag). Startet einmalig bei `starterTotal`, danach entwickelt es sich nur noch über echte Ergebnisse weiter (spätere Trade-/Waiver-bedingte Änderungen an `starterTotal` beeinflussen das Rating nicht mehr rückwirkend).
+- K-Faktor 64 gewählt (statt Schach-Standard 32) – für die Skala dieser Saison-Projektionswerte (Liga-Spread aktuell ~290 Punkte, ~32 Punkte zwischen benachbarten Rängen) kalibriert: ein Aufsteiger-Sieg gegen den Spitzenreiter bringt rechnerisch ~1.5-2 Rangplätze Sprung, ein Sieg gegen ein ähnlich starkes Team nur ~1 Rangplatz – spürbar unterschiedlich, ohne die Tabelle nach jedem Spieltag komplett durcheinanderzuwürfeln. Mit den echten Werten dieser Liga durchgerechnet und bestätigt.
+- Technisch nötig: die Scoreboard-Berechnung (inkl. `lastCompletedWeek`) musste vor den Power-Rankings-Block vorgezogen werden, da die Elo-Logik die komplette bisherige Spiel-Historie braucht, bevor sortiert werden kann. Reine Reihenfolge-Änderung, `scoreboard.json` selbst unverändert.
+- `teamsComputed.sort()` nutzt jetzt `team.rating` statt `wins`/`pointsFor`. Kein eigener Vor-Saison-Sonderfall mehr nötig (Punkt 29 brauchte noch ein `seasonStarted`-if/else) – vor dem ersten Spieltag entspricht das frisch geseedete Rating automatisch der alten, rein projektionsbasierten Sortierung, da noch keine Spiele = noch keine Rating-Änderung. Die beiden historischen Vor-Saison-Snapshots bleiben unberührt (werden ohnehin nie neu geschrieben).
+
+**Getestet:** 3 eigenständige Offline-Tests für `applyEloRatings()` (Erstlauf holt mehrere bereits gespielte Wochen in der richtigen Reihenfolge auf einmal nach; wiederholter Lauf mit denselben Wochen verändert nichts – Idempotenz; eine neue Woche wird nur einmal angewendet und verschiebt Auf-/Absteiger sinnvoll) – alle korrekt. Live verifiziert über einen echten Sync-Lauf: Zurich City Ravens (3-0) klettern von Rang 9 auf Rang 6 (statt direkt auf Rang 1/2 wie bei reiner Bilanz) – ihre Siege zählen jetzt mehr als vorher, aber nicht so viel wie ein Sieg gegen ein stärker eingeschätztes Team gebracht hätte. Playwright-Check auf der echten Live-Seite: saubere Anzeige, keine Konsolenfehler.
+
+Commit `a6807a6`, gepusht.
+
+## 31. Echter Bug gefunden: Sync-Bots konnten bei Push-Konflikten fremde Dateien zurückrollen
+
+**Wie entdeckt:** Beim Nachtragen von Punkt 29 in dieses Session-Log fiel auf, dass der Eintrag nach dem Commit plötzlich wieder verschwunden war. Untersucht per `git log`/`git show` über alle `espn-sync-bot`-Commits: der Commit `17818a5` ("Live-Score-Snapshot") hatte exakt diese 14 Zeilen aus dieser Datei gelöscht, obwohl der zugehörige Workflow (`espn-live-snapshot.yml`) nur `data/live-snapshots.json` committet. Eine Stichprobe über weitere `espn-sync-bot`-Commits zeigte dasselbe Muster wiederholt bei `docs/CHANGELOG.md` (mehrfach reine Löschungen ganzer Abschnitte, keine echte Änderung an den Daten selbst).
+
+**Root Cause (in einem isolierten Test-Repo reproduziert und bestätigt):** Alle drei datengenerierenden Workflows (`espn-sync.yml`, `espn-live-snapshot.yml`, `sync-transactions.yml`) nutzen bei einem Push-Konflikt (ein anderer Commit landete zwischen Checkout und Push auf `main`) denselben Retry-Mechanismus: `git fetch` + `git reset --soft origin/main` + gezieltes `git add <eigene Datei(en)>` + neu committen. Das Problem: `--soft` verschiebt nur den Branch-Zeiger (HEAD), lässt INDEX und Working Tree aber komplett unangetastet. Landete zwischen dem ursprünglichen Checkout und diesem Retry ein fremder Commit, der eine ANDERE Datei änderte (z.B. `docs/CHANGELOG.md` durch den Changelog-Bot, oder ein session-log durch mich), blieb die VOR-Checkout-Version dieser Datei im Index stehen - `git add <eigene Datei>` aktualisiert nur den eigenen Pfad, alles andere committet mit dem veralteten Stand. Der daraus resultierende Commit rollte die fremde Änderung dadurch still zurück, sobald der Push (jetzt gegen den neuen `origin/main` als Parent) durchging. Per Testfall in einem isolierten Repo eindeutig reproduziert: eine echte Zwischenzeit-Änderung an einer Test-Datei ging exakt so verloren.
+
+**Fix:** In allen drei Workflows `git reset --soft origin/main` zu `git reset --mixed origin/main` geändert. `--mixed` resettet zusätzlich den INDEX auf den frischen `origin/main`-Stand für ALLE Pfade, lässt aber den Working Tree (und damit die gerade frisch generierten Daten, z.B. `data/live-snapshots.json`) unberührt - das gezielte `git add` überschreibt danach nur noch den eigenen Pfad, alles andere committet mit dem korrekten, aktuellen Stand. Ebenfalls im Test-Repo verifiziert: derselbe Testfall liefert mit `--mixed` sowohl die fremde Änderung als auch die eigene neu generierte Datei korrekt.
+
+**Schaden/Aufräumen:** Die konkret entdeckte, verlorene Doku (Punkt 29 oben) wurde von Hand wieder nachgetragen (dieser Commit). `docs/CHANGELOG.md` hat vermutlich ebenfalls Lücken aus früheren Vorkommnissen dieses Bugs - da es sich um ein rein mechanisch aus `git log` generiertes Nachschlagewerk handelt (nicht die eigentliche, von Hand/durch Claude gepflegte Doku), wurde bewusst keine rückwirkende Rekonstruktion vorgenommen; die vollständige, korrekte Historie steht ohnehin unverändert in `git log`. Betrifft nur Commits VOR diesem Fix - alle Workflows committen ab jetzt mit dem korrigierten Retry-Mechanismus.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.

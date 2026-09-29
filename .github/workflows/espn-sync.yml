@@ -13,6 +13,21 @@ name: ESPN Sync
 # jedem Lauf komplett neu von ESPN generiert wird (keine manuellen Edits),
 # ist "auf dem neuesten main neu committen" einfacher und robuster als ein
 # Rebase, der bei geänderter Basis in Konflikte laufen könnte.
+#
+# WICHTIG: der Reset beim Retry ist "--mixed", NICHT "--soft" - ein am 29.9.2026
+# gefundener echter Bug (siehe Session-Log): "--soft" verschiebt nur HEAD, lässt
+# INDEX und Working Tree aber unverändert. Landete zwischen Checkout und Retry ein
+# fremder Commit auf main, der eine ANDERE Datei ändert (z.B. docs/CHANGELOG.md
+# oder eine session-log-*.md), stand die STALE Vor-Checkout-Version dieser Datei
+# weiterhin im Index/Working Tree - "git add data/" holt zwar data/* frisch, aber
+# alles andere blieb alt. Der resultierende Commit hat dann die fremde Änderung
+# an dieser Datei still zurückgerollt (per Reproduktion in einem isolierten Test-
+# Repo bestätigt: docs/notes.md verlor eine echte Zwischenzeit-Änderung genau so).
+# "--mixed" resettet zusätzlich den INDEX auf den frischen origin/main-Stand für
+# ALLE Pfade (Working Tree bleibt unberührt, unsere frisch generierten data/*.json
+# im Arbeitsverzeichnis bleiben also erhalten) - "git add data/" überschreibt danach
+# nur noch gezielt data/* im Index, alles andere committet mit dem korrekten,
+# aktuellen Stand. Ebenfalls per Test-Repo verifiziert.
 on:
   schedule:
     # Jeden Dienstag ab 05:07 UTC (= 07:07 Schweizer Sommerzeit), danach alle 2h bis 13:07 UTC.
@@ -57,7 +72,7 @@ jobs:
             if [ "$delay" != "0" ]; then
               echo "Erneuter Versuch in ${delay}s…"
               git fetch origin main
-              git reset --soft origin/main
+              git reset --mixed origin/main
               sleep "$delay"
             fi
             git add data/

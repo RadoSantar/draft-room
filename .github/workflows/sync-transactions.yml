@@ -37,6 +37,14 @@ jobs:
         run: node scripts/sync-transactions.mjs
 
       - name: transactions.json committen
+        # WICHTIG: Reset beim Retry ist "--mixed", NICHT "--soft" - siehe ausführlicher Kommentar
+        # in espn-sync.yml (identisches Commit-Muster). Kurzfassung: "--soft" lässt den Index für
+        # alle NICHT explizit neu geaddeten Dateien beim alten (Vor-Checkout-)Stand, wodurch ein
+        # zwischenzeitlich auf main gelandeter fremder Commit an einer anderen Datei (z.B.
+        # docs/CHANGELOG.md) beim Retry-Commit still zurückgerollt würde - live an genau dieser
+        # Datei beobachtet und in einem isolierten Test-Repo reproduziert/bestätigt (29.9.2026).
+        # "--mixed" synct den Index für alle Pfade auf den frischen origin/main-Stand, lässt aber
+        # den Working Tree (und damit unsere frisch generierte data/transactions.json) unberührt.
         run: |
           git config user.name "espn-sync-bot"
           git config user.email "actions@users.noreply.github.com"
@@ -44,7 +52,7 @@ jobs:
             if [ "$delay" != "0" ]; then
               echo "Erneuter Versuch in ${delay}s…"
               git fetch origin main
-              git reset --soft origin/main
+              git reset --mixed origin/main
               sleep "$delay"
             fi
             git add data/transactions.json
