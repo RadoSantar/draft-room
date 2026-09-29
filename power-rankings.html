@@ -604,6 +604,10 @@
     return '<span class="rank-move down mono">▼ ' + (t.rank - t.previousRank) + '</span>';
   }
 
+  function recordLabel(t){
+    return t.wins + '-' + t.losses + (t.ties ? '-' + t.ties : '');
+  }
+
   function rankItemHtml(t){
     return '<a class="rank-item" href="#team-' + t.id + '">' +
       '<span class="rank-num mono">' + t.rank + '</span>' +
@@ -612,7 +616,7 @@
         rankMoveHtml(t) +
         '<span class="rank-tagline">' + (t.tagline || '') + '</span>' +
       '</span>' +
-      '<span class="rank-score">' + fmt(t.starterTotal) + '<small>Start-Proj.</small></span>' +
+      '<span class="rank-score">' + recordLabel(t) + '<small>Bilanz</small></span>' +
     '</a>';
   }
 

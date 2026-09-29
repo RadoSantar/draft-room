@@ -2059,9 +2059,15 @@ async function main() {
         return { id: p.playerId, r: p.roundId, rp: p.roundPickNumber, ov: p.overallPickNumber, pos: info.pos, name: info.name, team: info.proTeam, proj: info.proj, adp: info.adp };
       });
 
+    const rec = t.record.overall;
+
     return {
       id: t.id,
       name: teamNames[t.id],
+      wins: rec.wins,
+      losses: rec.losses,
+      ties: rec.ties,
+      pointsFor: Math.round(rec.pointsFor * 10) / 10,
       starterTotal: Math.round(starterTotal * 10) / 10,
       benchTotal: Math.round(benchTotal * 10) / 10,
       posTotals: Object.fromEntries(Object.entries(posTotals).map(([k, v]) => [k, Math.round(v * 10) / 10])),
@@ -2069,7 +2075,22 @@ async function main() {
     };
   });
 
-  teamsComputed.sort((a, b) => b.starterTotal - a.starterTotal);
+  // Power Rankings sortieren primär nach echter Sieg/Niederlage-Bilanz (Punkte-Für als Tiebreaker,
+  // die projektionsbasierte Kaderstärke als letzter Tiebreaker bei einem echten Gleichstand) - auf
+  // Nutzer-Wunsch, nachdem die bisherige rein projektionsbasierte Sortierung dazu führte, dass ein
+  // ungeschlagenes Team (3-0) auf Rang 9 stehen konnte, weil ihr Kader laut ESPNs Saison-Projektion
+  // schwächer eingeschätzt wird als der anderer Teams. VOR dem ersten Spieltag (alle Teams 0-0-0)
+  // gibt es noch keine Bilanz - dort bleibt die alte, rein projektionsbasierte Sortierung (beste
+  // mögliche Start-Aufstellung nach ESPNs Saison-Projektionen) der einzig sinnvolle Massstab, exakt
+  // wie bisher. Die beiden historischen Vor-Saison-Schnappschüsse ("Nach dem Draft"/"Vor dem 1.
+  // Spieltag" in power-rankings-history.json) wurden ohnehin einmalig von Hand gesetzt und nie
+  // wieder verändert (siehe Kommentar dort) - bleiben von dieser Änderung unberührt.
+  const seasonStarted = teamsComputed.some((t) => t.wins + t.losses + t.ties > 0);
+  if (seasonStarted) {
+    teamsComputed.sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor || b.starterTotal - a.starterTotal);
+  } else {
+    teamsComputed.sort((a, b) => b.starterTotal - a.starterTotal);
+  }
   teamsComputed.forEach((t, i) => {
     t.previousRank = oldRankById[t.id] || i + 1;
     t.rank = i + 1;
