@@ -1538,3 +1538,5 @@ einer da ist, ist jeder weitere stündliche Check ein reines No-Op ohne
 ESPN-/Claude-Aufruf. Verkürzt die maximale Verzögerung bei einem
 komplett übersprungenen Scheduled-Tag von bisher bis zu ~9h auf
 realistisch ~1h.
+
+## 2026-09-29 – `e37a94d` Changelog: Watchdog-Stunden-Check dokumentiert
