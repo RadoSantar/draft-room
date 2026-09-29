@@ -1521,3 +1521,20 @@ als eigener erster Menüpunkt übernimmt. "Übersicht" steht gleichrangig
 neben den anderen Zielen.
 
 ## 2026-09-25 – `6d8bbfe` Changelog: Pfeil-Entfernung bei Übersicht-Link dokumentiert
+
+## 2026-09-29 – `3eea343` Watchdog: Tages-Check von 1x/Dienstag auf stündlich umgestellt
+
+Nutzer-Wunsch: nachdem heute (29.9.) erneut sowohl der 05:07- als auch der
+07:07-UTC-Trigger von espn-sync.yml ausgefallen ist (GitHub überspringt
+Scheduled-Runs offenbar wiederholt, nicht nur einmalig am 22.9.
+beobachtet), sollte der Fallback-Check schneller reagieren als erst um
+14:23 UTC am Nachmittag.
+
+cron von '23 14 * * 2' (1x) auf '23 5-14 * * 2' (stündlich, 10x über den
+Tag verteilt) geändert. Job dailycheck -> hourly-check umbenannt, Kommentare
+entsprechend aktualisiert. Bleibt trotzdem günstig: prüft nur per GitHub-
+API, ob heute schon ein erfolgreicher espn-sync-Lauf existiert - sobald
+einer da ist, ist jeder weitere stündliche Check ein reines No-Op ohne
+ESPN-/Claude-Aufruf. Verkürzt die maximale Verzögerung bei einem
+komplett übersprungenen Scheduled-Tag von bisher bis zu ~9h auf
+realistisch ~1h.
