@@ -1130,6 +1130,57 @@ function findPerfectWeekProximityFact(game, homePerf, awayPerf, seasonStats) {
   return check(game.homeName, homePerf) || check(game.awayName, awayPerf) || null;
 }
 
+// Gegner-stärke-gewichtetes Power-Rating (klassisches Elo), ersetzt die reine Sieg/Niederlage-Bilanz
+// als Power-Ranking-Sortierung (siehe teamsComputed-Sortierung in main()). Nutzer-Wunsch: ein Sieg
+// gegen ein starkes Team soll einen grösseren Sprung bringen als ein Sieg gegen ein schwaches Team -
+// und symmetrisch bei Niederlagen. Reine Sieg/Niederlage-Zählung kann das nicht abbilden (ein Sieg
+// ist immer +1, egal gegen wen), ein kontinuierliches Rating pro Team dagegen schon.
+//
+// Start-Rating je Team: einmalig die aktuelle projektionsbasierte Kaderstärke (starterTotal, ESPNs
+// Saison-Projektion nach unserem Scoring) - Teams starten also unterschiedlich stark eingeschätzt,
+// genau wie die alte, rein projektionsbasierte Power-Ranking-Sortierung es schon tat. Ab dann
+// entwickelt sich das Rating nur noch über echte Spielergebnisse weiter, die Projektion beeinflusst
+// es danach nicht mehr (auch wenn sich starterTotal durch Trades/Waiver/Verletzungen später ändert).
+//
+// K-Faktor 64 (statt des Schach-Standardwerts 32) bewusst gewählt für die Grössenordnung dieser
+// Skala (Saison-Projektionswerte liegen bei ~1600-1900, Liga-Spread aktuell ~290 Punkte, ~32 Punkte
+// Abstand zwischen benachbarten Rängen): bei K=64 bringt der grösstmögliche Aufsteiger-Sieg (klarer
+// Aussenseiter schlägt den Spitzenreiter) rechnerisch einen Sprung von ca. 1.5-2 Rangplätzen, ein
+// Sieg gegen ein ähnlich starkes Team dagegen nur ca. 1 Rangplatz - spürbar unterschiedlich, aber
+// nicht so gross, dass die Tabelle nach jedem Spieltag komplett durcheinandergewürfelt wird.
+//
+// weeksApplied-Guard (analog zu archiveSeasonStats/archiveLiveSnapshotWeek) verarbeitet bei jedem
+// Lauf alle noch nicht angewendeten, bereits abgeschlossenen Wochen IN REIHENFOLGE nach - deckt damit
+// sowohl den Normalfall (eine neue Woche pro Lauf) als auch einen Erstlauf mitten in der Saison ab
+// (mehrere Wochen auf einmal nachholen, in der richtigen Reihenfolge, nicht alle gegen den heutigen
+// Stand). Unentschieden zählen als 0.5 Sieg für beide Seiten (Standard-Elo-Konvention).
+const ELO_K = 64;
+function eloExpected(ratingA, ratingB) {
+  return 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+}
+async function applyEloRatings(scoreboard, lastCompletedWeek, teamsComputed) {
+  const state = await readJsonSafe('power-rating.json', { weeksApplied: [], ratings: {} });
+  teamsComputed.forEach((t) => {
+    if (state.ratings[t.id] === undefined) state.ratings[t.id] = t.starterTotal;
+  });
+  for (const wk of scoreboard) {
+    if (wk.week > lastCompletedWeek || state.weeksApplied.includes(wk.week)) continue;
+    wk.games.forEach((g) => {
+      if (g.winner !== 'HOME' && g.winner !== 'AWAY' && g.winner !== 'TIE') return;
+      const homeRating = state.ratings[g.homeId];
+      const awayRating = state.ratings[g.awayId];
+      if (homeRating === undefined || awayRating === undefined) return;
+      const actualHome = g.winner === 'HOME' ? 1 : g.winner === 'AWAY' ? 0 : 0.5;
+      const delta = ELO_K * (actualHome - eloExpected(homeRating, awayRating));
+      state.ratings[g.homeId] = Math.round((homeRating + delta) * 10) / 10;
+      state.ratings[g.awayId] = Math.round((awayRating - delta) * 10) / 10;
+    });
+    state.weeksApplied.push(wk.week);
+  }
+  await writeJson('power-rating.json', { lastUpdated: nowIso(), weeksApplied: state.weeksApplied, ratings: state.ratings });
+  return state.ratings;
+}
+
 // Aktualisiert data/season-stats.json um die gerade abgeschlossene Woche - Grundlage für B2/B3/C1/C2
 // oben. Analog zu archiveLiveSnapshotWeek (weeksArchived-Guard, läuft NACH der Recap-Generierung),
 // aber unabhängig von Live-Snapshots - läuft auf Basis von Endständen/Rostern, die in jeder Woche
@@ -2033,6 +2084,35 @@ async function main() {
     return { name: 'Unbekannter Spieler #' + id, pos: '?', proTeam: '', adp: 999, proj: null, injuryStatus: null };
   }
 
+  // ---- Scoreboard (Regular Season Wochen 1-15 + Playoff-Wochen danach) ----
+  // Kein hartes Limit auf Woche 15 mehr: ESPN liefert im selben Schedule auch die Playoff-Wochen
+  // (bei dieser Liga aktuell 2), die einfach mit übernommen werden – die Zahl 25 ist nur eine grobe
+  // Notbremse gegen kaputte/unerwartete Daten, keine echte funktionale Grenze. Playoff-Matchups mit
+  // einem Freilos (kein echter Gegner) werden übersprungen, da für diese kein sinnvoller Recap/
+  // Vergleich möglich ist.
+  // ESPN markiert Playoff-Matchups selbst mit playoffTierType ('WINNERS_BRACKET' = Championship-Jagd,
+  // 'LOSERS_BRACKET' = Platzierungsspiele/Toilet Bowl, 'NONE'/fehlend = normale Regular-Season-Partie).
+  // Wir bilden ESPNs eigene Playoff-Seeding-Logik damit NICHT selbst nach – wir übernehmen nur, wie
+  // ESPN das jeweilige Spiel bereits selbst einordnet.
+  // Weiter oben (statt wie ursprünglich erst nach den Power Rankings) berechnet, weil die Power-
+  // Rating-Sortierung weiter unten die komplette Spiel-Historie (welche Woche wer gegen wen gewonnen
+  // hat) braucht, bevor die Rangliste sortiert werden kann.
+  const weeksMap = {};
+  (scoreData.schedule || []).forEach((e) => {
+    const wk = e.matchupPeriodId;
+    if (wk > 25) return;
+    if (!e.home?.teamId || !e.away?.teamId) return;
+    (weeksMap[wk] = weeksMap[wk] || []).push({
+      homeId: e.home.teamId, homeName: teamNames[e.home.teamId], homeScore: Math.round(e.home.totalPoints * 10) / 10,
+      awayId: e.away.teamId, awayName: teamNames[e.away.teamId], awayScore: Math.round(e.away.totalPoints * 10) / 10,
+      playoffTier: e.playoffTierType && e.playoffTierType !== 'NONE' ? e.playoffTierType : null,
+      winner: e.winner
+    });
+  });
+  const scoreboard = Object.keys(weeksMap).map(Number).sort((a, b) => a - b).map((wk) => ({ week: wk, games: weeksMap[wk] }));
+  await writeJson('scoreboard.json', { lastUpdated: nowIso(), data: scoreboard });
+  const lastCompletedWeek = computeLastCompletedWeek(scoreboard);
+
   // ---- Power Rankings: aktuelle Kader -> optimale Aufstellung -> Rangliste ----
   const oldPower = await readJsonSafe('power-rankings.json', { data: [] });
   const oldRankById = {};
@@ -2075,22 +2155,20 @@ async function main() {
     };
   });
 
-  // Power Rankings sortieren primär nach echter Sieg/Niederlage-Bilanz (Punkte-Für als Tiebreaker,
-  // die projektionsbasierte Kaderstärke als letzter Tiebreaker bei einem echten Gleichstand) - auf
-  // Nutzer-Wunsch, nachdem die bisherige rein projektionsbasierte Sortierung dazu führte, dass ein
-  // ungeschlagenes Team (3-0) auf Rang 9 stehen konnte, weil ihr Kader laut ESPNs Saison-Projektion
-  // schwächer eingeschätzt wird als der anderer Teams. VOR dem ersten Spieltag (alle Teams 0-0-0)
-  // gibt es noch keine Bilanz - dort bleibt die alte, rein projektionsbasierte Sortierung (beste
-  // mögliche Start-Aufstellung nach ESPNs Saison-Projektionen) der einzig sinnvolle Massstab, exakt
-  // wie bisher. Die beiden historischen Vor-Saison-Schnappschüsse ("Nach dem Draft"/"Vor dem 1.
-  // Spieltag" in power-rankings-history.json) wurden ohnehin einmalig von Hand gesetzt und nie
-  // wieder verändert (siehe Kommentar dort) - bleiben von dieser Änderung unberührt.
-  const seasonStarted = teamsComputed.some((t) => t.wins + t.losses + t.ties > 0);
-  if (seasonStarted) {
-    teamsComputed.sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor || b.starterTotal - a.starterTotal);
-  } else {
-    teamsComputed.sort((a, b) => b.starterTotal - a.starterTotal);
-  }
+  // Power Rankings sortieren jetzt nach gegner-stärke-gewichtetem Power-Rating (Elo, siehe
+  // applyEloRatings() oben) statt nach reiner Sieg/Niederlage-Bilanz - zweite Iteration auf
+  // Nutzer-Wunsch: ein Sieg gegen ein starkes Team soll einen grösseren Sprung bringen als ein Sieg
+  // gegen ein schwaches Team, symmetrisch bei Niederlagen. Reine Bilanz-Sortierung (erste Iteration,
+  // siehe Kommentar in applyEloRatings()) konnte das nicht abbilden. Das Rating startet pro Team bei
+  // der aktuellen projektionsbasierten Kaderstärke (VOR dem ersten Spieltag also identisch mit der
+  // alten, rein projektionsbasierten Sortierung) und entwickelt sich danach nur noch über echte
+  // Ergebnisse weiter - kein eigener Vor-Saison-Sonderfall mehr nötig. Die beiden historischen
+  // Vor-Saison-Schnappschüsse ("Nach dem Draft"/"Vor dem 1. Spieltag" in power-rankings-history.json)
+  // wurden ohnehin einmalig von Hand gesetzt und nie wieder verändert (siehe Kommentar dort) -
+  // bleiben von dieser Änderung unberührt.
+  const ratings = await applyEloRatings(scoreboard, lastCompletedWeek, teamsComputed);
+  teamsComputed.forEach((t) => { t.rating = ratings[t.id]; });
+  teamsComputed.sort((a, b) => b.rating - a.rating);
   teamsComputed.forEach((t, i) => {
     t.previousRank = oldRankById[t.id] || i + 1;
     t.rank = i + 1;
@@ -2156,37 +2234,6 @@ async function main() {
       .forEach((s, i) => { confStandings[s.id] = { conf, rank: i + 1, wins: s.wins, losses: s.losses, ties: s.ties }; });
   });
 
-  // ---- Scoreboard (Regular Season Wochen 1-15 + Playoff-Wochen danach) ----
-  // Kein hartes Limit auf Woche 15 mehr: ESPN liefert im selben Schedule auch die Playoff-Wochen
-  // (bei dieser Liga aktuell 2), die einfach mit übernommen werden – die Zahl 25 ist nur eine grobe
-  // Notbremse gegen kaputte/unerwartete Daten, keine echte funktionale Grenze. Playoff-Matchups mit
-  // einem Freilos (kein echter Gegner) werden übersprungen, da für diese kein sinnvoller Recap/
-  // Vergleich möglich ist.
-  // ESPN markiert Playoff-Matchups selbst mit playoffTierType ('WINNERS_BRACKET' = Championship-Jagd,
-  // 'LOSERS_BRACKET' = Platzierungsspiele/Toilet Bowl, 'NONE'/fehlend = normale Regular-Season-Partie).
-  // Wir bilden ESPNs eigene Playoff-Seeding-Logik damit NICHT selbst nach – wir übernehmen nur, wie
-  // ESPN das jeweilige Spiel bereits selbst einordnet.
-  const weeksMap = {};
-  (scoreData.schedule || []).forEach((e) => {
-    const wk = e.matchupPeriodId;
-    if (wk > 25) return;
-    if (!e.home?.teamId || !e.away?.teamId) return;
-    (weeksMap[wk] = weeksMap[wk] || []).push({
-      homeId: e.home.teamId, homeName: teamNames[e.home.teamId], homeScore: Math.round(e.home.totalPoints * 10) / 10,
-      awayId: e.away.teamId, awayName: teamNames[e.away.teamId], awayScore: Math.round(e.away.totalPoints * 10) / 10,
-      playoffTier: e.playoffTierType && e.playoffTierType !== 'NONE' ? e.playoffTierType : null,
-      winner: e.winner
-    });
-  });
-  const scoreboard = Object.keys(weeksMap).map(Number).sort((a, b) => a - b).map((wk) => ({ week: wk, games: weeksMap[wk] }));
-  await writeJson('scoreboard.json', { lastUpdated: nowIso(), data: scoreboard });
-
-  // ---- Power-Ranking-Verlauf: ein Snapshot pro abgeschlossenem Spieltag ----
-  // ("Nach dem Draft" und "Vor dem 1. Spieltag" sind einmalig von Hand gesetzt und
-  // werden hier nie verändert; ab der ersten komplett gewerteten Woche kommt pro
-  // Woche automatisch ein neuer bzw. aktualisierter Snapshot dazu.)
-  const lastCompletedWeek = computeLastCompletedWeek(scoreboard);
-
   // ---- Playoff-Szenario je Team (für my-team.html "Playoff-Chancen") ----
   // Nutzt dieselbe Bracket-Logik wie findPlayoffRaceFact() (Top 2 je Conference qualifizieren sich,
   // geseedet 1-4 nach Gesamt-Bilanz, siehe computePlayoffPicture() weiter oben), aber
@@ -2227,6 +2274,10 @@ async function main() {
     ...playoffBracket
   });
 
+  // ---- Power-Ranking-Verlauf: ein Snapshot pro abgeschlossenem Spieltag ----
+  // ("Nach dem Draft" und "Vor dem 1. Spieltag" sind einmalig von Hand gesetzt und
+  // werden hier nie verändert; ab der ersten komplett gewerteten Woche kommt pro
+  // Woche automatisch ein neuer bzw. aktualisierter Snapshot dazu.)
   if (lastCompletedWeek > 0) {
     const history = await readJsonSafe('power-rankings-history.json', { snapshots: [] });
     const key = 'week-' + lastCompletedWeek;
