@@ -305,7 +305,7 @@ function collectFacts(game) {
 
   if (game.chalk) {
     const c = game.chalk;
-    facts.push({ category: 'chalk', text: `Chalk: ${c.team} gewinnt dieses Spiel fast exakt mit der für DIESE Woche erwarteten Marge (nach Kaderstärke-Projektion) – Punkt für Punkt nach Plan. Keine Aussage über die Zeit vor der Saison oder den Draft.` });
+    facts.push({ category: 'chalk', text: `Reine Zahlen-Beobachtung zu DIESEM einen Spiel: die Punkte-Marge, mit der ${c.team} gewinnt, liegt nah an der rein rechnerischen Erwartung aus der aktuellen Kaderstärke-Projektion (Stand: DIESE Woche). Das ist KEIN Beleg für einen "Favoriten"-Status vor der Saison, beim Draft oder sonst wann in der Vergangenheit - verwende das Wort "Favorit" hier NICHT und erfinde keinen Vorab-Status. Beschreibe es nur als: das Ergebnis passt diese Woche zu den Zahlen.` });
   }
 
   if (game.formTrend) {
