@@ -564,6 +564,22 @@ Commit `3f8c494`, gepusht.
 
 Commit `0996c74`, gepusht.
 
+## 28. Recaps fehlten noch (Woche 3) + Watchdog-Tages-Check auf stündlich umgestellt
+
+**Kontext:** Session wurde am 29.9.2026 fortgesetzt. Nutzer: "aktuell sehe ich noch keine recaps auf der seite prüfe weshalb das so ist -> starte den workflow aber nicht manuell ich möchte dass es noch mit dem automatismus klappt der versucht ja noch ein paar anläufe."
+
+**Diagnose (ohne manuellen Trigger):** Woche-1- und Woche-2-Recaps waren bereits vorhanden (`game-recaps.json`/`week-recaps.json`), nur Woche 3 fehlte – die war erst in der Nacht auf den 29.9. mit dem Monday-Night-Spiel fertig geworden. Root Cause via GitHub-Actions-Run-Historie geprüft: `espn-sync.yml` (einziger Workflow, der Recaps schreibt) hatte seit dem 22.9. keinen einzigen ECHTEN Scheduled-Lauf mehr – alle Läufe dazwischen waren `workflow_dispatch` (meine manuellen Trigger während der Fixes diese Woche). Am heutigen Dienstag zeigte die Run-Liste für 05:07 und 07:07 UTC gar keinen Eintrag – GitHub hat die Scheduled-Trigger komplett übersprungen, exakt dasselbe Verhalten wie schon am 22.9. dokumentiert (siehe Kommentar in `espn-sync-watchdog.yml`). Kein Bug in unserem Code, sondern eine wiederkehrende GitHub-Eigenart. Die eingebaute Resilienz (3 weitere reguläre Versuche um 09:07/11:07/13:07 UTC, plus der Watchdog-Fallback) war zum Zeitpunkt der Meldung noch nicht durchgelaufen.
+
+**Nutzer-Nachfrage:** "gäbe es Möglichkeiten das zu beschleunigen? wie mehrere syncs pro stunde plus ein mal pro stunde ein check wie der um 14:23?" Antwort/Empfehlung: mehr volle Sync-Zeitfenster bringen wenig (gleiches Skip-Risiko pro Slot, kostet aber echte ESPN-/Claude-Aufrufe), aber der bestehende leichte Watchdog-Check (`espn-sync-watchdog.yml`, Job `daily-check`) stündlich statt nur einmal um 14:23 UTC laufen zu lassen ist praktisch kostenlos (nur eine GitHub-API-Abfrage, kein ESPN-/Claude-Call, sobald ein erfolgreicher Lauf existiert ist jeder weitere Check ein No-Op) und senkt die maximale Verzögerung von bis zu ~9h auf realistisch ~1h. Nutzer stimmte zu.
+
+**Umgesetzt:** `espn-sync-watchdog.yml`: `cron: '23 14 * * 2'` (1x) → `cron: '23 5-14 * * 2'` (stündlich, 10x über den Tag verteilt: 05:23 bis 14:23 UTC). Job `daily-check` → `hourly-check` umbenannt (Name passte nicht mehr), Kommentare entsprechend aktualisiert (inkl. Hinweis, dass der Skip-Fall jetzt an zwei Tagen beobachtet wurde). Die eigentliche Check-Logik (prüft per GitHub-API, ob heute schon ein erfolgreicher `espn-sync.yml`-Lauf existiert, stösst sonst per `gh workflow run` einen an) blieb unverändert.
+
+**Getestet:** `python3 -c "import yaml; ..."` bestätigt gültiges YAML, Cron-Auflösung manuell durchgerechnet (10 Zeitpunkte 05:23-14:23 UTC bestätigt).
+
+Kein manueller Trigger von `espn-sync.yml` ausgelöst, wie vom Nutzer gewünscht – die 3 verbleibenden reguären Zeitfenster plus der jetzt stündliche Watchdog übernehmen das automatisch.
+
+Commit `3eea343`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
