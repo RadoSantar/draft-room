@@ -644,6 +644,24 @@ Commit `a6807a6`, gepusht.
 
 Commits `dde8c57`, `cbe7569`, `68dcfd4`, gepusht.
 
+## 33. Recaps: falscher "Allzeit-Rekord"-Claim behoben + zwei weitere "vor der Saison"-Bugs gefunden
+
+**Nutzer-Meldung:** "die jetzige info im wochen recap ist aber auch nicht korrekt 202 hat nicht den allzeit rekord gebrochen, der liegt seit dieser saison 212.5 im text heisst es 199 was nur den rekord von letzter saison rinbezieht, dieser wurde in dieser saison aber bereits von TM06 Gebrochen." Bezog sich auf den Woche-3-Wochenüberblick: "Buhaaner schreibt Geschichte: 202.5 Punkte pulverisieren den bisherigen All-Time-Rekord von 199.0."
+
+**Root Cause:** `findAllTimeRecordFact()` verglich nur gegen den in `league-history.json` handverlesenen Hall-of-Fame-Rekord (199.0, aus der 2025er-Saison) – dieser wird laut eigenem Dateikommentar nur EINMALIG von Hand am Saisonende nachgetragen, nie während der laufenden Saison. Ein neuer Bestwert INNERHALB dieser Saison (TM06 mit 212.5 in Woche 2, per `scoreboard.json` bestätigt) tauchte im Vergleich also nie auf.
+
+**Fix:** `findAllTimeRecordFact()` scannt jetzt zusätzlich alle bereits gespielten Wochen VOR dem aktuellen Spiel aus dem frischen `scoreboard` (Team-Rekord) bzw. aus `season-stats.json.records.topWeeklyPerformances` ("Mount Rushmore", Spieler-Rekord) und nimmt den höheren der beiden Werte als tatsächlichen aktuellen Rekord. Die Spieler-Variante hatte strukturell dieselbe Lücke (bisher nur zufällig nicht falsch ausgeschlagen) – aus Konsistenzgründen gleich mitgefixt.
+
+**Beim Durchsuchen der Recaps nach demselben Grundmuster ("vor der Saison") zwei weitere, unabhängige Bugs gefunden** – vermutlich die eigentliche Hauptquelle des ursprünglich gemeldeten Queen-of-Chaos-Bugs (Punkt 32), nicht nur der Chalk-Fakt:
+- `buildPrompt()` in `generate-recaps.mjs` (Haupt-Prompt-Builder für JEDEN Einzel-Recap, nicht nur bei einem Chalk-Fakt): behauptete unbedingt "`${favorite} galt vor der Saison als das stärker aufgestellte Team`" bei jedem Aussenseiter-Sieg bzw. bestätigten Favoriten – basierend auf der AKTUELLEN Wochenprojektion, nicht auf echten Vor-Saison-Daten. Umformuliert auf "diese Woche laut Kaderstärke-Projektion".
+- `buildWeekPrompt()` (Wochenüberblick): identisches Muster bei Aussenseiter-Siegen, ebenfalls korrigiert.
+
+**Geprüft, keine weiteren betroffenen Einträge:** zwei zusätzliche Treffer aus einer breiteren Suche ("Queen of Chaos, die auf dem Papier deutlich stärker aufgestellte Mannschaft" und "das stärker aufgestellte Team" bei Sherlock Mahomes) nutzen bereits die korrekt gescopte Formulierung ("auf dem Papier"/"Vorschau-Zahlen" statt "vor der Saison") – keine Änderung nötig.
+
+**Aufräumen:** `data/week-recaps.json` (Woche 3) gelöscht und unter dem korrigierten Code neu generiert – live verifiziert: kein falscher Rekord-Claim mehr, korrekt nur noch "die mit Abstand deutlichste Klatsche der gesamten Woche".
+
+Commit `33c61ad`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
