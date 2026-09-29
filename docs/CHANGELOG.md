@@ -1629,3 +1629,5 @@ System-Prompt zu hoffen, dass sie befolgt wird.
 data/game-recaps.json: Eintrag "3-1-10" nochmal gelöscht (die erste,
 noch fehlerhafte Regeneration überschrieben) - wird beim nächsten
 Sync-Lauf unter dem verschärften Fakt-Text neu generiert.
+
+## 2026-09-29 – `09afcdb` Changelog: Liga-Name + falsche Vor-Saison-Favoriten-Claims dokumentiert
