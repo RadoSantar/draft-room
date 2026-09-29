@@ -622,6 +622,28 @@ Commit `a6807a6`, gepusht.
 
 **Schaden/Aufräumen:** Die konkret entdeckte, verlorene Doku (Punkt 29 oben) wurde von Hand wieder nachgetragen (dieser Commit). `docs/CHANGELOG.md` hat vermutlich ebenfalls Lücken aus früheren Vorkommnissen dieses Bugs - da es sich um ein rein mechanisch aus `git log` generiertes Nachschlagewerk handelt (nicht die eigentliche, von Hand/durch Claude gepflegte Doku), wurde bewusst keine rückwirkende Rekonstruktion vorgenommen; die vollständige, korrekte Historie steht ohnehin unverändert in `git log`. Betrifft nur Commits VOR diesem Fix - alle Workflows committen ab jetzt mit dem korrigierten Retry-Mechanismus.
 
+## 32. Recaps: Liga-Name korrigiert (Swiss League statt Fantasy Playbook) + falsche Vor-Saison-Favoriten-Behauptungen
+
+**Nutzer-Meldung (zwei Punkte):**
+1. "im wochen recap wird die liga als fantasy playbook Liga bezeichnet die liga heisst aber eigentlich Swiss League."
+2. "im recap von saints of anarchy vs queen of chaos heisst es dass queen of chaos vor anpfiff der saison der haushohe favorit sei das stimmt so aber nicht sie war vor der saison platz 6 des powerrankings und die saints platz 2."
+
+**Root Cause #1:** Alle drei System-Prompts in `generate-recaps.mjs` (Einzel-Recap, Wochenüberblick, Wochen-Vorschau) nannten die Liga fälschlich "Fantasy Playbook" – das ist der Name der Website, nicht der ESPN-Liga. Auf "Swiss League" korrigiert.
+
+**Root Cause #2:** Der "Chalk"-Fakt (Favorit gewinnt mit der erwarteten Marge) basiert auf `homeProj`/`awayProj` – der AKTUELLEN Kaderstärke-Projektion DIESER Woche, nicht auf einem fixen Vor-Saison-Wert. Der Fakt-Text liess offen, WANN "vorab" gemeint war; Claude hat daraus eigenmächtig "vor dem Anpfiff der Saison" gemacht.
+
+**Iterativ gefixt (zwei Anläufe nötig, live verifiziert):**
+- 1. Anlauf: allgemeine System-Prompt-Regel gegen erfundene Zeitangaben ergänzt + Fakt-Text präzisiert ("für DIESE Woche"). Live regeneriert – **reichte nicht**: der neue Text sagte praktisch wortgleich wieder "schon vor der Saison als das stärkere Ensemble gehandelt". Die generelle Anweisung war offenbar zu schwach gegen die gegenläufige "sei extrem dramatisch"-Anweisung im selben Prompt.
+- 2. Anlauf: Fakt-Text komplett umgeschrieben – verzichtet jetzt bewusst auf das Wort "Favorit" (genau das Wort, das die "seit wann Favorit"-Fantasie triggert), formuliert als reine Zahlen-Beobachtung zu DIESEM einen Spiel, mit explizitem Verbot, das Wort "Favorit" oder einen Vor-Saison-/Draft-Status zu erfinden. Mirrort den bereits früher erfolgreichen Ansatz bei der "einziges ungeschlagenes Team"-Vorschau-Korrektur: die Einschränkung direkt im Fakt selbst statt nur allgemein im System-Prompt. Live regeneriert – **diesmal korrekt**: "die Queen of Chaos... taten das, was von ihnen als vorab stärker eingeschätztes Team erwartet wurde" (ohne Zeitbezug zur Saison).
+
+**Zusätzlich gefunden bei der Suche nach weiteren Vorkommen:** 4 Treffer für "vor der Saison"/"beim Draft" in bereits publizierten Recaps. Gegen die echten Vor-Saison-Snapshots (`power-rankings-history.json`, "Nach dem Draft" und "Vor dem 1. Spieltag") geprüft:
+- 3 davon (Apukalypse Now vs. Tackleberry Finn Woche 1, TM06 vs. Tackleberry Finn Woche 2, Buhaaner vs. Apukalypse Now Woche 3) waren durch die echten Vor-Saison-Ränge tatsächlich gedeckt – nicht angerührt.
+- 1 davon (Tackleberry Finn vs. Zurich City Ravens Woche 3) behauptete, Zurich sei "schon vor der Saison das stärkere Team" gewesen – stimmte laut dem früheren "Nach dem Draft"-Snapshot (Zurich #4, Tackleberry #7), aber NICHT laut dem massgeblicheren, späteren "Vor dem 1. Spieltag"-Snapshot direkt vor Kickoff (Tackleberry #6, Zurich #7 – Tackleberry war da sogar leicht vorne). Nicht sauber belegt – gelöscht und unter dem gehärteten Prompt neu generiert, jetzt ohne den falschen Zeitbezug ("sie waren das bessere Team, sind das bessere Team" statt "schon vor der Saison").
+
+**Aufräumen:** `data/game-recaps.json` (Einträge "3-1-10" und "3-2-4") und `data/week-recaps.json` (Woche 3) für die Neugenerierung gelöscht. Jeweils per echtem Sync-Lauf regeneriert und verifiziert.
+
+Commits `dde8c57`, `cbe7569`, `68dcfd4`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
