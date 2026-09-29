@@ -580,6 +580,20 @@ Kein manueller Trigger von `espn-sync.yml` ausgelöst, wie vom Nutzer gewünscht
 
 Commit `3eea343`, gepusht.
 
+## 29. Power Rankings: Sortierung auf echte Sieg/Niederlage-Bilanz umgestellt
+
+**Nutzer-Meldung:** "das power ranking kann nicht korrekt sein weshalb sind die ravens auf platz 9 abgerutscht obwohl sie alle spiele gewonnen haben?" Geprüft (Rohdaten `roster.json`/`power-rankings.json`, keine Rechenfehler) und erklärt: kein Bug, sondern Absicht – Power Rankings sortierten bis dahin rein nach ESPNs Saison-Projektion der bestmöglichen Start-Aufstellung, komplett unabhängig von echten Ergebnissen. Zurich City Ravens (3-0) hatten laut ESPN-Projektion einfach einen schwächer eingeschätzten Kader (1616.5) als z.B. Buhaaner (1906.4, damals 2-1). Das war früher über einen Erklär-Absatz auf der Seite dokumentiert, den der Nutzer aber genau letzte Woche entfernen liess (Punkt 26 oben) – dadurch fehlte der Kontext.
+
+**Nutzer-Entscheidung:** "oder powerrankings umbauen anhand sieg/niederlage bilanz abgesehen von denen vor der saison natürlich die bleiben so wie sie sind." Also: Sortierung auf echte Bilanz umstellen, mit Ausnahme der beiden historischen Vor-Saison-Schnappschüsse ("Nach dem Draft"/"Vor dem 1. Spieltag" in `power-rankings-history.json`), die unverändert bleiben.
+
+**Umgesetzt:**
+- `scripts/sync-espn.mjs`: `teamsComputed` bekommt `wins`/`losses`/`ties`/`pointsFor` direkt aus ESPNs `t.record.overall` (dieselbe Quelle wie der bestehende `standings`-Block, keine doppelte Datenherkunft). Sortierregel: sobald irgendein Team mindestens ein Spiel absolviert hat, nach Siegen, dann Punkte-Für, dann `starterTotal` (Kaderstärke) als letzter Tiebreaker bei echtem Gleichstand. Vor dem ersten Spieltag (alle Teams 0-0-0) bleibt die alte, rein projektionsbasierte Sortierung – betrifft nur künftige Vor-Saison-Phasen, die beiden bereits gespeicherten Snapshots dieser Saison werden ohnehin nie neu geschrieben. `starterTotal` bleibt unverändert berechnet/gespeichert (wird weiterhin für Strength of Schedule, Matchup-Projektionen in Recaps und die Team-Karten-Detailansicht gebraucht).
+- `power-rankings.html`: `rankItemHtml()` zeigt jetzt die Bilanz ("3-0" statt "1616.5 Start-Proj.") als Score-Wert je Rang-Zeile. Strength-of-Schedule und Team-Karten-Detailansicht unverändert (nutzen weiterhin `starterTotal`).
+
+**Getestet:** 4 Offline-Testfälle für die neue Sortierlogik (reales 3-0-vs-Projektions-Szenario, Vor-Saison-Fallback, echter Gleichstand mit Projektions-Tiebreak, Team mit Unentschieden zählt als Saison-gestartet) – alle korrekt. Playwright-Rendertest mit simulierten Bilanz-Daten bestätigt saubere Anzeige, keine Konsolenfehler. Live verifiziert über einen echten Sync-Lauf: TM06 (3-0, 562.5 PF) und Zurich City Ravens (3-0, 435 PF) stehen jetzt korrekt auf Rang 1/2, exakt wie erwartet.
+
+Commit `838c7eb`, gepusht.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
