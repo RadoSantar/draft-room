@@ -1631,3 +1631,46 @@ noch fehlerhafte Regeneration überschrieben) - wird beim nächsten
 Sync-Lauf unter dem verschärften Fakt-Text neu generiert.
 
 ## 2026-09-29 – `09afcdb` Changelog: Liga-Name + falsche Vor-Saison-Favoriten-Claims dokumentiert
+
+## 2026-09-29 – `33c61ad` Recaps: falscher "Allzeit-Rekord"-Claim behoben + zwei weitere "vor der Saison"-Bugs gefunden
+
+Nutzer meldete: "die jetzige info im wochen recap ist aber auch nicht
+korrekt 202.5 hat nicht den allzeit rekord gebrochen, der liegt seit
+dieser saison bei 212.5, im text heisst es 199 was nur den rekord von
+letzter saison einbezieht, dieser wurde in dieser saison aber bereits
+von TM06 gebrochen."
+
+Root Cause: findAllTimeRecordFact() verglich nur gegen den in
+league-history.json handverlesenen Hall-of-Fame-Rekord (199.0, letzte
+Saison) - dieser wird laut eigenem Kommentar dort nur EINMALIG von Hand
+am Saisonende nachgetragen, nie während der laufenden Saison. Ein neuer
+Bestwert INNERHALB dieser Saison (TM06 mit 212.5 in Woche 2, per
+scoreboard.json bestätigt) tauchte im Vergleich also nie auf - Buhaaners
+202.5 in Woche 3 wurde fälschlich als "neuer Allzeit-Rekord" gefeiert,
+obwohl es nicht mal der beste Wert dieser Saison war.
+
+Fix: findAllTimeRecordFact() scannt jetzt zusätzlich alle bereits
+gespielten Wochen VOR dem aktuellen Spiel aus dem frischen scoreboard
+(Team-Rekord) bzw. aus season-stats.json.records.topWeeklyPerformances
+(Spieler-Rekord, "Mount Rushmore") und nimmt den höheren der beiden Werte
+(alter Hall-of-Fame-Rekord vs. bereits diese Saison erzielter Bestwert)
+als tatsächlichen aktuellen Rekord. Die Spieler-Variante hatte strukturell
+dieselbe Lücke, ist bisher nur zufällig nicht falsch ausgeschlagen - aus
+Konsistenzgründen gleich mitgefixt.
+
+Beim Durchsuchen der Recaps nach demselben Grundmuster zwei weitere,
+unabhängige Bugs gefunden und behoben:
+- generate-recaps.mjs buildPrompt() (Haupt-Prompt-Builder für JEDEN
+  Einzel-Recap, nicht nur bei einem "Chalk"-Fakt): behauptete
+  unbedingt "${favorite} galt vor der Saison als das stärker aufgestellte
+  Team" bei jedem Aussenseiter-Sieg bzw. bestätigten Favoriten - basierend
+  auf der AKTUELLEN Wochenprojektion, nicht auf echten Vor-Saison-Daten.
+  Das ist vermutlich die eigentliche Hauptquelle des ursprünglich
+  gemeldeten "Queen of Chaos"-Bugs, nicht nur der Chalk-Fakt. Umformuliert
+  auf "diese Woche laut Kaderstärke-Projektion".
+- buildWeekPrompt() (Wochenüberblick): identisches Muster bei
+  Aussenseiter-Siegen, ebenfalls korrigiert.
+
+data/week-recaps.json: Woche-3-Eintrag gelöscht (enthielt die falsche
+199.0-Behauptung), wird beim nächsten Sync-Lauf unter dem korrigierten
+Code neu generiert.
