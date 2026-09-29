@@ -1540,3 +1540,37 @@ komplett übersprungenen Scheduled-Tag von bisher bis zu ~9h auf
 realistisch ~1h.
 
 ## 2026-09-29 – `e37a94d` Changelog: Watchdog-Stunden-Check dokumentiert
+
+## 2026-09-29 – `838c7eb` Power Rankings: Sortierung auf echte Sieg/Niederlage-Bilanz umgestellt
+
+Nutzer-Feedback: Zurich City Ravens standen trotz 3-0-Bilanz auf Rang 9,
+weil die Power Rankings bisher rein nach ESPNs Saison-Projektion der
+bestmöglichen Start-Aufstellung sortiert waren - komplett unabhängig von
+tatsächlichen Ergebnissen. Nutzer-Wunsch: nach Sieg/Niederlage-Bilanz
+umbauen, ausser den beiden historischen Vor-Saison-Schnappschüssen
+("Nach dem Draft"/"Vor dem 1. Spieltag"), die unverändert bleiben sollen.
+
+scripts/sync-espn.mjs: teamsComputed bekommt jetzt wins/losses/ties/
+pointsFor direkt aus ESPNs t.record.overall (identische Quelle wie der
+bestehende standings-Block). Sortierung: sobald mindestens ein Team ein
+Spiel absolviert hat (wins+losses+ties > 0 bei irgendeinem Team), nach
+Siegen, dann Punkte-Für, dann projektionsbasierter Kaderstärke als
+finaler Tiebreaker bei echtem Gleichstand. VOR dem ersten Spieltag (alle
+Teams 0-0-0) bleibt die alte, rein projektionsbasierte Sortierung - exakt
+das bisherige Verhalten, betrifft also nur die künftige Vor-Saison-Phase
+kommender Jahre, die beiden bereits gespeicherten Vor-Saison-Snapshots
+dieser Saison bleiben ohnehin unangetastet (werden nie neu geschrieben).
+starterTotal bleibt unverändert berechnet und gespeichert - wird
+weiterhin für Strength of Schedule, Matchup-Projektionen in Recaps und
+die Team-Karten-Detailansicht gebraucht.
+
+power-rankings.html: rankItemHtml() zeigt jetzt die Bilanz ("3-0" statt
+"1616.5 Start-Proj.") als Score-Wert je Rang-Zeile. Strength-of-Schedule-
+Berechnung (nutzt weiterhin starterTotal) und Team-Karten-Detailansicht
+unverändert.
+
+Getestet: 4 Offline-Testfälle für die neue Sortierlogik (echtes 3-0-vs-
+Projektions-Szenario, Vor-Saison-Fallback, echter Gleichstand mit
+Projektions-Tiebreak, Team mit Unentschieden zählt als Saison-gestartet) -
+alle korrekt. Playwright-Rendertest mit simulierten Bilanz-Daten bestätigt
+saubere Anzeige ("3-0 Bilanz" etc.), keine Konsolenfehler.
