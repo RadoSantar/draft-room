@@ -1542,3 +1542,36 @@ realistisch ~1h.
 ## 2026-09-29 – `e37a94d` Changelog: Watchdog-Stunden-Check dokumentiert
 
 ## 2026-09-29 – `bf49829` Changelog: Power-Rankings-Umstellung auf Sieg/Niederlage-Bilanz dokumentiert
+
+## 2026-09-29 – `d1ccc6f` Fix: Sync-Bots konnten bei Push-Konflikten fremde Dateien zurückrollen
+
+Entdeckt beim Nachtragen einer Session-Log-Doku: der Eintrag verschwand
+nach dem Commit wieder. Root Cause per git log/git show gefunden und in
+einem isolierten Test-Repo reproduziert/bestätigt.
+
+Alle drei datengenerierenden Workflows (espn-sync.yml, espn-live-
+snapshot.yml, sync-transactions.yml) nutzen bei einem Push-Konflikt
+denselben Retry-Mechanismus: git fetch + git reset --soft origin/main +
+gezieltes git add <eigene Datei> + neu committen. "--soft" verschiebt nur
+den Branch-Zeiger, lässt Index und Working Tree aber unangetastet.
+Landete zwischen Checkout und Retry ein fremder Commit, der eine ANDERE
+Datei änderte (z.B. docs/CHANGELOG.md durch den Changelog-Bot, oder ein
+Session-Log durch mich), blieb die Vor-Checkout-Version dieser Datei im
+Index - der Retry-Commit rollte sie dadurch still zurück, sobald der Push
+durchging.
+
+Fix: "--soft" zu "--mixed" geändert. "--mixed" synct den Index für ALLE
+Pfade auf den frischen origin/main-Stand, lässt aber den Working Tree
+(und damit die frisch generierten Daten) unberührt - das gezielte
+git add überschreibt danach nur noch den eigenen Pfad, alles andere
+committet korrekt.
+
+Per Testfall in einem isolierten Repo eindeutig reproduziert (mit --soft
+ging eine echte Zwischenzeit-Änderung verloren) und die Fix-Variante
+verifiziert (mit --mixed bleiben beide Änderungen korrekt erhalten).
+
+Schaden: die konkret entdeckte verlorene Session-Log-Doku wurde von Hand
+nachgetragen. docs/CHANGELOG.md hat vermutlich ähnliche Lücken aus
+früheren Vorkommnissen - bewusst nicht rückwirkend rekonstruiert, da rein
+mechanisch aus git log generiert (die vollständige Historie steht dort
+unverändert). Betrifft nur Commits vor diesem Fix.
