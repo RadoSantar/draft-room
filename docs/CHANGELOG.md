@@ -1575,3 +1575,33 @@ nachgetragen. docs/CHANGELOG.md hat vermutlich ähnliche Lücken aus
 früheren Vorkommnissen - bewusst nicht rückwirkend rekonstruiert, da rein
 mechanisch aus git log generiert (die vollständige Historie steht dort
 unverändert). Betrifft nur Commits vor diesem Fix.
+
+## 2026-09-29 – `dde8c57` Recaps: Liga-Name korrigiert (Swiss League statt Fantasy Playbook) + falscher Favoriten-Claim behoben
+
+Nutzer meldete zwei Probleme:
+1. Recaps bezeichnen die Liga als "Fantasy Playbook" - das ist aber der
+   Name der Seite selbst, die ESPN-Liga heisst "Swiss League".
+2. Der Recap zu Saints of Anarchy vs. Queen of Chaos (Woche 3) behauptete,
+   Queen of Chaos sei "schon vor dem Anpfiff der Saison der haushohe
+   Favorit" gewesen - stimmt nicht (Queen of Chaos stand vor der Saison
+   auf Power-Ranking-Platz 6, Saints auf Platz 2).
+
+Root Cause #1: Alle drei System-Prompts in generate-recaps.mjs (Einzel-
+Recap, Wochenüberblick, Wochen-Vorschau) nannten die Liga fälschlich
+"Fantasy Playbook" - auf "Swiss League" korrigiert.
+
+Root Cause #2: Der "Chalk"-Fakt (Favorit gewinnt mit der erwarteten Marge)
+bezieht sich auf die aktuelle Kaderstärke-Projektion DIESER Woche
+(homeProj/awayProj, wöchentlich neu berechnet), nicht auf einen fixen
+Vor-Saison-Wert. Der bisherige Fakt-Text ("vorab erwarteten Marge") liess
+offen, WANN "vorab" war - Claude hat daraus eigenmächtig "vor dem Anpfiff
+der Saison" gemacht, obwohl das nirgends so gegeben war. Fakt-Text
+präzisiert (explizit "für DIESE Woche", "keine Aussage über die Zeit vor
+der Saison") und System-Prompt um eine allgemeine Regel gegen erfundene
+Zeitangaben ergänzt (analog zur bereits bestehenden "keine unbelegte
+Alleinstellung"-Regel in der Wochen-Vorschau).
+
+data/game-recaps.json: Eintrag "3-1-10" (das betroffene Spiel) gelöscht,
+data/week-recaps.json: Woche-3-Eintrag gelöscht (referenzierte ebenfalls
+"Fantasy Playbook Liga") - beide werden beim nächsten Sync-Lauf unter dem
+korrigierten Prompt neu generiert.
