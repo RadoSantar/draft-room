@@ -1689,3 +1689,11 @@ scoringPeriodId und Summe der Starter-appliedStatTotal berechnet. Zusätzlicher
 Schutz gegen künftige 0:0-Platzhalter-Snapshots. Woche-4-Wochenüberblick zur
 Neugenerierung gelöscht (alte Zwischenstände dieser Woche sind nicht mehr
 rekonstruierbar, Satz entfällt für diese Woche statt eine unbelegte Zahl zu zeigen).
+
+## 2026-10-06 – `e0789cd` Fix: Draft-Runde im Schnäppchen-Fakt mit Spielwoche verwechselbar
+
+"Runde X" im draftValue-/seasonDraftValue-Fakt-Text meinte die Runde des
+Saison-Drafts, wurde aber im generierten Fliesstext (nach Verlust des
+Klammerzusatzes "gedraftet") wie eine Spielwoche lesbar ("Runde 10" bei
+aktuell erst Woche 4). Auf "Draft-Runde X" umgestellt plus explizite
+Anweisung direkt im Fakt. Woche-4-Wochenüberblick zur Neugenerierung gelöscht.
