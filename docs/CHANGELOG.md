@@ -1697,3 +1697,11 @@ Saison-Drafts, wurde aber im generierten Fliesstext (nach Verlust des
 Klammerzusatzes "gedraftet") wie eine Spielwoche lesbar ("Runde 10" bei
 aktuell erst Woche 4). Auf "Draft-Runde X" umgestellt plus explizite
 Anweisung direkt im Fakt. Woche-4-Wochenüberblick zur Neugenerierung gelöscht.
+
+## 2026-10-06 – `f80e966` Fix: Wochenüberblick-Schlusssatz wiederholte zu oft dieselbe Bank-Management-Moral
+
+WEEK_SYSTEM_PROMPT gab bisher keine Anweisung zum Thema des Schlusssatzes vor,
+wodurch Claude beim freien Formulieren wiederholt auf "Bank im Griff haben" als
+Moral zurückgriff (Wochen 1, 2 und 4 betroffen). Anweisung ergänzt: Schlusssatz
+soll aus der stärksten Geschichte DIESER Woche kommen und das Thema variieren.
+Woche-4-Wochenüberblick zur Neugenerierung gelöscht.
