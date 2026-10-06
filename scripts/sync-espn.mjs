@@ -583,16 +583,28 @@ function findSurvivedScareFact(game, liveSnapshots) {
   return null;
 }
 
-// Monday-Night-Rettung: das Team lag beim letzten Snapshot VOR Montagabend (grosszügig: vor 18:00
-// UTC Montag, weit vor jedem realistischen MNF-Kickoff, siehe espn-live-snapshot.yml) noch zurück,
-// gewann das Spiel am Ende aber trotzdem – kann also nur dank der Montagabend-Spieler passiert sein.
+// Letzten Zwischenstand VOR Montagabend (grosszügig: vor 18:00 UTC Montag, weit vor jedem
+// realistischen MNF-Kickoff, siehe espn-live-snapshot.yml) aus den Snapshots dieser Woche picken.
+// Erlaubte Tage sind explizit Do/Fr/Sa/So/Mo (vor 18 Uhr) - NICHT einfach "jeder Tag außer Montag-
+// nach-18-Uhr", denn das würde auch einen Snapshot vom FOLGENDEN Dienstag durchlassen (Dienstag
+// ist kein Montag, erfüllt die alte Bedingung also trivial). Bug live beobachtet: für Woche 4 wurde
+// so ein Snapshot vom Dienstagmorgen (nach Ende des MNF) als "vor Montagabend" gewählt, wodurch ein
+// bereits längst entschiedenes Spiel fälschlich als "noch offen" galt.
+function selectPreMondaySnapshot(liveSnapshots) {
+  if (!liveSnapshots?.length) return null;
+  const ALLOWED_DAYS = new Set([4, 5, 6, 0, 1]); // Do, Fr, Sa, So, Mo
+  return liveSnapshots.filter((s) => {
+    const d = new Date(s.at);
+    const day = d.getUTCDay();
+    if (!ALLOWED_DAYS.has(day)) return false;
+    if (day === 1 && d.getUTCHours() >= 18) return false;
+    return true;
+  }).slice(-1)[0] || null;
+}
+
 function findMondayNightRescueFact(game, liveSnapshots) {
   if (game.winner !== 'HOME' && game.winner !== 'AWAY') return null;
-  if (!liveSnapshots?.length) return null;
-  const preMonday = liveSnapshots.filter((s) => {
-    const d = new Date(s.at);
-    return d.getUTCDay() !== 1 || d.getUTCHours() < 18;
-  }).slice(-1)[0];
+  const preMonday = selectPreMondaySnapshot(liveSnapshots);
   if (!preMonday) return null;
   const g = preMonday.games.find((gg) => gg.homeId === game.homeId && gg.awayId === game.awayId);
   if (!g) return null;
@@ -684,17 +696,19 @@ function findBuzzerBeaterFact(game, liveSnapshots) {
 
 // Wochen-weite Stat (nicht pro Spiel, speist einen Satz im Wochenüberblick): wie viele der Matchups
 // dieser Woche waren noch beim Anpfiff des Monday Night Football (grosszügig: vor 18:00 UTC Montag,
-// dieselbe Schwelle wie findMondayNightRescueFact()) mit höchstens 15 Punkten Vorsprung offen -
+// dieselbe Schwelle wie selectPreMondaySnapshot()) mit höchstens 15 Punkten Vorsprung offen -
 // selbst wenn der Vorsprung am Ende hielt, war zu dem Zeitpunkt noch nicht sicher, wer gewinnt.
 function countGamesOpenBeforeMonday(weekGames, liveSnapshots) {
-  if (!liveSnapshots?.length) return null;
   const decided = weekGames.filter((g) => g.winner === 'HOME' || g.winner === 'AWAY');
   if (!decided.length) return null;
-  const preMonday = liveSnapshots.filter((s) => {
-    const d = new Date(s.at);
-    return d.getUTCDay() !== 1 || d.getUTCHours() < 18;
-  }).slice(-1)[0];
+  const preMonday = selectPreMondaySnapshot(liveSnapshots);
   if (!preMonday) return null;
+  // Schutz gegen fehlerhafte Platzhalter-Snapshots (0:0 in jedem Spiel, obwohl die Spiele laut
+  // winner-Feld längst entschieden sind - live für Woche 4/2026 beobachtet, als snapshot-live-
+  // scores.mjs durchgehend keine echten Punktestände einsammeln konnte): ein solcher Snapshot
+  // sagt nichts darüber aus, wie eng es vor Montagabend wirklich stand, und wird ignoriert.
+  const allZero = preMonday.games.every((g) => g.homeScore === 0 && g.awayScore === 0);
+  if (allZero) return null;
   let open = 0;
   decided.forEach((g) => {
     const match = preMonday.games.find((gg) => gg.homeId === g.homeId && gg.awayId === g.awayId);

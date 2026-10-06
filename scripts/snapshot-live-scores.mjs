@@ -8,7 +8,22 @@
 // später beim eigentlichen Sync aufgelöst, der die Team-Namen ohnehin schon kennt.
 import { fetchLeague, readJsonSafe, writeJson, nowIso } from './espn-client.mjs';
 
+// ESPN-Lineup-Slot-IDs: 20 = Bench, 21 = IR – identisch zu BENCH_SLOT_ID/IR_SLOT_ID in sync-espn.mjs.
+const BENCH_SLOT_ID = 20;
+const IR_SLOT_ID = 21;
+
+function sumStarterPoints(side) {
+  let total = 0;
+  (side.rosterForCurrentScoringPeriod?.entries || []).forEach((e) => {
+    if (e.lineupSlotId === BENCH_SLOT_ID || e.lineupSlotId === IR_SLOT_ID) return;
+    total += e.playerPoolEntry?.appliedStatTotal || 0;
+  });
+  return Math.round(total * 10) / 10;
+}
+
 async function main() {
+  // Erster Fetch ohne scoringPeriodId: liefert zuverlässig den winner-Status (UNDECIDED/HOME/AWAY)
+  // jeder Woche, um die laufende Woche (targetWeek) zu bestimmen - dafür reicht dieser View.
   const scoreData = await fetchLeague(['mMatchupScore', 'mScoreboard']);
 
   const weeksMap = {};
@@ -16,11 +31,7 @@ async function main() {
     const wk = e.matchupPeriodId;
     if (wk > 25) return;
     if (!e.home?.teamId || !e.away?.teamId) return;
-    (weeksMap[wk] = weeksMap[wk] || []).push({
-      homeId: e.home.teamId, homeScore: Math.round(e.home.totalPoints * 10) / 10,
-      awayId: e.away.teamId, awayScore: Math.round(e.away.totalPoints * 10) / 10,
-      winner: e.winner
-    });
+    (weeksMap[wk] = weeksMap[wk] || []).push({ homeId: e.home.teamId, awayId: e.away.teamId, winner: e.winner });
   });
   const weeks = Object.keys(weeksMap).map(Number).sort((a, b) => a - b);
 
@@ -36,12 +47,34 @@ async function main() {
     return;
   }
 
+  // Echte Live-Punktestände kommen NICHT aus obigem mScoreboard-totalPoints: dieses Feld bleibt
+  // während einer noch laufenden Woche durchgängig 0, bestätigt für Woche 4/2026 (alle 11
+  // Zwischenstände dieser Woche zeigten 0:0 in jedem Spiel, auch für längst abgepfiffene Partien).
+  // Stattdessen wie fetchWeeklyKeyMomentsByTeam() in sync-espn.mjs: expliziten scoringPeriodId
+  // mitgeben und die tatsächlichen Punkte aus den einzelnen Rosterplätzen aufsummieren (appliedStatTotal
+  // der Starter, ohne Bank/IR) - das liefert echte, auch während des Spiels aktuelle Werte.
+  const boxData = await fetchLeague(['mBoxscore', 'mMatchupScore'], targetWeek);
+  const liveByMatchup = {};
+  (boxData.schedule || []).forEach((matchup) => {
+    if (matchup.matchupPeriodId !== targetWeek) return;
+    if (!matchup.home?.teamId || !matchup.away?.teamId) return;
+    liveByMatchup[`${matchup.home.teamId}-${matchup.away.teamId}`] = {
+      homeScore: sumStarterPoints(matchup.home),
+      awayScore: sumStarterPoints(matchup.away)
+    };
+  });
+
+  const games = weeksMap[targetWeek].map((g) => {
+    const live = liveByMatchup[`${g.homeId}-${g.awayId}`];
+    return {
+      homeId: g.homeId, homeScore: live ? live.homeScore : 0,
+      awayId: g.awayId, awayScore: live ? live.awayScore : 0
+    };
+  });
+
   const existing = await readJsonSafe('live-snapshots.json', { week: null, snapshots: [] });
   const snapshots = existing.week === targetWeek ? existing.snapshots : [];
-  snapshots.push({
-    at: nowIso(),
-    games: weeksMap[targetWeek].map((g) => ({ homeId: g.homeId, homeScore: g.homeScore, awayId: g.awayId, awayScore: g.awayScore }))
-  });
+  snapshots.push({ at: nowIso(), games });
 
   await writeJson('live-snapshots.json', { lastUpdated: nowIso(), week: targetWeek, snapshots });
   console.log(`Snapshot für Woche ${targetWeek} gespeichert (${snapshots.length}. Zwischenstand dieser Woche).`);

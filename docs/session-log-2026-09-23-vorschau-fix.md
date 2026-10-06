@@ -662,6 +662,23 @@ Commits `dde8c57`, `cbe7569`, `68dcfd4`, gepusht.
 
 Commit `33c61ad`, gepusht.
 
+## 34. Wochenüberblick: falsche "alle Spiele vor Montag noch eng"-Behauptung – zwei Bugs gefunden
+
+**Nutzer-Meldung:** Der Woche-4-Wochenüberblick behauptete am Schluss, bis zum Anpfiff des Monday Night Football sei "in allen fünf Partien höchstens eine 15-Punkte-Führung in Sicht" gewesen. Stimmte nicht: Apukalypse Now gegen Run CMC stand da schon längst 70 Punkte auseinander, nur Tackleberry Finn gegen Sherlock Mahomes war tatsächlich bis zur letzten Sekunde eng/unentschieden.
+
+**Root Cause, zwei unabhängige Bugs, beide in `countGamesOpenBeforeMonday()` (`sync-espn.mjs`):**
+1. **Datums-Filter-Bug:** Die Snapshot-Auswahl `d.getUTCDay() !== 1 || d.getUTCHours() < 18` sollte "vor Montag 18 Uhr UTC" heissen, lässt aber durch das ODER auch jeden Snapshot vom FOLGENDEN DIENSTAG durch (Dienstag ist trivial `!== Montag`). Für Woche 4 wurde dadurch ein Snapshot vom Dienstagmorgen (05:07 UTC, längst nach Ende des MNF) als "vor Montagabend" ausgewählt – per Test-Skript gegen die echten Woche-4-Daten eindeutig reproduziert. Dieselbe fehlerhafte Logik war identisch dupliziert in `findMondayNightRescueFact()`.
+2. **`snapshot-live-scores.mjs` lieferte durchgehend 0:0-Platzhalter:** ALLE 11 Zwischenstände der Woche 4 (Donnerstag bis Dienstag) zeigten 0:0 in jedem einzelnen Spiel – auch für längst abgepfiffene Partien. Ursache: Das Skript nutzte `fetchLeague(['mMatchupScore', 'mScoreboard'])` OHNE expliziten `scoringPeriodId` und las `home.totalPoints`/`away.totalPoints` – dieses Feld bleibt in diesem View für die noch laufende Woche durchgängig 0 (erst nach Wochenabschluss/Stat-Korrektur befüllt, siehe `sync-espn.mjs`s eigener Scoreboard-Fetch, der denselben View nutzt, aber immer erst NACH Wochenende läuft). Durch Margin `0 <= 15` galt dadurch jedes Spiel trivial als "noch offen".
+
+**Fix:**
+- Snapshot-Auswahl in eine gemeinsame, korrigierte Funktion `selectPreMondaySnapshot()` ausgelagert (ersetzt die doppelte Logik in `countGamesOpenBeforeMonday()` und `findMondayNightRescueFact()`): erlaubte Tage jetzt explizit Do/Fr/Sa/So/Mo(<18 Uhr) statt "nicht Montag-nach-18-Uhr".
+- Zusätzlicher Schutz in `countGamesOpenBeforeMonday()`: ist der gewählte Snapshot in JEDEM Spiel 0:0 (Platzhalter-Daten), wird er verworfen (`null` statt eine falsche Aussage) – greift auch, falls künftig nochmal ein Snapshot aus anderem Grund leer bleibt.
+- `snapshot-live-scores.mjs` umgebaut: holt die Sieger-Zuordnung (für `lastCompletedWeek`) weiter ohne `scoringPeriodId`, berechnet die eigentlichen Live-Punktestände aber jetzt wie `fetchWeeklyKeyMomentsByTeam()` in `sync-espn.mjs` – mit explizitem `scoringPeriodId` (`fetchLeague(['mBoxscore', 'mMatchupScore'], targetWeek)`) und Aufsummieren der `appliedStatTotal`-Werte aller Starter (ohne Bank/IR) je Team. Dieselbe, im Code bereits bewährte Methode für echte Live-Werte.
+
+**Für Woche 4 selbst nicht mehr rekonstruierbar:** die bereits gespeicherten Zwischenstände dieser Woche sind unwiederbringlich 0:0 – der neue Schutz lässt den "X von Y offen"-Satz für diese eine Woche einfach weg, statt eine unbelegte Zahl zu erfinden. Ab Woche 5 sammelt der reparierte `snapshot-live-scores.mjs` echte Zwischenstände.
+
+**Aufräumen:** `data/week-recaps.json` (Woche 4) gelöscht und unter dem korrigierten Code neu generiert.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
