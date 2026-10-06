@@ -689,6 +689,16 @@ Commit `33c61ad`, gepusht.
 
 **Aufräumen:** `data/week-recaps.json` (Woche 4) erneut gelöscht und unter dem korrigierten Code neu generiert.
 
+## 36. Wochenüberblick: Schlusssatz/Moral zu oft dasselbe Bank-Management-Thema
+
+**Nutzer-Meldung:** Der Schlusssatz der Wochenüberblicke wiederholt sich zu oft mit derselben "Bank im Griff haben"-Moral – zuletzt in Woche 4 ("wer seine Bank nicht im Griff hat, verschenkt den Sieg gleich mit."), davor schon in Woche 1 ("wer nicht, braucht offenbar einen Jaxson Dart in Bestform" – bank-adjacent) und Woche 2 ("Checkt eure Bank, bevor die Bank euch checkt.").
+
+**Root Cause:** `WEEK_SYSTEM_PROMPT` in `generate-recaps.mjs` gibt keine Anweisung zum Thema des Schlusssatzes vor – Claude wählt es frei. Da Bank-Fehlentscheidungen fast jede Woche als Fakt verfügbar sind (prominent, leicht zu einer Moral zuzuspitzen), greift das Modell beim freien Formulieren immer wieder auf dasselbe Motiv zurück, auch wenn andere Geschichten der Woche (Aussenseiter-Sieg, Comeback, Serie) mindestens genauso stark wären.
+
+**Fix:** `WEEK_SYSTEM_PROMPT` um eine explizite Anweisung ergänzt: der Schlusssatz/Moral soll aus der STÄRKSTEN Geschichte der jeweiligen Woche kommen, nicht automatisch aus der Bank-Fehlentscheidung, und das Thema soll von Woche zu Woche variieren statt immer wieder "Bank im Griff haben" zu wiederholen.
+
+**Aufräumen:** `data/week-recaps.json` (Woche 4) erneut gelöscht und unter der neuen Anweisung neu generiert.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
