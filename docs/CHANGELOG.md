@@ -1676,3 +1676,16 @@ data/week-recaps.json: Woche-3-Eintrag gelöscht (enthielt die falsche
 Code neu generiert.
 
 ## 2026-09-29 – `ba5d5ea` Changelog: Allzeit-Rekord-Fix + zwei weitere "vor der Saison"-Bugs dokumentiert
+
+## 2026-10-06 – `232d04c` Fix: Wochenüberblick behauptete fälschlich, alle Spiele seien vor MNF noch eng gewesen
+
+Zwei Bugs in countGamesOpenBeforeMonday(): Snapshot-Auswahl liess auch Dienstag-
+Snapshots durch (Datums-Filter-Bug, in selectPreMondaySnapshot() korrigiert und mit
+findMondayNightRescueFact() geteilt) und snapshot-live-scores.mjs lieferte während
+laufender Wochen durchgehend 0:0-Platzhalter statt echter Punktestände (totalPoints
+im mScoreboard-View ohne scoringPeriodId wird erst nach Wochenabschluss befüllt).
+Live-Scores werden jetzt wie fetchWeeklyKeyMomentsByTeam() per explizitem
+scoringPeriodId und Summe der Starter-appliedStatTotal berechnet. Zusätzlicher
+Schutz gegen künftige 0:0-Platzhalter-Snapshots. Woche-4-Wochenüberblick zur
+Neugenerierung gelöscht (alte Zwischenstände dieser Woche sind nicht mehr
+rekonstruierbar, Satz entfällt für diese Woche statt eine unbelegte Zahl zu zeigen).
