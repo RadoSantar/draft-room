@@ -255,8 +255,8 @@ function collectFacts(game) {
   if (game.draftValue) {
     const d = game.draftValue;
     facts.push({ category: 'draftValue', text: d.type === 'bargain'
-      ? `Schnäppchen der Woche: ${d.name} von ${d.team} wurde erst in Runde ${d.round} gedraftet und liefert jetzt ${d.points.toFixed(1)} Punkte als Standout des Spiels ab.`
-      : `Draft-Reue: ${d.name} von ${d.team} wurde bereits in Runde ${d.round} gedraftet, brachte aber nur ${d.points.toFixed(1)} Punkte – während ein Bankspieler ihn deutlich blamierte.` });
+      ? `Schnäppchen der Woche: ${d.name} von ${d.team} wurde erst in Draft-Runde ${d.round} gedraftet und liefert jetzt ${d.points.toFixed(1)} Punkte als Standout des Spiels ab. Schreibe IMMER "Draft-Runde ${d.round}", NIE nur "Runde ${d.round}" - das ist die Runde des Saison-Drafts, keine Spielwoche/Spielrunde.`
+      : `Draft-Reue: ${d.name} von ${d.team} wurde bereits in Draft-Runde ${d.round} gedraftet, brachte aber nur ${d.points.toFixed(1)} Punkte – während ein Bankspieler ihn deutlich blamierte. Schreibe IMMER "Draft-Runde ${d.round}", NIE nur "Runde ${d.round}" - das ist die Runde des Saison-Drafts, keine Spielwoche/Spielrunde.` });
   }
 
   if (game.empireStoryline) {
@@ -386,8 +386,8 @@ function collectFacts(game) {
   if (game.seasonDraftValue) {
     const d = game.seasonDraftValue;
     facts.push({ category: 'seasonDraftValue', text: d.type === 'bargain'
-      ? `Saison-Schnäppchen: ${d.name} (Runde ${d.round} gedraftet) hat schon ${d.totalPoints.toFixed(1)} Saisonpunkte für ${d.team} abgeliefert.`
-      : `Saison-Draft-Reue: ${d.name} (Runde ${d.round} gedraftet) kommt für ${d.team} nur auf ${d.avg.toFixed(1)} Punkte im Wochenschnitt.` });
+      ? `Saison-Schnäppchen: ${d.name} (in Draft-Runde ${d.round} gedraftet) hat schon ${d.totalPoints.toFixed(1)} Saisonpunkte für ${d.team} abgeliefert. Schreibe IMMER "Draft-Runde ${d.round}", NIE nur "Runde ${d.round}" - das ist die Runde des Saison-Drafts, keine Spielwoche/Spielrunde.`
+      : `Saison-Draft-Reue: ${d.name} (in Draft-Runde ${d.round} gedraftet) kommt für ${d.team} nur auf ${d.avg.toFixed(1)} Punkte im Wochenschnitt. Schreibe IMMER "Draft-Runde ${d.round}", NIE nur "Runde ${d.round}" - das ist die Runde des Saison-Drafts, keine Spielwoche/Spielrunde.` });
   }
 
   if (game.leagueActivity) {

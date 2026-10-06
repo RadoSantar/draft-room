@@ -679,6 +679,16 @@ Commit `33c61ad`, gepusht.
 
 **Aufräumen:** `data/week-recaps.json` (Woche 4) gelöscht und unter dem korrigierten Code neu generiert.
 
+## 35. Wochenüberblick: "Runde 10" beim Draft-Schnäppchen-Fakt mit Spielwoche verwechselbar
+
+**Nutzer-Meldung:** Im Woche-4-Wochenüberblick stand "Chuba Hubbards 75 Saisonpunkte aus Runde 10 hin oder her" – unklar, was mit "Runde 10" gemeint ist (es gibt keine Spielwoche 10, aktuell läuft erst Woche 4).
+
+**Root Cause:** Gemeint ist die DRAFT-Runde (Chuba Hubbard wurde in Runde 10 des Saison-Drafts gezogen, ein später/günstiger Pick, der trotzdem schon 75 Saisonpunkte gebracht hat – ein "Saison-Schnäppchen"-Fakt, kein Datenfehler). Der Fakt-Text in `generate-recaps.mjs` (`findSeasonDraftValueFact`-Verbraucher) formulierte das aber nur als Klammerzusatz `(Runde ${d.round} gedraftet)` – beim freien Zusammenfassen in den finalen Fliesstext ist das Wort "gedraftet" verlorengegangen, übrig blieb die mehrdeutige nackte Zahl "Runde 10".
+
+**Fix:** Sowohl `draftValue`- als auch `seasonDraftValue`-Fakt-Texte in `generate-recaps.mjs` von "Runde X" auf "Draft-Runde X" umgestellt (Begriff selbst disambiguiert jetzt, unabhängig davon ob der Rest des Satzes beim Schreiben gekürzt wird) und je eine explizite Anweisung direkt im Fakt ergänzt: "Schreibe IMMER 'Draft-Runde X', NIE nur 'Runde X' – das ist die Runde des Saison-Drafts, keine Spielwoche/Spielrunde." Gleiches Muster wie bei früheren Fakt-Bugs dieser Session (Einschränkung direkt im Fakt statt nur im allgemeinen System-Prompt).
+
+**Aufräumen:** `data/week-recaps.json` (Woche 4) erneut gelöscht und unter dem korrigierten Code neu generiert.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
