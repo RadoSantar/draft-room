@@ -1727,3 +1727,14 @@ Favorit auseinander, wird das als reiner Nebenfakt angeboten, ausdrücklich nich
 als Favoritenstatus. Betrifft buildPrompt/buildWeekPrompt/buildWeekPreviewPrompt.
 Woche-5-Recaps (Einzelspiele + Wochenüberblick) und die Woche-6-Vorschau zur
 Neugenerierung gelöscht.
+
+## 2026-10-13 – `f7db5dd` Fix: Saison-Upset-Zähler nutzte noch alte projektionsbasierte Favoriten-Logik
+
+archiveSeasonStats() (speist den saisonlangen Aussenseiter-Siege-Zähler in
+season-stats.json) hatte eine dritte, unabhängige Kopie der alten Projektions-
+basierten Favoriten-Berechnung, die der vorherige Fix nicht erfasst hatte -
+live beobachtet: ein nach Bilanz klar favorisiertes Team wurde als "Aussenseiter-
+Sieg der Saison" gezählt. recordBeforeGame()/favoriteByRecord() aus
+generate-recaps.mjs exportiert und hier wiederverwendet statt dupliziert.
+Historische Zähler für Wochen 1-5 bleiben unverändert (weeksArchived-Guard),
+ab Woche 6 greift die korrigierte Logik.
