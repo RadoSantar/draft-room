@@ -5,7 +5,7 @@
 // Schreibt NIE team-content.json (die handgeschriebenen Analysen/Ausblicke) – das bleibt
 // ausschliesslich manuell gepflegt.
 import { POS_MAP, TEAM_ABBR, projectedPoints, findSeasonProjection, buildOptimalLineup } from './scoring.mjs';
-import { generateRecapsForGames, generateWeekRecap, generateWeekPreview } from './generate-recaps.mjs';
+import { generateRecapsForGames, generateWeekRecap, generateWeekPreview, recordBeforeGame, favoriteByRecord } from './generate-recaps.mjs';
 import { SEASON, fetchLeague, readJsonSafe, writeJson, nowIso } from './espn-client.mjs';
 
 // Conference-Zuordnung – deckungsgleich mit TEAM_CONF in power-rankings.html/schedule.html.
@@ -1234,7 +1234,14 @@ async function archiveSeasonStats(week, enrichedGames, keyMomentsByTeam) {
 
   enrichedGames.forEach((g) => {
     if (g.winner === 'HOME' || g.winner === 'AWAY') {
-      const favoriteId = g.homeProj >= g.awayProj ? g.homeId : g.awayId;
+      // Favorit hier wie überall sonst aus der Sieg-Niederlage-Bilanz VOR diesem Spiel (nicht aus
+      // der Kaderstärke-Projektion) - siehe favoriteByRecord()/recordBeforeGame() in generate-
+      // recaps.mjs, dieselbe Logik, nur mit Team-IDs statt -Namen aufgerufen.
+      const homeWon = g.winner === 'HOME';
+      const awayWon = g.winner === 'AWAY';
+      const homeRecordBefore = recordBeforeGame(g.homeRecord, homeWon, awayWon, false);
+      const awayRecordBefore = recordBeforeGame(g.awayRecord, awayWon, homeWon, false);
+      const favoriteId = favoriteByRecord(g.homeId, g.awayId, homeRecordBefore, awayRecordBefore, g.homeProj, g.awayProj);
       const winnerId = g.winner === 'HOME' ? g.homeId : g.awayId;
       const wasUpset = favoriteId !== winnerId;
       [g.homeId, g.awayId].forEach((teamId) => {

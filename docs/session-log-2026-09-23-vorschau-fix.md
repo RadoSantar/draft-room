@@ -723,6 +723,12 @@ Commit `33c61ad`, gepusht.
 
 **Aufräumen:** `data/week-recaps.json` (Woche 5), alle 5 Einzel-Spiel-Recaps aus `data/game-recaps.json` für Woche 5, sowie `data/week-previews.json` (Woche 6, die aktuell einzige noch nicht gespielte/live angezeigte Vorschau) gelöscht und unter dem korrigierten Code neu generiert. Wochen 1-4 bewusst NICHT rückwirkend neu generiert (nicht angefragt, grösserer Eingriff) - der Fix gilt ab sofort für alle künftigen Recaps/Vorschauen.
 
+**Verifiziert, dabei dritte (inkonsistente) Stelle gefunden:** Im neu generierten Recap zu Run CMC vs. Zurich City Ravens (Woche 5) stand noch "Zurich City Ravens... nahm sich nebenbei gleich den zweiten Aussenseiter-Sieg der Saison" – obwohl Zurich laut Bilanz VOR diesem Spiel (3-1) klar favorisiert war gegen Run CMC (1-3), also gar kein Aussenseiter-Sieg war. Ursache: `archiveSeasonStats()` in `sync-espn.mjs` (speist den saisonlangen "Aussenseiter-Siege"-Zähler in `season-stats.json`, den `findUpsetTallyFact()` als Fakt ausgibt) hatte eine DRITTE, unabhängige Kopie der alten Projektions-basierten Favoriten-Logik (`favoriteId = g.homeProj >= g.awayProj ? ...`), die der Haupt-Fix nicht erfasst hatte.
+
+**Nachgezogener Fix:** `recordBeforeGame()` und `favoriteByRecord()` aus `generate-recaps.mjs` exportiert (identische Logik, Team-IDs statt -Namen funktionieren genauso, da die Funktion nur eines der beiden Argumente zurückgibt) und in `archiveSeasonStats()` importiert/verwendet statt der alten Projektions-Berechnung.
+
+**Bekannte, akzeptierte Einschränkung:** `season-stats.json`s `upsetWins`-Zähler für die WOCHEN 1-5 bleiben auf dem alten (Projektions-basierten) Stand, da `archiveSeasonStats()` bereits archivierte Wochen nicht neu berechnet (`weeksArchived`-Guard) – eine rückwirkende Korrektur der historischen Zähler wurde nicht angefragt und bewusst nicht vorgenommen. Ab Woche 6 nutzt der Zähler die neue, korrekte Bilanz-Logik.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.

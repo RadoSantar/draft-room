@@ -903,7 +903,9 @@ function fmtRecord(r) {
 // aus sync-espn.mjs) den Stand NACH der Woche zeigt - für die Favoriten-Frage zählt aber die Bilanz
 // VOR diesem Spiel, sonst würde "wer gewonnen hat" zirkulär zum Favoriten erklärt (ein Team, das von
 // 2-2 auf 3-2 gewinnt, hätte dann nachträglich als Favorit gegolten, nur weil es gewonnen hat).
-function recordBeforeGame(record, won, lost, tied) {
+// Exportiert, damit sync-espn.mjs (archiveSeasonStats(), Upset-Tally für die Saison) dieselbe Regel
+// nutzt statt sie ein zweites Mal mit der alten Projektions-Logik nachzubauen.
+export function recordBeforeGame(record, won, lost, tied) {
   if (!record) return null;
   return { wins: record.wins - (won ? 1 : 0), losses: record.losses - (lost ? 1 : 0), ties: (record.ties || 0) - (tied ? 1 : 0) };
 }
@@ -912,8 +914,9 @@ function recordBeforeGame(record, won, lost, tied) {
 // gegen ein 1-3-Team), NICHT mehr aus der Kaderstärke-Projektion - die sagt nur etwas über die
 // Rosterstärke dieser Woche, nicht darüber, wer im Saisonverlauf tatsächlich der Favorit ist. Ohne
 // Bilanz-Daten (z.B. Woche 1, oder exakt gleiche Bilanz) fällt die Entscheidung auf die Projektion
-// zurück, rein um nie ohne Antwort dazustehen.
-function favoriteByRecord(homeName, awayName, homeRecord, awayRecord, homeProj, awayProj) {
+// zurück, rein um nie ohne Antwort dazustehen. Die ersten beiden Parameter müssen keine Namen sein -
+// die Funktion gibt nur einen davon unverändert zurück, sync-espn.mjs übergibt hier Team-IDs.
+export function favoriteByRecord(homeName, awayName, homeRecord, awayRecord, homeProj, awayProj) {
   const winPct = (r) => {
     if (!r) return null;
     const played = r.wins + r.losses + (r.ties || 0);
