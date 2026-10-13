@@ -1715,3 +1715,15 @@ enrichedGames bekommen jetzt dieselben homeRecord/awayRecord-Felder wie der
 Wochen-Vorschau-Pfad, buildWeekPrompt zeigt die Bilanz jetzt explizit pro Team,
 WEEK_SYSTEM_PROMPT verbietet Charakterisierungen, die der Bilanz widersprechen.
 Woche-5-Wochenüberblick zur Neugenerierung gelöscht.
+
+## 2026-10-13 – `c9cee0b` Favorit in Recaps/Vorschau: Sieg-Niederlage-Bilanz statt Kaderstärke-Projektion
+
+Favorit wird jetzt über favoriteByRecord() aus der echten Sieg-Quote bestimmt
+(4-0-Team ist klar favorisiert gegen 1-3-Team), nicht mehr aus der wöchentlichen
+Kaderstärke-Projektion. Bei Recaps (nach dem Spiel) wird die Bilanz dafür erst
+auf den Stand VOR diesem Spiel zurückgerechnet (recordBeforeGame()), sonst würde
+der Spielausgang zirkulär zum Favoritenstatus. Fällt Projektions- und Bilanz-
+Favorit auseinander, wird das als reiner Nebenfakt angeboten, ausdrücklich nicht
+als Favoritenstatus. Betrifft buildPrompt/buildWeekPrompt/buildWeekPreviewPrompt.
+Woche-5-Recaps (Einzelspiele + Wochenüberblick) und die Woche-6-Vorschau zur
+Neugenerierung gelöscht.
