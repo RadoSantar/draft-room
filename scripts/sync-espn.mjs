@@ -2369,7 +2369,13 @@ async function main() {
         ...g,
         week: lastCompletedWeek,
         homeProj: starterTotalById[g.homeId] || 0,
-        awayProj: starterTotalById[g.awayId] || 0
+        awayProj: starterTotalById[g.awayId] || 0,
+        // Echte Saison-Bilanz (Stand NACH dieser Woche) mitgeben - selbes Feld wie bei den Vorschau-
+        // Spielen unten (homeRecord/awayRecord). Ohne das hatte der Wochenüberblick-Prompt keinerlei
+        // Bilanz-Grounding, wodurch Claude frei erfundene Saison-Charakterisierungen ("eine Saison
+        // voller Kantersiege") für ein Team mit tatsächlich nur 1 Sieg geschrieben hat - live beobachtet.
+        homeRecord: standingsById[g.homeId] ? { wins: standingsById[g.homeId].wins, losses: standingsById[g.homeId].losses, ties: standingsById[g.homeId].ties } : null,
+        awayRecord: standingsById[g.awayId] ? { wins: standingsById[g.awayId].wins, losses: standingsById[g.awayId].losses, ties: standingsById[g.awayId].ties } : null
       };
       return { ...base, ...findKeyMoments(base, keyMomentsByTeam[g.homeId], keyMomentsByTeam[g.awayId], ctx) };
     });

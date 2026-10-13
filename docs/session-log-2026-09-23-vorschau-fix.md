@@ -699,6 +699,19 @@ Commit `33c61ad`, gepusht.
 
 **Aufräumen:** `data/week-recaps.json` (Woche 4) erneut gelöscht und unter der neuen Anweisung neu generiert.
 
+## 37. Wochenüberblick: erfundene Saison-Charakterisierung ("voller Kantersiege" bei 1-4-Team)
+
+**Nutzer-Meldung:** Im Woche-5-Wochenüberblick stand "Run CMC, das trotz einer Saison voller Kantersiege nun zum dritten Mal in Folge verliert" – stimmt nicht, Run CMC hatte zu dem Zeitpunkt erst einen einzigen Saisonsieg (1-4, gegen Zurich City Ravens dann 1-4 nach der Niederlage... korrekt: 1 Sieg, 4 Niederlagen laut `standings.json`), keine "Saison voller Kantersiege".
+
+**Root Cause:** Reine Halluzination – `buildWeekPrompt()` in `generate-recaps.mjs` gab pro Spiel bisher NUR Endstand + Marge + Favoriten-Status (aktuelle Kaderstärke-Projektion) mit, aber KEINE echte Saison-Bilanz. Ohne dieses Grounding hat Claude sich beim Ausschmücken frei eine dramatische Vorgeschichte ausgedacht, die der Realität widerspricht. Der Wochen-VORSCHAU-Prompt (`buildWeekPreviewPrompt()`) hatte dieses Problem schon nicht, weil er über `homeRecord`/`awayRecord` die echte Bilanz je Team mitgibt ("(Bilanz 1-4)") – im Wochenüberblick fehlte dieses Feld aber bisher komplett.
+
+**Fix:**
+- `enrichedGames` in `sync-espn.mjs` (Wochenüberblick-Pfad) um dieselben `homeRecord`/`awayRecord`-Felder ergänzt, die der Vorschau-Pfad schon hatte (Bilanz-Stand nach der jeweiligen Woche, aus `standingsById`).
+- `buildWeekPrompt()` in `generate-recaps.mjs` zeigt die Bilanz jetzt explizit pro Team in der Spiel-Zeile ("(Saison-Bilanz 1-4)").
+- `WEEK_SYSTEM_PROMPT` um eine explizite Regel ergänzt: keine pauschalen Saison-Charakterisierungen erfinden, die der mitgelieferten Bilanz widersprechen.
+
+**Aufräumen:** `data/week-recaps.json` (Woche 5) gelöscht und unter dem korrigierten Code neu generiert.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.

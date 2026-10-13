@@ -64,7 +64,7 @@ Zeile 1: Eine einzige, knackige Schlagzeile (maximal 8 Wörter, reisserisch, OHN
 Dann eine Leerzeile.
 Danach 5-7 Sätze Fliesstext, der die Woche als Ganzes erzählt: wähle 4-5 der interessantesten Geschichten aus den gelieferten Spielen aus (grösster Aussenseiter-Sieg/Upset, beeindruckendste Einzelleistung, dramatischster Kollaps oder knappste Partie, grösste Bank-Fehlentscheidung, auffälligste Team-Storyline) und verwebe sie zu EINEM Erzählbogen mit echten Übergängen, nicht Spiel-für-Spiel abgehakt. Bei wenigen Spielen pro Woche deckt das oft schon alle ab – nur bei wirklich unspektakulären Partien darfst du eine weglassen, statt sie krampfhaft einzubauen.
 
-Stil: frech, schadenfroh, mit Sport-Boulevard-Schlagzeilen-Vokabular ("Drama", "Sensation", "Blamage", "Show"), Spott zielt immer auf Fantasy-Entscheidungen, nie persönlich auf die realen Menschen dahinter. Nutze nur die gelieferten Fakten, erfinde nichts. Vermeide technische Begriffe wie "Snapshot" oder "Datenpunkt" – sprich stattdessen von "Zwischenstand" oder "im Wochenverlauf". Schreib NUR Schlagzeile + Leerzeile + Fliesstext, keine weitere Einleitung, keine zusätzliche Überschrift wie "Wochenüberblick:".
+Stil: frech, schadenfroh, mit Sport-Boulevard-Schlagzeilen-Vokabular ("Drama", "Sensation", "Blamage", "Show"), Spott zielt immer auf Fantasy-Entscheidungen, nie persönlich auf die realen Menschen dahinter. Nutze nur die gelieferten Fakten, erfinde nichts - das gilt ausdrücklich auch für pauschale Saison-Charakterisierungen eines Teams ("eine Saison voller Kantersiege", "bisher dominant", "seit Wochen stark"): jedes Spiel kommt mit der echten Saison-Bilanz (Siege-Niederlagen) - widerspricht eine solche Formulierung dieser Bilanz (z.B. "voller Siege" bei einem Team mit nur 1 Sieg), schreib sie NICHT. Vermeide technische Begriffe wie "Snapshot" oder "Datenpunkt" – sprich stattdessen von "Zwischenstand" oder "im Wochenverlauf". Schreib NUR Schlagzeile + Leerzeile + Fliesstext, keine weitere Einleitung, keine zusätzliche Überschrift wie "Wochenüberblick:".
 
 Schlusssatz: falls du den Text mit einer Art Fazit/Moral abschliesst, wähle sie aus der STÄRKSTEN Geschichte DIESER Woche – nicht automatisch die Bank-Fehlentscheidung, auch wenn eine vorkommt. Variiere das Thema des Schlusssatzes von Woche zu Woche (z.B. Aussenseiter-Sieg, Papierform-Blamage, Comeback, Serie/Tabellensituation) statt immer wieder "Bank im Griff haben"/"Checkt eure Bank" o.ä. – das kam in mehreren aufeinanderfolgenden Wochen vor und wirkt dadurch wie eine Floskel statt wie ein auf DIESE Woche zugeschnittenes Fazit.`;
 
@@ -999,8 +999,13 @@ function buildWeekPrompt(games, openBeforeMonday) {
     const loser = game.winner === 'HOME' ? game.awayName : game.winner === 'AWAY' ? game.homeName : null;
     const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
     const wasUpset = winner && loser && winner !== favorite;
+    const homeRecord = game.homeRecord ? `${game.homeRecord.wins}-${game.homeRecord.losses}${game.homeRecord.ties ? '-' + game.homeRecord.ties : ''}` : null;
+    const awayRecord = game.awayRecord ? `${game.awayRecord.wins}-${game.awayRecord.losses}${game.awayRecord.ties ? '-' + game.awayRecord.ties : ''}` : null;
 
-    let line = `Spiel ${i + 1}: ${game.homeName} ${game.homeScore.toFixed(1)} : ${game.awayScore.toFixed(1)} ${game.awayName}.`;
+    // Echte Saison-Bilanz (Stand nach diesem Spiel) explizit mitgeben, als Grounding gegen erfundene
+    // Saison-Charakterisierungen ("eine Saison voller Kantersiege" o.ä. ohne Beleg) - live beobachtet
+    // bei einem 1-4-Team. Nur erwähnen, was die Bilanz tatsächlich hergibt, nichts dazuerfinden.
+    let line = `Spiel ${i + 1}: ${game.homeName}${homeRecord ? ' (Saison-Bilanz ' + homeRecord + ')' : ''} ${game.homeScore.toFixed(1)} : ${game.awayScore.toFixed(1)} ${game.awayName}${awayRecord ? ' (Saison-Bilanz ' + awayRecord + ')' : ''}.`;
     if (game.winner === 'TIE') {
       line += ' Unentschieden.';
     } else {
