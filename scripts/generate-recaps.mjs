@@ -893,14 +893,53 @@ function pickBadge(game, wasUpset, margin, categoryUsage, capPerCategory) {
   return chosen.label;
 }
 
+// Bilanz-Format "A-B" bzw. "A-B-C" bei Unentschieden, oder null ohne Daten (z.B. Woche 1).
+function fmtRecord(r) {
+  if (!r) return null;
+  return `${r.wins}-${r.losses}${r.ties ? '-' + r.ties : ''}`;
+}
+
+// Zieht das Ergebnis GENAU dieses Spiels aus einer Bilanz heraus, die (wie homeRecord/awayRecord
+// aus sync-espn.mjs) den Stand NACH der Woche zeigt - für die Favoriten-Frage zählt aber die Bilanz
+// VOR diesem Spiel, sonst würde "wer gewonnen hat" zirkulär zum Favoriten erklärt (ein Team, das von
+// 2-2 auf 3-2 gewinnt, hätte dann nachträglich als Favorit gegolten, nur weil es gewonnen hat).
+function recordBeforeGame(record, won, lost, tied) {
+  if (!record) return null;
+  return { wins: record.wins - (won ? 1 : 0), losses: record.losses - (lost ? 1 : 0), ties: (record.ties || 0) - (tied ? 1 : 0) };
+}
+
+// Favorit wird aus der ECHTEN Sieg-Niederlage-Bilanz bestimmt (ein 4-0-Team ist klar favorisiert
+// gegen ein 1-3-Team), NICHT mehr aus der Kaderstärke-Projektion - die sagt nur etwas über die
+// Rosterstärke dieser Woche, nicht darüber, wer im Saisonverlauf tatsächlich der Favorit ist. Ohne
+// Bilanz-Daten (z.B. Woche 1, oder exakt gleiche Bilanz) fällt die Entscheidung auf die Projektion
+// zurück, rein um nie ohne Antwort dazustehen.
+function favoriteByRecord(homeName, awayName, homeRecord, awayRecord, homeProj, awayProj) {
+  const winPct = (r) => {
+    if (!r) return null;
+    const played = r.wins + r.losses + (r.ties || 0);
+    return played ? (r.wins + 0.5 * (r.ties || 0)) / played : null;
+  };
+  const homePct = winPct(homeRecord);
+  const awayPct = winPct(awayRecord);
+  if (homePct != null && awayPct != null && homePct !== awayPct) return homePct > awayPct ? homeName : awayName;
+  return homeProj >= awayProj ? homeName : awayName;
+}
+
 function buildPrompt(game, facts, categoryUsage) {
   const margin = Math.abs(game.homeScore - game.awayScore);
   const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
   const loser = game.winner === 'HOME' ? game.awayName : game.winner === 'AWAY' ? game.homeName : null;
-  const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+  const homeWon = game.winner === 'HOME';
+  const awayWon = game.winner === 'AWAY';
+  const tied = game.winner === 'TIE';
+  const homeRecordBefore = recordBeforeGame(game.homeRecord, homeWon, awayWon, tied);
+  const awayRecordBefore = recordBeforeGame(game.awayRecord, awayWon, homeWon, tied);
+  const favorite = favoriteByRecord(game.homeName, game.awayName, homeRecordBefore, awayRecordBefore, game.homeProj, game.awayProj);
   const wasUpset = winner && loser && winner !== favorite;
+  const projFavorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+  const projDivergesFromRecord = homeRecordBefore && awayRecordBefore && projFavorite !== favorite;
 
-  let context = `Woche ${game.week}: ${game.homeName} (Vorschau-Stärke: ${game.homeProj.toFixed(0)} Punkte-Projektion für die Saison) gegen ${game.awayName} (${game.awayProj.toFixed(0)}). `;
+  let context = `Woche ${game.week}: ${game.homeName}${homeRecordBefore ? ` (Bilanz vor diesem Spiel: ${fmtRecord(homeRecordBefore)})` : ''} gegen ${game.awayName}${awayRecordBefore ? ` (Bilanz vor diesem Spiel: ${fmtRecord(awayRecordBefore)})` : ''}. Kaderstärke-Projektion für diese Woche: ${game.homeName} ${game.homeProj.toFixed(0)}, ${game.awayName} ${game.awayProj.toFixed(0)}. `;
   if (game.playoffTier === 'WINNERS_BRACKET') {
     context += 'Playoff-Kontext: Dieses Spiel gehört zum Gewinner-Bracket der Playoffs – hier geht es um die Championship. ';
   } else if (game.playoffTier === 'LOSERS_BRACKET') {
@@ -911,14 +950,15 @@ function buildPrompt(game, facts, categoryUsage) {
     context += 'Das Spiel endete unentschieden. ';
   } else {
     context += `${winner} gewinnt mit ${margin.toFixed(1)} Punkten Vorsprung gegen ${loser}. `;
-    // "vor der Saison" wäre hier falsch/unbelegt - favorite kommt aus der AKTUELLEN Kaderstärke-
-    // Projektion DIESER Woche (homeProj/awayProj, wöchentlich neu berechnet), nicht aus einem echten
-    // Vor-Saison-Wert (siehe Session-Log: exakt dieser Fehler wurde live in Recap-Texten beobachtet -
-    // ein Team wurde fälschlich als "schon vor der Saison Favorit" bezeichnet, obwohl es laut dem
-    // echten Vor-Saison-Power-Ranking gar nicht das stärkere Team war).
+    // Favorit = bessere Sieg-Niederlage-Bilanz VOR diesem Spiel, NICHT die Kaderstärke-Projektion
+    // (siehe favoriteByRecord() oben - frühere Fehler kamen davon, Projektion und Favoritenstatus
+    // gleichzusetzen, u.a. ein Team fälschlich als "schon vor der Saison Favorit" bezeichnet).
     context += wasUpset
-      ? `${favorite} galt diese Woche laut Kaderstärke-Projektion als das stärker aufgestellte Team – ${winner} hat hier also den Außenseiter-Sieg gelandet. `
-      : `${winner} war diese Woche schon laut Kaderstärke-Projektion das stärker aufgestellte Team und bestätigt das hier. `;
+      ? `${favorite} ging laut Sieg-Niederlage-Bilanz als Favorit in dieses Spiel – ${winner} hat hier also den Bilanz-Außenseiter-Sieg gelandet. `
+      : `${winner} ging schon laut Bilanz als Favorit in dieses Spiel und bestätigt das hier. `;
+    if (projDivergesFromRecord) {
+      context += `Nebenfakt (darfst du kurz erwähnen, aber NICHT als Favoritenstatus framen - eine bessere Projektion macht noch keinen Favoriten): ${projFavorite} hatte diese Woche laut Kaderstärke-Projektion rechnerisch die stärkere Aufstellung, war aber trotzdem nicht der Bilanz-Favorit. `;
+    }
   }
 
   facts.forEach((fact) => { context += fact.text + ' '; });
@@ -997,10 +1037,17 @@ function buildWeekPrompt(games, openBeforeMonday) {
     const margin = Math.abs(game.homeScore - game.awayScore);
     const winner = game.winner === 'HOME' ? game.homeName : game.winner === 'AWAY' ? game.awayName : null;
     const loser = game.winner === 'HOME' ? game.awayName : game.winner === 'AWAY' ? game.homeName : null;
-    const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+    const homeWon = game.winner === 'HOME';
+    const awayWon = game.winner === 'AWAY';
+    const tied = game.winner === 'TIE';
+    const homeRecordBefore = recordBeforeGame(game.homeRecord, homeWon, awayWon, tied);
+    const awayRecordBefore = recordBeforeGame(game.awayRecord, awayWon, homeWon, tied);
+    const favorite = favoriteByRecord(game.homeName, game.awayName, homeRecordBefore, awayRecordBefore, game.homeProj, game.awayProj);
     const wasUpset = winner && loser && winner !== favorite;
-    const homeRecord = game.homeRecord ? `${game.homeRecord.wins}-${game.homeRecord.losses}${game.homeRecord.ties ? '-' + game.homeRecord.ties : ''}` : null;
-    const awayRecord = game.awayRecord ? `${game.awayRecord.wins}-${game.awayRecord.losses}${game.awayRecord.ties ? '-' + game.awayRecord.ties : ''}` : null;
+    const projFavorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+    const projDivergesFromRecord = homeRecordBefore && awayRecordBefore && projFavorite !== favorite;
+    const homeRecord = fmtRecord(game.homeRecord);
+    const awayRecord = fmtRecord(game.awayRecord);
 
     // Echte Saison-Bilanz (Stand nach diesem Spiel) explizit mitgeben, als Grounding gegen erfundene
     // Saison-Charakterisierungen ("eine Saison voller Kantersiege" o.ä. ohne Beleg) - live beobachtet
@@ -1010,10 +1057,12 @@ function buildWeekPrompt(games, openBeforeMonday) {
       line += ' Unentschieden.';
     } else {
       line += ` ${winner} gewinnt mit ${margin.toFixed(1)} Punkten gegen ${loser}.`;
-      // "vor der Saison" wäre hier falsch/unbelegt - favorite kommt aus der AKTUELLEN Kaderstärke-
-      // Projektion DIESER Woche (homeProj/awayProj), nicht aus einem echten Vor-Saison-Wert (siehe
-      // Session-Log: exakt dieser Fehler wurde live in Recap-Texten beobachtet).
-      line += wasUpset ? ` Aussenseiter-Sieg, ${favorite} galt diese Woche laut Kaderstärke als stärker.` : '';
+      // Favorit = bessere Sieg-Niederlage-Bilanz VOR diesem Spiel, NICHT die Kaderstärke-Projektion
+      // (siehe favoriteByRecord() weiter oben in dieser Datei).
+      line += wasUpset ? ` Aussenseiter-Sieg laut Bilanz, ${favorite} ging als Bilanz-Favorit in dieses Spiel.` : '';
+      if (projDivergesFromRecord) {
+        line += ` Nebenfakt (nicht als Favoritenstatus framen): ${projFavorite} hatte diese Woche laut Kaderstärke-Projektion die rechnerisch stärkere Aufstellung, war aber trotzdem nicht der Bilanz-Favorit.`;
+      }
     }
 
     const facts = pickFactsForGame(game, categoryUsage, '-week', 2, 2);
@@ -1159,11 +1208,19 @@ function buildWeekPreviewPrompt(games) {
   }
   context += `Schreibe daraus EINE Wochen-Vorschau:\n\n`;
   games.forEach((game, i) => {
-    const favorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
-    const homeRecord = game.homeRecord ? `${game.homeRecord.wins}-${game.homeRecord.losses}${game.homeRecord.ties ? '-' + game.homeRecord.ties : ''}` : '0-0';
-    const awayRecord = game.awayRecord ? `${game.awayRecord.wins}-${game.awayRecord.losses}${game.awayRecord.ties ? '-' + game.awayRecord.ties : ''}` : '0-0';
+    // Favorit = bessere aktuelle Sieg-Niederlage-Bilanz, NICHT die Kaderstärke-Projektion (siehe
+    // favoriteByRecord() weiter oben in dieser Datei) - bei der Vorschau ist game.homeRecord/
+    // awayRecord bereits der Stand VOR diesem (noch nicht gespielten) Spiel, keine Anpassung nötig.
+    const favorite = favoriteByRecord(game.homeName, game.awayName, game.homeRecord, game.awayRecord, game.homeProj, game.awayProj);
+    const projFavorite = game.homeProj >= game.awayProj ? game.homeName : game.awayName;
+    const projDivergesFromRecord = game.homeRecord && game.awayRecord && projFavorite !== favorite;
+    const homeRecord = fmtRecord(game.homeRecord) || '0-0';
+    const awayRecord = fmtRecord(game.awayRecord) || '0-0';
 
-    let line = `Spiel ${i + 1}: ${game.homeName} (Bilanz ${homeRecord}) gegen ${game.awayName} (Bilanz ${awayRecord}). Papierform-Favorit laut Vorschau-Stärke: ${favorite}.`;
+    let line = `Spiel ${i + 1}: ${game.homeName} (Bilanz ${homeRecord}) gegen ${game.awayName} (Bilanz ${awayRecord}). Bilanz-Favorit: ${favorite}.`;
+    if (projDivergesFromRecord) {
+      line += ` Nebenfakt (nicht als Favoritenstatus framen): ${projFavorite} hat diese Woche laut Kaderstärke-Projektion die rechnerisch stärkere Aufstellung, ist aber trotzdem nicht der Bilanz-Favorit.`;
+    }
 
     const facts = pickFactsForGame(game, categoryUsage, '-preview', 2, 2, collectPreviewFacts);
     facts.forEach((fact) => { line += ' ' + fact.text; });

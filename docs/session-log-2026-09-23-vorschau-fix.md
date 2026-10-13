@@ -712,6 +712,17 @@ Commit `33c61ad`, gepusht.
 
 **Aufräumen:** `data/week-recaps.json` (Woche 5) gelöscht und unter dem korrigierten Code neu generiert.
 
+## 38. Favorit in Recaps/Vorschau neu definiert: Bilanz statt Kaderstärke-Projektion
+
+**Nutzer-Anfrage:** Der "Favorit" in den Recaps soll nicht mehr aus der Kaderstärke-Projektion bestimmt werden, sondern aus der Sieg-Niederlage-Bilanz – ein 4-0-Team ist klar favorisiert gegen ein 1-3-Team, unabhängig vom Rosterwert. Präzisierung auf Nachfrage: die Projektion darf weiterhin als Nebeninfo erwähnt werden ("der Underdog hatte die bessere Projektion"), macht ein Team dadurch aber nicht zum Favoriten.
+
+**Umsetzung in `generate-recaps.mjs`:**
+- Neue Hilfsfunktionen `fmtRecord()`, `recordBeforeGame()` und `favoriteByRecord()`: Favorit = Team mit der besseren Sieg-Quote (`wins/(wins+losses+ties)`); bei exakt gleicher Bilanz oder fehlenden Daten (z.B. Woche 1) fällt die Entscheidung auf die Projektion zurück, rein um nie ohne Antwort dazustehen.
+- Wichtige Feinheit: Bei bereits gespielten Spielen (`buildPrompt()`, `buildWeekPrompt()`) zeigt `game.homeRecord`/`awayRecord` die Bilanz NACH der Woche. Für die Favoriten-Frage wird daraus per `recordBeforeGame()` erst die Bilanz VOR diesem Spiel zurückgerechnet (Ergebnis dieses einen Spiels wieder abgezogen) – sonst würde "wer gewonnen hat" zirkulär zum Favoriten erklärt (ein Team, das von 2-2 auf 3-2 gewinnt, hätte sonst nachträglich als Favorit gegolten). Bei der Wochen-Vorschau (`buildWeekPreviewPrompt()`) ist die Bilanz ohnehin schon die VOR dem Spiel, keine Anpassung nötig.
+- Alle drei Prompt-Builder (`buildPrompt`, `buildWeekPrompt`, `buildWeekPreviewPrompt`) zeigen jetzt zusätzlich einen "Nebenfakt", wenn Bilanz-Favorit und Projektions-Favorit auseinanderfallen – ausdrücklich NICHT als Favoritenstatus geframt, nur als Zahlen-Kontrast erwähnbar.
+
+**Aufräumen:** `data/week-recaps.json` (Woche 5), alle 5 Einzel-Spiel-Recaps aus `data/game-recaps.json` für Woche 5, sowie `data/week-previews.json` (Woche 6, die aktuell einzige noch nicht gespielte/live angezeigte Vorschau) gelöscht und unter dem korrigierten Code neu generiert. Wochen 1-4 bewusst NICHT rückwirkend neu generiert (nicht angefragt, grösserer Eingriff) - der Fix gilt ab sofort für alle künftigen Recaps/Vorschauen.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
