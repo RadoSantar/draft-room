@@ -1705,3 +1705,13 @@ wodurch Claude beim freien Formulieren wiederholt auf "Bank im Griff haben" als
 Moral zurückgriff (Wochen 1, 2 und 4 betroffen). Anweisung ergänzt: Schlusssatz
 soll aus der stärksten Geschichte DIESER Woche kommen und das Thema variieren.
 Woche-4-Wochenüberblick zur Neugenerierung gelöscht.
+
+## 2026-10-13 – `3ba3e68` Fix: Wochenüberblick erfand Saison-Charakterisierung ohne Bilanz-Grounding
+
+buildWeekPrompt() gab pro Spiel bisher nur Endstand/Marge/Favoriten-Status mit,
+keine echte Saison-Bilanz - dadurch konnte Claude sich eine falsche Vorgeschichte
+ausdenken ("eine Saison voller Kantersiege" für ein Team mit nur 1 Saisonsieg).
+enrichedGames bekommen jetzt dieselben homeRecord/awayRecord-Felder wie der
+Wochen-Vorschau-Pfad, buildWeekPrompt zeigt die Bilanz jetzt explizit pro Team,
+WEEK_SYSTEM_PROMPT verbietet Charakterisierungen, die der Bilanz widersprechen.
+Woche-5-Wochenüberblick zur Neugenerierung gelöscht.
