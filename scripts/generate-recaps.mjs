@@ -1208,6 +1208,12 @@ function buildWeekPreviewPrompt(games) {
     context += `Fakt: ${unbeaten[0].name} ist aktuell das EINZIGE noch ungeschlagene Team der Liga - das darfst du so hervorheben.\n`;
   } else if (unbeaten.length > 1) {
     context += `Fakt: Aktuell sind ${unbeaten.length} Teams noch ungeschlagen: ${unbeaten.map((t) => t.name).join(', ')}. KEINES davon ist "das einzige ungeschlagene Team" - behaupte das nicht, auch nicht implizit.\n`;
+  } else {
+    // Ohne diesen expliziten Gegenfakt hat Claude live (27.10.2026, Woche-8-Vorschau) frei das Wort
+    // "ungeschlagen" für die beiden Tabellenführer verwendet, obwohl ihre eigene mitgelieferte
+    // Bilanz (6-1) im selben Satz eine Niederlage auswies - reine Floskel ("die Besten der Liga"),
+    // nicht durch die Daten gedeckt. Jetzt ausdrücklich dementiert, auch wenn kein Team betroffen ist.
+    context += `Fakt: AKTUELL IST KEIN TEAM DER LIGA MEHR UNGESCHLAGEN - jedes Team hat mindestens eine Niederlage. Nenne niemanden "ungeschlagen"/"ohne Niederlage"/"makellos", auch nicht die Tabellenführer - prüfe bei jedem Team erst die mitgelieferte Bilanz, bevor du es so beschreibst.\n`;
   }
   context += `Schreibe daraus EINE Wochen-Vorschau:\n\n`;
   games.forEach((game, i) => {

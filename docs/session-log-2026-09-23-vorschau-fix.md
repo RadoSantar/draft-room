@@ -729,6 +729,16 @@ Commit `33c61ad`, gepusht.
 
 **Bekannte, akzeptierte Einschränkung:** `season-stats.json`s `upsetWins`-Zähler für die WOCHEN 1-5 bleiben auf dem alten (Projektions-basierten) Stand, da `archiveSeasonStats()` bereits archivierte Wochen nicht neu berechnet (`weeksArchived`-Guard) – eine rückwirkende Korrektur der historischen Zähler wurde nicht angefragt und bewusst nicht vorgenommen. Ab Woche 6 nutzt der Zähler die neue, korrekte Bilanz-Logik.
 
+## 39. Wochen-Vorschau: Tabellenführer fälschlich "ungeschlagen" genannt trotz eigener 6-1-Bilanz
+
+**Nutzer-Meldung:** Die Woche-8-Vorschau nannte TM06 und Buhaaner "die beiden ungeschlagenen Aushängeschilder... (beide 6-1)" – widersprüchlich, bei 6-1 hat jedes Team schon einmal verloren.
+
+**Root Cause:** `buildWeekPreviewPrompt()` in `generate-recaps.mjs` berechnet vorab, wie viele Teams wirklich ungeschlagen sind (`unbeaten`, `losses === 0`), und gibt dazu einen expliziten Fakt mit – aber NUR für die Fälle "genau 1 ungeschlagenes Team" und "mehrere ungeschlagene Teams". Für den Fall "NIEMAND ist mehr ungeschlagen" (0 Teams mit `losses === 0`) fehlte der Gegenfakt komplett – Claude bekam dazu gar keine Anweisung und hat sich frei das Wort "ungeschlagen" als Floskel für die beiden Tabellenführer ausgedacht, trotz der im selben Satz korrekt mitgelieferten 6-1-Bilanz.
+
+**Fix:** Dritten `else`-Zweig ergänzt, der explizit sagt: "AKTUELL IST KEIN TEAM DER LIGA MEHR UNGESCHLAGEN" und verbietet die Wörter "ungeschlagen"/"ohne Niederlage"/"makellos" für jedes Team, solange dieser Fall zutrifft.
+
+**Aufräumen:** `data/week-previews.json` (Woche 8, aktuell einzige live angezeigte Vorschau) gelöscht und unter dem korrigierten Code neu generiert.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.
