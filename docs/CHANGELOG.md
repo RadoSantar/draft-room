@@ -1738,3 +1738,12 @@ Sieg der Saison" gezählt. recordBeforeGame()/favoriteByRecord() aus
 generate-recaps.mjs exportiert und hier wiederverwendet statt dupliziert.
 Historische Zähler für Wochen 1-5 bleiben unverändert (weeksArchived-Guard),
 ab Woche 6 greift die korrigierte Logik.
+
+## 2026-10-28 – `5140832` Fix: Wochen-Vorschau nannte Tabellenführer fälschlich "ungeschlagen" bei 6-1
+
+buildWeekPreviewPrompt() gab einen expliziten Ungeschlagen-Fakt nur für "genau 1"
+oder "mehrere ungeschlagene Teams" mit - für den Fall "niemand mehr ungeschlagen"
+fehlte der Gegenfakt komplett, wodurch Claude sich das Wort frei für die beiden
+Tabellenführer ausgedacht hat, trotz korrekt mitgelieferter 6-1-Bilanz im selben
+Satz. Dritten else-Zweig ergänzt, der das explizit dementiert. Woche-8-Vorschau
+zur Neugenerierung gelöscht.
