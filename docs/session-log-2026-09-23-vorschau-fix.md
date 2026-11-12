@@ -739,6 +739,24 @@ Commit `33c61ad`, gepusht.
 
 **Aufräumen:** `data/week-previews.json` (Woche 8, aktuell einzige live angezeigte Vorschau) gelöscht und unter dem korrigierten Code neu generiert.
 
+## 40. Playoff-Chancen: Cutoff/Cushion nutzten globales Minimum statt eigener Conference
+
+**Nutzer-Frage:** Beachtet die Playoff-Chancen-Tabelle auf "mein Team" wirklich, dass nur Platz 1&2 je Conference (AFC/NFC) in die Playoffs kommen?
+
+**Antwort/Befund:** Die "in/out"-Einteilung selbst (Seeds 1-4, Status "in") war schon korrekt conference-bewusst (bereits bei Punkt 31 früher in dieser Session gefixt). ABER: `cutoffWins` in `computePlayoffPicture()` war das GLOBALE Minimum der beiden Conference-2.-Plätze - für die "wie viele Siege noch nötig" (`winsBehind`)-/"eliminated"-Einschätzung nicht qualifizierter Teams UND für das "Vorsprung"-Cushion bereits qualifizierter Teams wurde dieser globale Wert für ALLE Teams verwendet, egal in welcher Conference. Bei unterschiedlich starken Conferences unterschätzt das den echten Rückstand für Teams in der stärkeren Conference (ihr tatsächlicher Cutoff liegt höher als der globale). Mit synthetischen Testdaten (zwei absichtlich unterschiedlich starke Conferences) eindeutig reproduziert, bevor der echte Fix geschrieben wurde - mit echten Live-Daten aktuell nicht sichtbar, weil beide Conferences zufällig denselben 2.-Platz-Wert haben.
+
+**Fix:** `computePlayoffPicture()` liefert jetzt zusätzlich `cutoffFor(teamId)` (Win-Stand des aktuellen 2. Platzes DERSELBEN Conference - die Hürde für ein chasing Team) und `threatFor(teamId)` (Rang 3 derselben Conference - die Bedrohung/das Cushion für ein bereits qualifiziertes Team). Alle drei Verbraucher darauf umgestellt: der `playoff-picture.json`-Block in `main()` (für my-team.html), sowie `findPlayoffRaceFact()` (Recap-Storyline-Fakt) - beide hatten vorher eigene, unabhängige Kopien derselben globalen (falschen) Logik.
+
+**Eigener Fehler während der Umsetzung gefunden und korrigiert, bevor er committed wurde:** Erster Entwurf von `cutoffFor()` griff versehentlich auf Rang 3 (Index 2) statt Rang 2 (Index 1) der Conference zu - per Node-Testskript mit synthetischen Daten sofort als falsch erkannt (lieferte trivial den eigenen Wert eines Rang-3-Teams zurück) und vor dem Commit berichtigt.
+
+## 41. Rivalitäten auf hall-of-fame.html: Kacheln statt dauerhaft ausgeklappter Listen
+
+**Nutzer-Wunsch:** Rivalitäten-Sektion soll nur noch Matchup-Kacheln zeigen (z.B. "Apukalypse Now vs. Tackleberry Finn"), die man aufklappen kann, um die einzelnen Duell-Ergebnisse zu sehen - nimmt sonst zu viel Platz ein, wenn mehrere Doppel-Duelle gleichzeitig alle ausgeklappt dastehen.
+
+**Umsetzung:** `renderRivalries()` baut jetzt `<details class="hof-rivalry-card js-animatable"><summary>Team A vs. Team B</summary>...</details>` statt eines dauerhaft offenen `<div>`. Styling als Pill-Button im selben Look wie `.tx-week summary` auf power-rankings.html (Hintergrund/Rahmen/Hover-zu-Amber/+-Minus-Marker) - konsistent mit dem schon etablierten Muster dieser Session, nachdem einfache Text-Links an anderer Stelle als "nicht wie ein Button erkennbar" kritisiert wurden. `initAnimatableDetails()` (shared.js) wird bereits nach `renderRivalries()` aufgerufen, keine Änderung an der Aufruf-Reihenfolge nötig.
+
+**Verifiziert:** Mit echten Live-Daten per Playwright gegen einen lokalen Server getestet - alle 6 aktuellen Doppel-Duelle erscheinen korrekt als eingeklappte Kacheln, Klick auf eine Kachel klappt sie auf und zeigt beide Spiel-Ergebnisse (Wochen-Nummer, Endstand, Sieger) wie bisher.
+
 ## Offene, noch nicht umgesetzte Punkte
 - #12: Punkterechner – QB-Rushing-First-Down-Bonus nachrüsten.
 - #13: Punkterechner – DST-Lücken (Forced Fumbles, Safeties, geblockte Kicks) prüfen.

@@ -261,7 +261,30 @@ function computePlayoffPicture(standings, confStandings) {
     .map((t, i) => ({ ...t, seed: i + 1 }));
   const outside = outsidePool.slice().sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor);
   const cutoffWins = playoffTeams.length ? playoffTeams[playoffTeams.length - 1].wins : 0;
-  return { playoffTeams, outside, cutoffWins };
+
+  // Conference-eigener Cutoff/Bedrohung: Qualifikation läuft pro Conference (Top 2 AFC + Top 2
+  // NFC), nicht über eine gemeinsame Top-4-Tabelle. Für ein noch nicht qualifiziertes Team ist der
+  // zu knackende Wert der WIN-STAND DES AKTUELLEN 2.-PLATZES DERSELBEN CONFERENCE (confSorted[conf]
+  // Index 1 - wer den überholt, übernimmt dessen Platz); für ein bereits qualifiziertes Team ist die
+  // Bedrohung (Cushion) der nächstbeste NICHT qualifizierte Herausforderer derselben Conference
+  // (Index 2, Rang 3). NICHT das globale Minimum über beide Conferences (cutoffWins oben), das ein
+  // Team in der stärkeren Conference zu optimistisch einschätzen würde. Bug live entdeckt, als beide
+  // Conferences zufällig denselben Cutoff hatten und der Fehler dadurch unsichtbar blieb.
+  const confSorted = {};
+  standings.forEach((s) => {
+    const cs = confStandings[s.id];
+    if (!cs) return;
+    (confSorted[cs.conf] = confSorted[cs.conf] || []).push(s);
+  });
+  Object.keys(confSorted).forEach((conf) => confSorted[conf].sort((a, b) => b.wins - a.wins || b.pointsFor - a.pointsFor));
+  const cutoffFor = (teamId) => {
+    const conf = confStandings[teamId]?.conf;
+    const secondSeed = confSorted[conf]?.[1];
+    return secondSeed ? secondSeed.wins : cutoffWins;
+  };
+  const threatFor = (teamId) => confSorted[confStandings[teamId]?.conf]?.[2] || null;
+
+  return { playoffTeams, outside, cutoffWins, cutoffFor, threatFor };
 }
 
 // Playoff- und Consolation-Bracket (Wochen 16+17) für schedule.html. Seeds 1-4 kommen aus
@@ -355,26 +378,28 @@ function buildPlayoffBracket(standings, confStandings, scoreboard) {
 // Playoff-Rennen-Kontext ab Woche 8: steht ein Team aktuell auf einem Playoff-Platz (mit wie viel
 // Polster), jagt es den letzten Platz noch ein, oder ist es rechnerisch schon draussen (Elimination
 // hier als einfache Maximal-Siege-Schranke: selbst mit ausschliesslich Siegen aus allen verbleibenden
-// Spielen würde es nicht mehr an den aktuellen 4. Seed herankommen – eine bewusst simple Näherung
-// ohne Restspielplan-Simulation, aber als "rechnerisch chancenlos"-Aussage korrekt). Nur für Wochen
-// 8-15 relevant, danach steht der Bracket fest (siehe playoffTier).
+// Spielen würde es nicht mehr an den relevanten Cutoff DERSELBEN Conference herankommen – eine
+// bewusst simple Näherung ohne Restspielplan-Simulation, aber als "rechnerisch chancenlos"-Aussage
+// korrekt, siehe cutoffFor()/threatFor() in computePlayoffPicture()). Nur für Wochen 8-15 relevant,
+// danach steht der Bracket fest (siehe playoffTier).
 function findPlayoffRaceFact(game, standings, confStandings) {
   if (game.week < 8 || game.week > 15) return null;
-  const { playoffTeams, outside, cutoffWins } = computePlayoffPicture(standings, confStandings);
+  const { playoffTeams, cutoffFor, threatFor } = computePlayoffPicture(standings, confStandings);
   const remainingGames = 15 - game.week;
 
   const describe = (teamId, teamName) => {
     const seeded = playoffTeams.find((t) => t.id === teamId);
     if (seeded) {
-      const firstOut = outside[0];
-      const cushion = firstOut ? seeded.wins - firstOut.wins : null;
+      const threat = threatFor(teamId);
+      const cushion = threat ? seeded.wins - threat.wins : null;
       return { team: teamName, status: 'in', seed: seeded.seed, cushion };
     }
     const out = standings.find((s) => s.id === teamId);
     if (!out) return null;
+    const ownCutoff = cutoffFor(teamId);
     const maxPossibleWins = out.wins + remainingGames;
-    if (maxPossibleWins < cutoffWins) return { team: teamName, status: 'eliminated' };
-    return { team: teamName, status: 'chasing', winsBehind: cutoffWins - out.wins };
+    if (maxPossibleWins < ownCutoff) return { team: teamName, status: 'eliminated' };
+    return { team: teamName, status: 'chasing', winsBehind: ownCutoff - out.wins };
   };
 
   const home = describe(game.homeId, game.homeName);
@@ -2286,24 +2311,32 @@ async function main() {
   // für ALLE Teams auf einmal statt nur die 2 Teams eines einzelnen Spiels. Restspiele = 15
   // (reguläre Saisonlänge dieser Liga, siehe TOTAL_SEASON_WEEKS in my-team.html) minus zuletzt
   // komplett gewertete Woche. "eliminated" = selbst mit ausschliesslich Siegen aus allen
-  // verbleibenden Spielen käme das Team nicht mehr an den aktuellen 4. Seed heran - eine bewusst
+  // verbleibenden Spielen käme das Team nicht mehr an den relevanten Cutoff heran - eine bewusst
   // simple Näherung ohne echte Restspielplan-Simulation (kein Playoff-Tiebreaker über Punkte
   // simuliert), aber als "rechnerisch chancenlos"-Aussage korrekt.
+  //
+  // WICHTIG: der relevante Cutoff ist der 2.-Platz-Wert der EIGENEN Conference, nicht ein globaler
+  // Wert über beide Conferences hinweg - Qualifikation läuft ja pro Conference (Top 2 AFC + Top 2
+  // NFC), nicht nach einer gemeinsamen Top-4-Tabelle. Mit cutoffWins (= Minimum der beiden
+  // Conference-Cutoffs) für ALLE Teams zu rechnen, würde ein Team in der stärkeren Conference zu
+  // optimistisch einschätzen (sein echter Cutoff liegt höher) - live als Bug erkannt, als beide
+  // Conferences zufällig denselben Cutoff hatten und der Fehler dadurch nicht sichtbar war.
   const REGULAR_SEASON_WEEKS = 15;
   const remainingGames = Math.max(0, REGULAR_SEASON_WEEKS - lastCompletedWeek);
-  const { playoffTeams, outside, cutoffWins } = computePlayoffPicture(standings, confStandings);
+  const { playoffTeams, cutoffWins, cutoffFor, threatFor } = computePlayoffPicture(standings, confStandings);
   const playoffPictureTeams = standings.map((s) => {
     const seeded = playoffTeams.find((t) => t.id === s.id);
     if (seeded) {
-      const firstOut = outside[0];
-      const cushion = firstOut ? seeded.wins - firstOut.wins : null;
+      const threat = threatFor(s.id);
+      const cushion = threat ? seeded.wins - threat.wins : null;
       return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'in', seed: seeded.seed, cushion, winsBehind: null };
     }
+    const ownCutoff = cutoffFor(s.id);
     const maxPossibleWins = s.wins + remainingGames;
-    if (maxPossibleWins < cutoffWins) {
+    if (maxPossibleWins < ownCutoff) {
       return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'eliminated', seed: null, cushion: null, winsBehind: null };
     }
-    return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'chasing', seed: null, cushion: null, winsBehind: cutoffWins - s.wins };
+    return { id: s.id, name: s.name, wins: s.wins, losses: s.losses, ties: s.ties, status: 'chasing', seed: null, cushion: null, winsBehind: ownCutoff - s.wins };
   });
   await writeJson('playoff-picture.json', {
     lastUpdated: nowIso(),

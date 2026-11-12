@@ -139,9 +139,33 @@
   .hof-highlight-body{font-size:14.5px;}
   .hof-highlight-body strong{color:var(--ink);}
 
-  /* Rivalitäten */
-  .hof-rivalry-card{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:12px 16px;margin-bottom:8px;font-size:14px;}
-  .hof-rivalry-teams{font-family:'IBM Plex Mono', monospace;font-size:11px;text-transform:uppercase;letter-spacing:.04em;color:var(--turf);margin-bottom:6px;}
+  /* Rivalitäten - als aufklappbare Kachel statt dauerhaft ausgeklappter Liste (nimmt sonst bei
+     mehreren Doppel-Duellen zu viel Platz ein), selbes Pill-Muster wie .tx-week summary. */
+  .hof-rivalry-card{margin-bottom:8px;}
+  .hof-rivalry-card summary{
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:.04em;
+    color:var(--turf);
+    background:var(--card);
+    border:1px solid var(--card-border);
+    border-radius:20px;
+    padding:8px 16px;
+    list-style:none;
+    transition:border-color .15s ease;
+  }
+  .hof-rivalry-card summary:hover{border-color:var(--amber);}
+  .hof-rivalry-card summary::-webkit-details-marker{display:none;}
+  .hof-rivalry-card summary::before{content:'+ ';color:var(--amber);font-weight:700;}
+  .hof-rivalry-card[open] summary::before{content:'\2212 ';}
+  .hof-rivalry-card[open] summary{border-color:var(--amber);}
+  .hof-rivalry-games{background:var(--card);border:1px solid var(--card-border);border-top:none;border-radius:0 0 8px 8px;padding:8px 16px 4px;margin-top:-1px;font-size:14px;}
   .hof-rivalry-game{display:flex;justify-content:space-between;gap:8px;padding:3px 0;}
   .hof-rivalry-game .week{color:var(--hash);font-family:'IBM Plex Mono', monospace;font-size:11.5px;}
 
@@ -657,7 +681,7 @@
       var games = r.games.map(function(g){
         return '<div class="hof-rivalry-game"><span class="week mono">Wo. ' + g.week + '</span><span>' + g.homeName + ' ' + fmt(g.homeScore) + ' – ' + fmt(g.awayScore) + ' ' + g.awayName + (g.winner ? (' → <strong>' + g.winner + '</strong>') : ' (Unentschieden)') + '</span></div>';
       }).join('');
-      return '<div class="hof-rivalry-card"><div class="hof-rivalry-teams">' + r.teams.join(' vs. ') + '</div>' + games + '</div>';
+      return '<details class="hof-rivalry-card js-animatable"><summary>' + r.teams.join(' vs. ') + '</summary><div class="hof-rivalry-games details-content">' + games + '</div></details>';
     }).join('');
   }
 
