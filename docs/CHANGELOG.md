@@ -1747,3 +1747,20 @@ fehlte der Gegenfakt komplett, wodurch Claude sich das Wort frei für die beiden
 Tabellenführer ausgedacht hat, trotz korrekt mitgelieferter 6-1-Bilanz im selben
 Satz. Dritten else-Zweig ergänzt, der das explizit dementiert. Woche-8-Vorschau
 zur Neugenerierung gelöscht.
+
+## 2026-11-12 – `31e9da7` Fix Playoff-Chancen auf echten Conference-Cutoff + Rivalitäten als Kacheln
+
+computePlayoffPicture() nutzte für "wie viele Siege noch nötig"/"eliminated"
+und für das Cushion qualifizierter Teams das globale Minimum der beiden
+Conference-2.-Plätze statt des Cutoffs der EIGENEN Conference - bei
+unterschiedlich starken Conferences unterschätzt das den Rückstand für Teams
+in der stärkeren Conference. Neue cutoffFor()/threatFor()-Helfer, in allen
+drei Verbrauchern verwendet (playoff-picture.json, findPlayoffRaceFact()
+hatte dieselbe Logik unabhängig dupliziert). Mit synthetischen Testdaten
+verifiziert, inkl. eines Index-Fehlers im ersten Entwurf, der vor dem
+Commit noch gefunden und korrigiert wurde.
+
+Rivalitäten auf hall-of-fame.html zeigen jetzt nur noch Matchup-Kacheln
+("Team A vs. Team B"), die man aufklappt, um die Duell-Ergebnisse zu sehen -
+spart Platz bei mehreren gleichzeitigen Doppel-Duellen. Per Playwright gegen
+echte Live-Daten verifiziert.
